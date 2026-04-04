@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS kis_ws_subscriptions (
+    id BIGSERIAL PRIMARY KEY,
+    mode VARCHAR(16) NOT NULL,
+    symbol VARCHAR(32) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (mode, symbol)
+);
+
+CREATE TABLE IF NOT EXISTS kis_rest_watchlist (
+    id BIGSERIAL PRIMARY KEY,
+    mode VARCHAR(16) NOT NULL,
+    symbol VARCHAR(32) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (mode, symbol)
+);

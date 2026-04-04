@@ -1,3 +1,67 @@
 spring:
   application:
     name: market-collector
+  config:
+    import:
+      - optional:file:.env[.properties]
+  r2dbc:
+    url: ${R2DBC_URL:r2dbc:postgresql://localhost:5432/paper}
+    username: ${R2DBC_USERNAME:paper}
+    password: ${R2DBC_PASSWORD:paper}
+  datasource:
+    url: ${JDBC_URL:jdbc:postgresql://localhost:5432/paper}
+    username: ${JDBC_USERNAME:paper}
+    password: ${JDBC_PASSWORD:paper}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    url: ${FLYWAY_URL:${JDBC_URL:jdbc:postgresql://localhost:5432/paper}}
+    user: ${FLYWAY_USER:${JDBC_USERNAME:paper}}
+    password: ${FLYWAY_PASSWORD:${JDBC_PASSWORD:paper}}
+    baseline-on-migrate: true
+    validate-on-migrate: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+collector:
+  source:
+    kis:
+      enabled: true
+      modes:
+        - paper
+        - live
+      paper-approval-url: ${KIS_PAPER_APPROVAL_URL:https://openapivts.koreainvestment.com:29443/oauth2/Approval}
+      paper-websocket-url: ${KIS_PAPER_WEBSOCKET_URL:ws://ops.koreainvestment.com:31000}
+      live-approval-url: ${KIS_LIVE_APPROVAL_URL:https://openapi.koreainvestment.com:9443/oauth2/Approval}
+      live-websocket-url: ${KIS_LIVE_WEBSOCKET_URL:ws://ops.koreainvestment.com:21000}
+      live-app-key: ${KIS_APP_KEY:}
+      live-app-secret: ${KIS_APP_SECRET:}
+      paper-app-key: ${KIS_PAPER_APP_KEY:}
+      paper-app-secret: ${KIS_PAPER_APP_SECRET:}
+      cust-type: P
+      symbols: []
+      tr-id: H0STCNT0
+      tr-ids:
+        - H0STCNT0
+        - H0STASP0
+      reconnect-min-delay: 1s
+      reconnect-max-delay: 30s
+      live-rest-requests-per-second: 20
+      paper-rest-requests-per-second: 2
+      approval-requests-per-second: 1
+      max-realtime-registrations: 41
+    upbit:
+      enabled: true
+      url: wss://api.upbit.com/websocket/v1
+      markets:
+        - KRW-BTC
+        - KRW-ETH
+      channels:
+        - ticker
+        - trade
+        - orderbook
+      simple-format: true
+      reconnect-min-delay: 1s
+      reconnect-max-delay: 30s

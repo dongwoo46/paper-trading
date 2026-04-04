@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "kis-trading": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-e",
+        "MCP_TYPE=stdio",
+        "-e",
+        "KIS_FORCE_CONFIG_UPDATE=0",
+        "-e",
+        "KIS_APP_KEY",
+        "-e",
+        "KIS_APP_SECRET",
+        "-e",
+        "KIS_PAPER_APP_KEY",
+        "-e",
+        "KIS_PAPER_APP_SECRET",
+        "-e",
+        "KIS_HTS_ID",
+        "-e",
+        "KIS_ACCT_STOCK",
+        "kis-trade-mcp:latest"
+      ]
+    }
+  }
+}
