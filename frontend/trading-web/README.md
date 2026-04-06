@@ -1,31 +1,44 @@
-# trading-web
+# Quant Trading Dashboard: UI/UX & Frontend Philosophy
 
-`paper-trading` 통합 프론트엔드입니다.  
-현재 `Market Collector` 운영 화면(KIS WS/REST 구독, 심볼 검색)이 포함되어 있습니다.
+This document outlines the design standards and technical architecture for this paper trading web application. Future maintenance and development (including by AI assistants) should adhere to these principles.
 
-## 실행
+## 🏛️ Architecture: Feature-Sliced Design (FSD)
 
-```bash
-npm install
-npm run dev
-```
+The project follows the [FSD architecture](https://feature-sliced.design/) to maintain scalability and modularity.
 
-기본 주소:
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:8080` (Vite proxy `/api`)
+-   **`app/`**: Global initialization (styles, providers, routing).
+-   **`pages/`**: Full-page compositions. Very few logic; primarily connects features.
+-   **`features/`**: Domain-specific logic and UI (e.g., `catalog-management`, `kis-management`). This is where most complex interactions reside.
+-   **`entities/`**: Domain data models and types (e.g., `symbol`, `market`).
+-   **`shared/`**: Common UI components, API wrappers, and utilities.
 
-## 주요 기능
+## 🛠️ Technical Stack & Data Fetching
 
-- KIS WebSocket 구독 목록 조회/추가/삭제
-- KIS REST watchlist 조회/추가/삭제
-- `paper/live` 모드 분리 표시
-- 국내 주식 심볼 검색 (`/api/symbols/kr`)
+-   **State Management**: Use **TanStack React Query** (`useQuery`, `useMutation`) for all server-side state. Avoid manual `useEffect` + `fetch` chains.
+-   **Modularity**: Large feature panels must be broken down into smaller sub-components (e.g., `CatalogTable`, `SelectionChips`) to keep the code readable and easy to debug.
+-   **Type Safety**: Always use TypeScript and prefer shared model types from `entities/`.
 
-## 환경변수
+## 🎨 Design Philosophy: Premium Pro-Trader Look
 
-백엔드가 다른 주소면:
+The UI uses a **Glassmorphism Dark Theme** designed for high productivity and professional aesthetics.
 
-```bash
-VITE_API_BASE_URL=http://your-host:8080
-```
+### 1. Color Palette & Contrast
+-   **Background**: Deep `06070a` (Main) to `0a0c12` (Sidebar).
+-   **Text Contrast**: High contrast is mandatory. 
+    -   Primary: `#ffffff`
+    -   Secondary: `#cbd5e1` (readable light slate)
+    -   Muted/Gray: `#94a3b8` (not darker!)
+-   **Accents**: `--brand-primary` (`#3b82f6`) and `--brand-secondary` (`#10b981`). Use gradients (`--grad-primary`) sparingly.
 
+### 2. Responsiveness (Mobile-First)
+-   Use the `.feature-grid` or `.card-grid` classes for layout.
+-   Grids must stack vertically on screens smaller than **1024px**.
+-   Tables must be wrapped in a `.scroll-container` (`shared/ui`) to prevent overflow.
+
+### 3. Micro-interactions
+-   Add `:hover` effects to all clickable cards and buttons (`transform: translateY(-2px)`).
+-   Use `.fade-in` animation for all page and panel entries.
+
+---
+
+*Maintainer: Antigravity AI (Google DeepMind)*

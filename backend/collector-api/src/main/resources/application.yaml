@@ -1,0 +1,100 @@
+spring:
+  application:
+    name: market-collector
+  main:
+    web-application-type: servlet
+  config:
+    import:
+      - optional:file:.env[.properties]
+  datasource:
+    url: ${JDBC_URL:jdbc:postgresql://localhost:5432/paper}
+    username: ${JDBC_USERNAME:paper}
+    password: ${JDBC_PASSWORD:paper}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    url: ${FLYWAY_URL:${JDBC_URL:jdbc:postgresql://localhost:5432/paper}}
+    user: ${FLYWAY_USER:${JDBC_USERNAME:paper}}
+    password: ${FLYWAY_PASSWORD:${JDBC_PASSWORD:paper}}
+    baseline-on-migrate: true
+    validate-on-migrate: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+collector:
+  catalog-sync:
+    enabled-on-startup: true
+    pykrx-enabled: true
+    upbit-enabled: true
+    fred-enabled: true
+    fred-max-categories: ${FRED_SYNC_MAX_CATEGORIES:500}
+    fred-page-size: ${FRED_SYNC_PAGE_SIZE:100}
+  source:
+    kis:
+      enabled: true
+      modes:
+        - paper
+        - live
+      paper-token-url: ${KIS_PAPER_TOKEN_URL:https://openapivts.koreainvestment.com:29443/oauth2/tokenP}
+      paper-approval-url: ${KIS_PAPER_APPROVAL_URL:https://openapivts.koreainvestment.com:29443/oauth2/Approval}
+      paper-websocket-url: ${KIS_PAPER_WEBSOCKET_URL:ws://ops.koreainvestment.com:31000}
+      paper-rest-base-url: ${KIS_PAPER_REST_BASE_URL:https://openapivts.koreainvestment.com:29443}
+      live-token-url: ${KIS_LIVE_TOKEN_URL:https://openapi.koreainvestment.com:9443/oauth2/tokenP}
+      live-approval-url: ${KIS_LIVE_APPROVAL_URL:https://openapi.koreainvestment.com:9443/oauth2/Approval}
+      live-websocket-url: ${KIS_LIVE_WEBSOCKET_URL:ws://ops.koreainvestment.com:21000}
+      live-rest-base-url: ${KIS_LIVE_REST_BASE_URL:https://openapi.koreainvestment.com:9443}
+      access-token-cache-file: ${KIS_ACCESS_TOKEN_CACHE_FILE:./data/kis-access-tokens.json}
+      live-app-key: ${KIS_APP_KEY:}
+      live-app-secret: ${KIS_APP_SECRET:}
+      paper-app-key: ${KIS_PAPER_APP_KEY:}
+      paper-app-secret: ${KIS_PAPER_APP_SECRET:}
+      cust-type: P
+      symbols: []
+      tr-id: H0STCNT0
+      tr-ids:
+        - H0STCNT0
+        - H0STASP0
+      reconnect-min-delay: 1s
+      reconnect-max-delay: 30s
+      live-rest-requests-per-second: 20
+      paper-rest-requests-per-second: 2
+      approval-requests-per-second: 1
+      rest-polling-enabled: true
+      rest-polling-interval-millis: 60000
+      rest-polling-initial-delay-millis: 0
+      max-realtime-registrations: 41
+    upbit:
+      enabled: true
+      url: wss://api.upbit.com/websocket/v1
+      markets:
+        - KRW-BTC
+        - KRW-ETH
+      channels:
+        - ticker
+        - trade
+        - orderbook
+      simple-format: true
+      reconnect-min-delay: 1s
+      reconnect-max-delay: 30s
+    fred:
+      enabled: ${FRED_ENABLED:false}
+      base-url: ${FRED_BASE_URL:https://api.stlouisfed.org/fred}
+      api-key: ${FRED_API_KEY:}
+      polling-enabled: ${FRED_POLLING_ENABLED:true}
+      polling-interval-millis: ${FRED_POLLING_INTERVAL_MILLIS:3600000}
+      polling-initial-delay-millis: ${FRED_POLLING_INITIAL_DELAY_MILLIS:60000}
+      polling-limit-per-series: ${FRED_POLLING_LIMIT_PER_SERIES:60}
+      polling-request-interval-millis: ${FRED_POLLING_REQUEST_INTERVAL_MILLIS:1500}
+      polling-max-retries: ${FRED_POLLING_MAX_RETRIES:3}
