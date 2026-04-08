@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '📝 파일 변경됨. 빌드 검증 필요: trading-api(./gradlew compileJava) | collector-api(./gradlew compileKotlin) | collector-worker(python -m py_compile) | trading-web(npm run build)'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '✅ 작업 완료. /review 실행을 권장합니다.'"
+          }
+        ]
+      }
+    ]
+  }
+}

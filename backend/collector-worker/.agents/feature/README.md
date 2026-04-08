@@ -3,9 +3,11 @@
 Store one file per feature.
 
 ## File Naming
-- `YYYY-MM-DD-<feature-name>.md`
+
+- `<feature-name>.md`
 
 ## Template
+
 - Title:
 - Date:
 - Owner:

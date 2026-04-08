@@ -1,12 +1,6 @@
-# Detailed Rules
+# .agents/rule — 재발 방지 규칙
 
-Keep detailed, evolving rules here.
+파일명: `{날짜}-{핵심이슈}.md`
 
-## Recommended Files
-- `coding-rules.md`
-- `data-collection-rules.md`
-- `incident-prevention-rules.md`
-
-## Update Policy
-- If a new issue occurs, add a prevention rule here immediately.
-- Rules should be specific, testable, and short.
+## 문서 형식
+문제 현상 / 재발 조건 / 원인 / 해결 방법 / 재발 방지 규칙 / 검증 결과

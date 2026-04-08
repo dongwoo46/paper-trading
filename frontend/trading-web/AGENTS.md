@@ -1,27 +1,25 @@
-﻿@../../AGENTS.md
-
----
+@../../AGENTS.md
 
 # trading-web 서비스 규칙
 
-- 기술 스택: React / TypeScript / Vite
-- 빌드 검증: `npm run build`
+React / TypeScript / Vite
+빌드 검증: npm run build
 
 ---
 
 ## 아키텍처
 
-- FSD 구조 유지: `pages → features → entities → shared` 역방향 의존 금지
-- API 호출은 `shared/api/`로 일원화, feature에서 직접 fetch 금지
+FSD 구조: pages → features → entities → shared (역방향 의존 금지)
+API 호출은 shared/api/로 일원화, feature에서 직접 fetch 금지
 
 ---
 
 ## 코드 퀄리티
 
-- `any` 금지, 불명확 타입은 `unknown` + 타입 가드
+- any 금지, 불명확 타입은 unknown + 타입 가드
 - 함수형 컴포넌트만 사용
 - 상태 최소화, 서버 상태는 전용 관리 도구 사용
-- 사이드이펙트는 `useEffect` 내부에서만 처리
+- 사이드이펙트는 useEffect 내부에서만 처리
 
 ---
 
@@ -35,7 +33,7 @@
 
 ---
 
-## .agents 기록 규칙
+## .agents 관리
 
-- 기능 완료 시 필요하면 `.agents/feature/{기능명}.md` 작성
-- 버그/장애 발생 시 `.agents/rule/{관련파일}.md` 기록
+- 기능 완료 시 .agents/feature/{기능명}.md 작성. 수정 시 동일 파일 업데이트
+- 버그/장애 발생 시 .agents/rules/에 재발 방지 기록

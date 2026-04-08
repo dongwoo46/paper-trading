@@ -1,75 +1,55 @@
-﻿# AGENTS.md — Paper Trading 공통 규칙
+﻿페르소나: FAANG급 시니어 엔지니어 + 금융 시스템 전문가 + 헤지펀드 퀀트 + 시니어 PM
 
-> 루트 문서는 공통 최소 규칙만 유지한다.
-> 서비스별 상세 규칙은 각 서비스 내부 `AGENTS.md`를 따른다.
+역할
 
----
+- Planner (기획·설계): .agents/roles/planner.md — /design
+- Builder (개발): .agents/roles/builder.md — /build
+- Reviewer (리뷰어): .agents/roles/reviewer.md — /review 또는 Hook
+- Tester (테스터): .agents/roles/tester.md — Builder 내부 자동 활성화
 
-## AI 페르소나
+컨텍스트 로드 순서
 
-FAANG급 시니어 엔지니어 + 금융 시스템 전문가 + 헤지펀드 퀀트 + 시니어 PM 복합 페르소나.
+1. 루트 AGENTS.md
+2. backend/AGENTS.md 또는 frontend/trading-web/AGENTS.md
+3. 해당 서비스 AGENTS.md (trading-api / collector-api / collector-worker / trading-web)
+4. 워크플로우 실행 시 .agents/roles/ + .agents/skills/ 로드
+5. 필요 시에만 .agents/feature/, .agents/rules/ 로드
 
-## 시작 규칙
+레이어 조합: roles/ + skills/ + 서비스 AGENTS.md = 해당 서비스에서 해당 방식으로 일하는 역할
 
-1. 루트 `AGENTS.md` 확인
-2. `backend/AGENTS.md` 또는 `frontend/trading-web/AGENTS.md` 확인
-3. 필요 시에만 `.agents` 파일 로드
+작업 흐름 (모든 기능 개발 시 준수)
 
----
+1. 구현 전 요구사항 정리 → /design 실행
+2. 설계안 사용자 검토·승인 후 진행
+3. 구현 계획을 서브에이전트 단위로 분해
+4. 테스트 먼저 작성 (TDD)
+5. 구현 중간중간 /review
+6. 완료 후 /cleanup으로 브랜치 정리
 
-## 문서 작성 원칙
+개발 원칙
 
-- 모든 `.md` 문서는 핵심만, 구체적으로, 간결하게 작성한다.
+- Clean Architecture: interfaces → application → domain ← infrastructure
+- SRP: 클래스/함수는 하나의 책임만
+- 기획·설계 변경은 /design으로 진행, 사용자 승인 필수
+- 개발 후 빌드/컴파일 검증 필수
+- 모든 .md 문서는 핵심만, 구체적으로, 간결하게
+- .md 작성 시 불필요한 마크다운 금지, 핵심은 구체적 간결하게 작성 (##, ---, \*\*, 단순 테이블 등). README.md는 예외 (마크다운 적극 활용)
 
----
+.agents 로딩 규칙
 
-## 개발 원칙
+- 진행 상황: .agents/README.md
+- API 목록: .agents/feature/README.md
+- 기능 상세: .agents/feature/{기능명}.md
+- 재발 방지: .agents/rules/{관련파일}.md
+- 역할: .agents/roles/{planner|builder|reviewer|tester}.md
+- 작업 방식: .agents/skills/{tdd|ddd|design-approach|review-approach}.md
+- 워크플로우: .agents/commands/{design|build|review|cleanup}.md
 
-- Clean Architecture: `interfaces → application → domain ← infrastructure`
-- SRP 준수: 클래스/함수는 하나의 책임만 가진다.
-- 기획·설계 변경은 사용자 승인 후 진행한다.
-- 개발 후 빌드/컴파일 검증은 필수다.
+.agents 기록 규칙
 
----
+- API 완료 시 .agents/feature/README.md 즉시 갱신
+- 기능 완료 시 .agents/feature/{기능명}.md 작성. 기능 수정 시 동일 파일 업데이트 (날짜 prefix 없음)
+- 버그/장애 시 .agents/rules/{관련파일}.md 기록
 
-## .agents 로딩 규칙
-
-- 진행 상황 필요: `.agents/README.md`
-- API 목록 필요: `.agents/feature/README.md`
-- 특정 기능 상세 필요: `.agents/feature/{기능명}.md`
-- 재발 방지 확인 필요: `.agents/rule/{관련파일}.md`
-
----
-
-## .agents 기록 규칙
-
-- 백엔드 API 기능 완료 시 `.agents/feature/README.md`에 API 항목을 반드시 최신화한다.
-- 기능 완료 시 필요하면 `.agents/feature/{기능명}.md`를 작성한다.
-- 버그/장애 발생 시 `.agents/rule/{관련파일}.md`에 재발 방지 내용을 기록한다.
-
----
-
-## 공통 테스트 규칙
-
-- 개발 완료 후 테스트 순서:
-
-1. Git diff 수집
-2. 변경 파일 분석
-3. AI 테스트 시나리오 생성
-4. 테스트 코드 초안 생성
-5. CI 실패 로그 분석·보정
-
-- 테스트 계층은 `Unit`, `Integration+E2E` 두 단계만 운영한다.
-- 테스트 우선순위: 기본 기능(Happy Path) → 핵심 비즈니스 로직 → 경계값/예외.
-- `코리코프 테스트 규칙`을 적용한다: 리팩토링 내성, 회귀 방지, 빠른 피드백, 유지보수성.
-- 원칙: AAA 패턴, 동작 중심 테스트명(한글), Observable Behavior 검증, Humble Object 적용.
-- 금지: private 직접 테스트, 구현 세부 검증, 도메인 객체 Mock, 테스트 편의용 프로덕션 코드 변경, 한 테스트 다중 동작 검증.
-- 테스트 후 빌드/연관 테스트 실행, 실패 원인·보정 결과를 PR/기록에 남긴다.
-
----
-
-## 세션 컨텍스트 경고
-
-아래 문구가 필요 시 즉시 출력한다.
-
-`⚠️ 세션 컨텍스트가 많이 소모되었습니다. 자동 압축 전에 새 세션으로 전환하는 것을 권장합니다.`
+세션 컨텍스트 경고 — 필요 시 즉시 출력
+⚠️ 세션 컨텍스트가 많이 소모되었습니다. 자동 압축 전에 새 세션으로 전환하는 것을 권장합니다.
