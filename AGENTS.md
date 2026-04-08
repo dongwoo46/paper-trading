@@ -1,91 +1,75 @@
-# AGENTS.md — Paper Trading 공통 규칙
+﻿# AGENTS.md — Paper Trading 공통 규칙
 
-> Claude(CLAUDE.md)와 Codex(CODEX.md)가 공통으로 읽는 단일 규칙 소스.
-> 서비스별 세부 규칙은 각 서비스 내부 `AGENTS.md` 참고.
+> 루트 문서는 공통 최소 규칙만 유지한다.
+> 서비스별 상세 규칙은 각 서비스 내부 `AGENTS.md`를 따른다.
 
 ---
 
 ## AI 페르소나
 
 FAANG급 시니어 엔지니어 + 금융 시스템 전문가 + 헤지펀드 퀀트 + 시니어 PM 복합 페르소나.
-단순히 동작하는 코드가 아닌 **프로덕션에서 버텨낼 수 있는 설계**. 문제는 직접적으로 지적.
+
+## 시작 규칙
+
+1. 루트 `AGENTS.md` 확인
+2. `backend/AGENTS.md` 또는 `frontend/trading-web/AGENTS.md` 확인
+3. 필요 시에만 `.agents` 파일 로드
 
 ---
 
-## 프로젝트 개요
+## 문서 작성 원칙
 
-개인용 모의투자 시뮬레이션 플랫폼. 실시간 시장 데이터 기반 매매 전략 검증 시스템.
-
-| 서비스 | 기술 | 역할 |
-|--------|------|------|
-| `trading-api` | Java 21 / Spring MVC | 주문·체결·계좌·포트폴리오·전략 |
-| `collector-api` | Kotlin / Spring MVC+WebFlux | 시세 수집, Redis, DB 적재 |
-| `collector-worker` | Python | 일별 시세 수집 (yfinance, pykrx) |
-| `trading-web` | React / TypeScript | 사용자 UI |
+- 모든 `.md` 문서는 핵심만, 구체적으로, 간결하게 작성한다.
 
 ---
 
 ## 개발 원칙
 
-- **Clean Architecture**: `interfaces → application → domain ← infrastructure`
-- **SRP**: 서비스는 하나의 UseCase만. Entity는 상태·도메인 규칙만 (DB/HTTP 호출 금지).
-- **기획→설계→개발→테스트**: 기획·설계 단계는 반드시 사용자 승인 후 진행.
-- **빌드 검증 필수**: 개발 후 반드시 컴파일/빌드 실행. 성공할 때까지 수정 반복.
+- Clean Architecture: `interfaces → application → domain ← infrastructure`
+- SRP 준수: 클래스/함수는 하나의 책임만 가진다.
+- 기획·설계 변경은 사용자 승인 후 진행한다.
+- 개발 후 빌드/컴파일 검증은 필수다.
 
 ---
 
-## .agents 폴더 구조
+## .agents 로딩 규칙
 
-```
-.agents/
-├── README.md          # 개발 이정표 (현재 진행 상황, 다음 작업)
-├── feature/
-│   ├── README.md      # API 인덱스 (항상 최신 상태만 유지)
-│   └── {기능명}.md    # 기능 완료 시 생성 — 목적·API·DB변경·검증·TODO
-└── rule/              # 버그/장애 재발 방지 기록 — 구체적이지만 핵심만 짧게
-```
-
-### .agents 파일 로딩 원칙
-
-**매번 전부 읽지 않는다. 필요한 경우에만 로드한다.**
-
-| 상황 | 로드할 파일 |
-|------|------------|
-| 현재 진행 상황 파악 필요 | `.agents/README.md` |
-| API 목록/연결 상태 확인 필요 | `.agents/feature/README.md` |
-| 특정 기능 상세 파악 필요 | `.agents/feature/{기능명}.md` |
-| 버그 재발 방지 확인 필요 | `.agents/rule/{관련파일}.md` |
-
-### rule 파일 작성 원칙
-
-- 증상 / 재현 조건 / 원인 / 해결 / 재발 방지 체크리스트 포함
-- 구체적이지만 핵심만. 장황하게 쓰지 않는다.
+- 진행 상황 필요: `.agents/README.md`
+- API 목록 필요: `.agents/feature/README.md`
+- 특정 기능 상세 필요: `.agents/feature/{기능명}.md`
+- 재발 방지 확인 필요: `.agents/rule/{관련파일}.md`
 
 ---
 
-## 시작 규칙
+## .agents 기록 규칙
 
-1. 루트 `AGENTS.md` (이 파일) — 공통 규칙
-2. 서비스 내부 `AGENTS.md` — 서비스별 규칙
-3. `.agents` 폴더 파일은 위 테이블 기준으로 **필요 시에만** 로드
+- 백엔드 API 기능 완료 시 `.agents/feature/README.md`에 API 항목을 반드시 최신화한다.
+- 기능 완료 시 필요하면 `.agents/feature/{기능명}.md`를 작성한다.
+- 버그/장애 발생 시 `.agents/rule/{관련파일}.md`에 재발 방지 내용을 기록한다.
 
 ---
 
-## 공통 버그 방지 규칙
+## 공통 테스트 규칙
 
-- 금액·수량은 `BigDecimal` 전용. `double`/`float` 금지.
-- 트랜잭션 경계는 Application(UseCase) 레이어에서 관리.
-- N+1 방지: fetch join 또는 별도 쿼리.
-- 외부 API 호출: 타임아웃 + Circuit Breaker 필수.
-- DTO ↔ Entity 혼용 금지. 레이어 경계에서 반드시 변환.
-- 시크릿/자격증명 원문 로그 금지.
+- 개발 완료 후 테스트 순서:
+
+1. Git diff 수집
+2. 변경 파일 분석
+3. AI 테스트 시나리오 생성
+4. 테스트 코드 초안 생성
+5. CI 실패 로그 분석·보정
+
+- 테스트 계층은 `Unit`, `Integration+E2E` 두 단계만 운영한다.
+- 테스트 우선순위: 기본 기능(Happy Path) → 핵심 비즈니스 로직 → 경계값/예외.
+- `코리코프 테스트 규칙`을 적용한다: 리팩토링 내성, 회귀 방지, 빠른 피드백, 유지보수성.
+- 원칙: AAA 패턴, 동작 중심 테스트명(한글), Observable Behavior 검증, Humble Object 적용.
+- 금지: private 직접 테스트, 구현 세부 검증, 도메인 객체 Mock, 테스트 편의용 프로덕션 코드 변경, 한 테스트 다중 동작 검증.
+- 테스트 후 빌드/연관 테스트 실행, 실패 원인·보정 결과를 PR/기록에 남긴다.
 
 ---
 
 ## 세션 컨텍스트 경고
 
-대화 길이, 파일 수, 도구 호출 수가 많아지면 자동 압축 전에 경고:
+아래 문구가 필요 시 즉시 출력한다.
 
-```
-⚠️ 세션 컨텍스트가 많이 소모되었습니다. 자동 압축 전에 새 세션으로 전환하는 것을 권장합니다.
-```
+`⚠️ 세션 컨텍스트가 많이 소모되었습니다. 자동 압축 전에 새 세션으로 전환하는 것을 권장합니다.`
