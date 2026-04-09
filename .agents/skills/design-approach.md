@@ -11,11 +11,11 @@ Skill: Design Approach
 
 아키텍처 원칙
 
-- interfaces → application → domain ← infrastructure
+- presentation → application → domain ← infrastructure
 - domain: 순수 비즈니스 규칙, 프레임워크 의존 금지
 - application: UseCase 오케스트레이션, 트랜잭션 경계
 - infrastructure: DB/Redis/외부 API 어댑터
-- interfaces: HTTP 변환, 입력 검증, 응답 조립
+- presentation: HTTP 변환, 입력 검증, 응답 조립
 
 설계안 출력 형식
 변경 범위 / API 설계 / DB 스키마 / 작업 분해

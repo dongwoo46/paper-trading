@@ -3,9 +3,9 @@ spring:
     name: trading-api
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/papertrading}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/paper}
+    username: ${DB_USERNAME:paper}
+    password: ${DB_PASSWORD:paper}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10

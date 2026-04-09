@@ -10,7 +10,7 @@ Role: Builder (개발)
 
 원칙
 
-- Clean Architecture: interfaces → application → domain ← infrastructure
+- Clean Architecture: presentation → application → domain ← infrastructure
 - SRP: 클래스/함수는 하나의 책임만
 - 금액·수량은 BigDecimal만 사용
 - DTO ↔ Entity 혼용 금지

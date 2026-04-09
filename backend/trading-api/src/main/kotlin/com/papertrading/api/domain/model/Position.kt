@@ -19,6 +19,13 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 
+/**
+ * 포지션 (보유 종목)
+ * 계좌별·종목별 보유 수량과 평균 매수가를 관리
+ * quantity = 총 보유 수량, lockedQuantity = 매도 주문 잠금 수량, orderableQuantity = 주문 가능 수량
+ * 체결 시 applyBuy/applySell로 수량·단가 갱신, 시세 수신 시 updatePrice로 평가손익 갱신
+ * 데드락 방지: 항상 Account 락 획득 후 Position 락 획득 순서 준수
+ */
 @Entity
 @Table(
     name = "positions",
