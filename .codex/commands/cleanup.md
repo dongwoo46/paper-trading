@@ -1,1 +1,1 @@
-@.agents/commands/cleanup.md
+@../../.agents/commands/cleanup.md

@@ -1,1 +1,1 @@
-@.agents/commands/design.md
+@../../.agents/commands/design.md

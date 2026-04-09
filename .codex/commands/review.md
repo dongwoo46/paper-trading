@@ -1,1 +1,1 @@
-@.agents/commands/review.md
+@../../.agents/commands/review.md

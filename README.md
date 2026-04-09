@@ -48,6 +48,9 @@ git 상태 확인 → PR 초안 → **사용자 승인 대기** → `gh pr creat
 슬래시 커맨드 대신 파일을 직접 참조한다.
 ```
 @.agents/commands/design.md
+@.agents/commands/build.md
+@.agents/commands/review.md
+@.agents/commands/cleanup.md
 [기능 설명]
 ```
 

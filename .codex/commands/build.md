@@ -1,1 +1,1 @@
-@.agents/commands/build.md
+@../../.agents/commands/build.md
