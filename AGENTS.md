@@ -28,7 +28,7 @@
 
 개발 원칙
 
-- Clean Architecture: interfaces → application → domain ← infrastructure
+- Clean Architecture: presentation → application → domain ← infrastructure
 - SRP: 클래스/함수는 하나의 책임만
 - 기획·설계 변경은 /design으로 진행, 사용자 승인 필수
 - 개발 후 빌드/컴파일 검증 필수

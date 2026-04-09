@@ -16,6 +16,12 @@ import jakarta.persistence.Table
 import java.math.BigDecimal
 import java.time.LocalDate
 
+/**
+ * 정산 예정 (Account Aggregate 내부 구성 요소)
+ * 매도 체결 후 실제 대금이 계좌에 입금되기까지의 대기 상태를 추적한다.
+ * 주식은 T+2일 결제 → 체결 즉시 대금이 들어오지 않고 settlementDate에 입금 예정으로 기록.
+ * status: PENDING(정산 대기) → COMPLETED(정산 완료, 계좌 잔액 반영)
+ */
 @Entity
 @Table(name = "pending_settlements")
 class PendingSettlement(

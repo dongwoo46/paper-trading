@@ -16,6 +16,11 @@ import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import java.math.BigDecimal
 
+/**
+ * 계좌 원장
+ * 입금·출금·매수잠금 등 계좌의 모든 자금 이동을 불변 이력으로 기록
+ * idempotencyKey 유니크 제약으로 동일 요청 중복 기록 방지
+ */
 @Entity
 @Table(
     name = "account_ledger",
