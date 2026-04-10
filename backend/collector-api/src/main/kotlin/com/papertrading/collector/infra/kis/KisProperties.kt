@@ -17,7 +17,6 @@ class KisProperties {
 	var liveApprovalUrl: String = "https://openapi.koreainvestment.com:9443/oauth2/Approval"
 	var liveWebsocketUrl: String = "ws://ops.koreainvestment.com:21000"
 	var liveRestBaseUrl: String = "https://openapi.koreainvestment.com:9443"
-	var accessTokenCacheFile: String = "./data/kis-access-tokens.json"
 	var liveAppKey: String = ""
 	var liveAppSecret: String = ""
 	var paperAppKey: String = ""
@@ -25,7 +24,7 @@ class KisProperties {
 	var custType: String = "P"
 	var symbols: List<String> = emptyList()
 	var trId: String = "H0STCNT0"
-	var trIds: List<String> = listOf("H0STCNT0", "H0STASP0")
+	var trIds: List<String> = listOf("H0STCNT0")  // 체결가만 구독. ASKP1/BIDP1이 H0STCNT0에 포함됨.
 	var reconnectMinDelay: Duration = Duration.ofSeconds(1)
 	var reconnectMaxDelay: Duration = Duration.ofSeconds(30)
 	var liveRestRequestsPerSecond: Int = 20

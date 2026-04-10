@@ -30,5 +30,14 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+trading:
+  collector-api:
+    base-url: ${COLLECTOR_API_URL:http://localhost:8081}
+  kis:
+    paper-app-key: ${KIS_PAPER_APP_KEY:}
+    paper-app-secret: ${KIS_PAPER_APP_SECRET:}
+    live-app-key: ${KIS_LIVE_APP_KEY:}
+    live-app-secret: ${KIS_LIVE_APP_SECRET:}
+
 server:
   port: 8080

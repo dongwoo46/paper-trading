@@ -12,6 +12,11 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.Instant
 
+/**
+ * 리스크 이벤트 이력
+ * RiskPolicy 한도 위반(최대 손실 초과, 단건 주문 한도 초과 등) 발생 시 기록.
+ * 알림 발송 및 사후 감사 추적 용도. 삭제·수정 없이 append-only로 유지.
+ */
 @Entity
 @Table(name = "risk_events")
 class RiskEvent(

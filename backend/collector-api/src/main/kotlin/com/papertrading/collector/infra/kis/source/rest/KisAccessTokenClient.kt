@@ -13,7 +13,7 @@ import java.time.Instant
 class KisAccessTokenClient(
 	private val properties: KisProperties,
 	private val rateLimiter: KisRateLimiter,
-	private val tokenFileStore: KisAccessTokenFileStore,
+	private val tokenRedisStore: KisTokenRedisStore,
 	private val webClientBuilder: WebClient.Builder,
 ) {
 	private val webClient: WebClient = webClientBuilder.build()
@@ -21,7 +21,7 @@ class KisAccessTokenClient(
 
 	fun issueAccessToken(mode: String): Mono<String> {
 		val normalizedMode = mode.lowercase()
-		val cachedToken = tokenFileStore.findValidToken(normalizedMode)
+		val cachedToken = tokenRedisStore.findValidToken(normalizedMode)
 		if (cachedToken != null) {
 			return Mono.just(cachedToken)
 		}
@@ -43,7 +43,7 @@ class KisAccessTokenClient(
 					.flatMap { response ->
 						val token = response.accessToken ?: return@flatMap Mono.empty<String>()
 						val expiresAt = resolveExpiresAt(response)
-						tokenFileStore.save(normalizedMode, token, expiresAt)
+						tokenRedisStore.save(normalizedMode, token, expiresAt)
 						Mono.just(token)
 					},
 			)
@@ -63,7 +63,7 @@ class KisAccessTokenClient(
 			}
 		}
 
-		return Instant.now(clock).plusSeconds(60)
+		return Instant.now(clock).plusSeconds(86_400) // KIS 토큰 기본 24h
 	}
 }
 

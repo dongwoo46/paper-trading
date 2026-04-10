@@ -13,6 +13,11 @@ import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import java.math.BigDecimal
 
+/**
+ * 연간 세금 정산 요약
+ * 연도별 실현손익·과세대상손익·예상세금을 집계 보관.
+ * 연말 세금 신고 지원 및 세후 수익률 계산 용도.
+ */
 @Entity
 @Table(
     name = "tax_summaries",

@@ -15,6 +15,11 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.util.UUID
 
+/**
+ * 전략 버전 이력
+ * 전략 규칙(rules JSONB) 변경 시마다 버전 행 추가 — 기존 버전 보존.
+ * backtestRunId: research-service의 백테스트 실행 ID(외부 참조, UUID).
+ */
 @Entity
 @Table(
     name = "strategy_versions",

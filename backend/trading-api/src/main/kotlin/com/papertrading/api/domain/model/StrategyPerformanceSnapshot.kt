@@ -13,6 +13,11 @@ import jakarta.persistence.Table
 import java.math.BigDecimal
 import java.time.LocalDate
 
+/**
+ * 전략 기간별 성과 스냅샷
+ * 특정 기간(periodStart~periodEnd)의 수익률·샤프지수·MDD·승률을 집계 보관.
+ * research-service 백테스트 또는 실 운용 결과를 주기적으로 저장.
+ */
 @Entity
 @Table(name = "strategy_performance_snapshots")
 class StrategyPerformanceSnapshot(

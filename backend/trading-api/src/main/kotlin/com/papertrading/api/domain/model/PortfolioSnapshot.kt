@@ -16,6 +16,11 @@ import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.LocalDate
 
+/**
+ * 일별 포트폴리오 구성 스냅샷
+ * 매일 장 마감 시점의 종목별 보유 비중·평가금액을 JSONB로 저장.
+ * composition 예시: [{"ticker":"005930","weight":0.35,"evaluation":3500000}, ...]
+ */
 @Entity
 @Table(
     name = "portfolio_snapshots",

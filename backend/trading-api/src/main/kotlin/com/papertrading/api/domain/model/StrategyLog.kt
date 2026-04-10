@@ -14,6 +14,11 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.Instant
 
+/**
+ * 전략 실행 로그
+ * 전략 실행 중 발생한 이벤트·오류를 시계열로 기록한다.
+ * logLevel: INFO | WARN | ERROR. context(JSONB): 신호값·포지션 등 실행 맥락.
+ */
 @Entity
 @Table(name = "strategy_logs")
 class StrategyLog(

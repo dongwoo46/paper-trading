@@ -22,6 +22,13 @@ import jakarta.persistence.Version
 import java.math.BigDecimal
 import java.time.Instant
 
+/**
+ * 주문 (Aggregate Root)
+ * 매수·매도 주문의 상태 머신. PENDING → PARTIAL → FILLED / CANCELLED 흐름.
+ * version 컬럼으로 낙관적 락 적용 (동시 체결 충돌 방지).
+ * 상태 변경은 반드시 updateStatus/applyExecution 도메인 메서드로만.
+ * externalOrderId: KIS_PAPER·KIS_LIVE 연동 시 외부 주문번호 저장.
+ */
 @Entity
 @Table(
     name = "orders",
@@ -76,6 +83,10 @@ class Order(
 
     @Column(name = "fee", nullable = false, precision = 20, scale = 4)
     var fee: BigDecimal = BigDecimal.ZERO,
+
+    // 매수 주문 접수 시 잠금된 예수금 (취소/부분체결 시 잔여 해제에 사용)
+    @Column(name = "locked_amount", nullable = false, precision = 20, scale = 4)
+    var lockedAmount: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "idempotency_key", nullable = false, length = 100)
     var idempotencyKey: String? = null,

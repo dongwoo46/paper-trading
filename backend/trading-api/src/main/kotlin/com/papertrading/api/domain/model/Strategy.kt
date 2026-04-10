@@ -16,6 +16,14 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.math.BigDecimal
 
+/**
+ * 전략 (Aggregate Root)
+ * 매매 전략 메타 정보 및 승인 상태 관리.
+ * sourceType: HUMAN(수동) | AI_QUANT | AI_RECOMMENDED | HYBRID
+ * approvalStatus: DRAFT → PENDING_REVIEW → APPROVED/REJECTED
+ * AI 생성 전략은 APPROVED 이후에만 실거래 활성화 가능(activate() 내부 guard).
+ * sharpeRatio·maxDrawdown·winRate: research-service 백테스트 결과를 수신해 저장.
+ */
 @Entity
 @Table(name = "strategies")
 class Strategy(
