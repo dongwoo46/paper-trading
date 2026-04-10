@@ -19,7 +19,10 @@
 - [x] 일별 OHLCV 조회 API (pykrx, yfinance)
 - [x] trading-web UI 전체 API 연결 완료
 
-### 다음 작업
-- [ ] trading-api와의 시세 연동 인터페이스 정의
-- [ ] Redis 최신 시세 키 스키마 표준화
+### 다음 작업 (Phase 4 선행 — trading-api 주문 API 위해 필수)
+- [ ] Redis Pub/Sub 시세 발행 구현: realtime-quote-pubsub.md
+  - RawEventPipeline.publish() 구현 (현재 TODO log.debug 상태)
+  - KisRawEventParser: H0STCNT0(체결) 파싱 → QuoteEvent
+  - QuoteRedisPublisher: Hash 저장(quote:{ticker}) + Pub/Sub 발행
+  - 동적 채널: quote:{ticker} (구독 종목별 자동 생성)
 - [ ] WebSocket 재연결 안정성 강화
