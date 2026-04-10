@@ -11,6 +11,12 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
+/**
+ * 알림
+ * 체결·리스크 위반·정산 완료 등 주요 이벤트를 사용자에게 전달하기 위한 메시지.
+ * notificationType: ORDER_FILLED | RISK_BREACH | SETTLEMENT_DONE 등.
+ * isRead=false인 건만 읽지 않은 알림으로 노출.
+ */
 @Entity
 @Table(name = "notifications")
 class Notification(

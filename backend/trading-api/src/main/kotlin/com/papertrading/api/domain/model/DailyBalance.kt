@@ -14,6 +14,11 @@ import jakarta.persistence.UniqueConstraint
 import java.math.BigDecimal
 import java.time.LocalDate
 
+/**
+ * 일별 잔고 스냅샷
+ * 매일 장 마감 후 계좌의 예수금·평가금액·총자산·손익을 집계 저장.
+ * 수익률 차트, 기간별 성과 조회의 원천 데이터.
+ */
 @Entity
 @Table(
     name = "daily_balances",

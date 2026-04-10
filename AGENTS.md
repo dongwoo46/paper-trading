@@ -7,6 +7,15 @@
 - Reviewer (리뷰어): .agents/roles/reviewer.md — /review 또는 Hook
 - Tester (테스터): .agents/roles/tester.md — Builder 내부 자동 활성화
 
+서브에이전트 실행 규칙 (필수)
+
+/design, /build, /review, /cleanup 슬래시 커맨드는 반드시 Agent tool로 서브에이전트를 띄워 실행한다.
+각 에이전트는 자기 역할 범위만 수행하며 직접 처리 금지.
+- /design → Planner 서브에이전트
+- /build → Builder 서브에이전트
+- /review → Reviewer 서브에이전트
+- /cleanup → Cleanup 서브에이전트
+
 컨텍스트 로드 순서
 
 1. 루트 AGENTS.md

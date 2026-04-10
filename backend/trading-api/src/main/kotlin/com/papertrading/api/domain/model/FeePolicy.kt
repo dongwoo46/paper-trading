@@ -14,6 +14,11 @@ import jakarta.persistence.Table
 import java.math.BigDecimal
 import java.time.Instant
 
+/**
+ * 수수료 정책
+ * 거래 모드(LOCAL·KIS_PAPER·KIS_LIVE)와 시장 유형(STOCK·CRYPTO)별 수수료율·최소수수료 정의.
+ * effectiveFrom~effectiveUntil 기간 이력 관리 — 정책 변경 시 신규 행 추가, 기존 행 보존.
+ */
 @Entity
 @Table(name = "fee_policies")
 class FeePolicy(

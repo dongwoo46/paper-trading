@@ -98,6 +98,20 @@ class Position(
         totalBuyAmount = avgBuyPrice.multiply(quantity)
     }
 
+    fun lockQuantity(qty: BigDecimal) {
+        require(qty > BigDecimal.ZERO) { "잠금 수량은 0보다 커야 합니다." }
+        require(orderableQuantity >= qty) { "주문 가능 수량이 부족합니다. available=$orderableQuantity, requested=$qty" }
+        lockedQuantity = lockedQuantity.add(qty)
+        orderableQuantity = quantity.subtract(lockedQuantity)
+    }
+
+    fun unlockQuantity(qty: BigDecimal) {
+        require(qty > BigDecimal.ZERO) { "해제 수량은 0보다 커야 합니다." }
+        require(lockedQuantity >= qty) { "잠금 수량이 부족합니다. locked=$lockedQuantity, requested=$qty" }
+        lockedQuantity = lockedQuantity.subtract(qty)
+        orderableQuantity = quantity.subtract(lockedQuantity)
+    }
+
     fun updatePrice(price: BigDecimal, source: PriceSource) {
         currentPrice = price
         evaluationAmount = price.multiply(quantity)

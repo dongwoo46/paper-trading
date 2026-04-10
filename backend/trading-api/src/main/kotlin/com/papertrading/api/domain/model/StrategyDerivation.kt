@@ -11,6 +11,11 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
+/**
+ * 전략 파생 계보
+ * 기존 전략(parent)을 기반으로 새 전략(child)을 파생시킬 때 관계를 기록.
+ * derivationType: FORK(독립 파생) | TUNE(파라미터 조정) | ENSEMBLE(앙상블 결합)
+ */
 @Entity
 @Table(name = "strategy_derivations")
 class StrategyDerivation(

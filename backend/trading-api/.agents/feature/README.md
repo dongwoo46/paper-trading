@@ -6,6 +6,10 @@ ERD 설계 v1(23개 테이블): erd-design-v1.md
 JPA Entity + Repository: Phase 2 완료
 계좌 API (Phase 3): account.md
 
+설계 확정 / 구현 대기
+주문 API (Phase 4): order-api-design.md
+  선행 조건: collector-api realtime-quote-pubsub 구현 완료 후 진행
+
 API 목록
 
 계좌 관리
@@ -24,3 +28,14 @@ POST   | /api/v1/accounts/{id}/risk-policy             | 정책 등록/수정   
 
 정산 예정
 GET    | /api/v1/accounts/{id}/pending-settlements     | 정산 예정 조회     | 완료
+
+주문 (Phase 4 — 구현 대기)
+POST   | /api/v1/accounts/{id}/orders                  | 주문 생성 (멱등)   | 예정
+GET    | /api/v1/accounts/{id}/orders                  | 주문 목록          | 예정
+GET    | /api/v1/accounts/{id}/orders/{orderId}        | 주문 상세          | 예정
+DELETE | /api/v1/accounts/{id}/orders/{orderId}        | 주문 취소          | 예정
+GET    | /api/v1/accounts/{id}/orders/{orderId}/executions | 체결 내역      | 예정
+
+포지션 (Phase 4 — 구현 대기)
+GET    | /api/v1/accounts/{id}/positions               | 포지션 목록        | 예정
+GET    | /api/v1/accounts/{id}/positions/{ticker}      | 종목별 포지션      | 예정

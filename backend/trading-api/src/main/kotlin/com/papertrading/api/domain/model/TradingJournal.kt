@@ -11,6 +11,11 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
+/**
+ * 트레이딩 기록 (매매 일지)
+ * 주문·종목에 대한 사용자 메모·감상·매매 근거를 자유 형식으로 기록.
+ * sentiment: BULLISH | BEARISH | NEUTRAL — 당시 심리 태그.
+ */
 @Entity
 @Table(name = "trading_journals")
 class TradingJournal(

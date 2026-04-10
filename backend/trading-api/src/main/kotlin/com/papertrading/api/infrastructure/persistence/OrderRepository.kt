@@ -9,11 +9,13 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.util.Optional
 
-interface OrderRepository : JpaRepository<Order, Long> {
+interface OrderRepository : JpaRepository<Order, Long>, OrderRepositoryCustom {
     @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT o FROM Order o WHERE o.id = :id")
     fun findByIdWithOptimisticLock(@Param("id") id: Long): Optional<Order>
 
     fun findByAccountIdAndOrderStatusIn(accountId: Long, statuses: List<OrderStatus>): List<Order>
     fun existsByAccountIdAndIdempotencyKey(accountId: Long, idempotencyKey: String): Boolean
+    fun findByAccountIdAndIdempotencyKey(accountId: Long, idempotencyKey: String): Order?
+    fun findByAccountIdOrderByCreatedAtDesc(accountId: Long): List<Order>
 }

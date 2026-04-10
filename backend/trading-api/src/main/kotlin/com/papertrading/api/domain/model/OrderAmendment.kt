@@ -12,6 +12,11 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.math.BigDecimal
 
+/**
+ * 주문 정정·취소 이력
+ * 주문의 수량·가격 변경 또는 취소 요청 시 변경 전후 값을 불변 이력으로 기록.
+ * amendmentType: MODIFY(정정) | CANCEL(취소)
+ */
 @Entity
 @Table(name = "order_amendments")
 class OrderAmendment(

@@ -15,6 +15,12 @@ import jakarta.persistence.UniqueConstraint
 import java.math.BigDecimal
 import java.time.Instant
 
+/**
+ * 정산 (주문 완전 체결 시 1건 생성)
+ * FILLED 주문의 실현손익(realizedPnl), 수수료(fee), 세금(tax)을 확정 기록.
+ * netPnl = realizedPnl - fee - tax. 다중 통화는 krwNetPnl로 원화 환산.
+ * 어떤 Execution들이 포함됐는지는 SettlementExecution 조인 테이블로 추적.
+ */
 @Entity
 @Table(
     name = "settlements",

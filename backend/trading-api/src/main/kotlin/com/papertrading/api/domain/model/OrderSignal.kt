@@ -20,6 +20,12 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 
+/**
+ * 주문 신호 (Python research-service → trading-api 진입점)
+ * Python 전략이 생성한 매매 신호를 수신·검증 후 실제 Order로 전환한다.
+ * isProcessed=false인 신호만 Order 변환 대상. 멱등 처리(idempotencyKey UNIQUE).
+ * conditionSnapshot: 신호 생성 시점의 지표 스냅샷(JSONB) — 사후 분석용.
+ */
 @Entity
 @Table(
     name = "order_signals",

@@ -14,6 +14,12 @@ import jakarta.persistence.UniqueConstraint
 import java.math.BigDecimal
 import java.time.Instant
 
+/**
+ * 체결 (Order 1건에 1~N개)
+ * 주문이 실제로 거래소(또는 LOCAL 체결 엔진)에서 체결된 결과 기록.
+ * external_execution_id UNIQUE — 외부 체결 ID 중복 수신 방지.
+ * 다중 통화 지원: currency + fxRate → krwExecutedPrice로 원화 환산.
+ */
 @Entity
 @Table(
     name = "executions",

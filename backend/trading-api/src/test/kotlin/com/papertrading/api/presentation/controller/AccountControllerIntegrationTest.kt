@@ -15,9 +15,11 @@ import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
+import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.utility.DockerImageName
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -37,6 +39,10 @@ class AccountControllerIntegrationTest {
         @Container
         @ServiceConnection
         val postgres = PostgreSQLContainer("postgres:16-alpine")
+
+        @Container
+        @ServiceConnection(name = "redis")
+        val redis = GenericContainer(DockerImageName.parse("redis:7-alpine")).withExposedPorts(6379)
     }
 
     @Test
