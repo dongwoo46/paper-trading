@@ -5,3 +5,30 @@
 
 # Git worktrees
 .worktrees/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Gradle
+.gradle/
+build/
+
+# Node
+node_modules/
+dist/
+.next/
+
+# Graphify (output/cache only — graphify.yaml is tracked)
+run-graphify.sh
+graphify-out/
+**/graphify-out/
+**/.graphify_incremental.json
+**/.graphify_python/
+
+# Misc
+BLOG.md
+.claude/.dirty-services

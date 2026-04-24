@@ -1,0 +1,70 @@
+include:
+  # backend services
+  - backend/collector-api/**
+  - backend/collector-worker/**
+  - backend/research-worker/**
+  - backend/trading-api/**
+
+  # frontend source
+  - frontend/**
+
+  # architecture / planning docs
+  - docs/ADR.md
+  - docs/PRD.md
+  - docs/state.md
+  - docs/TODO.md
+  - docs/phase/**/*.md
+  - docs/**/*.md
+  - README.md
+  - BLOG.md
+
+exclude:
+  # docs to skip for now
+  - docs/before/**
+  - docs/done/**
+
+  # local / IDE / AI tool metadata
+  - .git/**
+  - .idea/**
+  - .claude/**
+  - .worktrees/**
+  - .venv/**
+  - backend/.idea/**
+
+  # dependency / build outputs
+  - **/node_modules/**
+  - **/dist/**
+  - **/build/**
+  - **/target/**
+  - **/out/**
+  - **/coverage/**
+  - **/.next/**
+  - **/.turbo/**
+  - **/.gradle/**
+
+  # runtime / generated files
+  - **/logs/**
+  - **/*.log
+  - **/*.tmp
+  - **/*.lock
+
+  # binary / large files
+  - **/*.png
+  - **/*.jpg
+  - **/*.jpeg
+  - **/*.gif
+  - **/*.pdf
+  - **/*.zip
+  - **/*.jar
+  - **/*.class
+
+  # python caches
+  - **/__pycache__/**
+  - **/*.pyc
+  - **/.pytest_cache/**
+  - **/.mypy_cache/**
+  - **/.ruff_cache/**
+
+  # secrets
+  - .env
+  - .env.*
