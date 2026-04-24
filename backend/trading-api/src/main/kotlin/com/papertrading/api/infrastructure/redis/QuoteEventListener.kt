@@ -2,6 +2,8 @@ package com.papertrading.api.infrastructure.redis
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.papertrading.api.application.order.LocalMatchingEngine
+import com.papertrading.api.application.position.PositionCommandService
+import com.papertrading.api.domain.enums.PriceSource
 import com.papertrading.api.domain.port.QuoteSnapshot
 import mu.KotlinLogging
 import org.springframework.data.redis.connection.Message
@@ -18,6 +20,7 @@ import java.time.Instant
 @Component
 class QuoteEventListener(
     private val localMatchingEngine: LocalMatchingEngine,
+    private val positionCommandService: PositionCommandService,
     private val objectMapper: ObjectMapper,
 ) : MessageListener {
 
@@ -27,6 +30,9 @@ class QuoteEventListener(
         val quote = parseMessage(message.body) ?: return
         runCatching { localMatchingEngine.tryMatchPendingOrders(quote.ticker, quote) }
             .onFailure { log.warn { "매칭 처리 오류: ticker=${quote.ticker}, reason=${it.message}" } }
+        // 포지션 평가손익 갱신 (체결 엔진과 독립적으로 처리)
+        runCatching { positionCommandService.updateCurrentPriceByTicker(quote.ticker, quote.price, PriceSource.REDIS_LIVE) }
+            .onFailure { log.warn { "포지션 시세 갱신 오류: ticker=${quote.ticker}, reason=${it.message}" } }
     }
 
     private fun parseMessage(body: ByteArray): QuoteSnapshot? = runCatching {

@@ -2,10 +2,8 @@ package com.papertrading.api.application.order
 
 import com.papertrading.api.domain.model.Execution
 import com.papertrading.api.domain.model.Order
-import com.papertrading.api.domain.model.Position
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
-import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional
 class OrderQueryService(
     private val orderRepository: OrderRepository,
     private val executionRepository: ExecutionRepository,
-    private val positionRepository: PositionRepository,
 ) {
     fun getOrder(accountId: Long, orderId: Long): Order {
         val order = orderRepository.findById(orderId)
@@ -30,11 +27,4 @@ class OrderQueryService(
         getOrder(accountId, orderId) // 권한 검증
         return executionRepository.findByOrderId(orderId)
     }
-
-    fun listPositions(accountId: Long): List<Position> =
-        positionRepository.findByAccountIdAndQuantityGreaterThan(accountId, java.math.BigDecimal.ZERO)
-
-    fun getPosition(accountId: Long, ticker: String): Position =
-        positionRepository.findByAccountIdAndTicker(accountId, ticker)
-            .orElseThrow { NoSuchElementException("포지션을 찾을 수 없습니다. ticker=$ticker") }
 }
