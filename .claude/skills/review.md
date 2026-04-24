@@ -1,57 +1,57 @@
 Skill: Code Review
 
-## 검토 순서
+## Review Order
 
-1. git diff로 변경 범위 파악
-2. spec.md로 설계 의도 파악
-3. 체크리스트 순서대로 검토
-4. 결과 출력: 🔴 필수 수정 / 🟡 권장 개선 / 🟢 확인 완료
+1. `git diff` — understand the scope of changes.
+2. `spec.md` — understand the design intent.
+3. Work through the checklist in order.
+4. Output results: 🔴 Must fix / 🟡 Recommended improvement / 🟢 Confirmed OK
 
-## 아키텍처
+## Architecture
 
-- 레이어 의존 방향 준수 (presentation → application → domain ← infrastructure)
-- 도메인에 프레임워크 의존 없음
-- DTO ↔ Entity 혼용 없음
-- 트랜잭션 경계 Application에서만
+- Layer dependency direction respected (`presentation → application → domain ← infrastructure`).
+- No framework dependencies in the domain layer.
+- No mixing of DTOs and Entities.
+- `@Transactional` exists only in the application layer.
 
-## 코드 품질
+## Code Quality
 
-- SRP/OCP/DIP 준수
-- 중복 로직 없음
-- 매직 넘버 없음 (상수화)
-- 도메인 용어 기반 네이밍
-- 불필요한 주석 없음 (코드가 자기 설명적이어야 함)
-- 주석 처리된 코드 없음
-- 트랜잭션 경계 확인
+- SRP / OCP / DIP respected.
+- No duplicated logic.
+- No magic numbers (extracted to named constants).
+- Domain-term-based naming.
+- No unnecessary comments (code should be self-explanatory).
+- No commented-out code.
+- Transaction boundaries verified.
 
-## 안정성
+## Reliability
 
-- 금액·수량 BigDecimal 사용
-- N+1 쿼리 없음
-- 외부 API 타임아웃 명시
-- 예외 처리 누락 없음
-- 널 처리 일관성
+- `BigDecimal` used for all money and quantity fields.
+- No N+1 queries.
+- Timeout specified on all external API calls.
+- No missing exception handling.
+- Null handling consistent.
 
-## 보안
+## Security
 
-- 시크릿/자격증명 원문 로그 없음
-- 토큰 평문 저장 없음
-- SQL Injection, XSS 방어
-- 입력 유효성 검증 누락 없음
+- No secrets or credentials logged in plaintext.
+- No tokens stored in plaintext.
+- SQL Injection and XSS defenses in place.
+- No missing input validation.
 
-## 테스트 품질
+## Test Quality
 
-- Observable Behavior만 검증 (구현 세부 검증 없음)
-- 도메인 객체 Mock 없음
-- AAA 패턴 적용
-- Stub에 verify() 없음
-- 경계값/예외 케이스 커버
-- 테스트명이 동작을 명확히 설명
+- Tests assert on observable behavior only (no implementation detail assertions).
+- No domain objects mocked.
+- AAA (Arrange / Act / Assert) pattern applied.
+- No `verify()` on stubs.
+- Boundary values and exception cases covered.
+- Test names clearly describe the behavior under test.
 
-## 퀀트 로직 (해당 시)
+## Quant Logic (if applicable)
 
-- 수식과 코드 일치 여부
-- look-ahead bias 없음
-- 거래비용 반영 여부
-- 결측값/이상값 처리
-- 결과 재현성 (random seed)
+- Formula matches code implementation.
+- No look-ahead bias.
+- Transaction costs reflected.
+- Missing value and outlier handling present.
+- Reproducibility ensured (random seed set).

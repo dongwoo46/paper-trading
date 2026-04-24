@@ -1,17 +1,15 @@
 #!/bin/bash
-# Stop 훅 — 사용자 허가가 필요한 상황에서 Windows 알림 + 소리 출력
+# Stop hook — manual mode / blocked 상태에서 소리 + Windows 알림
 
 STATE_FILE="docs/state.md"
 
-# 현재 모드 파악
 MODE=$(grep -A1 "## 모드" "$STATE_FILE" 2>/dev/null | tail -1 | tr -d ' \r')
 STATUS=$(grep -A1 "## 상태" "$STATE_FILE" 2>/dev/null | tail -1 | tr -d ' \r')
-ACTIVE=$(grep -A1 "## 활성 Phase" "$STATE_FILE" 2>/dev/null | tail -1 | tr -d '\r')
+ACTIVE=$(grep -A1 "## 활성 Phase" "$STATE_FILE" 2>/dev/null | tail -1 | tr -d '\r' | sed "s/['\"]//g")
 
-# 알림이 필요한 조건:
-# 1. manual 모드 (매 step마다 허가 필요)
-# 2. blocked 상태 (긴급 개입 필요)
 NEEDS_APPROVAL=0
+TITLE=""
+MESSAGE=""
 
 if [ "$MODE" = "manual" ]; then
   NEEDS_APPROVAL=1
@@ -25,38 +23,29 @@ if [ "$STATUS" = "blocked" ]; then
   MESSAGE="Phase가 blocked 상태입니다. 수동 확인이 필요합니다."
 fi
 
-# 알림 불필요하면 종료
 if [ $NEEDS_APPROVAL -eq 0 ]; then
   exit 0
 fi
 
-# Windows 알림 + 소리 (PowerShell)
+# ── 소리 재생 ─────────────────────────────────────────────────────────────
+WIN_PS1=$(cygpath -w "$(cd "$(dirname "$0")" && pwd)/play-sound.ps1")
+powershell.exe -NoProfile -NonInteractive -File "$WIN_PS1" >/dev/null 2>&1
+
+# ── Windows 알림 (NotifyIcon 시스템 트레이) ───────────────────────────────
+TITLE_ENV="$TITLE" MESSAGE_ENV="$MESSAGE — 활성 Phase: $ACTIVE" \
 powershell.exe -NoProfile -NonInteractive -Command "
-  # 소리 재생
-  [System.Media.SystemSounds]::Asterisk.Play()
-  Start-Sleep -Milliseconds 600
-  [System.Media.SystemSounds]::Asterisk.Play()
-
-  # Windows 토스트 알림
-  try {
-    \$title   = '$TITLE'
-    \$message = '$MESSAGE — 활성 Phase: $ACTIVE'
-
-    [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-    [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-
-    \$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent(
-      [Windows.UI.Notifications.ToastTemplateType]::ToastText02
-    )
-    \$template.SelectSingleNode('//text[@id=\"1\"]').InnerText = \$title
-    \$template.SelectSingleNode('//text[@id=\"2\"]').InnerText = \$message
-
-    \$toast = [Windows.UI.Notifications.ToastNotification]::new(\$template)
-    [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Claude Code').Show(\$toast)
-  } catch {
-    # 토스트 실패 시 콘솔 출력으로 fallback
-    Write-Host '🔔 알림: $TITLE'
-  }
-" 2>/dev/null
+  Add-Type -AssemblyName System.Windows.Forms
+  Add-Type -AssemblyName System.Drawing
+  \$n = New-Object System.Windows.Forms.NotifyIcon
+  \$n.Icon = [System.Drawing.SystemIcons]::Information
+  \$n.BalloonTipIcon = [System.Windows.Forms.ToolTipIcon]::Warning
+  \$n.BalloonTipTitle = \$env:TITLE_ENV
+  \$n.BalloonTipText  = \$env:MESSAGE_ENV
+  \$n.Visible = \$true
+  \$n.ShowBalloonTip(6000)
+  Start-Sleep -Seconds 6
+  \$n.Visible = \$false
+  \$n.Dispose()
+" >/dev/null 2>&1
 
 exit 0

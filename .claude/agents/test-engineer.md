@@ -1,55 +1,57 @@
-Role: Test Engineer — QA 전문가 + 테스트 자동화 엔지니어
+Role: Test Engineer — QA Specialist + Test Automation Engineer
 
 @../skills/tdd.md
 
-## 책임
-- 기존 테스트 스위트 전체 실행 및 결과 검증
-- 누락된 통합 테스트 / API 계약 테스트 작성
-- Acceptance Criteria 시나리오 기반 E2E 검증
-- 커버리지 측정 및 미달 영역 리포트
-- 테스트 실패 시 원인 분석 → Orchestrator에 재작업 요청
+## Responsibilities
+- Run the full test suite and verify results.
+- Write missing integration tests and API contract tests.
+- E2E verification based on Acceptance Criteria scenarios.
+- Measure coverage and report under-covered areas.
+- On test failure: analyze root cause → request rework from Orchestrator.
 
-## 실행 모드
-시작 전 state.md에서 모드 확인
-- manual: 각 단계 완료 후 결과 보고 → 승인 후 다음 진행
-- auto: 전체 자동 실행. 실패 시 즉시 중단 후 원인 보고.
+## Execution Mode
+Check `state.md` for mode before starting.
+- `manual`: report result after each step → wait for approval before proceeding.
+- `auto`: run everything automatically. Stop immediately and report root cause on failure.
 
-## 실행 순서
+## Execution Order
 
-1. step-{n}.md 읽기 → "읽어야 할 파일" 섹션 전부 읽기
-2. git diff --name-only 로 변경된 서비스 감지
-3. 변경된 서비스 테스트 전체 실행
+1. Read `step-{n}.md` → read every file listed in the "Files to Read" section.
+2. Detect changed files via `git diff --name-only` in the worktree.
+3. Run **feature-scoped tests only** — tests directly related to the changed classes/packages.
+   Do NOT run the full test suite here. Full suite runs only at Phase Completion (Orchestrator's responsibility).
 
-### 서비스별 테스트 명령
+### Feature-Scoped Test Commands
 ```bash
-# trading-api
-cd backend/trading-api && ./gradlew test
+# trading-api — specific package or class
+cd .worktrees/{worktree} && ./gradlew test --tests "com.papertrading.api.{feature_package}.*"
+# example: ./gradlew test --tests "com.papertrading.api.application.position.*"
 
-# collector-api
-cd backend/collector-api && ./gradlew test
+# collector-api — specific package
+cd .worktrees/{worktree} && ./gradlew test --tests "com.papertrading.collector.{feature_package}.*"
 
-# collector-worker
-cd backend/collector-worker && python -m pytest tests/ -v --tb=short
+# collector-worker — specific test file
+cd .worktrees/{worktree} && python -m pytest tests/test_{feature}.py -v --tb=short
 
-# trading-web
-cd frontend/trading-web && npm test -- --run
+# trading-web — specific test file
+cd .worktrees/{worktree} && npm test -- --run --reporter=verbose {feature}.test.ts
 ```
 
-4. 테스트 결과 분석
-   - PASS: 다음 단계 진행
-   - FAIL: 스택 트레이스 분석 → 실패 원인 분류
-     - 구현 버그: 해당 파일 수정 후 재실행
-     - 테스트 코드 오류: 테스트 수정 후 재실행
-     - 환경 문제: Orchestrator에 보고
+4. Analyze test results:
+   - PASS: proceed to next step.
+   - FAIL: analyze stack trace → classify root cause.
+     - Implementation bug: fix the file and rerun.
+     - Test code error: fix the test and rerun.
+     - Environment issue: report to Orchestrator.
 
-5. 통합 테스트 누락 여부 확인
-   - Controller 레이어: HTTP 요청/응답 계약 검증 (@SpringBootTest + MockMvc)
-   - Service 레이어: 핵심 비즈니스 로직 시나리오 (트랜잭션 경계 포함)
-   - 누락 시 작성 후 실행 (TDD 기준 충족)
+5. Check for missing integration tests:
+   - Controller layer: HTTP request/response contract (`@SpringBootTest` + MockMvc).
+   - Service layer: core business logic scenarios (including transaction boundaries).
+   - If missing: write and run them (must satisfy TDD standard).
 
-6. Acceptance Criteria 검증 (step 파일의 명령 직접 실행)
+6. Verify Acceptance Criteria (run the command in the step file directly).
 
-7. 커버리지 측정 (중요 비즈니스 로직 대상)
+7. Measure coverage (focus on core business logic):
 ```bash
 # trading-api
 cd backend/trading-api && ./gradlew test jacocoTestReport
@@ -58,36 +60,36 @@ cd backend/trading-api && ./gradlew test jacocoTestReport
 cd backend/collector-worker && python -m pytest tests/ --cov=src --cov-report=term-missing
 ```
 
-8. 결과 요약 출력
-   - 전체 테스트 수, PASS/FAIL 수
-   - 커버리지 (핵심 서비스 레이어 기준)
-   - 미검증 시나리오 목록 (있는 경우)
+8. Output result summary:
+   - Total tests, PASS / FAIL counts.
+   - Coverage (application service layer focus).
+   - List of unverified scenarios (if any).
 
-9. index.json 현재 step → status: "done", result에 테스트 결과 요약 기록
-10. Orchestrator에 완료 보고
+9. Update `index.json` current step → `status: "completed"`, record test result summary.
+10. Report completion to Orchestrator.
 
-## 판단 기준
+## Decision Criteria
 
-| 결과 | 조건 | 처리 |
-|------|------|------|
-| 🟢 통과 | 전체 테스트 PASS + Acceptance Criteria 충족 | Orchestrator에 다음 step 진행 승인 |
-| 🟡 경고 | 테스트 PASS지만 커버리지 부족 / 엣지케이스 누락 | 경고 포함 통과 처리 |
-| 🔴 실패 | 테스트 FAIL 또는 Acceptance Criteria 미충족 | Orchestrator에 재작업 요청 |
+| Result | Condition | Action |
+|--------|-----------|--------|
+| 🟢 Pass | All tests PASS + Acceptance Criteria met | Approve next step to Orchestrator |
+| 🟡 Warning | Tests PASS but coverage low or edge cases missing | Pass with warning |
+| 🔴 Fail | Tests FAIL or Acceptance Criteria not met | Request rework from Orchestrator |
 
-## 통합 테스트 작성 기준
+## Integration Test Standards
 
-### Kotlin/Spring Boot
+### Kotlin / Spring Boot
 ```kotlin
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
 class {Feature}IntegrationTest {
-    // given-when-then 구조
-    // 실제 DB 사용 (H2 또는 TestContainers)
-    // MockMvc로 HTTP 계약 검증
+    // given-when-then structure
+    // Real DB via Testcontainers (never mock DB or Redis)
+    // HTTP contract verified via MockMvc
 }
 ```
 
-### Python/FastAPI
+### Python / FastAPI
 ```python
 # pytest + TestClient
 def test_{scenario}(client: TestClient):

@@ -1,57 +1,57 @@
 Skill: API Design (REST)
 
-## URL 설계
+## URL Design
 
-- 리소스 중심 명사 사용: /orders, /accounts, /positions
-- 동사 금지: /createOrder (X) → POST /orders (O)
-- 계층 관계 표현: /accounts/{id}/orders, /orders/{id}/fills
-- 복수형 사용: /order (X) → /orders (O)
-- kebab-case: /market-data (O), /marketData (X)
+- Use resource-centric nouns: `/orders`, `/accounts`, `/positions`.
+- No verbs: `/createOrder` ✗ → `POST /orders` ✓
+- Express hierarchy: `/accounts/{id}/orders`, `/orders/{id}/fills`.
+- Plural nouns: `/order` ✗ → `/orders` ✓
+- kebab-case: `/market-data` ✓, `/marketData` ✗
 
-## HTTP 메서드
+## HTTP Methods
 
-- GET: 조회 (멱등, 부수효과 없음)
-- POST: 생성
-- PUT: 전체 수정 (멱등)
-- PATCH: 부분 수정
-- DELETE: 삭제
+- `GET`: Read (idempotent, no side effects).
+- `POST`: Create.
+- `PUT`: Full update (idempotent).
+- `PATCH`: Partial update.
+- `DELETE`: Delete.
 
-## 상태 코드
+## Status Codes
 
-- 200 OK: 조회/수정 성공
-- 201 Created: 생성 성공 (Location 헤더 포함)
-- 204 No Content: 삭제 성공
-- 400 Bad Request: 입력 유효성 오류
-- 401 Unauthorized: 인증 필요
-- 403 Forbidden: 권한 없음
-- 404 Not Found: 리소스 없음
-- 409 Conflict: 비즈니스 규칙 충돌 (잔고 부족, 중복 등)
-- 500 Internal Server Error: 서버 오류
+- `200 OK`: Successful read or update.
+- `201 Created`: Successful creation (include `Location` header).
+- `204 No Content`: Successful deletion.
+- `400 Bad Request`: Input validation error.
+- `401 Unauthorized`: Authentication required.
+- `403 Forbidden`: Insufficient permissions.
+- `404 Not Found`: Resource does not exist.
+- `409 Conflict`: Business rule violation (insufficient balance, duplicate, etc.).
+- `500 Internal Server Error`: Server-side error.
 
-## 에러 응답 형식
+## Error Response Format
 
 ```json
 {
   "code": "INSUFFICIENT_BALANCE",
-  "message": "보유 잔고가 부족합니다.",
+  "message": "Insufficient balance.",
   "detail": { "required": 100000, "available": 50000 }
 }
 ```
 
-## Request/Response 원칙
+## Request / Response Rules
 
-- Request: 필요한 필드만. 불필요한 필드 노출 금지.
-- Response: 클라이언트가 실제로 사용하는 필드만.
-- 페이지네이션: cursor 기반 우선 (offset은 대용량 시 성능 문제)
-- 날짜/시간: ISO 8601 (2025-04-16T10:30:00Z)
-- 금액: 문자열 또는 정수(원 단위). float 금지.
+- Request: only the fields that are needed. Do not expose unnecessary fields.
+- Response: only the fields the client actually uses.
+- Pagination: prefer cursor-based (offset has performance issues at scale).
+- Date/time: ISO 8601 (`2025-04-16T10:30:00Z`).
+- Money: string or integer (smallest currency unit). No `float`.
 
-## 버저닝
+## Versioning
 
-- URL 버저닝: /api/v1/orders
-- 하위 호환성 유지 원칙: 필드 추가는 비파괴적, 필드 제거/변경은 새 버전
+- URL versioning: `/api/v1/orders`.
+- Backwards compatibility: adding fields is non-breaking; removing or renaming requires a new version.
 
-## 내부 API
+## Internal APIs
 
-- 서비스 간 내부 호출: /api/internal/{리소스}
-- 외부 노출 금지, 인증 별도 처리
+- Inter-service calls: `/api/internal/{resource}`.
+- Never expose externally. Use separate authentication.

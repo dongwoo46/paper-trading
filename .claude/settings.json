@@ -36,6 +36,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash .claude/hooks/compile-dirty.sh"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/on-stop.sh"
           },
           {

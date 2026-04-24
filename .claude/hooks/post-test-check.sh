@@ -4,7 +4,7 @@
 
 INPUT=$(cat)
 CMD=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('command',''))" 2>/dev/null)
-EXIT_CODE=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_response',{}).get('exit_code', 0))" 2>/dev/null)
+EXIT_CODE=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_response',{}).get('exitCode', 0))" 2>/dev/null)
 
 # 테스트 명령인지 확인
 IS_TEST=0

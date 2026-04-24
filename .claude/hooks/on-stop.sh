@@ -4,8 +4,8 @@
 STATE_FILE="docs/state.md"
 
 if [ -f "$STATE_FILE" ]; then
-  MODE=$(grep -m1 "^manual\|^auto" "$STATE_FILE" 2>/dev/null || echo "unknown")
-  ACTIVE=$(grep -A1 "## 활성 Phase" "$STATE_FILE" 2>/dev/null | tail -1)
+  MODE=$(grep -A1 "## 모드" "$STATE_FILE" 2>/dev/null | tail -1 | tr -d ' \r' || echo "unknown")
+  ACTIVE=$(grep -A1 "## 활성 Phase" "$STATE_FILE" 2>/dev/null | tail -1 | tr -d '\r')
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "✅ 작업 완료"

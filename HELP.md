@@ -68,6 +68,81 @@ state.md → index.json 순으로 읽어 중단된 step부터 자동 재개.
 /review       ← 리뷰만 하고 싶을 때
 ```
 
+### Graphify 실행 가이드
+
+코드 수정 후에는 서비스 단위로 graphify를 다시 실행한다.
+현재 환경은 `.venv` 기준으로 실행한다.
+
+```bash
+# venv 활성화 (Git Bash)
+source .venv/Scripts/activate
+
+# 공통 형식
+python -m graphify update <service-path>
+
+# 서비스별 실행
+python -m graphify update backend/collector-api
+python -m graphify update backend/collector-worker
+python -m graphify update backend/research-worker
+python -m graphify update backend/trading-api
+```
+
+백엔드 전체를 한 번에 갱신할 때:
+
+```bash
+python -m graphify update backend/collector-api && \
+python -m graphify update backend/collector-worker && \
+python -m graphify update backend/research-worker && \
+python -m graphify update backend/trading-api
+```
+
+PowerShell을 쓸 때:
+
+```powershell
+# venv 활성화 (PowerShell)
+.\.venv\Scripts\Activate.ps1
+python -m graphify update backend/trading-api
+```
+
+### Graphify 스크립트 실행 가이드 (`run-graphify.sh`)
+
+루트에 있는 `run-graphify.sh`로 `ast`/`semantic`/`both` 모드를 선택 실행할 수 있다.
+
+```bash
+# 실행권한 (최초 1회)
+chmod +x run-graphify.sh
+
+# AST만 (기본)
+./run-graphify.sh --mode ast --all
+./run-graphify.sh -m ast -s trading-api
+
+# 파일 경로로 서비스 자동 선택
+./run-graphify.sh -m ast -f backend/trading-api/src/main/kotlin/com/papertrading/api/TradingApiApplication.kt
+
+# semantic 또는 both
+./run-graphify.sh -m semantic -s collector-api
+./run-graphify.sh -m both --all
+
+# 실제 실행 없이 명령만 확인
+./run-graphify.sh --dry-run -m both --all
+```
+
+주요 옵션:
+
+```text
+-m, --mode ast|semantic|both
+-s, --service <name|path[,..]>   (collector-api, collector-worker, research-worker, trading-api)
+-f, --files <file[,..]>          (파일 경로 기반 서비스 자동 매핑)
+-a, --all
+--python <python-path>
+--semantic-cmd "<template>"      ({path} placeholder 사용)
+--dry-run
+```
+
+참고:
+- 현재 `graphify 0.5.x` CLI는 semantic 직접 실행 명령이 제한적이라, 스크립트의 semantic 모드는 기본적으로 AI 채팅용 `/graphify <path> --update` 실행 목록을 출력한다.
+- semantic 자동 실행이 필요하면 `--semantic-cmd`를 지정해 사용한다.
+
 ---
 
 ## 모드 전환

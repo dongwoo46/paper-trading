@@ -1,18 +1,42 @@
 #!/bin/bash
-# PostToolUse(Edit|Write) 훅 — 변경된 파일의 서비스 감지 후 빌드 명령 안내
-# stdin으로 Claude Code가 JSON을 넘겨줌
+# PostToolUse(Edit|Write) — 변경된 서비스를 dirty 목록에 기록 (컴파일은 Stop 훅에서)
 
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" 2>/dev/null)
+FILE_PATH=$(echo "$INPUT" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+print(d.get('tool_input', {}).get('file_path', ''))
+" 2>/dev/null)
 
-if [[ "$FILE_PATH" == *"trading-api"* ]]; then
-  echo "⚡ [trading-api] 변경 감지 → cd backend/trading-api && ./gradlew compileJava"
-elif [[ "$FILE_PATH" == *"collector-api"* ]]; then
-  echo "⚡ [collector-api] 변경 감지 → cd backend/collector-api && ./gradlew compileKotlin"
-elif [[ "$FILE_PATH" == *"collector-worker"* ]]; then
-  echo "⚡ [collector-worker] 변경 감지 → python -m py_compile $FILE_PATH"
-elif [[ "$FILE_PATH" == *"trading-web"* ]]; then
-  echo "⚡ [trading-web] 변경 감지 → cd frontend/trading-web && npm run build"
-elif [[ "$FILE_PATH" == *"research-worker"* ]]; then
-  echo "⚡ [research-worker] 변경 감지 → python -m py_compile $FILE_PATH"
+# 경로 정규화 (Windows 백슬래시 → 슬래시)
+FILE_PATH=$(echo "$FILE_PATH" | tr '\\' '/')
+
+# 소스 파일이 아니면 skip
+if [[ "$FILE_PATH" != *.kt && "$FILE_PATH" != *.java && "$FILE_PATH" != *.py \
+   && "$FILE_PATH" != *.ts && "$FILE_PATH" != *.tsx ]]; then
+  exit 0
+fi
+
+DIRTY_FILE="/tmp/.claude_dirty_services"
+
+record() {
+  grep -qF "$1" "$DIRTY_FILE" 2>/dev/null || echo "$1" >> "$DIRTY_FILE"
+}
+
+if [[ "$FILE_PATH" == *"backend/trading-api"* ]]; then
+  BASE="${FILE_PATH%%backend/trading-api*}backend/trading-api"
+  record "kotlin|${BASE}"
+
+elif [[ "$FILE_PATH" == *"backend/collector-api"* ]]; then
+  BASE="${FILE_PATH%%backend/collector-api*}backend/collector-api"
+  record "kotlin|${BASE}"
+
+elif [[ "$FILE_PATH" == *"backend/collector-worker"* && "$FILE_PATH" == *.py ]]; then
+  record "python|${FILE_PATH}"
+
+elif [[ "$FILE_PATH" == *"research-worker"* && "$FILE_PATH" == *.py ]]; then
+  record "python|${FILE_PATH}"
+
+elif [[ "$FILE_PATH" == *"frontend/trading-web"* ]]; then
+  record "web|skip"
 fi
