@@ -12,7 +12,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P0 — MVP 필수
 
-- [x] Position 애플리케이션 서비스 | project: trading-api | phase: position-service | priority: P0 | done: 2026-04-24 | pr: #TBD
+- [x] Position 애플리케이션 서비스 | project: trading-api | phase: position-service | priority: P0 | done: 2026-04-24 | pr: #4
   - PositionCommandService (포지션 생성·업데이트·청산)
   - PositionQueryService (포지션 조회, 평균단가, 평가손익 계산)
   - PositionResponseDto + PositionController 응답 연결
