@@ -7,7 +7,6 @@ import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.model.Execution
 import com.papertrading.api.domain.model.Order
-import com.papertrading.api.domain.model.Position
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -59,32 +58,6 @@ data class ExecutionResponse(
             executedPrice = e.executedPrice,
             fee = e.fee,
             executedAt = requireNotNull(e.executedAt) { "execution.executedAt is null" },
-        )
-    }
-}
-
-data class PositionResponse(
-    val ticker: String,
-    val quantity: BigDecimal,
-    val orderableQuantity: BigDecimal,
-    val lockedQuantity: BigDecimal,
-    val avgBuyPrice: BigDecimal,
-    val currentPrice: BigDecimal?,
-    val evaluationAmount: BigDecimal?,
-    val unrealizedPnl: BigDecimal?,
-    val returnRate: BigDecimal?,
-) {
-    companion object {
-        fun from(p: Position) = PositionResponse(
-            ticker = requireNotNull(p.ticker) { "position.ticker is null" },
-            quantity = p.quantity,
-            orderableQuantity = p.orderableQuantity,
-            lockedQuantity = p.lockedQuantity,
-            avgBuyPrice = p.avgBuyPrice,
-            currentPrice = p.currentPrice,
-            evaluationAmount = p.evaluationAmount,
-            unrealizedPnl = p.unrealizedPnl,
-            returnRate = p.returnRate,
         )
     }
 }

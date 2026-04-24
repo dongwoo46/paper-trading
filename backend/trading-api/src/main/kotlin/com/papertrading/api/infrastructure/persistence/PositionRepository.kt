@@ -20,4 +20,7 @@ interface PositionRepository : JpaRepository<Position, Long> {
     ): Optional<Position>
 
     fun findByAccountIdAndQuantityGreaterThan(accountId: Long, minQuantity: BigDecimal): List<Position>
+
+    // ticker 기준 보유 포지션 전체 조회 (QuoteEventListener 시세 갱신용)
+    fun findByTickerAndQuantityGreaterThan(ticker: String, minQuantity: BigDecimal): List<Position>
 }

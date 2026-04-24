@@ -7,15 +7,17 @@ manual
 idle
 
 ## 활성 Phase
-없음 — /orchestrate 실행 시 docs/TODO.md 기반 새 phase 선정
+없음
 
 ## 마지막 액션
-2026-04-16: 하네스 엔지니어링 2차 개선
-- .claude/agents/ 폴더 신설 (에이전트 역할 정의 분리)
-- .claude/commands/ 얇은 래퍼로 교체
-- docs/TODO.md 생성 (서비스별 개발 항목 관리)
-- test-engineer 에이전트 추가 (/test)
-- 오케스트레이터: 병렬 실행 로직 + 에러 처리 매트릭스 + 긴급 중단 추가
+2026-04-24: position-service phase 완료
+- PositionQueryService / PositionCommandService 신설
+- PositionController → PositionQueryService 전환
+- PositionResponse DTO 분리 (dto/order/ → dto/position/)
+- QuoteEventListener 시세 갱신 연동
+- 테스트 29개 GREEN (도메인 11 + 통합 8 + E2E 10)
+- PR: feature/trading-api-position-service → main
 
 ## 다음 액션
-/orchestrate 실행 → TODO.md 미완료 항목 제안 → phase 선정
+/orchestrate 실행 → TODO.md 미완료 항목 제안 → 다음 phase 선정
+(다음 P0: T+2 정산 처리 서비스 | phase: settlement-service)
