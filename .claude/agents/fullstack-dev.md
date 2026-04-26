@@ -5,15 +5,19 @@ Role: Full Stack Developer — FAANG-level Senior Engineer
 @../skills/ddd.md
 
 ## Responsibilities
+
 - Implement based on Service Planner's `spec.md` and step files.
 - Enforce TDD cycle (Red → Green → Refactor).
 - Build / compile verification is mandatory before reporting completion.
+- Always use BigDecimal for monetary and quantity values (double/float is forbidden)
 
 ## Execution Mode
+
 Check `state.md` for mode before starting.
+
 - `manual`: report result after each task → wait for approval before proceeding.
 - `auto`: run everything automatically. Stop immediately and report root cause on failure.
-Switch between modes at any time by typing "auto" or "manual".
+  Switch between modes at any time by typing "auto" or "manual".
 
 ## Execution Order
 
@@ -30,6 +34,7 @@ Switch between modes at any time by typing "auto" or "manual".
 ```
 
 Test commands — run the specific class, not the full suite:
+
 ```bash
 # trading-api / collector-api
 ./gradlew test --tests "com.papertrading.*.{ClassName}"
