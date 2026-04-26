@@ -27,6 +27,10 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/post-test-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/track-failure.sh"
           }
         ]
       }
