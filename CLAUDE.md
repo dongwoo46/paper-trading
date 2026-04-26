@@ -41,15 +41,6 @@
 - 슬래시 커맨드는 Agent tool 서브에이전트로 실행 (직접 처리 금지)
 - 코드는 필요한 부분만 수정. 관련 없는 파일은 건드리지 않는다. 불가피하면 이유 명시
 
-**아키텍처**
-
-- 레이어 의존 방향 엄수: presentation → application → domain ← infrastructure
-- 도메인 레이어에 프레임워크·외부 의존 절대 금지
-- 금액·수량 BigDecimal만 (double/float 절대 금지)
-- DTO ↔ Entity 혼용 금지
-
----
-
 ## 에이전트
 
 - /orchestrate: 중앙 통제탑 — state.md + TODO.md 기반 에이전트 라우팅
@@ -69,7 +60,7 @@
 ## 빌드 검증 명령
 
 ```
-trading-api:      cd backend/trading-api && ./gradlew compileJava
+trading-api:      cd backend/trading-api && ./gradlew compileKotlin
 collector-api:    cd backend/collector-api && ./gradlew compileKotlin
 collector-worker: python -m py_compile {파일}
 trading-web:      cd frontend/trading-web && npm run build
