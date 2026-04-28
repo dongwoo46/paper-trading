@@ -70,7 +70,21 @@ Table name (key columns, indexes)
 ## step-N.md Format
 
 Each step file must be self-contained enough for the assigned agent to execute with only the files listed.
-Code snippets at interface/signature level only — leave the implementation to the agent.
+
+Step files contain directives, not implementation. The planner's job is to specify what to build and where — not how to build it. Implementation is the responsibility of fullstack-dev and test-engineer.
+
+Allowed in step files:
+- File paths to create or modify
+- Class and method signatures (name, parameters, return type only)
+- Processing flow description
+- Rules and constraints to follow
+- Build/test verification commands
+
+Not allowed in step files:
+- Method bodies or business logic
+- Full test case code
+- Import lists
+- Any runnable code
 
 ```markdown
 # Step {N}: {Name}
@@ -83,8 +97,8 @@ Assigned agent: {agent}
 - {paths of files created or modified in previous steps}
 
 ## Tasks
-{Concrete implementation directives. File paths, class/function signatures, logic description.
-Explicitly state rules that must not be violated.}
+{File paths, class/method signatures, processing flow, rules to follow.
+No implementation code.}
 
 ## Acceptance Criteria
 \`\`\`bash
