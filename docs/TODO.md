@@ -18,7 +18,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - PositionResponseDto + PositionController 응답 연결
   - 체결(Execution) 이벤트 → 포지션 자동 업데이트
 
-- [ ] T+2 정산 처리 서비스 | project: trading-api | phase: settlement-service | priority: P0
+- [x] T+2 정산 처리 서비스 | project: trading-api | phase: settlement-service | priority: P0 | done: 2026-04-28 | pr: #5
   - SettlementCommandService: PendingSettlement → Settlement 체결
   - T+2 체결일 도래 시 예수금 반영 + AccountLedger 기록
   - 정산 스케줄러 (매일 장 마감 후 실행)
