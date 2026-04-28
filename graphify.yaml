@@ -1,8 +1,7 @@
 include:
   # backend services
   - backend/collector-api/**
-  - backend/collector-worker/**
-  - backend/research-worker/**
+  - backend/quant-worker/**
   - backend/trading-api/**
 
   # frontend source

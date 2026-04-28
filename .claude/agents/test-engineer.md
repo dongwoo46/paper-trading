@@ -30,7 +30,7 @@ cd .worktrees/{worktree} && ./gradlew test --tests "com.papertrading.api.{featur
 # collector-api — specific package
 cd .worktrees/{worktree} && ./gradlew test --tests "com.papertrading.collector.{feature_package}.*"
 
-# collector-worker — specific test file
+# quant-worker — specific test file
 cd .worktrees/{worktree} && python -m pytest tests/test_{feature}.py -v --tb=short
 
 # trading-web — specific test file
@@ -56,8 +56,8 @@ cd .worktrees/{worktree} && npm test -- --run --reporter=verbose {feature}.test.
 # trading-api
 cd backend/trading-api && ./gradlew test jacocoTestReport
 
-# collector-worker
-cd backend/collector-worker && python -m pytest tests/ --cov=src --cov-report=term-missing
+# quant-worker
+cd backend/quant-worker && python -m pytest tests/ --cov=src --cov-report=term-missing
 ```
 
 8. Output result summary:

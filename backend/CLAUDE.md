@@ -1,7 +1,7 @@
 @../CLAUDE.md
 
 ## Backend 공통 규칙
-> trading-api, collector-api, collector-worker 공통
+> trading-api, collector-api, quant-worker 공통
 
 ## 아키텍처
 interfaces → application → domain ← infrastructure

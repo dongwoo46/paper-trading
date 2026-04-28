@@ -37,4 +37,4 @@ Skill: DDD (Domain-Driven Design)
 - `trading-api` ↔ `collector-api`: separate Bounded Contexts. Apply ACL when consuming market quotes.
 - `trading-api`: `domain` package = pure domain model.
 - `collector-api`: `domain` package = pure domain model.
-- `collector-worker`: dataclasses act as Value Objects.
+- `quant-worker`: dataclasses act as Value Objects.

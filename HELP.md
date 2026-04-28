@@ -82,8 +82,8 @@ python -m graphify update <service-path>
 
 # 서비스별 실행
 python -m graphify update backend/collector-api
-python -m graphify update backend/collector-worker
-python -m graphify update backend/research-worker
+python -m graphify update backend/quant-worker
+python -m graphify update backend/quant-worker
 python -m graphify update backend/trading-api
 ```
 
@@ -91,8 +91,8 @@ python -m graphify update backend/trading-api
 
 ```bash
 python -m graphify update backend/collector-api && \
-python -m graphify update backend/collector-worker && \
-python -m graphify update backend/research-worker && \
+python -m graphify update backend/quant-worker && \
+python -m graphify update backend/quant-worker && \
 python -m graphify update backend/trading-api
 ```
 
@@ -131,7 +131,7 @@ chmod +x run-graphify.sh
 
 ```text
 -m, --mode ast|semantic|both
--s, --service <name|path[,..]>   (collector-api, collector-worker, research-worker, trading-api)
+-s, --service <name|path[,..]>   (collector-api, quant-worker, quant-worker, trading-api)
 -f, --files <file[,..]>          (파일 경로 기반 서비스 자동 매핑)
 -a, --all
 --python <python-path>
@@ -273,12 +273,12 @@ docs/
 │   ├── trading-api/
 │   ├── collector-api/
 │   ├── front/
-│   └── research-worker/
+│   └── quant-worker/
 ├── done/              ← 완료된 기능 아카이브
 │   ├── trading-api/
 │   ├── collector-api/
 │   ├── front/
-│   └── research-worker/
+│   └── quant-worker/
 ├── PRD.md
 └── ADR.md
 ```

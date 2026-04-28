@@ -41,8 +41,8 @@ KIS WebSocket 메시지
 trading-api → POST /api/internal/subscriptions/{ticker}
   → KisWebSocketCollector.emit() (동적 구독/해제)
 
-collector-api → POST /collect/daily (collector-worker HTTP)
-  → collector-worker가 pykrx/yfinance 수집 후 PostgreSQL 적재
+collector-api → POST /collect/daily (quant-worker HTTP)
+  → quant-worker가 pykrx/yfinance 수집 후 PostgreSQL 적재
 ```
 
 ## 핵심 기능 (MVP)

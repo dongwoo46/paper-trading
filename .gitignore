@@ -32,3 +32,4 @@ graphify-out/
 # Misc
 BLOG.md
 .claude/.dirty-services
+.graphify-semantic-cmd

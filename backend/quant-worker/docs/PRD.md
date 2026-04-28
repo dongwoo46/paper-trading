@@ -1,4 +1,4 @@
-# PRD — collector-worker
+# PRD — quant-worker
 
 ## 역할
 일봉 OHLCV 배치 수집 워커. collector-api HTTP 요청으로 트리거, pykrx/yfinance로 수집 후 PostgreSQL 적재.
@@ -7,7 +7,7 @@
 
 ### 디렉토리 구조
 ```
-collector-worker/
+quant-worker/
 ├── src/
 │   ├── fetch/          pykrx_fetcher.py, yfinance_fetcher.py
 │   └── db/             upsert.py (ON CONFLICT DO UPDATE)

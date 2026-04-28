@@ -69,18 +69,18 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ---
 
-## collector-worker
+## quant-worker
 
 ### P0 — MVP 필수
 
-- [ ] PostgreSQL 직접 적재 연동 | project: collector-worker | phase: db-persistence | priority: P0
+- [ ] PostgreSQL 직접 적재 연동 | project: quant-worker | phase: db-persistence | priority: P0
   - 현재 파일 기반(data/) 출력 → PostgreSQL market_daily_ohlcv 직접 적재로 전환
   - SQLAlchemy + collector-api DB 연결 설정
   - Flyway 마이그레이션 또는 collector-api 통해 적재 방식 결정
 
 ### P1 — 운영 안정성
 
-- [ ] 배치 스케줄 자동화 | project: collector-worker | phase: batch-schedule | priority: P1
+- [ ] 배치 스케줄 자동화 | project: quant-worker | phase: batch-schedule | priority: P1
   - 매 거래일 장 마감 후 자동 수집 스케줄 (KST 17:00)
   - 수집 실패 시 알림 + 재시도 로직
 
@@ -123,15 +123,15 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ---
 
-## research-worker (미착수)
+## quant-worker (퀀트 리서치)
 
 ### P2 — MVP 이후
 
-- [ ] 백테스팅 엔진 기본 구조 | project: research-worker | phase: backtest-engine | priority: P2
+- [ ] 백테스팅 엔진 기본 구조 | project: quant-worker | phase: backtest-engine | priority: P2
   - Python 기반 벡터화 백테스팅 (vectorbt 또는 자체 구현)
   - 일봉 OHLCV + FRED 데이터 소비
   - 성과 지표 계산 (Sharpe, MDD, 연환산 수익률, 최대낙폭)
 
-- [ ] 알파 팩터 파이프라인 | project: research-worker | phase: alpha-pipeline | priority: P2
+- [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석

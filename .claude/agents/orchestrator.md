@@ -501,8 +501,8 @@ cd .worktrees/{worktree}/backend/trading-api && ./gradlew test
 # collector-api
 cd .worktrees/{worktree}/backend/collector-api && ./gradlew test
 
-# collector-worker
-cd .worktrees/{worktree}/backend/collector-worker && python -m pytest tests/ -v --tb=short
+# quant-worker
+cd .worktrees/{worktree}/backend/quant-worker && python -m pytest tests/ -v --tb=short
 
 # trading-web
 cd .worktrees/{worktree}/frontend/trading-web && npm test -- --run

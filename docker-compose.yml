@@ -101,11 +101,11 @@
       redis:
         condition: service_healthy
 
-  collector-worker:
+  quant-worker:
     build:
-      context: ./backend/collector-worker
+      context: ./backend/quant-worker
       dockerfile: Dockerfile
-    container_name: collector-worker
+    container_name: quant-worker
     restart: unless-stopped
     ports:
       - '8082:8082'

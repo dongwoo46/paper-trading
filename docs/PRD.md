@@ -10,7 +10,7 @@
 | --- | --- |
 | trading-api | 계좌·주문·체결·포지션·정산·전략 |
 | collector-api | 시장 데이터 수집·구독 관리·Redis 시세 발행 |
-| collector-worker | 일봉 OHLCV 배치 수집 (pykrx/yfinance) |
+| quant-worker | 일봉 OHLCV 배치 수집 (pykrx/yfinance) |
 | trading-web | 운영 대시보드 UI |
 
 ## 핵심 기능 (MVP)
@@ -40,7 +40,7 @@ KIS WebSocket
                     └─→ trading-api (QuoteEventListener → LocalMatchingEngine)
 
 collector-api HTTP API
-    └─→ collector-worker POST /collect/daily
+    └─→ quant-worker POST /collect/daily
             └─→ PostgreSQL market_daily_ohlcv  (일봉 적재)
 
 trading-api → collector-api POST /api/internal/subscriptions/{ticker}

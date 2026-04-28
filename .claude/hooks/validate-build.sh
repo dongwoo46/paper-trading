@@ -31,10 +31,7 @@ elif [[ "$FILE_PATH" == *"backend/collector-api"* ]]; then
   BASE="${FILE_PATH%%backend/collector-api*}backend/collector-api"
   record "kotlin|${BASE}"
 
-elif [[ "$FILE_PATH" == *"backend/collector-worker"* && "$FILE_PATH" == *.py ]]; then
-  record "python|${FILE_PATH}"
-
-elif [[ "$FILE_PATH" == *"research-worker"* && "$FILE_PATH" == *.py ]]; then
+elif [[ "$FILE_PATH" == *"backend/quant-worker"* && "$FILE_PATH" == *.py ]]; then
   record "python|${FILE_PATH}"
 
 elif [[ "$FILE_PATH" == *"frontend/trading-web"* ]]; then

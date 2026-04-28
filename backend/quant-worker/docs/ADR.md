@@ -1,4 +1,4 @@
-# ADR — collector-worker
+# ADR — quant-worker
 
 ## ADR-001: Python + FastAPI 선택
 **결정**: pykrx/yfinance 수집 워커를 Python FastAPI로 구현

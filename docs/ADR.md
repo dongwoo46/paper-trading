@@ -6,7 +6,7 @@
 **트레이드오프**: 서비스별 독립 배포 파이프라인 설정이 복잡해짐. 레포 규모 커지면 빌드 시간 증가.
 
 ## ADR-002: 언어/프레임워크 혼용 (Kotlin + Python)
-**결정**: trading-api/collector-api → Kotlin/Spring Boot, collector-worker → Python/FastAPI
+**결정**: trading-api/collector-api → Kotlin/Spring Boot, quant-worker → Python/FastAPI
 **이유**: OHLCV 수집은 pykrx/yfinance가 Python 전용 라이브러리. 금융 도메인 로직은 Kotlin 타입 안전성이 유리.
 **트레이드오프**: 두 언어 유지 비용. 서비스 간 타입 공유 불가, API 스펙으로만 계약.
 
@@ -16,7 +16,7 @@
 **트레이드오프**: Redis 장애 시 시세 수신과 체결 엔진 동시 중단. 메시지 영속성 없음(재시작 시 유실 가능).
 
 ## ADR-004: PostgreSQL 단일 DB (서비스 간 스키마 공유)
-**결정**: trading-api / collector-api / collector-worker 모두 동일 PostgreSQL 인스턴스 사용
+**결정**: trading-api / collector-api / quant-worker 모두 동일 PostgreSQL 인스턴스 사용
 **이유**: 초기 단계에서 DB 분리 운영 비용 대비 이점 없음. 조인 없이 각 서비스가 자기 스키마만 접근.
 **트레이드오프**: 서비스 독립 확장 어려움. 한 서비스의 쿼리 폭주가 전체 DB에 영향.
 

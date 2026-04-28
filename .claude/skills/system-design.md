@@ -14,7 +14,7 @@ KIS WebSocket → collector-api → Redis Pub/Sub → trading-api
                              → Redis Hash (quote cache)
                              → PostgreSQL (history)
 
-collector-api → collector-worker (HTTP trigger)
+collector-api → quant-worker (HTTP trigger)
              → PostgreSQL (OHLCV)
 
 trading-api → PostgreSQL (orders / accounts / positions)

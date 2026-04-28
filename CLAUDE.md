@@ -7,8 +7,7 @@
 
 - trading-api: 주문·체결·계좌·포지션·정산 — Kotlin/Spring Boot 3/JPA/PostgreSQL/Redis
 - collector-api: 실시간 시세 수집·Redis 발행 — Kotlin/Spring Boot 3/Redis
-- collector-worker: 일봉 OHLCV 배치 수집 — Python 3.11/FastAPI/SQLAlchemy
-- research-worker: 퀀트 전략·백테스팅 — Python 3.11
+- quant-worker: 일봉 OHLCV 수집·백테스팅·AI 퀀트 전략 — Python 3.11/FastAPI/SQLAlchemy/LangChain
 - trading-web: 운영 대시보드 UI — React/TypeScript/Vite
 
 데이터 흐름: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (체결 엔진)
@@ -62,7 +61,7 @@
 ```
 trading-api:      cd backend/trading-api && ./gradlew compileKotlin
 collector-api:    cd backend/collector-api && ./gradlew compileKotlin
-collector-worker: python -m py_compile {파일}
+quant-worker:     python -m py_compile {파일}
 trading-web:      cd frontend/trading-web && npm run build
 ```
 

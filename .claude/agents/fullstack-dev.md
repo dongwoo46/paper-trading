@@ -39,7 +39,7 @@ Test commands — run the specific class, not the full suite:
 # trading-api / collector-api
 ./gradlew test --tests "com.papertrading.*.{ClassName}"
 
-# collector-worker
+# quant-worker
 python -m pytest tests/test_{unit}.py::test_{function} -v
 
 # trading-web
