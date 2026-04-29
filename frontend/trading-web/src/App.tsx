@@ -4,6 +4,7 @@ import { AccountDashboardPage } from "./pages/account/ui/AccountDashboardPage";
 import { HistoricalPage } from "./pages/historical/ui/HistoricalPage";
 import { HomePage } from "./pages/home/ui/HomePage";
 import { MacroPage } from "./pages/macro/ui/MacroPage";
+import { OrderPage } from "./pages/order/ui/OrderPage";
 import { RealtimePage } from "./pages/realtime/ui/RealtimePage";
 import { Sidebar } from "./shared/ui/Sidebar";
 import { TopBar } from "./shared/ui/TopBar";
@@ -35,6 +36,8 @@ function App() {
         return "거시경제 데이터";
       case "/account":
         return "계좌·포지션";
+      case "/orders":
+        return "주문 관리";
       default:
         return "Trading Console";
     }
@@ -54,6 +57,7 @@ function App() {
             <Route path="/historical" element={<HistoricalPage />} />
             <Route path="/macro" element={<MacroPage />} />
             <Route path="/account" element={<AccountDashboardPage />} />
+            <Route path="/orders" element={<OrderPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
