@@ -27,6 +27,7 @@ class KisProperties {
 	var trIds: List<String> = listOf("H0STCNT0")  // 체결가만 구독. ASKP1/BIDP1이 H0STCNT0에 포함됨.
 	var reconnectMinDelay: Duration = Duration.ofSeconds(1)
 	var reconnectMaxDelay: Duration = Duration.ofSeconds(30)
+	var heartbeatTimeout: Duration = Duration.ofSeconds(60)
 	var liveRestRequestsPerSecond: Int = 20
 	var paperRestRequestsPerSecond: Int = 2
 	var approvalRequestsPerSecond: Int = 1
