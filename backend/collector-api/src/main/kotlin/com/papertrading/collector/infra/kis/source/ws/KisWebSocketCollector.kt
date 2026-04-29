@@ -31,6 +31,7 @@ class KisWebSocketCollector(
 	private val rawEventPipeline: RawEventPipeline,
 	private val wsSubscriptionService: KisWsSubscriptionService,
 	private val restWatchlistService: KisRestWatchlistService,
+	private val registry: KisWsConnectionRegistry,
 ) {
 	private val log = KotlinLogging.logger {}
 	private val running = AtomicBoolean(false)
@@ -97,12 +98,14 @@ class KisWebSocketCollector(
 				Retry.backoff(Long.MAX_VALUE, properties.reconnectMinDelay)
 					.maxBackoff(properties.reconnectMaxDelay)
 					.doBeforeRetry { signal ->
+						val attempt = signal.totalRetries() + 1
 						log.warn(
 							"KIS reconnect mode={}, attempt={}, reason={}",
 							mode,
-							signal.totalRetries() + 1,
+							attempt,
 							signal.failure().message ?: "unknown",
 						)
+						registry.markReconnecting(mode, attempt)
 					},
 			)
 			.subscribe(
@@ -124,6 +127,7 @@ class KisWebSocketCollector(
 
 				webSocketClient.execute(endpoint) { session ->
 					log.info("Connected to KIS websocket mode={}, url={}", mode, properties.websocketUrlFor(mode))
+					registry.markConnected(mode)
 					val sender = session.send(
 						Flux.concat(
 							Flux.fromIterable(buildSubscribeMessages(approvalKey, symbols, trIds, subscribe = true)),
@@ -135,6 +139,7 @@ class KisWebSocketCollector(
 							val decoded = decodeMessage(message)
 							if (decoded != null) sink.next(decoded)
 						}
+						.timeout(properties.heartbeatTimeout)
 						.doOnNext { rawEventPipeline.publish(source = "kis-$mode", payload = it) }
 						.then()
 					sender.then(receiver)
@@ -144,6 +149,7 @@ class KisWebSocketCollector(
 				outboundSinks.remove(mode)
 				approvalKeys.remove(mode)
 				log.warn("KIS websocket disconnected, mode={}, signal={}", mode, signal)
+				registry.markDisconnected(mode)
 			}
 			.then(Mono.error(IllegalStateException("KIS session ended for mode=$mode")))
 	}

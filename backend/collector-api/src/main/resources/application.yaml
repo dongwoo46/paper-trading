@@ -75,6 +75,7 @@ collector:
       rest-polling-interval-millis: 60000
       rest-polling-initial-delay-millis: 0
       max-realtime-registrations: 41
+      heartbeat-timeout: 60s
     upbit:
       enabled: true
       url: wss://api.upbit.com/websocket/v1
