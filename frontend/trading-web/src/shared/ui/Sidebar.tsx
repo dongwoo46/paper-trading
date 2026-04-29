@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Globe, History, Home, TrendingUp, X, Zap } from "lucide-react";
+import { Globe, History, Home, TrendingUp, Wallet, X, Zap } from "lucide-react";
 
 export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boolean) => void }) {
   const closeOnMobile = () => {
@@ -24,6 +24,10 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boo
           <NavLink to="/" end className="nav-link" onClick={closeOnMobile}>
             <Home size={18} />
             <span>대시보드</span>
+          </NavLink>
+          <NavLink to="/account" className="nav-link" onClick={closeOnMobile}>
+            <Wallet size={18} />
+            <span>계좌·포지션</span>
           </NavLink>
           <NavLink to="/realtime" className="nav-link" onClick={closeOnMobile}>
             <Zap size={18} />
