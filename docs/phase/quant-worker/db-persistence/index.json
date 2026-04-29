@@ -1,0 +1,30 @@
+{
+  "project": "quant-worker",
+  "phase": "db-persistence",
+  "priority": "P0",
+  "status": "done",
+  "goal": "파일 기반(data/) 출력 제거 → PostgreSQL market_daily_ohlcv 단독 적재. 청킹(chunk_size=500) 배치 upsert로 대규모 데이터 삽입 대응.",
+  "steps": [
+    {
+      "id": 1,
+      "title": "테스트 작성 (Red)",
+      "file": "step-1.md",
+      "status": "done",
+      "agent": "build"
+    },
+    {
+      "id": 2,
+      "title": "청킹 upsert + 파일 잔재 제거 (Green)",
+      "file": "step-2.md",
+      "status": "done",
+      "agent": "build"
+    },
+    {
+      "id": 3,
+      "title": "빌드 검증",
+      "file": "step-3.md",
+      "status": "done",
+      "agent": "build"
+    }
+  ]
+}

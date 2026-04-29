@@ -18,7 +18,6 @@ class CollectDailyRequest(BaseModel):
     provider: Literal["yfinance", "pykrx", "all"] = "all"
     start: str = "2010-01-01"
     end: str = Field(default_factory=lambda: datetime.now().date().isoformat())
-    output_root: str = "data"
     only_default: bool = False
     auto_adjust: bool = False
     adjusted: bool = False
@@ -29,7 +28,7 @@ class CollectDailyResponse(BaseModel):
     symbols: int
     success_symbols: int
     failed_symbols: int
-    summary_path: str
+    total_rows_inserted: int
     start: str
     end: str
 
@@ -73,7 +72,6 @@ def collect_daily(request: CollectDailyRequest) -> CollectDailyResponse:
                 provider=request.provider,
                 start=request.start,
                 end=request.end,
-                output_root=request.output_root,
                 only_default=request.only_default,
                 auto_adjust=request.auto_adjust,
                 adjusted=request.adjusted,

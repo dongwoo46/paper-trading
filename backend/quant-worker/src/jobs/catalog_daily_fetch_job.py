@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from pathlib import Path
 
 import pandas as pd
 
@@ -34,16 +33,13 @@ class FetchResult:
     requested_start: date
     requested_end: date
     fetched_until_date: date | None
-    rows: int
-    output_path: Path | None
+    rows_inserted: int
     skipped: bool
     success: bool
     error: str | None
 
 
 class CatalogDailyFetchJob:
-    """Fetch daily data for symbol catalogs and save per-symbol CSV files."""
-
     def __init__(
         self,
         yfinance_collector: YFinanceDailyCollector,
@@ -58,7 +54,6 @@ class CatalogDailyFetchJob:
         self,
         symbols: list[CatalogSymbol],
         window: FetchWindow,
-        output_root: Path,
         auto_adjust: bool,
     ) -> list[FetchResult]:
         results: list[FetchResult] = []
@@ -72,8 +67,7 @@ class CatalogDailyFetchJob:
                         requested_start=effective_start,
                         requested_end=window.end_date,
                         fetched_until_date=None,
-                        rows=0,
-                        output_path=None,
+                        rows_inserted=0,
                         skipped=True,
                         success=True,
                         error=None,
@@ -100,10 +94,6 @@ class CatalogDailyFetchJob:
                         is_adjusted=auto_adjust,
                     ),
                 )
-                saved = None
-                if not frame.empty:
-                    path = output_root / "yfinance" / f"{request.symbol}_daily.csv"
-                    saved = self._yfinance_collector.save_csv(frame, path)
                 results.append(
                     FetchResult(
                         provider="yfinance",
@@ -111,8 +101,7 @@ class CatalogDailyFetchJob:
                         requested_start=effective_start,
                         requested_end=window.end_date,
                         fetched_until_date=_max_trade_date(frame),
-                        rows=inserted,
-                        output_path=saved,
+                        rows_inserted=inserted,
                         skipped=False,
                         success=True,
                         error=None,
@@ -122,13 +111,11 @@ class CatalogDailyFetchJob:
                 results.append(
                     FetchResult(
                         provider="yfinance",
-
                         symbol=request.symbol,
                         requested_start=effective_start,
                         requested_end=window.end_date,
                         fetched_until_date=None,
-                        rows=0,
-                        output_path=None,
+                        rows_inserted=0,
                         skipped=False,
                         success=False,
                         error=str(exc),
@@ -140,7 +127,6 @@ class CatalogDailyFetchJob:
         self,
         symbols: list[CatalogSymbol],
         window: FetchWindow,
-        output_root: Path,
         adjusted: bool,
     ) -> list[FetchResult]:
         results: list[FetchResult] = []
@@ -154,8 +140,7 @@ class CatalogDailyFetchJob:
                         requested_start=effective_start,
                         requested_end=window.end_date,
                         fetched_until_date=None,
-                        rows=0,
-                        output_path=None,
+                        rows_inserted=0,
                         skipped=True,
                         success=True,
                         error=None,
@@ -182,10 +167,6 @@ class CatalogDailyFetchJob:
                         is_adjusted=adjusted,
                     ),
                 )
-                saved = None
-                if not frame.empty:
-                    path = output_root / "pykrx" / f"{request.symbol}_daily.csv"
-                    saved = self._pykrx_collector.save_csv(frame, path)
                 results.append(
                     FetchResult(
                         provider="pykrx",
@@ -193,8 +174,7 @@ class CatalogDailyFetchJob:
                         requested_start=effective_start,
                         requested_end=window.end_date,
                         fetched_until_date=_max_trade_date(frame),
-                        rows=inserted,
-                        output_path=saved,
+                        rows_inserted=inserted,
                         skipped=False,
                         success=True,
                         error=None,
@@ -208,8 +188,7 @@ class CatalogDailyFetchJob:
                         requested_start=effective_start,
                         requested_end=window.end_date,
                         fetched_until_date=None,
-                        rows=0,
-                        output_path=None,
+                        rows_inserted=0,
                         skipped=False,
                         success=False,
                         error=str(exc),
@@ -237,8 +216,7 @@ def to_summary_frame(results: list[FetchResult]) -> pd.DataFrame:
                 "fetched_until_date": (
                     "" if row.fetched_until_date is None else row.fetched_until_date.isoformat()
                 ),
-                "rows": row.rows,
-                "output_path": "" if row.output_path is None else str(row.output_path),
+                "rows_inserted": row.rows_inserted,
                 "skipped": row.skipped,
                 "success": row.success,
                 "error": "" if row.error is None else row.error,

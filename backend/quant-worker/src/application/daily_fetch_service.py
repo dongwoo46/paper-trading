@@ -4,7 +4,6 @@ import logging
 import os
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from pathlib import Path
 
 from src.catalog.postgres_symbol_catalog import DbConfig, PostgresSymbolCatalogRepository
 from src.collectors.pykrx_daily_collector import PykrxDailyCollector
@@ -20,7 +19,6 @@ class DailyFetchOptions:
     provider: str = "all"
     start: str = "2010-01-01"
     end: str = field(default_factory=lambda: datetime.now().date().isoformat())
-    output_root: str = "data"
     only_default: bool = False
     auto_adjust: bool = False
     adjusted: bool = False
@@ -53,8 +51,7 @@ def execute(options: DailyFetchOptions) -> dict[str, object]:
         ohlcv_repository=ohlcv_repository,
     )
 
-    output_root = Path(options.output_root)
-    results = []
+    results: list[FetchResult] = []
 
     if options.provider in ("yfinance", "all"):
         yfinance_symbols = repository.list_symbols(
@@ -65,7 +62,6 @@ def execute(options: DailyFetchOptions) -> dict[str, object]:
         yfinance_results = job.run_for_yfinance(
             symbols=yfinance_symbols,
             window=window,
-            output_root=output_root,
             auto_adjust=options.auto_adjust,
         )
         results.extend(yfinance_results)
@@ -81,34 +77,30 @@ def execute(options: DailyFetchOptions) -> dict[str, object]:
         pykrx_results = job.run_for_pykrx(
             symbols=pykrx_symbols,
             window=window,
-            output_root=output_root,
             adjusted=options.adjusted,
         )
         results.extend(pykrx_results)
         _sync_collection_status(repository, pykrx_results)
         _log_provider_result("pykrx", pykrx_results)
 
-    summary = to_summary_frame(results)
-    summary_path = output_root / "summary.csv"
-    summary_path.parent.mkdir(parents=True, exist_ok=True)
-    summary.to_csv(summary_path, index=False)
+    total_rows_inserted = sum(r.rows_inserted for r in results if r.success)
 
     response = {
         "provider": options.provider,
         "symbols": len(results),
-        "success_symbols": len([row for row in results if row.success]),
-        "failed_symbols": len([row for row in results if not row.success]),
-        "summary_path": str(summary_path.resolve()),
+        "success_symbols": len([r for r in results if r.success]),
+        "failed_symbols": len([r for r in results if not r.success]),
+        "total_rows_inserted": total_rows_inserted,
         "start": window.start_date.isoformat(),
         "end": window.end_date.isoformat(),
     }
     logger.info(
-        "collect_daily:done provider=%s symbols=%d success=%d failed=%d summary=%s",
+        "collect_daily:done provider=%s symbols=%d success=%d failed=%d rows_inserted=%d",
         response["provider"],
         response["symbols"],
         response["success_symbols"],
         response["failed_symbols"],
-        response["summary_path"],
+        response["total_rows_inserted"],
     )
     return response
 
@@ -139,9 +131,9 @@ def _sync_collection_status(
 
 
 def _log_provider_result(provider: str, results: list[FetchResult]) -> None:
-    success_count = len([row for row in results if row.success])
-    failed = [row for row in results if not row.success]
-    skipped_count = len([row for row in results if row.skipped])
+    success_count = len([r for r in results if r.success])
+    failed = [r for r in results if not r.success]
+    skipped_count = len([r for r in results if r.skipped])
     logger.info(
         "collect_daily:%s result success=%d failed=%d skipped=%d",
         provider,
@@ -150,9 +142,5 @@ def _log_provider_result(provider: str, results: list[FetchResult]) -> None:
         skipped_count,
     )
     if failed:
-        failed_symbols = ", ".join([row.symbol for row in failed][:20])
-        logger.warning(
-            "collect_daily:%s failed_symbols=%s",
-            provider,
-            failed_symbols,
-        )
+        failed_symbols = ", ".join([r.symbol for r in failed][:20])
+        logger.warning("collect_daily:%s failed_symbols=%s", provider, failed_symbols)

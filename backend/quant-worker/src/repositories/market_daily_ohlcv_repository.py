@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Iterable
 
 import pandas as pd
 
@@ -24,13 +23,18 @@ class MarketDailyOhlcvRepository:
     def __init__(self, config: DbConfig) -> None:
         self._config = config
 
-    def upsert_daily_rows(self, frame: pd.DataFrame, context: OhlcvUpsertContext) -> int:
+    def upsert_daily_rows(
+        self,
+        frame: pd.DataFrame,
+        context: OhlcvUpsertContext,
+        chunk_size: int = 500,
+    ) -> int:
         if frame.empty:
             return 0
 
         collected_at = datetime.now()
         rows = [self._to_row(item, context, collected_at) for item in frame.to_dict(orient="records")]
-        self._executemany(self._upsert_query(), rows)
+        self._execute_chunks(self._upsert_query(), rows, chunk_size)
         return len(rows)
 
     def _to_row(self, item: dict[str, object], context: OhlcvUpsertContext, collected_at: datetime) -> tuple[object, ...]:
@@ -85,10 +89,11 @@ class MarketDailyOhlcvRepository:
             "updated_at = CURRENT_TIMESTAMP"
         )
 
-    def _executemany(self, query: str, rows: Iterable[tuple[object, ...]]) -> None:
+    def _execute_chunks(self, query: str, rows: list[tuple[object, ...]], chunk_size: int) -> None:
         with self._connect() as connection:
             with connection.cursor() as cursor:
-                cursor.executemany(query, rows)
+                for i in range(0, len(rows), chunk_size):
+                    cursor.executemany(query, rows[i : i + chunk_size])
             connection.commit()
 
     def _connect(self):
