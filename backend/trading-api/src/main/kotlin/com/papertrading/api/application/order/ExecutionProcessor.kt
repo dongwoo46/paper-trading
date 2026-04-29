@@ -3,22 +3,32 @@ package com.papertrading.api.application.order
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.TransactionType
+import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.model.AccountLedger
 import com.papertrading.api.domain.model.Execution
+import com.papertrading.api.domain.model.PendingSettlement
 import com.papertrading.api.domain.model.Position
+import com.papertrading.api.domain.model.Settlement
+import com.papertrading.api.domain.model.SettlementExecution
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
+import com.papertrading.api.domain.util.BusinessDayCalculator
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
 import com.papertrading.api.infrastructure.persistence.FeePolicyRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
+import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
+import com.papertrading.api.infrastructure.persistence.SettlementExecutionRepository
+import com.papertrading.api.infrastructure.persistence.SettlementRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 
 /**
@@ -35,6 +45,9 @@ class ExecutionProcessor(
     private val accountLedgerRepository: AccountLedgerRepository,
     private val feePolicyRepository: FeePolicyRepository,
     private val collectorSubscriptionPort: CollectorSubscriptionPort,
+    private val pendingSettlementRepository: PendingSettlementRepository,
+    private val settlementRepository: SettlementRepository,
+    private val settlementExecutionRepository: SettlementExecutionRepository,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -105,8 +118,33 @@ class ExecutionProcessor(
             position.applySell(fillQty)
             positionRepository.save(position)
 
-            val netProceeds = fillPrice.multiply(fillQty).subtract(fee)
-            account.receiveSellProceeds(netProceeds)
+            val grossProceeds = fillPrice.multiply(fillQty).setScale(4, RoundingMode.HALF_UP)
+            val netProceeds = grossProceeds.subtract(fee).setScale(4, RoundingMode.HALF_UP)
+
+            when (tradingMode) {
+                TradingMode.LOCAL -> {
+                    // LOCAL 모드: 즉시 예수금 입금 (모의투자 UX 유지)
+                    account.receiveSellProceeds(netProceeds)
+                }
+                TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> {
+                    // KIS 모드: T+2 결제 — 즉시 입금 없이 PendingSettlement 생성
+                    val settlementDate = BusinessDayCalculator.addBusinessDays(
+                        LocalDate.now(ZoneId.of("Asia/Seoul")), 2
+                    )
+                    pendingSettlementRepository.save(
+                        PendingSettlement(
+                            account = account,
+                            orderId = orderId,
+                            settlementDate = settlementDate,
+                            amount = netProceeds,
+                        )
+                    )
+                }
+                else -> {
+                    // 다른 모드는 즉시 입금 처리 (향후 확장 대비)
+                    account.receiveSellProceeds(netProceeds)
+                }
+            }
 
             accountLedgerRepository.save(AccountLedger(
                 account = account,
@@ -117,6 +155,30 @@ class ExecutionProcessor(
                 refExecutionId = executionId,
                 idempotencyKey = "sell-exec-$executionId",
             ))
+
+            if (order.orderStatus == OrderStatus.FILLED && order.orderSide == OrderSide.SELL) {
+                val realizedPnl = grossProceeds.subtract(fee).setScale(4, RoundingMode.HALF_UP)
+                val settlement = settlementRepository.save(
+                    Settlement(
+                        order = order,
+                        account = account,
+                        ticker = ticker,
+                        realizedPnl = realizedPnl,
+                        fee = fee,
+                        tax = BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP),
+                        netPnl = realizedPnl,
+                        currency = account.baseCurrency,
+                        krwNetPnl = realizedPnl,
+                        settledAt = Instant.now(),
+                    )
+                )
+                settlementExecutionRepository.save(
+                    SettlementExecution(
+                        settlement = settlement,
+                        execution = execution,
+                    )
+                )
+            }
         }
 
         if (fee > BigDecimal.ZERO) {
