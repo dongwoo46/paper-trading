@@ -24,17 +24,19 @@ Read the graphify graph first to understand existing structure before designing.
 
 ## Design Order
 
-1. Read graphify graph → map existing classes, dependencies, and entry points relevant to the feature.
-2. Structure requirements (separate functional / non-functional, ask about ambiguities).
-2. Confirm DDD model (Bounded Context, Entity, VO, Aggregate, Domain Event).
-3. Determine change scope per architecture layer.
-4. Design API spec.
-5. Design DB schema.
-6. Identify external dependencies.
-7. Write `spec.md`.
-8. Generate `step-2.md` ~ `step-N.md` (each step with concrete directives).
-9. Confirm `index.json` `total_steps` (3–7 based on complexity).
-10. Output "spec.md and step files are ready. Awaiting approval to proceed to implementation." and wait.
+0. **Before starting**: write the following substeps into `index.json` current step's `substeps` array (status: `pending`):
+   - `graphify + requirements`
+   - `DDD model`
+   - `API + DB design`
+   - `spec.md`
+   - `step files generation`
+
+1. Mark substep 1 `in_progress`. Read graphify graph → map existing classes, dependencies, and entry points. Structure requirements (separate functional / non-functional, ask about ambiguities). Mark `completed`.
+2. Mark substep 2 `in_progress`. Confirm DDD model (Bounded Context, Entity, VO, Aggregate, Domain Event). Determine change scope per architecture layer. Mark `completed`.
+3. Mark substep 3 `in_progress`. Design API spec. Design DB schema. Identify external dependencies. Mark `completed`.
+4. Mark substep 4 `in_progress`. Write `spec.md`. Mark `completed`.
+5. Mark substep 5 `in_progress`. Generate `step-2.md` ~ `step-N.md` (each step with concrete directives). Confirm `index.json` `total_steps` (3–7 based on complexity). Mark `completed`.
+6. Output "spec.md and step files are ready. Awaiting approval to proceed to implementation." and wait.
 
 ## spec.md Format
 

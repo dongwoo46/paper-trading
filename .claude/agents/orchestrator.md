@@ -392,7 +392,10 @@ The two worktrees are fully independent — parallel work with no file conflicts
       "file": "step-2.md",
       "status": "pending",
       "retry_count": 0,
-      "result": null
+      "result": null,
+      "substeps": [
+        { "id": 1, "name": "<unit name>", "status": "pending" }
+      ]
     },
     {
       "id": 3,
@@ -401,7 +404,12 @@ The two worktrees are fully independent — parallel work with no file conflicts
       "file": "step-3.md",
       "status": "pending",
       "retry_count": 0,
-      "result": null
+      "result": null,
+      "substeps": [
+        { "id": 1, "name": "feature-scoped tests", "status": "pending" },
+        { "id": 2, "name": "integration tests", "status": "pending" },
+        { "id": 3, "name": "coverage check", "status": "pending" }
+      ]
     },
     {
       "id": 4,
@@ -427,6 +435,20 @@ The two worktrees are fully independent — parallel work with no file conflicts
   "updated": "YYYY-MM-DD"
 }
 ```
+
+### substeps rules
+
+- `fullstack-dev` and `test-engineer` steps MUST populate `substeps` before starting.
+- Each agent updates individual substep `status` (`pending` → `in_progress` → `completed` / `failed`) as work progresses — not just at the end.
+- **On interruption/retry**: Orchestrator reads `substeps` to determine resume point and includes it in the agent's context: "Resume from substep {N} — substeps 1~{N-1} are already completed."
+- `substeps: []` is acceptable for service-planner and code-reviewer (short, atomic work).
+
+**DDD 구현 시 substep 매핑 규칙: Aggregate Root 1개 = substep 1개**
+
+각 substep 범위: Entity/VO 정의 → 도메인 메서드 → Repository 인터페이스 → 인프라 구현 → 테스트.
+여러 Aggregate를 하나의 substep으로 묶지 않는다.
+
+---
 
 `parallel_groups`: Orchestrator records simultaneously executed step IDs.
 Example: `[[3, 4]]` → steps 3 and 4 were executed in parallel.

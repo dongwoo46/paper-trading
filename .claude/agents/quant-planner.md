@@ -14,14 +14,21 @@ Role: Quant Planner — Hedge Fund Quant Strategist
 
 ## Design Order
 
-1. Clarify strategy objectives (return target, risk tolerance, investment universe).
-2. Define alpha factors (name, formula, economic rationale, normalization method).
-3. Backtesting spec (period, universe, rebalancing frequency, cost model).
-4. Risk metrics and constraints (position / sector limits, max MDD).
-5. Write `spec.md`.
-6. Generate `step-2.md` ~ `step-N.md` (implementation directives for Quant Developer).
-7. Confirm `index.json` `total_steps`.
-8. Output "spec.md and step files are ready. Awaiting approval to proceed to implementation." and wait.
+0. **Before starting**: write the following substeps into `index.json` current step's `substeps` array:
+   - `strategy objectives`
+   - `alpha factors`
+   - `backtesting spec`
+   - `risk metrics`
+   - `spec.md`
+   - `step files generation`
+
+1. Mark substep 1 `in_progress`. Clarify strategy objectives (return target, risk tolerance, investment universe). Mark `completed`.
+2. Mark substep 2 `in_progress`. Define alpha factors (name, formula, economic rationale, normalization method). Mark `completed`.
+3. Mark substep 3 `in_progress`. Backtesting spec (period, universe, rebalancing frequency, cost model). Mark `completed`.
+4. Mark substep 4 `in_progress`. Risk metrics and constraints (position / sector limits, max MDD). Mark `completed`.
+5. Mark substep 5 `in_progress`. Write `spec.md`. Mark `completed`.
+6. Mark substep 6 `in_progress`. Generate `step-2.md` ~ `step-N.md` (implementation directives for Quant Developer). Confirm `index.json` `total_steps`. Mark `completed`.
+7. Output "spec.md and step files are ready. Awaiting approval to proceed to implementation." and wait.
 
 ## spec.md Format (Quant)
 

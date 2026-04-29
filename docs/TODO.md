@@ -37,6 +37,11 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P2 — 고도화
 
+- [ ] DDD Aggregate 경계 수정 | project: trading-api | phase: ddd-aggregate-fix | priority: P2
+  - 내부 Entity Repository 제거: ExecutionRepository, SettlementRepository, RiskPolicyRepository, PendingSettlementRepository, OrderAmendmentRepository, SettlementExecutionRepository
+  - 모든 접근을 Aggregate Root Repository(OrderRepository, AccountRepository)를 통하도록 변경
+  - Aggregate 간 객체 직접 참조 → ID 참조로 변경 (Execution.order → orderId, Settlement.order → orderId)
+
 - [ ] 세금 정산 자동화 | project: trading-api | phase: tax-summary | priority: P2
 - [ ] 거래 일지 자동 생성 | project: trading-api | phase: trading-journal | priority: P2
 

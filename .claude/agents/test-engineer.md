@@ -17,8 +17,9 @@ Check `state.md` for mode before starting.
 ## Execution Order
 
 1. Read `step-{n}.md` → read every file listed in the "Files to Read" section.
-2. Detect changed files via `git diff --name-only` in the worktree.
-3. Run **feature-scoped tests only** — tests directly related to the changed classes/packages.
+2. **Before starting**: confirm `index.json` substeps are set (`feature-scoped tests`, `integration tests`, `coverage check`). If resuming, skip `completed` substeps.
+3. Detect changed files via `git diff --name-only` in the worktree.
+4. Run **feature-scoped tests only** — tests directly related to the changed classes/packages.
    Do NOT run the full test suite here. Full suite runs only at Phase Completion (Orchestrator's responsibility).
 
 ### Feature-Scoped Test Commands
@@ -37,21 +38,21 @@ cd .worktrees/{worktree} && python -m pytest tests/test_{feature}.py -v --tb=sho
 cd .worktrees/{worktree} && npm test -- --run --reporter=verbose {feature}.test.ts
 ```
 
-4. Analyze test results:
-   - PASS: proceed to next step.
+5. Analyze test results:
+   - PASS: mark substep 1 `completed` in `index.json`, proceed.
    - FAIL: analyze stack trace → classify root cause.
      - Implementation bug: fix the file and rerun.
      - Test code error: fix the test and rerun.
      - Environment issue: report to Orchestrator.
 
-5. Check for missing integration tests:
+6. Check for missing integration tests:
    - Controller layer: HTTP request/response contract (`@SpringBootTest` + MockMvc).
    - Service layer: core business logic scenarios (including transaction boundaries).
    - If missing: write and run them (must satisfy TDD standard).
 
-6. Verify Acceptance Criteria (run the command in the step file directly).
+7. Mark substep 2 `completed` in `index.json`. Verify Acceptance Criteria (run the command in the step file directly).
 
-7. Measure coverage (focus on core business logic):
+8. Measure coverage (focus on core business logic):
 ```bash
 # trading-api
 cd backend/trading-api && ./gradlew test jacocoTestReport
@@ -60,13 +61,13 @@ cd backend/trading-api && ./gradlew test jacocoTestReport
 cd backend/quant-worker && python -m pytest tests/ --cov=src --cov-report=term-missing
 ```
 
-8. Output result summary:
+9. Mark substep 3 `completed` in `index.json`. Output result summary:
    - Total tests, PASS / FAIL counts.
    - Coverage (application service layer focus).
    - List of unverified scenarios (if any).
 
-9. Update `index.json` current step → `status: "completed"`, record test result summary.
-10. Report completion to Orchestrator.
+10. Update `index.json` current step → `status: "completed"`, record test result summary.
+11. Report completion to Orchestrator.
 
 ## Decision Criteria
 

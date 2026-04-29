@@ -2,39 +2,43 @@ Skill: DDD (Domain-Driven Design)
 
 ## Core Concepts
 
-- **Bounded Context**: A clear boundary within which a model is valid. Each BC has its own Ubiquitous Language.
-- **Entity**: Identity determined by ID, not attributes.
-- **Value Object**: Identity determined by value. Immutable. (e.g. Money, Quantity, DateRange)
-- **Aggregate**: Consistency boundary. Access internal objects only through the Root. Reference other Aggregates by ID only.
-- **Domain Service**: Domain operations that don't naturally belong to any Entity or VO.
-- **Domain Event**: A fact that occurred in the domain. Past-tense noun. (e.g. OrderPlaced, TradeExecuted)
-- **Repository**: Defined per Aggregate Root only.
-- **Factory**: Encapsulates creation of complex Aggregates or Entities.
-- **Ubiquitous Language**: Use the same domain terms consistently across code, docs, and conversations.
+- **Entity**: Identity by ID. Mutable through domain methods only.
+- **Value Object**: Identity by value. Immutable.
+- **Aggregate**: Consistency boundary. All state changes go through the Root. Internal entities are not accessible from outside.
+- **Repository**: One per Aggregate Root. Never for internal entities.
+- **Domain Service**: Logic that doesn't belong to any single Entity or VO.
+- **Domain Event**: Immutable record of something that happened. Past tense. (e.g. `OrderExecuted`)
+- **Bounded Context**: Explicit boundary where a model is valid. Each BC owns its Ubiquitous Language.
+- **ACL (Anti-Corruption Layer)**: Translation layer between Bounded Contexts. Prevents external models from leaking in.
 
 ## Context Map Patterns
 
-- **Anti-Corruption Layer (ACL)**: Prevents external BC models from polluting the internal domain. Acts as a translation layer.
+- **ACL (Anti-Corruption Layer)**: Translation layer between BCs. Prevents external models from polluting the internal domain.
 - **Shared Kernel**: A small model shared by two BCs. Changes require agreement from both sides.
-- **Customer-Supplier**: The upstream (Supplier) accommodates the needs of the downstream (Customer).
+- **Customer-Supplier**: Upstream (Supplier) accommodates the downstream (Customer).
 
 ## Strategic Design
 
-- **Core Domain**: The competitive advantage. Maximum investment. (This project: order matching, position management)
-- **Supporting Subdomain**: Supports the Core. Build it directly but keep it simple.
-- **Generic Subdomain**: A well-known problem space. Replace with external libraries.
+- **Core Domain**: Competitive advantage — maximum investment. (This project: order matching, position management)
+- **Supporting Subdomain**: Supports the Core. Build directly, keep simple.
+- **Generic Subdomain**: Well-known problem space. Prefer external libraries.
 
 ## Implementation Rules
 
-- Domain layer: no framework dependencies — pure business logic only.
-- State changes go through domain methods: `order.cancel()`, `account.lockDeposit(amount)`.
-- Business rule violations throw immediately in the domain: `require(amount > 0) { "..." }`.
-- Never modify internal objects of an Aggregate from outside its boundary.
-- Keep JPA `@Entity` and DDD Entity separate — ORM concerns must not pollute the domain.
+- Domain layer has zero framework dependencies — pure business logic only.
+- All state changes go through domain methods (`order.cancel()`, `account.lockDeposit(amount)`).
+- Business rule violations throw immediately inside the domain.
+- Never create a Repository for an internal Entity — only for Aggregate Roots.
+- Cross-Aggregate references use ID only, never object references.
+- JPA `@Entity` and DDD Entity are separate — ORM annotations must not appear in the domain layer.
 
-## Project-Specific Application
+## Do Not Repeat
 
-- `trading-api` ↔ `collector-api`: separate Bounded Contexts. Apply ACL when consuming market quotes.
-- `trading-api`: `domain` package = pure domain model.
-- `collector-api`: `domain` package = pure domain model.
-- `quant-worker`: dataclasses act as Value Objects.
+- **Repository for internal Entity**: `ExecutionRepository`, `RiskPolicyRepository`, etc. are violations. Internal entities are accessed only through the Root's collection.
+- **Cross-Aggregate object reference**: `Execution.order: Order` is a violation. Use `Execution.orderId: Long`.
+
+## Project-Specific
+
+- `trading-api` ↔ `collector-api`: separate Bounded Contexts. Apply ACL at the market quote boundary.
+- `trading-api` Aggregate Roots: `Order`, `Account`, `Position`, `Strategy`.
+- `trading-api` domain package must be pure Kotlin — no Spring, no JPA.

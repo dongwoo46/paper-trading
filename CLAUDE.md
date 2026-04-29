@@ -1,77 +1,122 @@
-페르소나: FAANG급 시니어 엔지니어 + 금융 시스템 전문가 + 헤지펀드 퀀트 + 시니어 PM
+## Project Overview
 
-## 프로젝트 개요
+Paper trading (LOCAL/KIS) + algorithmic trading platform.
+Market data collection → strategy execution → order/execution/settlement → portfolio analysis.
 
-모의투자(LOCAL/KIS) + 알고리즘 트레이딩 플랫폼.
-시장 데이터 수집 → 전략 실행 → 주문/체결/정산 → 포트폴리오 분석.
+- trading-api: orders, executions, accounts, positions, settlement — Kotlin/Spring Boot 3/JPA/PostgreSQL/Redis
+- collector-api: real-time quote collection, Redis publishing — Kotlin/Spring Boot 3/Redis
+- quant-worker: daily OHLCV collection, backtesting, AI quant strategies — Python 3.11/FastAPI/SQLAlchemy/LangChain
+- trading-web: operations dashboard UI — React/TypeScript/Vite
 
-- trading-api: 주문·체결·계좌·포지션·정산 — Kotlin/Spring Boot 3/JPA/PostgreSQL/Redis
-- collector-api: 실시간 시세 수집·Redis 발행 — Kotlin/Spring Boot 3/Redis
-- quant-worker: 일봉 OHLCV 수집·백테스팅·AI 퀀트 전략 — Python 3.11/FastAPI/SQLAlchemy/LangChain
-- trading-web: 운영 대시보드 UI — React/TypeScript/Vite
-
-데이터 흐름: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (체결 엔진)
-
-세션 시작 시 반드시 읽기: `docs/state.md` → `docs/TODO.md` → `docs/phase/{project}/{feature}/index.json`
+Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (matching engine)
 
 ---
 
-## CRITICAL — 절대 원칙 (예외 없음)
+## Session Boot Rules
 
-**보안**
-
-- API 키·시크릿·자격증명 하드코딩 절대 금지 → 환경변수 사용
-- 시크릿 원문 로그 출력 금지
-- 토큰 평문 저장 금지
-
-**협업 원칙**
-
-- 지시를 실행하기 전 항상 의견을 먼저 말한다 (부족한 점·불필요한 점·더 나은 대안 포함)
-- 단순 실행이 아닌 능동적 파트너로 행동한다. 사용자가 고수하면 그에 따른다.
-
-**개발 프로세스**
-
-- CRITICAL: 새 기능은 반드시 테스트 먼저 작성 (TDD: Red → Green → Refactor)
-- CRITICAL: 작은 단위로 반복 — 기능 추가/수정 하나 → 테스트 → 린트/포맷 → 커밋 → 다음
-- CRITICAL: 완료 선언 전 lint·테스트·빌드 모두 통과 필수. 하나라도 실패하면 완료 아님
-- CRITICAL: 명시된 파일만 읽는다. 추가 참조 필요 시에만 확장. 전체 탐색 금지
-- CRITICAL: 이 파일(CLAUDE.md) 작성 시 구체적이되 핵심만 간결하게
-- 기획·설계 변경은 사용자 승인 필수
-- 슬래시 커맨드는 Agent tool 서브에이전트로 실행 (직접 처리 금지)
-- 코드는 필요한 부분만 수정. 관련 없는 파일은 건드리지 않는다. 불가피하면 이유 명시
-
-## 에이전트
-
-- /orchestrate: 중앙 통제탑 — state.md + TODO.md 기반 에이전트 라우팅
-- /plan: Service Planner — 기능 명세·API·DB 설계
-- /plan-quant: Quant Planner — 전략·팩터·백테스팅 설계
-- /build: Full Stack Developer — 구현 (TDD, DDD)
-- /build-quant: Quant Developer — 퀀트 전략 구현
-- /review: Code Reviewer — 코드·보안·퀀트 수학 오류 검토
-- /test: Test Engineer — QA 검증·테스트 자동화
-
-모드: `auto` (자동) / `manual` (step마다 승인) — 언제든 전환 가능, docs/state.md에 기록
-
-워크플로우: /orchestrate → state.md → index.json → step-{n}.md → 서브에이전트 → 결과 기록
+- Read `docs/state.md` first (determine active feature)
+- Read `docs/TODO.md` only if task selection or backlog prioritization is needed
+- Read `docs/phase/{project}/{feature}/index.json` only for the active feature
+- Do not re-read unchanged state files in the same session
 
 ---
 
-## 빌드 검증 명령
+## CRITICAL — Absolute Rules (No Exceptions)
+
+**Security**
+
+- Never hardcode API keys, secrets, or credentials — use environment variables
+- Never log secrets in plaintext
+- Never store tokens in plaintext
+
+**Collaboration**
+
+- Critique before execution (risks, gaps, better alternatives)
+- Act as an active partner, not a passive executor. Follow the user if they insist.
+- Design/planning changes require user approval
+
+**Development Process**
+
+- CRITICAL: Write tests first for all business logic changes (TDD: Red → Green → Refactor)
+- CRITICAL: Infrastructure/configuration-only changes may skip test-first, but must include validation after implementation
+- CRITICAL: Work in small increments: implement → test → lint → commit
+- CRITICAL: Only read explicitly specified files. Expand only when necessary. No broad exploration
+- CRITICAL: Slash command workflows MUST delegate execution to Agent tool subagents — never via Skill tool inline
+  - Correct: `Agent(description="...", prompt="...")`
+  - Forbidden: `Skill("build", ...)` or `Skill("plan", ...)` inline execution
+- Only modify code relevant to the task. Do not touch unrelated files. If unavoidable, state the reason
+
+### Completion Criteria (Mandatory)
+
+A task is complete only if:
+
+- Build passes
+- Tests pass
+- Lint/format passes
+- No broken imports or compile errors
+- No unresolved TODO/FIXME remains in modified files
+- Relevant documentation state is updated (`state.md`, `index.json`, `TODO.md` if needed)
+
+---
+
+## CRITICAL — Financial Safety
+
+- Monetary calculations must never use floating-point types
+- Use `BigDecimal` for Kotlin/Java monetary calculations
+- Use `Decimal` for Python monetary calculations
+- All order execution flows must be idempotent
+- Order/Execution/Settlement state transitions must be explicit
+- Never mutate financial state implicitly
+- All financial state changes must be auditable and event-traceable
+
+---
+
+## CRITICAL — Subagent Cost Control
+
+- Main agent handles only: state/docs read, summary, approval, routing, trivial docs edits (≤20 lines)
+- Subagents handle: implementation, tests, refactoring, build/lint/test, multi-file changes, planning, review
+
+- Do not spawn multiple subagents for trivial tasks
+- Prefer one focused subagent per independent work item
+- Use parallel subagents only for truly independent work
+- Do not spawn an Explore agent when the file path is already known
+- Do not re-run planning agents if the approved design has not changed
+- Summarize tool/build/test outputs before passing them back to the main agent
+
+---
+
+## Agents
+
+- /orchestrate: Central control — routes agents based on state.md + TODO.md
+- /plan: Service Planner — feature spec, API design, DB schema
+- /plan-quant: Quant Planner — strategy, alpha factors, backtesting design
+- /build: Full Stack Developer — implementation (TDD, DDD)
+- /build-quant: Quant Developer — quant strategy implementation
+- /review: Code Reviewer — code, security, quant math error review
+- /test: Test Engineer — QA validation, test automation
+
+Mode: `auto` (automatic) / `manual` (approve each step) — switchable anytime, record in docs/state.md
+
+Workflow: /orchestrate → state.md → index.json → step-{n}.md → Agent tool subagent → record results
+
+---
+
+## Build Verification Commands
 
 ```
 trading-api:      cd backend/trading-api && ./gradlew compileKotlin
 collector-api:    cd backend/collector-api && ./gradlew compileKotlin
-quant-worker:     python -m py_compile {파일}
+quant-worker:     python -m py_compile {file}
 trading-web:      cd frontend/trading-web && npm run build
 ```
 
 ---
 
-## docs 기록 규칙
+## Docs Rules
 
-- 진행 중: `docs/phase/{project}/{feature}/index.json` step 업데이트
-- 완료: `docs/done/{project}/{feature}/{feature}-summary.md` 작성 → phase 폴더 이동 → `docs/TODO.md` 해당 항목 [x] 처리
-- `docs/state.md` 항상 최신 유지
-- 새 기능 추가 시: `docs/TODO.md`에 항목 먼저 추가
+- In progress: update step status in `docs/phase/{project}/{feature}/index.json`
+- Done: write `docs/done/{project}/{feature}/{feature}-summary.md` → move phase folder → mark `[x]` in `docs/TODO.md`
+- Keep `docs/state.md` always up to date
+- When adding a new feature: add entry to `docs/TODO.md` first
 
-⚠️ 세션 컨텍스트 과부하 시 새 세션으로 전환 권장
+⚠️ If session context is overloaded, switch to a new session

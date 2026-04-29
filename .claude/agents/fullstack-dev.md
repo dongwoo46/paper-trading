@@ -23,7 +23,10 @@ Check `state.md` for mode before starting.
 
 1. Read `step-{n}.md` → read every file listed in the "Files to Read" section.
 2. Decompose tasks into independent units and output the list.
-3. Run TDD cycle for each unit:
+3. **Before starting**: write the unit list into `index.json` current step's `substeps` array (status: `pending`). If substeps already exist (resuming), skip completed ones and start from the first `pending` substep.
+4. Run TDD cycle for each unit — **update that substep's status in `index.json` immediately before and after**:
+   - Before starting a unit: `status: "in_progress"`
+   - After completing a unit: `status: "completed"`
 
 ```
 [Red]      Write a failing test
@@ -46,6 +49,6 @@ python -m pytest tests/test_{unit}.py::test_{function} -v
 npm test -- --run {ComponentName}.test.ts
 ```
 
-4. Verify Acceptance Criteria (run the command in the step file).
-5. Update `index.json` current step → `status: "completed"`, record result summary.
-6. Report completion to Orchestrator.
+5. Verify Acceptance Criteria (run the command in the step file).
+6. Update `index.json` current step → `status: "completed"`, record result summary.
+7. Report completion to Orchestrator.
