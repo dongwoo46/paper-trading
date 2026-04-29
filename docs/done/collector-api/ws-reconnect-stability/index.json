@@ -1,0 +1,89 @@
+{
+  "phase": "ws-reconnect-stability",
+  "project": "collector-api",
+  "status": "done",
+  "current_step": 5,
+  "total_steps": 5,
+  "branch": "feature/collector-api-ws-reconnect-stability",
+  "worktree_path": ".worktrees/collector-api-ws-reconnect-stability",
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "agent": "service-planner",
+      "name": "Feature spec, API spec, step file generation",
+      "file": "step-1.md",
+      "status": "done",
+      "retry_count": 0,
+      "result": "spec.md + step-2..5.md generated",
+      "substeps": [
+        { "id": 1, "name": "graphify + requirements", "status": "done" },
+        { "id": 2, "name": "DDD model", "status": "done" },
+        { "id": 3, "name": "API + config design", "status": "done" },
+        { "id": 4, "name": "spec.md", "status": "done" },
+        { "id": 5, "name": "step files generation", "status": "done" }
+      ]
+    },
+    {
+      "id": 2,
+      "agent": "fullstack-dev",
+      "name": "Implementation (TDD)",
+      "file": "step-2.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "All 9 tasks implemented. compileKotlin + full test suite pass (9 new tests green).",
+      "substeps": [
+        { "id": 1, "name": "WsConnectionStatus enum", "status": "completed" },
+        { "id": 2, "name": "WsHealthSnapshot data class", "status": "completed" },
+        { "id": 3, "name": "KisWsConnectionRegistry (@Component)", "status": "completed" },
+        { "id": 4, "name": "KisWsHealthService (@Service)", "status": "completed" },
+        { "id": 5, "name": "KisWsHealthController + WsHealthSnapshotResponse", "status": "completed" },
+        { "id": 6, "name": "KisProperties — add heartbeatTimeout", "status": "completed" },
+        { "id": 7, "name": "application.yaml — add heartbeat-timeout", "status": "completed" },
+        { "id": 8, "name": "KisWebSocketCollector — add registry callbacks + timeout", "status": "completed" },
+        { "id": 9, "name": "Tests — KisWsConnectionRegistryTest + KisWsHealthServiceTest", "status": "completed" }
+      ]
+    },
+    {
+      "id": 3,
+      "agent": "test-engineer",
+      "name": "Testing and QA verification",
+      "file": "step-3.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "All 26 tests pass (0 failures, 0 skipped). Added 3 missing registry test cases + 1 multi-mode snapshot test. New KisWsHealthControllerTest (3 cases) with @WebMvcTest + @MockitoBean.",
+      "substeps": [
+        { "id": 1, "name": "feature-scoped tests", "status": "completed" },
+        { "id": 2, "name": "integration tests", "status": "completed" },
+        { "id": 3, "name": "coverage check", "status": "completed" }
+      ]
+    },
+    {
+      "id": 4,
+      "agent": "code-reviewer",
+      "name": "Code review",
+      "file": "step-4.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "PASS — 0 red items, 2 yellow items noted (no code changes required). 15 tests green, build passes.",
+      "substeps": [
+        { "id": 1, "name": "git diff + scope analysis", "status": "completed" },
+        { "id": 2, "name": "spec comparison", "status": "completed" },
+        { "id": 3, "name": "checklist review", "status": "completed" },
+        { "id": 4, "name": "result output", "status": "completed" }
+      ]
+    },
+    {
+      "id": 5,
+      "agent": "orchestrator",
+      "name": "Write summary + create PR",
+      "file": "step-5.md",
+      "status": "done",
+      "retry_count": 0,
+      "result": "26 tests pass, summary written, phase folder moved, PR #8 created."
+    }
+  ],
+  "blockers": [],
+  "created": "2026-04-29",
+  "updated": "2026-04-29"
+}
