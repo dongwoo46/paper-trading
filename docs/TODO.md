@@ -95,12 +95,12 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P0 — MVP 필수
 
-- [ ] 계좌·포지션 대시보드 | project: front | phase: account-dashboard | priority: P0
+- [x] 계좌·포지션 대시보드 | project: front | phase: account-dashboard | priority: P0 | done: 2026-04-29 | pr: #7
   - 계좌 목록 (예수금, 평가금액, 수익률)
   - 포지션 테이블 (종목, 수량, 평균단가, 현재가, 평가손익)
   - trading-api 연동 (GET /accounts, GET /positions)
 
-- [ ] 주문 관리 UI | project: front | phase: order-management-ui | priority: P0
+- [x] 주문 관리 UI | project: front | phase: order-management-ui | priority: P0 | done: 2026-04-29 | pr: #6
   - 주문 생성 폼 (종목 검색, 수량/가격 입력, 매수/매도, 모드 선택)
   - 주문 내역 테이블 (상태별 필터, 취소 버튼)
   - trading-api 연동 (POST /orders, GET /orders, DELETE /orders/{id})

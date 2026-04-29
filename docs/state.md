@@ -10,7 +10,8 @@ idle
 없음
 
 ## 마지막 액션
-2026-04-28: trading-api/settlement-service 완료 — PR #5 생성 (feat: T+2 정산 처리 서비스)
+2026-04-29: front/account-dashboard 완료 — PR #7 생성 (계좌·포지션 대시보드)
+2026-04-29: front/order-management-ui 완료 — PR #6 생성 (주문 관리 UI)
 
 ## 다음 액션
-TODO.md 기반 다음 우선순위 확인 필요
+/orchestrate 실행 시 TODO.md의 미완료 항목 제안
