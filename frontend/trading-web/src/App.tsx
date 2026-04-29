@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AccountDashboardPage } from "./pages/account/ui/AccountDashboardPage";
 import { HistoricalPage } from "./pages/historical/ui/HistoricalPage";
 import { HomePage } from "./pages/home/ui/HomePage";
 import { MacroPage } from "./pages/macro/ui/MacroPage";
@@ -32,6 +33,8 @@ function App() {
         return "과거 OHLCV 수집";
       case "/macro":
         return "거시경제 데이터";
+      case "/account":
+        return "계좌·포지션";
       default:
         return "Trading Console";
     }
@@ -50,6 +53,7 @@ function App() {
             <Route path="/realtime" element={<RealtimePage />} />
             <Route path="/historical" element={<HistoricalPage />} />
             <Route path="/macro" element={<MacroPage />} />
+            <Route path="/account" element={<AccountDashboardPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
