@@ -58,11 +58,19 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1 — 운영 안정성
 
-- [ ] REST 폴링 fallback 안정화 | project: collector-api | phase: rest-polling-fallback | priority: P1
-  - WebSocket 연결 끊김 시 REST 폴링으로 자동 전환
-  - 재연결 backoff 전략 구체화 및 테스트
+- [x] WS 재연결 안정화 | project: collector-api | phase: ws-reconnect-stability | priority: P1 | done: 2026-04-29 | pr: #8
+  - heartbeat / pong timeout 감지
+  - exponential backoff 재연결 (1s → 30s 상한)
+  - 재연결 시 활성 구독 자동 복구
+  - GET /api/kis/ws/health — 모드별 연결 상태 노출
 
-- [ ] 구독 상태 모니터링 API | project: collector-api | phase: subscription-monitor | priority: P1
+- [ ] 구독 우선순위 라우팅 | project: collector-api | phase: subscription-routing | priority: P2
+  - 전략 종목 WS 우선 배정, 초과 시 REST overflow 자동화
+  - WS 슬롯 해제 시 REST → WS 자동 승격
+  - 내부 priority API (strategy-execution에서 호출)
+  - ⚠️ strategy-execution phase 완료 후 설계할 것
+
+- [x] 구독 상태 모니터링 API | project: collector-api | phase: subscription-monitor | priority: P1 | done: 2026-04-30 | pr: #TBD
   - GET /api/subscriptions/status — 현재 구독 종목·연결 상태 조회
   - 운영 대시보드 연동용
 
@@ -78,7 +86,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P0 — MVP 필수
 
-- [ ] PostgreSQL 직접 적재 연동 | project: quant-worker | phase: db-persistence | priority: P0
+- [x] PostgreSQL 직접 적재 연동 | project: quant-worker | phase: db-persistence | priority: P0 | done: 2026-04-29 | pr: #8
   - 현재 파일 기반(data/) 출력 → PostgreSQL market_daily_ohlcv 직접 적재로 전환
   - SQLAlchemy + collector-api DB 연결 설정
   - Flyway 마이그레이션 또는 collector-api 통해 적재 방식 결정
