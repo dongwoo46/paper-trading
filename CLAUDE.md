@@ -45,6 +45,18 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
   - Correct: `Agent(description="...", prompt="...")`
   - Forbidden: `Skill("build", ...)` or `Skill("plan", ...)` inline execution
 - Only modify code relevant to the task. Do not touch unrelated files. If unavoidable, state the reason
+- Write the minimum code that solves the problem. Do not implement for imagined future requirements.
+- If refactoring, large-scale changes, or improvements beyond the task scope are needed, propose them to the user and wait for approval before proceeding.
+
+### Goal-Driven Execution
+
+Before starting any task, define the success criteria first. Then verify at each step until met.
+
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+Multi-step tasks: plan as `[Step] → verify: [check]` before executing.
 
 ### Completion Criteria (Mandatory)
 
