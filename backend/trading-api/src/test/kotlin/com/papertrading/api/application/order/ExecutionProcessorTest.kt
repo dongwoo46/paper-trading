@@ -24,14 +24,17 @@ import com.papertrading.api.infrastructure.persistence.PendingSettlementReposito
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementExecutionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementRepository
+import com.papertrading.api.domain.event.ExecutionFilledEvent
 import io.mockk.every
 import io.mockk.just
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.springframework.context.ApplicationEventPublisher
 import java.math.BigDecimal
 import java.util.Optional
 
@@ -47,6 +50,9 @@ class ExecutionProcessorTest {
     private val pendingSettlementRepository = mockk<PendingSettlementRepository>()
     private val settlementRepository = mockk<SettlementRepository>()
     private val settlementExecutionRepository = mockk<SettlementExecutionRepository>()
+    private val eventPublisher = mockk<ApplicationEventPublisher>().also {
+        justRun { it.publishEvent(any<Any>()) }
+    }
 
     private val processor = ExecutionProcessor(
         orderRepository = orderRepository,
@@ -59,6 +65,7 @@ class ExecutionProcessorTest {
         pendingSettlementRepository = pendingSettlementRepository,
         settlementRepository = settlementRepository,
         settlementExecutionRepository = settlementExecutionRepository,
+        eventPublisher = eventPublisher,
     )
 
     private fun account(tradingMode: TradingMode, deposit: BigDecimal = BigDecimal("1000000")): Account =
@@ -160,5 +167,32 @@ class ExecutionProcessorTest {
         // amount = netProceeds = 350000
         val expectedAmount = fillPrice.multiply(fillQty) // fee=0
         assertEquals(0, expectedAmount.compareTo(pendingSlot.captured.amount))
+    }
+
+    /** Spec Test 1C: verify publishEvent(ExecutionFilledEvent) called after fill() with correct ticker, side, executionId */
+    @Test
+    fun `fill publishes ExecutionFilledEvent with correct ticker, side, and executionId`() {
+        val account = account(TradingMode.LOCAL)
+        val order = sellOrder(account, qty = BigDecimal("5"))
+        val fillPrice = BigDecimal("70000")
+        val fillQty = BigDecimal("5")
+
+        setupCommonMocks(account, order)
+        every { executionRepository.save(any()) } answers {
+            firstArg<Execution>().apply { id = 300L }
+        }
+
+        val eventSlot = slot<ExecutionFilledEvent>()
+        justRun { eventPublisher.publishEvent(capture(eventSlot)) }
+
+        processor.fill(10L, fillPrice, fillQty)
+
+        verify(exactly = 1) { eventPublisher.publishEvent(any<ExecutionFilledEvent>()) }
+
+        val publishedEvent = eventSlot.captured
+        assertEquals(300L, publishedEvent.executionId)
+        assertEquals(10L, publishedEvent.orderId)
+        assertEquals("005930", publishedEvent.ticker)
+        assertEquals(OrderSide.SELL, publishedEvent.side)
     }
 }
