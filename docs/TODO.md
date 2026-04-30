@@ -70,7 +70,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 내부 priority API (strategy-execution에서 호출)
   - ⚠️ strategy-execution phase 완료 후 설계할 것
 
-- [ ] 구독 상태 모니터링 API | project: collector-api | phase: subscription-monitor | priority: P1
+- [x] 구독 상태 모니터링 API | project: collector-api | phase: subscription-monitor | priority: P1 | done: 2026-04-30 | pr: #TBD
   - GET /api/subscriptions/status — 현재 구독 종목·연결 상태 조회
   - 운영 대시보드 연동용
 
