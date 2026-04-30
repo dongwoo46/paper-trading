@@ -4,55 +4,64 @@
 
 ### 커맨드
 
-| 커맨드 | 역할 | 실행 시점 |
-|--------|------|-----------|
-| `/design` | 기획·설계 (Planner) | 기능 개발 전 항상 |
-| `/build` | 구현 (Builder + Tester) | `/design` 승인 후 |
-| `/review` | 코드 리뷰 (Reviewer) | 구현 중간·완료 후 |
-| `/cleanup` | 브랜치 정리 · PR 생성 | 작업 완료 후 |
+| 커맨드 | 담당 에이전트 | 역할 |
+|--------|--------------|------|
+| `/orchestrate` | Orchestrator | 중앙 통제탑 — 상태 읽기·에이전트 라우팅·실패 처리 |
+| `/plan` | Service Planner | 기능 명세·API 설계·DB 스키마 |
+| `/plan-quant` | Quant Planner | 퀀트 전략·알파 팩터·백테스팅 설계 |
+| `/build` | Full Stack Dev | 프론트+백엔드+DB 구현 (TDD) |
+| `/build-quant` | Quant Dev | 퀀트 전략 구현·백테스팅 엔진 |
+| `/review` | Code Reviewer | 코드·보안·퀀트 수학 오류 검토 |
+| `/test` | Test Engineer | QA 검증·테스트 자동화 |
+| `/cleanup` | Orchestrator | 요약 작성·PR 생성 |
 
 ### 전체 흐름
 
 ```
-/design → 승인 → /build → /review → /cleanup
+/orchestrate → state.md 확인 → index.json 로드 → 에이전트 라우팅
 ```
 
-### `/design`
-```
-/design [기능 설명]
-예) /design 주문 체결 시 포지션 자동 업데이트
-```
-요구사항 정리 → 설계안 작성 → **사용자 승인 대기** → 구현 계획 분해
+개발은 `/orchestrate` 하나로 시작한다. 오케스트레이터가 `docs/state.md`와 `docs/phase/{project}/{feature}/index.json`을 읽어 현재 상태를 파악하고, 다음 에이전트를 자동으로 호출한다.
 
-### `/build`
-```
-/build          # 모드 선택 질문
-/build step     # 작업마다 승인
-/build auto     # 전체 자동 실행
-```
-실행 중 전환: `step` / `auto` / `stop` 입력
+### `/orchestrate`
 
-### `/review`
 ```
-/review
+/orchestrate
 ```
-결과: 🔴 필수 수정 / 🟡 권장 개선 / 🟢 확인 완료
 
-### `/cleanup`
-```
-/cleanup
-```
-git 상태 확인 → PR 초안 → **사용자 승인 대기** → `gh pr create`
+- **idle 상태**: `docs/TODO.md`에서 미완료 항목을 제안하고 새 기능 개발을 시작
+- **in_progress 상태**: 중단된 지점부터 자동 재개
+- **blocked 상태**: 블로커 내용을 보고하고 사용자 판단 대기
 
-### Codex 등 다른 AI에서 사용
-슬래시 커맨드 대신 파일을 직접 참조한다.
+모드 전환: 대화 중 `auto` / `manual` / `stop` 입력
+
 ```
-@.agents/commands/design.md
-@.agents/commands/build.md
-@.agents/commands/review.md
-@.agents/commands/cleanup.md
-[기능 설명]
+auto   → 모든 step을 자동 실행
+manual → 각 step 전 "진행할까요?" 대기
+stop   → 현재 step을 paused로 기록하고 중단
 ```
+
+### 단계별 흐름 (기본 5-step)
+
+```
+step 1: /plan      — 기능 명세·API 설계·DB 스키마·step 파일 생성
+step 2: /build     — TDD 구현 (Red → Green)
+step 3: /test      — QA 검증·커버리지 확인
+step 4: /review    — 코드·보안 검토 (🔴 필수 수정 / 🟡 권장 / 🟢 통과)
+step 5: /cleanup   — 요약 작성·PR 생성
+```
+
+퀀트 기능은 `/plan` → `/plan-quant`, `/build` → `/build-quant`로 교체한다.
+
+### 상태 파일
+
+| 파일 | 역할 |
+|------|------|
+| `docs/state.md` | 전역 상태 — 모드, 활성 Phase, 마지막/다음 액션 |
+| `docs/phase/{project}/{feature}/index.json` | 기능별 상태 머신 — step 진행 상태·retry_count·결과 |
+| `docs/TODO.md` | 기능 백로그 |
+
+세션이 끊겨도 `/orchestrate`를 실행하면 상태 파일 기준으로 중단 지점부터 재개된다.
 
 ---
 

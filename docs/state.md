@@ -10,7 +10,7 @@ idle
 (없음)
 
 ## 마지막 액션
-2026-04-30: collector-api/subscription-monitor 완료 — PR #TBD 생성
+2026-04-30: collector-api/subscription-monitor 완료 — PR #9 생성
 
 ## 다음 액션
 /orchestrate 실행하여 다음 Phase 선택
