@@ -1,0 +1,95 @@
+{
+  "phase": "realtime-execution",
+  "project": "front",
+  "status": "done",
+  "current_step": 5,
+  "total_steps": 5,
+  "branch": "feature/front-realtime-execution",
+  "worktree_path": ".worktrees/front-realtime-execution",
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "agent": "service-planner",
+      "name": "Feature spec, API spec, step file generation",
+      "file": "step-1.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "SSE transport selected; backend SSE endpoint added to trading-api; spec.md + step-2~5.md generated",
+      "substeps": [
+        { "id": 1, "name": "codebase exploration + requirements", "status": "completed" },
+        { "id": 2, "name": "transport + component design", "status": "completed" },
+        { "id": 3, "name": "spec.md", "status": "completed" },
+        { "id": 4, "name": "step files generation", "status": "completed" }
+      ]
+    },
+    {
+      "id": 2,
+      "agent": "fullstack-dev",
+      "name": "Implementation (TDD)",
+      "file": "step-2.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "Backend SSE (ExecutionFilledEvent→ExecutionSseRegistry→ExecutionSseController→EventHandler) + Frontend SSE hook, Zustand toast store, Toast UI, ExecutionToastProvider; all tests green; compileKotlin PASS; npm build PASS",
+      "substeps": [
+        { "id": "A-1", "name": "ExecutionFilledEvent (domain event)", "status": "completed" },
+        { "id": "A-2", "name": "ExecutionSseEvent (SSE DTO)", "status": "completed" },
+        { "id": "A-3", "name": "ExecutionSseRegistry", "status": "completed" },
+        { "id": "A-4", "name": "ExecutionSseController", "status": "completed" },
+        { "id": "A-5", "name": "ExecutionSseEventHandler", "status": "completed" },
+        { "id": "A-6", "name": "ExecutionProcessor modification", "status": "completed" },
+        { "id": "A-7", "name": "@EnableAsync check", "status": "completed" },
+        { "id": "A-8", "name": "Backend compileKotlin verification", "status": "completed" },
+        { "id": "B-1", "name": "ExecutionEvent type (frontend)", "status": "completed" },
+        { "id": "B-2", "name": "useExecutionSse hook", "status": "completed" },
+        { "id": "B-3", "name": "useToastStore (zustand)", "status": "completed" },
+        { "id": "B-4", "name": "Toast UI components", "status": "completed" },
+        { "id": "B-5", "name": "ExecutionToastProvider", "status": "completed" },
+        { "id": "B-6", "name": "App.tsx modification", "status": "completed" },
+        { "id": "B-7", "name": "Frontend build verification", "status": "completed" }
+      ]
+    },
+    {
+      "id": 3,
+      "agent": "test-engineer",
+      "name": "Testing and QA verification",
+      "file": "step-3.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "backend: 21/21 feature-scoped tests pass (3 ExecutionProcessor + 7 ExecutionSseRegistry + 1 ExecutionSseController + 10 ExecutionSseEvent); frontend: 65/65 tests pass across 12 files (10 new: 4 useToastStore + 4 ToastItem + 2 ToastContainer); 6 pre-existing Docker-dependent integration tests excluded",
+      "substeps": [
+        { "id": 1, "name": "feature-scoped tests", "status": "completed" },
+        { "id": 2, "name": "edge case tests", "status": "completed" },
+        { "id": 3, "name": "full suite + coverage check", "status": "completed" }
+      ]
+    },
+    {
+      "id": 4,
+      "agent": "code-reviewer",
+      "name": "Code review",
+      "file": "step-4.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "FSD violation fixed (shared/ imported from features/): Toast type extracted to shared/ui/Toast/types.ts, ToastContainer made prop-driven, App.tsx wires zustand; CORS comment added; all builds + 65 frontend + 11 backend tests pass",
+      "substeps": [
+        { "id": 1, "name": "git diff + scope analysis", "status": "completed" },
+        { "id": 2, "name": "security + correctness review", "status": "completed" },
+        { "id": 3, "name": "architecture + TypeScript hygiene", "status": "completed" },
+        { "id": 4, "name": "result output", "status": "completed" }
+      ]
+    },
+    {
+      "id": 5,
+      "agent": "orchestrator",
+      "name": "Write summary + create PR",
+      "file": "step-5.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "Summary written, phase folder moved, TODO/state/index.json updated, committed on feature branch"
+    }
+  ],
+  "blockers": [],
+  "created": "2026-04-30",
+  "updated": "2026-04-30",
+  "completed": "2026-04-30"
+}

@@ -25,10 +25,18 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1 — 운영 안정성
 
-- [ ] KIS LIVE 주문 연동 완성 | project: trading-api | phase: kis-live-order | priority: P1
-  - KisLiveOrderExecutor 실주문 흐름 E2E 검증
+- [ ] KIS 체결통보 WebSocket 연동 | project: trading-api | phase: kis-execution-ws | priority: P1
+  - KIS WebSocket 체결통보 구독: H0STCNI9 (모의투자) / H0STCNI0 (실전)
+  - 체결 이벤트 수신 → ExecutionProcessor.fill() → SSE 알림까지 연결
+  - 기존 KisPaperPollingScheduler 제거 (WebSocket으로 대체)
   - 주문 거부/에러 응답 처리 (에러 코드 → 도메인 예외 매핑)
-  - KIS 토큰 갱신 로직 안정화
+  - KIS 토큰 갱신 로직 안정화 (WebSocket 재인증 포함)
+
+- [ ] KIS 실계좌 데이터 조회 | project: trading-api | phase: kis-account-sync | priority: P1
+  - KIS 잔고조회 API 연동 (TTTC8434R live / VTTC8434R paper) → 보유주식·평가금액·수익률
+  - KisAccountQueryService: KIS 계좌 잔고 + 포지션 동기화
+  - GET /api/kis/account/balance — 실계좌 잔고·평가손익 응답
+  - trading-web 대시보드에 KIS 실계좌 잔고 반영 (KIS/LOCAL 계좌 구분 표시)
 
 - [ ] 전략 실행 서비스 | project: trading-api | phase: strategy-execution | priority: P1
   - StrategyCommandService: 전략 활성화/비활성화
@@ -120,7 +128,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1 — 운영 편의
 
-- [ ] 실시간 체결 알림 | project: front | phase: realtime-execution | priority: P1
+- [x] 실시간 체결 알림 | project: front | phase: realtime-execution | priority: P1 | done: 2026-04-30 | pr: #10
   - WebSocket 또는 SSE로 체결 이벤트 수신
   - 체결 토스트 알림
 
