@@ -353,9 +353,14 @@ The two worktrees are fully independent — parallel work with no file conflicts
 
 ## New Phase Creation (when state.md is idle)
 
-1. Read `docs/TODO.md` → output list of incomplete (`[ ]`) items.
-2. Confirm development target with user (select TODO item or define new feature).
-3. Create worktree: `git worktree add .worktrees/{project}-{feature} -b feature/{project}-{feature}`
+1. **Pull main before creating worktree** (mandatory):
+   ```bash
+   git pull origin main
+   ```
+   If conflicts exist, resolve docs/ conflicts first, then proceed.
+2. Read `docs/TODO.md` → output list of incomplete (`[ ]`) items.
+3. Confirm development target with user (select TODO item or define new feature).
+4. Create worktree: `git worktree add .worktrees/{project}-{feature} -b feature/{project}-{feature}`
 4. Create `docs/phase/{project}/{feature}/` folder.
 5. Create `index.json` (include `worktree_path`, `branch`).
 6. Create `step-1.md` (Service/Quant Planner initial template).
