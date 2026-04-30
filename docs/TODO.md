@@ -120,7 +120,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1 — 운영 편의
 
-- [ ] 실시간 체결 알림 | project: front | phase: realtime-execution | priority: P1
+- [x] 실시간 체결 알림 | project: front | phase: realtime-execution | priority: P1 | done: 2026-04-30 | pr: #TBD
   - WebSocket 또는 SSE로 체결 이벤트 수신
   - 체결 토스트 알림
 
