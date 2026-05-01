@@ -55,6 +55,17 @@ WRONG:    .worktrees/{project}-{feature}/docs/...
 
 ---
 
+## Test Scope Policy
+
+- Intermediate implementation, rework, and QA steps run only tests created or changed for the current phase plus directly related regression tests.
+- Use targeted commands such as `./gradlew test --tests "com.papertrading.api.<package>.<TestClass>"`, specific `pytest` files/functions, or specific frontend test files.
+- Do not run a full service test suite in the middle of a phase, even if an older step file includes that command.
+- The full test suite is allowed only at the final phase completion gate before cleanup/PR.
+- The final full-suite gate should be delegated to a dedicated `test-engineer` verification worker, not to each implementation/rework worker.
+- If a full-suite command is blocked by `pre-bash-guard.sh`, route the agent back to targeted tests instead of retrying the same full-suite command.
+
+---
+
 ## Mandatory Doc Update (after every step, no exceptions)
 
 **When a step is PASSED**, update BOTH files immediately before invoking the next step:
@@ -518,7 +529,7 @@ When you finish, output a completion report in EXACTLY this format so the Orches
 
 ## Phase Completion
 
-**Step 0 — Full Test Suite Gate (mandatory before PR)**
+**Step 0 — Full Test Suite Gate (mandatory before PR, final step only)**
 Run the complete test suite for every service touched in this phase.
 All tests must pass. If any fail, route back to fullstack-dev before proceeding.
 ```bash

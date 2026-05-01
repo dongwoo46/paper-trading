@@ -49,6 +49,7 @@ python -m pytest tests/test_{unit}.py::test_{function} -v
 npm test -- --run {ComponentName}.test.ts
 ```
 
-5. Verify Acceptance Criteria (run the command in the step file).
+5. Verify Acceptance Criteria with targeted tests for the code changed in this step plus compile checks.
+   Do not run the full test suite in intermediate implementation/rework steps; full suite runs only at the final phase completion gate.
 6. Update `index.json` current step → `status: "completed"`, record result summary.
 7. Report completion to Orchestrator.

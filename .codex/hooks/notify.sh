@@ -1,7 +1,27 @@
 #!/bin/bash
-# Stop hook — manual mode / blocked 상태에서 소리 + Windows 알림
+# Notification/Stop hook — permission/user-choice requests and blocked/manual stops notify the user.
 
 STATE_FILE="docs/state.md"
+INPUT=$(cat)
+
+HOOK_EVENT=$(echo "$INPUT" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    d = {}
+print(d.get('hook_event_name') or d.get('event') or '')
+" 2>/dev/null)
+
+HOOK_MESSAGE=$(echo "$INPUT" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    d = {}
+msg = d.get('message') or d.get('notification') or d.get('reason') or ''
+print(str(msg).replace('\r', ' ').replace('\n', ' ')[:220])
+" 2>/dev/null)
 
 MODE=$(grep -A1 "## 모드" "$STATE_FILE" 2>/dev/null | tail -1 | tr -d ' \r')
 STATUS=$(grep -A1 "## 상태" "$STATE_FILE" 2>/dev/null | tail -1 | tr -d ' \r')
@@ -11,15 +31,23 @@ NEEDS_APPROVAL=0
 TITLE=""
 MESSAGE=""
 
-if [ "$MODE" = "manual" ]; then
+if [ "$HOOK_EVENT" = "Notification" ]; then
   NEEDS_APPROVAL=1
-  TITLE="✋ 승인 필요 — Claude Code"
+  TITLE="승인/선택 필요 — Codex"
+  if [ -n "$HOOK_MESSAGE" ]; then
+    MESSAGE="$HOOK_MESSAGE"
+  else
+    MESSAGE="Codex가 사용자 승인 또는 선택을 기다리고 있습니다."
+  fi
+elif [ "$MODE" = "manual" ]; then
+  NEEDS_APPROVAL=1
+  TITLE="승인 필요 — Codex"
   MESSAGE="에이전트가 대기 중입니다. 확인 후 진행해 주세요."
 fi
 
 if [ "$STATUS" = "blocked" ]; then
   NEEDS_APPROVAL=1
-  TITLE="🚨 긴급 개입 필요 — Claude Code"
+  TITLE="개입 필요 — Codex"
   MESSAGE="Phase가 blocked 상태입니다. 수동 확인이 필요합니다."
 fi
 

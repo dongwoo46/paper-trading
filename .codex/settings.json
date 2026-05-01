@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .codex/hooks/pre-bash-guard.sh"
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .codex/hooks/pre-bash-guard.ps1"
           }
         ]
       }
@@ -41,9 +41,23 @@
         ]
       }
     ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .codex/hooks/notify.ps1"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .codex/hooks/notify.ps1"
+          },
           {
             "type": "command",
             "command": "bash .codex/hooks/compile-dirty.sh"
@@ -51,10 +65,6 @@
           {
             "type": "command",
             "command": "bash .codex/hooks/on-stop.sh"
-          },
-          {
-            "type": "command",
-            "command": "bash .codex/hooks/notify.sh"
           }
         ]
       }

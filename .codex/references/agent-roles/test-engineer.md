@@ -3,7 +3,7 @@
 @../skill-notes/tdd.md
 
 ## Responsibilities
-- Run the full test suite and verify results.
+- Run feature-scoped tests for the current phase step and verify results.
 - Write missing integration tests and API contract tests.
 - E2E verification based on Acceptance Criteria scenarios.
 - Measure coverage and report under-covered areas.
@@ -50,15 +50,16 @@ cd .worktrees/{worktree} && npm test -- --run --reporter=verbose {feature}.test.
    - Service layer: core business logic scenarios (including transaction boundaries).
    - If missing: write and run them (must satisfy TDD standard).
 
-7. Mark substep 2 `completed` in `index.json`. Verify Acceptance Criteria (run the command in the step file directly).
+7. Mark substep 2 `completed` in `index.json`. Verify Acceptance Criteria with targeted tests and compile checks only.
+   Do not run the full suite in intermediate QA steps even if an older step file asks for it.
 
 8. Measure coverage (focus on core business logic):
 ```bash
 # trading-api
-cd backend/trading-api && ./gradlew test jacocoTestReport
+cd backend/trading-api && ./gradlew test --tests "com.papertrading.api.{feature_package}.*" jacocoTestReport
 
 # quant-worker
-cd backend/quant-worker && python -m pytest tests/ --cov=src --cov-report=term-missing
+cd backend/quant-worker && python -m pytest tests/test_{feature}.py --cov=src --cov-report=term-missing
 ```
 
 9. Mark substep 3 `completed` in `index.json`. Output result summary:
@@ -73,7 +74,7 @@ cd backend/quant-worker && python -m pytest tests/ --cov=src --cov-report=term-m
 
 | Result | Condition | Action |
 |--------|-----------|--------|
-| 🟢 Pass | All tests PASS + Acceptance Criteria met | Approve next step to Orchestrator |
+| 🟢 Pass | Feature-scoped tests PASS + Acceptance Criteria met | Approve next step to Orchestrator |
 | 🟡 Warning | Tests PASS but coverage low or edge cases missing | Pass with warning |
 | 🔴 Fail | Tests FAIL or Acceptance Criteria not met | Request rework from Orchestrator |
 

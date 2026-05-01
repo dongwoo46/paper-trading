@@ -3,6 +3,9 @@
 .env*
 .env
 
+# Windows/MSYS2 crash dumps
+*.stackdump
+
 # Git worktrees
 .worktrees/
 .claude/worktrees/
