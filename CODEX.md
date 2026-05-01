@@ -43,9 +43,9 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
 - CRITICAL: Infrastructure/configuration-only changes may skip test-first, but must include validation after implementation
 - CRITICAL: Work in small increments: implement → test → lint → commit
 - CRITICAL: Only read explicitly specified files. Expand only when necessary. No broad exploration
-- CRITICAL: Slash command workflows MUST delegate execution to Agent tool subagents — never via Skill tool inline
-  - Correct: `Agent(description="...", prompt="...")`
-  - Forbidden: `Skill("build", ...)` or `Skill("plan", ...)` inline execution
+- CRITICAL: Slash command workflows MUST delegate execution to Codex subagents via `spawn_agent`/`wait_agent` — never via inline Skill execution
+  - Correct: `spawn_agent(...)` then collect with `wait_agent(...)`
+  - Forbidden: inline Skill-based implementation execution
 - Only modify code relevant to the task. Do not touch unrelated files. If unavoidable, state the reason
 - Write the minimum code that solves the problem. Do not implement for imagined future requirements.
 - If refactoring, large-scale changes, or improvements beyond the task scope are needed, propose them to the user and wait for approval before proceeding.
@@ -111,7 +111,7 @@ A task is complete only if:
 
 Mode: `auto` (automatic) / `manual` (approve each step) — switchable anytime, record in docs/state.md
 
-Workflow: /orchestrate → state.md → index.json → step-{n}.md → Agent tool subagent → record results
+Workflow: /orchestrate → state.md → index.json → step-{n}.md → Codex subagent (`spawn_agent`) → record results
 
 ---
 

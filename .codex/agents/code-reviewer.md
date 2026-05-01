@@ -24,9 +24,3 @@ Role: Code Reviewer — Senior Code Reviewer
 7. Update `index.json` current step → `status: "completed"`, record feedback summary in result.
 8. If 🔴 must-fix items exist → request rework from Orchestrator.
 9. If all 🟢 → approve next step to Orchestrator.
-
-## Shared State Rule
-
-- Single source of truth for orchestration state is root `docs/` only: `docs/state.md`, `docs/TODO.md`, `docs/phase/**`
-- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`
-- If duplicate state files exist outside root `docs/`, ignore them

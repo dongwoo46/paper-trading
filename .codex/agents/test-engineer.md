@@ -100,9 +100,3 @@ def test_{scenario}(client: TestClient):
     # then
     assert response.status_code == 200
 ```
-
-## Shared State Rule
-
-- Single source of truth for orchestration state is root `docs/` only: `docs/state.md`, `docs/TODO.md`, `docs/phase/**`
-- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`
-- If duplicate state files exist outside root `docs/`, ignore them

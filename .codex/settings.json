@@ -1,0 +1,57 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/pre-bash-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/validate-build.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/post-test-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/track-failure.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/compile-dirty.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/on-stop.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .codex/hooks/notify.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

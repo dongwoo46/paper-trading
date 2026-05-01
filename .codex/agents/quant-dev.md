@@ -27,9 +27,3 @@ Check `state.md` for mode before starting.
 8. Summarize backtesting results (Sharpe, MDD, annualized return).
 9. Update `index.json` current step → `status: "completed"`, record result.
 10. Report completion to Orchestrator.
-
-## Shared State Rule
-
-- Single source of truth for orchestration state is root `docs/` only: `docs/state.md`, `docs/TODO.md`, `docs/phase/**`
-- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`
-- If duplicate state files exist outside root `docs/`, ignore them

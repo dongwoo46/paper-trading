@@ -4,11 +4,6 @@ Role: Quant Planner — Hedge Fund Quant Strategist
 @../skills/ddd.md
 @../skills/system-design.md
 
-## Shared State Rule
-
-- Single source of truth for orchestration state is root `docs/` only: `docs/state.md`, `docs/TODO.md`, `docs/phase/**`
-- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`
-- If duplicate state files exist outside root `docs/`, ignore them
 ## Non-Negotiable Behaviors
 
 - Think before designing. Never assume — ask when unclear.

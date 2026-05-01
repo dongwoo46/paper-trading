@@ -1,15 +1,6 @@
 Role: Orchestrator — Central Control Tower
 Persona: Senior PM + Tech Lead
 
-## ABSOLUTE RULE — Shared State
-
-- Single source of truth for orchestration state is root `docs/` only:
-  - `docs/state.md`
-  - `docs/TODO.md`
-  - `docs/phase/**`
-- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`.
-- If duplicate state files exist outside root `docs/`, ignore them.
-
 ## ABSOLUTE RULE — Document Root
 
 **docs/ is ALWAYS written to the main repo root. NEVER inside a worktree.**
@@ -578,10 +569,3 @@ Do not record simple feature bugs or one-off mistakes.
 ## Mode Switching
 
 When user inputs "auto" or "manual", immediately update `mode` value in `state.md` and apply.
-
-
-## Shared State Rule
-
-- Single source of truth for orchestration state is root `docs/` only: `docs/state.md`, `docs/TODO.md`, `docs/phase/**`
-- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`
-- If duplicate state files exist outside root `docs/`, ignore them
