@@ -1,7 +1,7 @@
 # TODO — Paper Trading
 
 Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
-`/orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
+`$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
 
 형식: `- [ ] 설명 | project: {프로젝트} | phase: {phase명} | priority: P{n}`
 완료 시: `- [x]` 로 변경 + `| done: YYYY-MM-DD | pr: #{n}`
@@ -25,7 +25,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1 — 운영 안정성
 
-- [ ] KIS 체결통보 WebSocket 연동 | project: trading-api | phase: kis-execution-ws | priority: P1
+- [x] KIS 체결통보 WebSocket 연동 | project: trading-api | phase: kis-execution-ws | priority: P1 | done: 2026-05-02 | pr: #11
   - KIS WebSocket 체결통보 구독: H0STCNI9 (모의투자) / H0STCNI0 (실전)
   - 체결 이벤트 수신 → ExecutionProcessor.fill() → SSE 알림까지 연결
   - 기존 KisPaperPollingScheduler 제거 (WebSocket으로 대체)

@@ -1,0 +1,294 @@
+﻿{
+    "phase":  "kis-execution-ws",
+    "project":  "trading-api",
+    "status":  "completed",
+    "current_step":  11,
+    "total_steps":  11,
+    "branch":  "feature/trading-api-kis-execution-ws",
+    "worktree_path":  ".worktrees/trading-api-kis-execution-ws",
+    "parallel_groups":  [
+
+                        ],
+    "steps":  [
+                  {
+                      "id":  1,
+                      "agent":  "service-planner",
+                      "name":  "Feature spec, API spec, step file generation",
+                      "file":  "step-1.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "spec.md and step-2.md through step-5.md generated; awaiting approval to proceed to implementation.",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "graphify + requirements",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  2,
+                                           "name":  "DDD model",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  3,
+                                           "name":  "API + DB design",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  4,
+                                           "name":  "spec.md",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  5,
+                                           "name":  "step files generation",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  2,
+                      "agent":  "fullstack-dev",
+                      "name":  "Implementation (TDD)",
+                      "file":  "step-2.md",
+                      "status":  "completed",
+                      "retry_count":  1,
+                      "result":  "Step 2 implementation and final verification completed; worktree gradlew.bat test compileKotlin passed 117/117.",
+                      "substeps":  [
+                                       {
+                                           "status":  "completed",
+                                           "name":  "parser ACL DTO and tests",
+                                           "id":  1
+                                       },
+                                       {
+                                           "status":  "completed",
+                                           "name":  "idempotent KIS notice application handling",
+                                           "id":  2
+                                       },
+                                       {
+                                           "status":  "completed",
+                                           "name":  "typed KIS REST error mapping",
+                                           "id":  3
+                                       },
+                                       {
+                                           "status":  "completed",
+                                           "name":  "KIS execution WebSocket reconnect and polling deactivation",
+                                           "id":  4
+                                       },
+                                       {
+                                           "status":  "completed",
+                                           "name":  "final verification",
+                                           "id":  5
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  3,
+                      "agent":  "test-engineer",
+                      "name":  "Testing and QA verification",
+                      "file":  "step-3.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS: feature-scoped tests passed; full ./gradlew.bat test passed 117/117 after one timed-out attempt and one lock cleanup failure; ./gradlew.bat compileKotlin passed. Verified no active KisPaperPollingScheduler Spring bean/schedule, SSE GET /api/v1/executions/stream emits execution events, KIS financial fields use BigDecimal, and secret-bearing token/app secret/approval key values are not logged by inspected code/tests.",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "feature-scoped tests",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  2,
+                                           "name":  "integration tests",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  3,
+                                           "name":  "compile check",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  4,
+                      "agent":  "code-reviewer",
+                      "name":  "Code review",
+                      "file":  "step-4.md",
+                      "status":  "review_failed",
+                      "retry_count":  1,
+                      "result":  "FAIL: 🔴 Must fix: KisExecutionWebSocketManager/SpringKisExecutionWebSocketTransport never route production KIS control/auth/error frames or socket close/failure into reconnect/re-auth, and reconnect is immediate/unbounded despite configured backoff (src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionWebSocketManager.kt:45,65,70,106,123). 🔴 Must fix: KIS execution notice correlation ignores notice account identifiers and scopes only by externalOrderId + tradingMode, while the idempotency key also omits account scope, so same-mode multi-account collisions can select the wrong order or collide/dedupe incorrectly (src/main/kotlin/com/papertrading/api/application/order/KisExecutionNoticeService.kt:27; src/main/kotlin/com/papertrading/api/infrastructure/persistence/OrderRepositoryImpl.kt:51-62; src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionNoticeParser.kt:38,44-45). Tests not run in Step 4 review-only pass; Step 3 reported gradlew.bat test compileKotlin passed 117/117.",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "git diff + scope analysis",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  2,
+                                           "name":  "spec comparison",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  3,
+                                           "name":  "checklist review",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  4,
+                                           "name":  "result output",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  5,
+                      "agent":  "orchestrator",
+                      "name":  "Write summary + create PR",
+                      "file":  "step-5.md",
+                      "status":  "superseded",
+                      "retry_count":  1,
+                      "result":  "Original cleanup step superseded by Step 11 after review rework and final full-suite gate were added."
+                  },
+                  {
+                      "id":  6,
+                      "agent":  "fullstack-dev",
+                      "name":  "Code review rework",
+                      "file":  "step-6.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "Step 6 review rework completed; targeted tests passed 11/11. User approved proceeding to second review despite one final full-suite timeout; full suite deferred to final phase completion gate.",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "bounded websocket reconnect and re-auth",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  2,
+                                           "name":  "account-scoped notice correlation and idempotency",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  3,
+                                           "name":  "targeted and final verification",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  7,
+                      "agent":  "code-reviewer",
+                      "name":  "Second code review",
+                      "file":  "step-4.md",
+                      "status":  "review_failed",
+                      "retry_count":  1,
+                      "result":  "FAIL: \uD83D\uDD34 Must fix: production WebSocket initial connect failures are still not routed into bounded reconnect/re-auth. SpringKisExecutionWebSocketTransport invokes StandardWebSocketClient.execute(handler, request.url) but ignores the returned async completion, so DNS/refused/TLS/handshake failures before a WebSocketSession exists can complete exceptionally without calling request.onFailure; only post-session handleTransportError is wired. This leaves the production failure path without fresh approval-key reconnect despite the manager-level callbacks being bounded once invoked (src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionWebSocketManager.kt:100-105). \uD83D\uDFE2 Confirmed OK: auth/control messages, socket close, and manager-level transport failure now schedule bounded reconnect, evict approval keys, and fetch a fresh approval key on reconnect; no REST order submit/cancel retry is wired into reconnect (KisExecutionWebSocketManager.kt:87-101, 151-163, 166-211). \uD83D\uDFE2 Confirmed OK: KIS notice parser/service/repository now include account scope in external execution ids and order lookup when CANO + ACNT_PRDT_CD are available (KisExecutionNoticeParser.kt:33-46,100-113; KisExecutionNoticeService.kt:20-31; OrderRepositoryImpl.kt:52-72). \uD83D\uDFE2 Confirmed OK: inspected logs do not emit token, approval key, app secret, or full raw frames; targeted tests cover parser account scope, service idempotency/correlation, manager reconnect callbacks/backoff, and log redaction. Tests not run in Step 7 review-only pass; Step 6 reported targeted tests passed 11/11 and full suite was deferred.",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "git diff + scope analysis",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  2,
+                                           "name":  "spec comparison",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  3,
+                                           "name":  "checklist review",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  4,
+                                           "name":  "result output",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  8,
+                      "agent":  "fullstack-dev",
+                      "name":  "Initial WebSocket connect failure rework",
+                      "file":  "step-8.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "Step 8 initial WebSocket connect failure rework completed; targeted KisExecutionWebSocketManagerTest passed 6/6.",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "initial connect failure test",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  2,
+                                           "name":  "transport failure callback implementation",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  3,
+                                           "name":  "targeted verification",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  9,
+                      "agent":  "code-reviewer",
+                      "name":  "Final focused code review",
+                      "file":  "step-4.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS: No blocking findings in the focused Step 8 review. Confirmed initial StandardWebSocketClient.execute(...) exceptional completion is routed to request.onFailure (src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionWebSocketManager.kt:106-109), and that callback enters the existing bounded reconnect/re-auth path via handleTransportFailure -> reconnect -> evictWebSocketApprovalKey -> scheduled connectMode with fresh approval key (KisExecutionWebSocketManager.kt:156-168,189-216). Confirmed post-session transport error, socket close, auth/control reconnect, bounded backoff, fresh approval key, credential log redaction, and no REST order retry regression remain covered/unchanged in the focused manager flow (KisExecutionWebSocketManager.kt:88-109,171-224). Targeted regression test meaningfully reproduces the pre-session connect failure by returning a failed CompletableFuture from StandardWebSocketClient.execute and asserting the exact failure reaches request.onFailure; latest test XML reports KisExecutionWebSocketManagerTest passed 6/6 (src/test/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionWebSocketManagerTest.kt:108-178). Tests not run during Step 9 review-only pass.",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "git diff + scope analysis",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  2,
+                                           "name":  "spec comparison",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  3,
+                                           "name":  "checklist review",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  4,
+                                           "name":  "result output",
+                                           "status":  "completed"
+                                      }
+                                   ]
+                  },
+                  {
+                      "id":  10,
+                      "agent":  "test-engineer",
+                      "name":  "Final full test suite gate",
+                      "file":  "step-10.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS: final full-suite gate completed; worktree gradlew.bat test compileKotlin passed 122/122.",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "gradlew test compileKotlin",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  11,
+                      "agent":  "cleanup",
+                      "name":  "Summary and PR preparation",
+                      "file":  "step-11.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "Summary and PR created; phase complete."
+                  }
+              ],
+    "blockers":  [],
+    "created":  "2026-05-01",
+    "updated":  "2026-05-02"
+}
