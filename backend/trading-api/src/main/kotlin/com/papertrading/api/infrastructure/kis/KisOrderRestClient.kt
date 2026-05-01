@@ -1,6 +1,5 @@
 package com.papertrading.api.infrastructure.kis
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.model.Order
@@ -12,7 +11,6 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
-
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -58,11 +56,11 @@ class KisOrderRestClient(
             "${properties.restBaseUrl(mode)}/uapi/domestic-stock/v1/trading/order-cash",
             HttpMethod.POST,
             HttpEntity(body, headers),
-            OrderResponse::class.java,
+            Map::class.java,
         ).body
 
-        check(response?.rtCd == "0") { "KIS 주문 접수 실패: ${response?.msg}" }
-        return requireNotNull(response?.output?.orno) { "ORNO(주문번호) null" }
+        ensureSuccess(response, "KIS order placement failed")
+        return requireNotNull(outputValue(response, "ORNO")) { "ORNO(주문번호) null" }
     }
 
     /** 주문 취소 */
@@ -87,10 +85,10 @@ class KisOrderRestClient(
             "${properties.restBaseUrl(mode)}/uapi/domestic-stock/v1/trading/order-rvsecncl",
             HttpMethod.POST,
             HttpEntity(body, kisHeaders(mode, trId)),
-            OrderResponse::class.java,
+            Map::class.java,
         ).body
 
-        check(response?.rtCd == "0") { "KIS 주문 취소 실패: ${response?.msg}" }
+        ensureSuccess(response, "KIS order cancel failed")
     }
 
     /** 체결 조회 → 오늘 날짜 체결 내역 반환 */
@@ -121,17 +119,17 @@ class KisOrderRestClient(
             url,
             HttpMethod.GET,
             HttpEntity<Void>(kisHeaders(mode, ccldTrId(mode))),
-            FillInquiryResponse::class.java,
+            Map::class.java,
         ).body
 
-        if (response?.rtCd != "0") return emptyList()
+        if (rtCd(response) != "0") return emptyList()
 
-        return (response.output1 ?: emptyList()).map { item ->
+        return outputList(response, "output1").map { item ->
             FillResult(
-                externalOrderId = item.orno ?: "",
-                executedQty = item.totCcldQty?.toBigDecimalOrNull() ?: BigDecimal.ZERO,
-                executedPrice = item.avgPrvs?.toBigDecimalOrNull() ?: BigDecimal.ZERO,
-                isFullyFilled = (item.psblQty?.toBigDecimalOrNull() ?: BigDecimal.ONE) == BigDecimal.ZERO,
+                externalOrderId = item["ODNO"]?.toString() ?: "",
+                executedQty = item["TOT_CCLD_QTY"]?.toString()?.toBigDecimalOrNull() ?: BigDecimal.ZERO,
+                executedPrice = item["AVG_PRVS"]?.toString()?.toBigDecimalOrNull() ?: BigDecimal.ZERO,
+                isFullyFilled = (item["PSBL_QTY"]?.toString()?.toBigDecimalOrNull() ?: BigDecimal.ONE) == BigDecimal.ZERO,
             )
         }
     }
@@ -157,6 +155,29 @@ class KisOrderRestClient(
         return Pair(parts[0], parts[1])
     }
 
+    private fun ensureSuccess(response: Map<*, *>?, fallbackMessage: String) {
+        val rtCd = rtCd(response)
+        if (rtCd == "0") return
+        val message = message(response) ?: fallbackMessage
+        throw KisApiException(mapKisErrorCode(rtCd, message), rtCd, message)
+    }
+
+    private fun rtCd(response: Map<*, *>?): String? =
+        response?.get("rt_cd")?.toString()
+
+    private fun message(response: Map<*, *>?): String? =
+        response?.get("msg1")?.toString()
+
+    private fun outputValue(response: Map<*, *>?, key: String): String? {
+        val output = response?.get("output") as? Map<*, *> ?: return null
+        return output[key]?.toString()
+    }
+
+    private fun outputList(response: Map<*, *>?, key: String): List<Map<*, *>> {
+        val output = response?.get(key) as? List<*> ?: return emptyList()
+        return output.filterIsInstance<Map<*, *>>()
+    }
+
     // DTO
 
     data class FillResult(
@@ -166,25 +187,4 @@ class KisOrderRestClient(
         val isFullyFilled: Boolean,
     )
 
-    private data class OrderResponse(
-        @JsonProperty("rt_cd") val rtCd: String?,
-        @JsonProperty("msg1") val msg: String?,
-        @JsonProperty("output") val output: OrderOutput?,
-    )
-
-    private data class OrderOutput(
-        @JsonProperty("ORNO") val orno: String?,
-    )
-
-    private data class FillInquiryResponse(
-        @JsonProperty("rt_cd") val rtCd: String?,
-        @JsonProperty("output1") val output1: List<FillItem>?,
-    )
-
-    private data class FillItem(
-        @JsonProperty("ODNO") val orno: String?,
-        @JsonProperty("TOT_CCLD_QTY") val totCcldQty: String?,
-        @JsonProperty("AVG_PRVS") val avgPrvs: String?,
-        @JsonProperty("PSBL_QTY") val psblQty: String?,
-    )
 }

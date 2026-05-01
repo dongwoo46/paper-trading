@@ -95,6 +95,7 @@ class ExecutionProcessorTest {
             applyBuy(order.quantity, BigDecimal("60000"))
         }
         every { orderRepository.findByIdWithOptimisticLock(10L) } returns Optional.of(order)
+        every { executionRepository.findByExternalExecutionId(any()) } returns Optional.empty()
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { feePolicyRepository.findActivePolicy(any(), any(), any()) } returns Optional.empty()
         every { positionRepository.findByAccountIdAndTickerWithLock(1L, "005930") } returns Optional.of(position)

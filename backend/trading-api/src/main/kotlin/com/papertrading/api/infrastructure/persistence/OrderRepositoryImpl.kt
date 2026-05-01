@@ -4,8 +4,10 @@ import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.model.Order
 import com.papertrading.api.domain.model.QOrder
+import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import java.time.Instant
+import java.util.Optional
 
 class OrderRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
@@ -46,4 +48,26 @@ class OrderRepositoryImpl(
                 o.externalOrderId.isNotNull,
             )
             .fetch()
+
+    override fun findActiveKisOrderByExternalOrderId(
+        externalOrderId: String,
+        tradingMode: TradingMode,
+        accountScope: String?,
+    ): Optional<Order> =
+        Optional.ofNullable(
+            queryFactory
+                .select(o)
+                .from(o)
+                .join(o.account).fetchJoin()
+                .where(
+                    o.externalOrderId.eq(externalOrderId),
+                    o.account.tradingMode.eq(tradingMode),
+                    accountScopeCondition(accountScope),
+                    o.orderStatus.`in`(OrderStatus.PENDING, OrderStatus.PARTIAL),
+                )
+                .fetchOne()
+        )
+
+    private fun accountScopeCondition(accountScope: String?): BooleanExpression? =
+        accountScope?.takeIf(String::isNotBlank)?.let { o.account.externalAccountId.eq(it) }
 }

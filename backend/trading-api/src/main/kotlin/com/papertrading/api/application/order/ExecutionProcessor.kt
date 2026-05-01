@@ -56,6 +56,19 @@ class ExecutionProcessor(
 
     @Transactional
     fun fill(orderId: Long, fillPrice: BigDecimal, fillQty: BigDecimal) {
+        fill(orderId, fillPrice, fillQty, "LOCAL-${UUID.randomUUID()}", Instant.now())
+    }
+
+    @Transactional
+    fun fill(
+        orderId: Long,
+        fillPrice: BigDecimal,
+        fillQty: BigDecimal,
+        externalExecutionId: String,
+        executedAt: Instant,
+    ) {
+        if (executionRepository.findByExternalExecutionId(externalExecutionId).isPresent) return
+
         val order = orderRepository.findByIdWithOptimisticLock(orderId).orElse(null) ?: return
         if (order.orderStatus !in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) return
 
@@ -91,8 +104,8 @@ class ExecutionProcessor(
                 fee = fee,
                 currency = account.baseCurrency,
                 krwExecutedPrice = fillPrice,
-                externalExecutionId = "LOCAL-${UUID.randomUUID()}",
-                executedAt = Instant.now(),
+                externalExecutionId = externalExecutionId,
+                executedAt = executedAt,
             )
         )
         val executionId = requireNotNull(execution.id) { "saved execution.id is null" }
@@ -213,7 +226,7 @@ class ExecutionProcessor(
                 price = fillPrice,
                 fee = fee,
                 currency = requireNotNull(account.baseCurrency) { "account.baseCurrency is null: accountId=$accountId" },
-                executedAt = Instant.now(),
+                executedAt = executedAt,
             )
         )
     }
