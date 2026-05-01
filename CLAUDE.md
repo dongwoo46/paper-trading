@@ -20,6 +20,7 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
 - Do not re-read unchanged state files in the same session
 - Single source of truth for orchestrator state is `docs/` at repo root only
 - Never read/write orchestrator state under `.claude/**/docs` or `.codex/**/docs`
+- Create/remove git worktrees only under root `.worktrees/` (never under `.claude/worktrees` or `.codex/worktrees`)
 
 ---
 
@@ -52,22 +53,17 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
 
 ### Goal-Driven Execution
 
-Before starting any task, define the success criteria first. Then verify at each step until met.
-
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-Multi-step tasks: plan as `[Step] → verify: [check]` before executing.
+Define success criteria first, then execute each step with an explicit verification check.
+- "Add validation" → write tests for invalid inputs, then make them pass.
+- "Fix bug X" → reproduce with a failing test, implement fix, verify test passes.
+- "Refactor X" → keep behavior stable and verify tests pass before/after.
+- For multi-step tasks, always write steps as `[Step] -> verify: [check]`.
 
 ### Completion Criteria (Mandatory)
 
 A task is complete only if:
 
-- Build passes
-- Tests pass
-- Lint/format passes
-- No broken imports or compile errors
+- Build, tests, and lint/format all pass with no compile/import errors
 - No unresolved TODO/FIXME remains in modified files
 - Relevant documentation state is updated (`state.md`, `index.json`, `TODO.md` if needed)
 
@@ -87,27 +83,24 @@ A task is complete only if:
 
 ## CRITICAL — Subagent Cost Control
 
-- Main agent handles only: state/docs read, summary, approval, routing, trivial docs edits (≤20 lines)
-- Subagents handle: implementation, tests, refactoring, build/lint/test, multi-file changes, planning, review
-
-- Do not spawn multiple subagents for trivial tasks
-- Prefer one focused subagent per independent work item
-- Use parallel subagents only for truly independent work
-- Do not spawn an Explore agent when the file path is already known
-- Do not re-run planning agents if the approved design has not changed
-- Summarize tool/build/test outputs before passing them back to the main agent
+- Keep trivial work (small docs/read-only checks) in the main agent.
+- Delegate implementation, test execution, refactor, and multi-file changes to subagents.
+- Prefer one focused subagent per independent work item.
+- Parallelize only when write scopes do not overlap and tasks are truly independent.
+- Do not spawn extra planners/reviewers if plan/design has not changed.
+- Always summarize build/test outputs before handing control back.
 
 ---
 
 ## Agents
 
-- /orchestrate: Central control — routes agents based on state.md + TODO.md
-- /plan: Service Planner — feature spec, API design, DB schema
-- /plan-quant: Quant Planner — strategy, alpha factors, backtesting design
-- /build: Full Stack Developer — implementation (TDD, DDD)
-- /build-quant: Quant Developer — quant strategy implementation
-- /review: Code Reviewer — code, security, quant math error review
-- /test: Test Engineer — QA validation, test automation
+- /orchestrate: route phases and step execution
+- /plan: service feature planning (API, schema, step files)
+- /plan-quant: quant planning (factors, backtest design, risk metrics)
+- /build: application implementation (TDD, DDD)
+- /build-quant: quant strategy implementation
+- /review: code/security/quant review and must-fix feedback
+- /test: QA verification, scoped tests, coverage checks
 
 Mode: `auto` (automatic) / `manual` (approve each step) — switchable anytime, record in docs/state.md
 
@@ -130,8 +123,9 @@ trading-web:      cd frontend/trading-web && npm run build
 
 - In progress: update step status in `docs/phase/{project}/{feature}/index.json`
 - Done: write `docs/done/{project}/{feature}/{feature}-summary.md` → move phase folder → mark `[x]` in `docs/TODO.md`
-- Keep `docs/state.md` always up to date
-- When adding a new feature: add entry to `docs/TODO.md` first
-- If duplicate state files exist outside root `docs/`, ignore them and do not update them
+- Keep only root `docs/` state files up to date (`docs/state.md`, `docs/TODO.md`, `docs/phase/**`); ignore duplicate state files outside root `docs/`
+- When adding a new feature, add an entry to `docs/TODO.md` first
+- Never treat `.claude/**/docs` or `.codex/**/docs` as orchestration state.
+- If duplicate state files are found outside root `docs/`, leave them untouched.
 
 ⚠️ If session context is overloaded, switch to a new session
