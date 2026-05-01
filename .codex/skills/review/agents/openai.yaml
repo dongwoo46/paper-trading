@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review"
+  short_description: "Review code, security, performance, and quant math"
+  default_prompt: "$review"

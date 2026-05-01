@@ -1,5 +1,5 @@
-#!/bin/bash
-# PostToolUse(Bash) 훅 — 명령 실패 시 Ollama로 장애 분류 및 CLAUDE.md 누적 기록
+﻿#!/bin/bash
+# PostToolUse(Bash) 훅 — 명령 실패 시 Ollama로 장애 분류 및 CODEX.md 누적 기록
 
 INPUT=$(cat)
 
@@ -29,8 +29,8 @@ print(out[:600])
 # 분류할 내용 없으면 종료
 [ ${#OUTPUT} -lt 15 ] && exit 0
 
-LOG_FILE=".claude/failure-log.json"
-CLAUDE_MD="CLAUDE.md"
+LOG_FILE=".codex/failure-log.json"
+CODEX_MD="CODEX.md"
 THRESHOLD=5
 
 [ ! -f "$LOG_FILE" ] && echo '{"failures":{}}' > "$LOG_FILE"
@@ -61,7 +61,7 @@ python3 - <<PYEOF
 import json, datetime
 
 log_file = "$LOG_FILE"
-claude_md = "$CLAUDE_MD"
+codex_md = "$CODEX_MD"
 category = "$CATEGORY"
 threshold = $THRESHOLD
 
@@ -87,7 +87,7 @@ if count == threshold:
     last = failures[category]["last_seen"]
     entry = f"- **{category}** ({first} ~ {last}, {threshold}회 반복)"
 
-    with open(claude_md, encoding="utf-8") as f:
+    with open(codex_md, encoding="utf-8") as f:
         content = f.read()
 
     if section in content:
@@ -95,10 +95,10 @@ if count == threshold:
     else:
         content += f"\n\n{section}\n\n{entry}\n"
 
-    with open(claude_md, "w", encoding="utf-8") as f:
+    with open(codex_md, "w", encoding="utf-8") as f:
         f.write(content)
 
-    print(f"⚠️  [{category}] {threshold}회 반복 — CLAUDE.md 기록 완료")
+    print(f"⚠️  [{category}] {threshold}회 반복 — CODEX.md 기록 완료")
 PYEOF
 
 exit 0

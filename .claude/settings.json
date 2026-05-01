@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew compileTestKotlin)",
+      "Bash(./gradlew test *)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {

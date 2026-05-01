@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cleanup"
+  short_description: "Finalize phase docs, state, TODO, and PR cleanup"
+  default_prompt: "$cleanup"

@@ -43,6 +43,7 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
 - CRITICAL: Write tests first for all business logic changes (TDD: Red → Green → Refactor)
 - CRITICAL: Infrastructure/configuration-only changes may skip test-first, but must include validation after implementation
 - CRITICAL: Work in small increments: implement → test → lint → commit
+- CRITICAL: Write all commit messages in Korean.
 - CRITICAL: Only read explicitly specified files. Expand only when necessary. No broad exploration
 - CRITICAL: Slash command workflows MUST delegate execution to Codex subagents via `spawn_agent`/`wait_agent` — never via inline Skill execution
   - Correct: `spawn_agent(...)` then collect with `wait_agent(...)`
@@ -92,19 +93,16 @@ A task is complete only if:
 
 ---
 
-## Agents
+## Codex Orchestration
 
-- /orchestrate: route phases and step execution
-- /plan: service feature planning (API, schema, step files)
-- /plan-quant: quant planning (factors, backtest design, risk metrics)
-- /build: application implementation (TDD, DDD)
-- /build-quant: quant strategy implementation
-- /review: code/security/quant review and must-fix feedback
-- /test: QA verification, scoped tests, coverage checks
+- `$orchestrate`: project-local Codex skill entrypoint for phase routing and step execution.
+- Actual skill: `.codex/skills/orchestrate/SKILL.md`.
+- Role references: `.codex/references/agent-roles/**`.
+- Legacy command prompt references: `.codex/references/command-prompts/**`; these are not Codex runtime slash commands.
 
 Mode: `auto` (automatic) / `manual` (approve each step) — switchable anytime, record in docs/state.md
 
-Workflow: /orchestrate → state.md → index.json → step-{n}.md → Codex subagent (`spawn_agent`) → record results
+Workflow: `$orchestrate` → state.md → index.json → step-{n}.md → Codex subagent (`spawn_agent`) → record results
 
 ---
 

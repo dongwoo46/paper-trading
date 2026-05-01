@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Quant"
+  short_description: "Implement quant strategies, factors, and backtests"
+  default_prompt: "$build-quant"

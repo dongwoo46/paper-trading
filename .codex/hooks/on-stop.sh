@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # Stop 훅 — 작업 완료 시 state.md 현황 요약 + 권고
 
 STATE_FILE="docs/state.md"
@@ -10,9 +10,9 @@ if [ -f "$STATE_FILE" ]; then
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "✅ 작업 완료"
   echo "모드: $MODE | 활성 Phase: $ACTIVE"
-  echo "→ /review 또는 /orchestrate 로 계속 진행하세요."
+  echo '→ $orchestrate 로 계속 진행하세요.'
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 else
   echo ""
-  echo "✅ 작업 완료 — /orchestrate 실행을 권장합니다."
+  echo '✅ 작업 완료 — $orchestrate 실행을 권장합니다.'
 fi

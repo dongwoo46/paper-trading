@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Quant"
+  short_description: "Design quant strategies, factors, backtests, and risk metrics"
+  default_prompt: "$plan-quant"

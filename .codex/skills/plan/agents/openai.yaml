@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan"
+  short_description: "Design service specs, APIs, DB schema, and step files"
+  default_prompt: "$plan"

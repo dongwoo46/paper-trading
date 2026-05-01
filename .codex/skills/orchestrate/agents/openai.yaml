@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrate"
+  short_description: "Run this repository's orchestrator workflow"
+  default_prompt: "$orchestrate"

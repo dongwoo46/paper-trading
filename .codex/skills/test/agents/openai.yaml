@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test"
+  short_description: "Run QA verification and acceptance checks"
+  default_prompt: "$test"

@@ -43,6 +43,7 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
 - CRITICAL: Write tests first for all business logic changes (TDD: Red → Green → Refactor)
 - CRITICAL: Infrastructure/configuration-only changes may skip test-first, but must include validation after implementation
 - CRITICAL: Work in small increments: implement → test → lint → commit
+- CRITICAL: Write all commit messages in Korean.
 - CRITICAL: Only read explicitly specified files. Expand only when necessary. No broad exploration
 - CRITICAL: Slash command workflows MUST delegate execution to Agent tool subagents — never via Skill tool inline
   - Correct: `Agent(description="...", prompt="...")`
