@@ -25,6 +25,7 @@ class KisTokenManager(
 
     companion object {
         private fun redisKey(mode: String) = "kis:token:$mode"
+        private fun approvalRedisKey(mode: String) = "kis:approval:$mode"
     }
 
     fun getToken(mode: String): String {
@@ -35,6 +36,31 @@ class KisTokenManager(
             redisTemplate.opsForValue().get(redisKey(mode))
                 ?: issueAndSave(mode)
         }
+    }
+
+    fun getWebSocketApprovalKey(mode: String): String {
+        val key = approvalRedisKey(mode)
+        redisTemplate.opsForValue().get(key)?.let { return it }
+
+        val request = ApprovalRequest(
+            grantType = "client_credentials",
+            appKey = properties.appKey(mode),
+            secretKey = properties.appSecret(mode),
+        )
+        val response = restTemplate.postForObject(
+            "${properties.restBaseUrl(mode)}/oauth2/Approval",
+            request,
+            ApprovalResponse::class.java,
+        ) ?: throw IllegalStateException("KIS WebSocket approval response is null: mode=$mode")
+
+        val approvalKey = requireNotNull(response.approvalKey) { "approval_key null: mode=$mode" }
+        redisTemplate.opsForValue().set(key, approvalKey, Duration.ofHours(20))
+        log.info { "KIS WebSocket approval key stored: mode=$mode" }
+        return approvalKey
+    }
+
+    fun evictWebSocketApprovalKey(mode: String) {
+        redisTemplate.delete(approvalRedisKey(mode))
     }
 
     private fun issueAndSave(mode: String): String {
@@ -76,5 +102,15 @@ class KisTokenManager(
     private data class TokenResponse(
         @JsonProperty("access_token") val accessToken: String?,
         @JsonProperty("expires_in") val expiresIn: String?,
+    )
+
+    private data class ApprovalRequest(
+        @JsonProperty("grant_type") val grantType: String,
+        @JsonProperty("appkey") val appKey: String,
+        @JsonProperty("secretkey") val secretKey: String,
+    )
+
+    private data class ApprovalResponse(
+        @JsonProperty("approval_key") val approvalKey: String?,
     )
 }
