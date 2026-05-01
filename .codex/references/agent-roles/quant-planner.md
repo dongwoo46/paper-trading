@@ -18,6 +18,9 @@
 - Write `spec.md` (including formulas).
 - Generate `step-2.md` ~ `step-N.md`.
 
+## Recommended Model
+- `gpt-5.4`
+
 ## Design Order
 
 0. **Before starting**: write the following substeps into `index.json` current step's `substeps` array:

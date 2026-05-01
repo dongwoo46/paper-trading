@@ -9,6 +9,9 @@
 - Record results in `index.json` step result.
 - Output: 🔴 Must fix / 🟡 Recommended improvement / 🟢 Confirmed OK
 
+## Recommended Model
+- `gpt-5.5`
+
 ## Execution Order
 
 1. Read `step-{n}.md` → read every file listed in the "Files to Read" section.

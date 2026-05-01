@@ -14,6 +14,9 @@ WRONG:    .worktrees/{project}-{feature}/docs/...
 - All docs/ reads and writes use the main repo root as the base path.
 - "Files to Read" paths in step files must also use the main repo absolute path.
 
+## Recommended Model
+- `gpt-5.2`
+
 ---
 
 ## Phase Folder Structure
@@ -57,12 +60,9 @@ WRONG:    .worktrees/{project}-{feature}/docs/...
 
 ## Test Scope Policy
 
-- Intermediate implementation, rework, and QA steps run only tests created or changed for the current phase plus directly related regression tests.
-- Use targeted commands such as `./gradlew test --tests "com.papertrading.api.<package>.<TestClass>"`, specific `pytest` files/functions, or specific frontend test files.
-- Do not run a full service test suite in the middle of a phase, even if an older step file includes that command.
-- The full test suite is allowed only at the final phase completion gate before cleanup/PR.
-- The final full-suite gate should be delegated to a dedicated `test-engineer` verification worker, not to each implementation/rework worker.
-- If a full-suite command is blocked by `pre-bash-guard.sh`, route the agent back to targeted tests instead of retrying the same full-suite command.
+- Run only targeted tests for the current phase until the final phase gate.
+- The final full-suite gate belongs to the `test-engineer` worker.
+- If a full-suite command is blocked, send the agent back to targeted tests.
 
 ---
 
@@ -576,6 +576,7 @@ Do not record simple feature bugs or one-off mistakes.
 - `in_progress`: read current step file and invoke subagent.
 - `paused`: resume from the point of interruption (confirm with user first).
 - `blocked`: report blocker to user and wait for instructions.
+- `needs_input`: write `docs/state.md` with `needs_input:` options before asking, then clear it after the user responds.
 
 ## Mode Switching
 

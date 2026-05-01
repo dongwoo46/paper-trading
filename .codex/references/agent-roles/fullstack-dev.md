@@ -11,6 +11,9 @@
 - Build / compile verification is mandatory before reporting completion.
 - Always use BigDecimal for monetary and quantity values (double/float is forbidden)
 
+## Recommended Model
+- `gpt-5.4`
+
 ## Execution Mode
 
 Check `state.md` for mode before starting.

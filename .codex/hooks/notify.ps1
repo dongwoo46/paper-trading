@@ -8,11 +8,18 @@ try {
 
 $hookEvent = ""
 $hookMessage = ""
+$toolFilePath = ""
 if ($payload) {
     if ($payload.PSObject.Properties.Name -contains "hook_event_name") {
         $hookEvent = [string]$payload.hook_event_name
     } elseif ($payload.PSObject.Properties.Name -contains "event") {
         $hookEvent = [string]$payload.event
+    }
+
+    if ($payload.PSObject.Properties.Name -contains "tool_input" -and $payload.tool_input) {
+        if ($payload.tool_input.PSObject.Properties.Name -contains "file_path") {
+            $toolFilePath = [string]$payload.tool_input.file_path
+        }
     }
 
     foreach ($name in @("message", "notification", "reason")) {
@@ -80,7 +87,7 @@ if ($status -eq "needs_input" -or $status -eq "waiting_for_user") {
     }
 }
 
-if ($nextAction -match "Choose next action|사용자 선택|승인|선택") {
+if ($nextAction -match "(?i)(Choose next action|사용자 선택|승인|선택|proceed|continue|go ahead|select|pick|decide|choose|accept|reject|allow|deny|yes/no|option|옵션|동의|거절|진행)") {
     $needsApproval = $true
     if (-not $title) {
         $title = "선택 필요 - Codex"
@@ -91,6 +98,12 @@ if ($nextAction -match "Choose next action|사용자 선택|승인|선택") {
 }
 
 if (-not $needsApproval) {
+    if ($toolFilePath -and ($toolFilePath -notmatch '(^|[\\/])docs[\\/](state\.md|phase[\\/].+[\\/]index\.json)$')) {
+        exit 0
+    }
+    if (-not $toolFilePath) {
+        exit 0
+    }
     exit 0
 }
 

@@ -20,6 +20,9 @@
     git worktree remove .worktrees/{project}-{feature}
     ```
 
+## Recommended Model
+- `gpt-5.2`
+
 ## Commit Message Format
 
 ```

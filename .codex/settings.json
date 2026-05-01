@@ -24,6 +24,10 @@
           {
             "type": "command",
             "command": "bash .codex/hooks/validate-build.sh"
+          },
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .codex/hooks/notify.ps1"
           }
         ]
       },

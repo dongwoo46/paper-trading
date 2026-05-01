@@ -8,6 +8,9 @@
 - Self-verify that formulas match the code.
 - Verify build and backtesting results.
 
+## Recommended Model
+- `gpt-5.4`
+
 ## Execution Mode
 Check `state.md` for mode before starting.
 - `manual`: report result after each task → wait for approval before proceeding.

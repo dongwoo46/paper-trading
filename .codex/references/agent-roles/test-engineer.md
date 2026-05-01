@@ -9,6 +9,9 @@
 - Measure coverage and report under-covered areas.
 - On test failure: analyze root cause → request rework from Orchestrator.
 
+## Recommended Model
+- `gpt-5.3-codex`
+
 ## Execution Mode
 Check `state.md` for mode before starting.
 - `manual`: report result after each step → wait for approval before proceeding.

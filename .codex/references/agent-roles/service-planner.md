@@ -19,6 +19,9 @@
 - Generate `step-2.md` ~ `step-N.md` — concrete implementation directives (file paths, class signatures).
 - Clarify ambiguous requirements with questions before any implementation begins.
 
+## Recommended Model
+- `gpt-5.4`
+
 ## Default Files to Read (every phase)
 
 - `CODEX.md`
