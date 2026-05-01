@@ -4,6 +4,7 @@ import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
+import com.papertrading.api.domain.event.ExecutionFilledEvent
 import com.papertrading.api.domain.model.AccountLedger
 import com.papertrading.api.domain.model.Execution
 import com.papertrading.api.domain.model.PendingSettlement
@@ -22,6 +23,7 @@ import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementExecutionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementRepository
 import mu.KotlinLogging
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -48,6 +50,7 @@ class ExecutionProcessor(
     private val pendingSettlementRepository: PendingSettlementRepository,
     private val settlementRepository: SettlementRepository,
     private val settlementExecutionRepository: SettlementExecutionRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -199,6 +202,20 @@ class ExecutionProcessor(
         }
 
         log.info { "filled: orderId=$orderId, qty=$fillQty, price=$fillPrice, status=${order.orderStatus}" }
+
+        eventPublisher.publishEvent(
+            ExecutionFilledEvent(
+                executionId = executionId,
+                orderId = orderId,
+                ticker = ticker,
+                side = requireNotNull(order.orderSide) { "order.orderSide is null: orderId=$orderId" },
+                quantity = fillQty,
+                price = fillPrice,
+                fee = fee,
+                currency = requireNotNull(account.baseCurrency) { "account.baseCurrency is null: accountId=$accountId" },
+                executedAt = Instant.now(),
+            )
+        )
     }
 
     /** LIMIT 매수에서 실제 체결가가 잠금 금액보다 낮을 때 차액을 해제 */

@@ -8,11 +8,17 @@ import { OrderPage } from "./pages/order/ui/OrderPage";
 import { RealtimePage } from "./pages/realtime/ui/RealtimePage";
 import { Sidebar } from "./shared/ui/Sidebar";
 import { TopBar } from "./shared/ui/TopBar";
+import { ExecutionToastProvider } from "./features/execution-toast/ui/ExecutionToastProvider";
+import { useToastStore } from "./features/execution-toast/model/useToastStore";
+import { ToastContainer } from "./shared/ui/Toast";
 import "./app/styles/App.css";
+import "./shared/ui/Toast/toast.css";
 
 function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const toasts = useToastStore((state) => state.toasts);
+  const removeToast = useToastStore((state) => state.removeToast);
 
   useEffect(() => {
     const handleResize = () => {
@@ -45,6 +51,8 @@ function App() {
 
   return (
     <div className="app-shell">
+      <ExecutionToastProvider />
+
       <Sidebar isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
 
       <main className="main-wrapper">
@@ -62,6 +70,8 @@ function App() {
           </Routes>
         </div>
       </main>
+
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 }
