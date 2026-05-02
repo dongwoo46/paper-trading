@@ -32,7 +32,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 주문 거부/에러 응답 처리 (에러 코드 → 도메인 예외 매핑)
   - KIS 토큰 갱신 로직 안정화 (WebSocket 재인증 포함)
 
-- [ ] KIS 실계좌 데이터 조회 | project: trading-api | phase: kis-account-sync | priority: P1
+- [x] KIS 실계좌 데이터 조회 | project: trading-api | phase: kis-account-sync | priority: P1 | done: 2026-05-02 | pr: 미생성(phase cleanup 완료, PR 생성 대기)
   - KIS 잔고조회 API 연동 (TTTC8434R live / VTTC8434R paper) → 보유주식·평가금액·수익률
   - KisAccountQueryService: KIS 계좌 잔고 + 포지션 동기화
   - GET /api/kis/account/balance — 실계좌 잔고·평가손익 응답

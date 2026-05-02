@@ -1,4 +1,4 @@
-﻿---
+---
 name: orchestrate
 description: Project-local paper-trading orchestrator. Use when the user types "$orchestrate", "orchestrate", "orchestrate 실행", or asks Codex to select, resume, or advance a phase using this repository's root docs/state.md and docs/TODO.md.
 ---

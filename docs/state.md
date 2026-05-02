@@ -7,10 +7,10 @@ auto
 idle
 
 ## 활성 Phase
-(없음)
+- none
 
 ## 마지막 액션
-2026-05-02: kis-execution-ws phase 완료 — Step 11 cleanup 완료, PR 생성.
+2026-05-02: Step 5(cleanup) 완료 — summary/PR 초안/TODO/state/index 정리 완료.
 
 ## 다음 액션
-다음 P1 태스크 선택 (docs/TODO.md 참고).
+대기 중. 다음 phase 선택 시 `$orchestrate` 실행.
