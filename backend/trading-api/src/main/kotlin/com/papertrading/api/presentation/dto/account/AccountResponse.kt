@@ -1,6 +1,7 @@
 package com.papertrading.api.presentation.dto.account
 
 import com.papertrading.api.application.account.result.LedgerResult
+import com.papertrading.api.domain.enums.AccountSource
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
@@ -14,6 +15,7 @@ data class AccountResponse(
     val accountName: String,
     val accountType: AccountType,
     val tradingMode: TradingMode,
+    val source: AccountSource = AccountSource.LOCAL,
     val deposit: BigDecimal,
     val availableDeposit: BigDecimal,
     val lockedDeposit: BigDecimal,
@@ -29,6 +31,7 @@ data class AccountResponse(
             accountName = account.accountName!!,
             accountType = account.accountType!!,
             tradingMode = account.tradingMode!!,
+            source = AccountSource.LOCAL,
             deposit = account.deposit,
             availableDeposit = account.availableDeposit,
             lockedDeposit = account.lockedDeposit,
