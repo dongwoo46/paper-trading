@@ -1,0 +1,187 @@
+{
+    "phase":  "portfolio-chart",
+    "project":  "front",
+    "status":  "completed",
+    "current_step":  7,
+    "total_steps":  7,
+    "branch":  "feature/front-portfolio-chart",
+    "worktree_path":  ".worktrees/front-portfolio-chart",
+    "parallel_groups":  [
+
+                        ],
+    "steps":  [
+                  {
+                      "id":  1,
+                      "agent":  "service-planner",
+                      "name":  "기능 명세·API 스펙·step 파일 생성",
+                      "file":  "step-1.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS"
+                  },
+                  {
+                      "id":  2,
+                      "agent":  "fullstack-dev",
+                      "name":  "구현 (TDD)",
+                      "file":  "step-2.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS",
+                      "substeps":  [
+                                       {
+                                           "id":  "2-1",
+                                           "name":  "portfolio 타입/조회 API 및 숫자 파싱 유틸 구현",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "2-2",
+                                           "name":  "수익률 정규화 로직(buildReturnSeries) TDD 구현",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "2-3",
+                                           "name":  "PortfolioChartPanel UI 상태/렌더링 구현",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "2-4",
+                                           "name":  "포트폴리오 페이지/라우팅/사이드바 연결",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  3,
+                      "agent":  "test-engineer",
+                      "name":  "테스트 및 QA 검증",
+                      "file":  "step-3.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS",
+                      "summary":  "portfolio-chart/account feature-scope 테스트 및 build 통과. 수익률 규칙/벤치마크 누락 처리 회귀 확인.",
+                      "substeps":  [
+                                       {
+                                           "id":  "3-1",
+                                           "name":  "feature-scoped tests",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "3-2",
+                                           "name":  "integration tests",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "3-3",
+                                           "name":  "coverage check",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  4,
+                      "agent":  "code-reviewer",
+                      "name":  "코드 리뷰",
+                      "file":  "step-4.md",
+                      "status":  "review_failed",
+                      "retry_count":  2,
+                      "result":  "MUST FIX 3건: (1) benchmark 404 시 portfolio-only degrade 실패, (2) buildReturnSeries 0-division 미처리, (3) 날짜 중복 제거 규칙 미구현.",
+                      "substeps":  [
+                                       {
+                                           "status":  "completed",
+                                           "name":  "git diff + scope analysis",
+                                           "id":  "4-1"
+                                       },
+                                       {
+                                           "status":  "completed",
+                                           "name":  "spec comparison",
+                                           "id":  "4-2"
+                                       },
+                                       {
+                                           "status":  "completed",
+                                           "name":  "checklist review",
+                                           "id":  "4-3"
+                                       },
+                                       {
+                                           "status":  "completed",
+                                           "name":  "result output",
+                                           "id":  "4-4"
+                                       }
+                                   ],
+                      "summary":  "MUST FIX 3건으로 코드리뷰 FAIL: (1) 벤치마크 전체 부재 시 포트폴리오 단독 degrade 미동작, (2) 0 division 미처리, (3) 날짜 중복 제거 규칙 미구현."
+                  },
+                  {
+                      "id":  5,
+                      "agent":  "fullstack-dev",
+                      "name":  "코드리뷰 반영 재작업 (MUST FIX)",
+                      "file":  "step-4b-rework.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS",
+                      "summary":  "MUST FIX 3건 반영 완료: benchmark 404 graceful degrade, 0-division 방어, 날짜 중복 latest 우선 규칙 구현 및 테스트 통과.",
+                      "substeps":  [
+                                       {
+                                           "id":  "5-1",
+                                           "name":  "benchmark 404 graceful degrade 구현",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "5-2",
+                                           "name":  "0-division 방어 로직 구현 및 테스트",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "5-3",
+                                           "name":  "날짜 중복 제거 규칙 구현 및 테스트",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  6,
+                      "agent":  "code-reviewer",
+                      "name":  "코드 리뷰 2차 검증",
+                      "file":  "step-4c-review.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS",
+                      "summary":  "MUST FIX 3건(benchmark 404 degrade, 0-division 방어, 날짜 중복 latest 우선) 해소를 재검증했고 `npm run build` 통과로 병합 가능 상태를 확인.",
+                      "substeps":  [
+                                       {
+                                           "id":  "6-1",
+                                           "name":  "git diff + scope analysis",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "6-2",
+                                           "name":  "spec comparison",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "6-3",
+                                           "name":  "checklist review",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  "6-4",
+                                           "name":  "result output",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  7,
+                      "agent":  "cleanup",
+                      "name":  "summary 작성 + PR 준비",
+                      "file":  "step-5.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS",
+                      "summary":  "summary 문서/PR 초안 작성 및 TODO/state/index 최종 동기화를 완료했다."
+                  }
+              ],
+    "blockers":  [
+
+                 ],
+    "created":  "2026-05-02",
+    "updated":  "2026-05-03"
+}

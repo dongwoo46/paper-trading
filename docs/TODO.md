@@ -132,7 +132,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - WebSocket 또는 SSE로 체결 이벤트 수신
   - 체결 토스트 알림
 
-- [ ] 포트폴리오 수익률 차트 | project: front | phase: portfolio-chart | priority: P1
+- [x] 포트폴리오 수익률 차트 | project: front | phase: portfolio-chart | priority: P1 | done: 2026-05-03 | pr: #TBD
   - 일별 평가금액 추이 (DailyBalance 기반)
   - 벤치마크(KOSPI) 대비 수익률
 
