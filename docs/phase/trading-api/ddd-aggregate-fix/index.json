@@ -1,0 +1,89 @@
+{
+  "phase": "ddd-aggregate-fix",
+  "project": "trading-api",
+  "status": "completed",
+  "current_step": 8,
+  "total_steps": 8,
+  "branch": "feature/trading-api-ddd-aggregate-fix",
+  "worktree_path": ".worktrees/trading-api-ddd-aggregate-fix",
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "agent": "service-planner",
+      "name": "DDD Aggregate 경계 재설계 및 단계별 실행 계획 작성",
+      "file": "step-1.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "요구사항/범위 정의, spec.md 작성, step-2~step-6 생성 완료"
+    },
+    {
+      "id": 2,
+      "agent": "fullstack-dev",
+      "name": "DDD Aggregate 경계 수정 구현 (TDD)",
+      "file": "step-2.md",
+      "status": "completed",
+      "retry_count": 1,
+      "result": "정책 재정의 기준 반영 완료: Query 경로 ReadRepository 명시, externalExecutionId 멱등성+DB unique 제약 처리 강화, compileKotlin 통과",
+      "substeps": []
+    },
+    {
+      "id": 3,
+      "agent": "test-engineer",
+      "name": "테스트 및 QA 검증",
+      "file": "step-3.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "compileTestKotlin 및 지정된 타깃 테스트 전부 통과(순차 재실행 포함), 정책 반영 검증 완료",
+      "substeps": []
+    },
+    {
+      "id": 4,
+      "agent": "fullstack-dev",
+      "name": "내부 Entity Repository 제거 및 의존성 정리",
+      "file": "step-4.md",
+      "status": "completed",
+      "retry_count": 1,
+      "result": "리뷰 지적사항 재작업 완료: OrderQueryService 내부 Repo 의존 제거, KisExecutionNoticeService command 경로 중복체크 제거, compileKotlin/핵심 테스트 통과"
+    },
+    {
+      "id": 5,
+      "agent": "code-reviewer",
+      "name": "코드 리뷰 — 경계 위반 재발 방지 확인",
+      "file": "step-5.md",
+      "status": "review_failed",
+      "retry_count": 1,
+      "result": "DI 충돌로 테스트 실패: PendingSettlementReadRepository 빈 후보 2개(NoUniqueBeanDefinitionException)"
+    },
+    {
+      "id": 6,
+      "agent": "fullstack-dev",
+      "name": "DI 충돌 수정 및 재검증",
+      "file": "step-6.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "PendingSettlementReadRepository DI 충돌 해소(@Qualifier), compileKotlin 및 지정 테스트 통과"
+    },
+    {
+      "id": 7,
+      "agent": "code-reviewer",
+      "name": "코드 리뷰(2차) — 재작업 검증",
+      "file": "step-7.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "DI 충돌 해소 및 정책 준수 재확인 PASS"
+    },
+    {
+      "id": 8,
+      "agent": "cleanup",
+      "name": "정리 및 완료 문서화",
+      "file": "step-8.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "summary 문서 작성 완료. compileKotlin/compileTestKotlin/test 전체 통과"
+    }
+  ],
+  "blockers": [],
+  "created": "2026-05-03",
+  "updated": "2026-05-03"
+}

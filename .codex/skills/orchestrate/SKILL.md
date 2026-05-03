@@ -35,3 +35,4 @@ Act as the paper-trading project Orchestrator.
 - Use Codex subagents via `spawn_agent`/`wait_agent` when delegation is needed and available.
 - Keep trivial routing, state reads, and small docs edits in the main agent.
 - Use parallel subagents only for independent work with non-overlapping write scopes.
+- Within a phase, reuse the same subagent per role; use `send_input` for rework, and spawn only if unavailable.

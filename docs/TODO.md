@@ -8,6 +8,20 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ---
 
+## 현재 실행 우선순위 (2026-05-03)
+
+- [x] trading-api: DDD Aggregate 경계 수정 | phase: ddd-aggregate-fix | priority: P2 | done: 2026-05-03 | pr: #TBD
+- [ ] trading-api: 세금 정산 자동화 | phase: tax-summary | priority: P2
+- [ ] trading-api: 거래 일지 자동 생성 | phase: trading-journal | priority: P2
+- [ ] collector-api: 구독 우선순위 라우팅 | phase: subscription-routing | priority: P2
+
+보류 정책
+- 전략/퀀트 기반 자동매수 관련 개발은 후순위 보류.
+- `strategy-execution`은 전략 도메인 리빌딩(저장/버전/성과기록 체계) 이후 재개.
+- `quant-worker` 리서치성 작업(백테스트/알파 파이프라인)은 collector-api/trading-api 안정화 이후 진행.
+
+---
+
 ## trading-api
 
 ### P0 — MVP 필수
@@ -39,13 +53,15 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - trading-web 대시보드에 KIS 실계좌 잔고 반영 (KIS/LOCAL 계좌 구분 표시)
 
 - [ ] 전략 실행 서비스 | project: trading-api | phase: strategy-execution | priority: P1
+  - ⚠️ 보류: 전략 도메인 리빌딩 이후 진행 (자동 주문 로직 선개발 금지)
+  - 리빌딩 범위: 전략 저장/버전 관리, 전략별 손익 기록, 실주문 성과 vs 백테스트 성과 분리 기록
   - StrategyCommandService: 전략 활성화/비활성화
   - 시그널(OrderSignal) 수신 → 자동 주문 생성
   - 전략 성과 스냅샷 기록 (StrategyPerformanceSnapshot)
 
 ### P2 — 고도화
 
-- [ ] DDD Aggregate 경계 수정 | project: trading-api | phase: ddd-aggregate-fix | priority: P2
+- [x] DDD Aggregate 경계 수정 | project: trading-api | phase: ddd-aggregate-fix | priority: P2 | done: 2026-05-03 | pr: #TBD
   - 내부 Entity Repository 제거: ExecutionRepository, SettlementRepository, RiskPolicyRepository, PendingSettlementRepository, OrderAmendmentRepository, SettlementExecutionRepository
   - 모든 접근을 Aggregate Root Repository(OrderRepository, AccountRepository)를 통하도록 변경
   - Aggregate 간 객체 직접 참조 → ID 참조로 변경 (Execution.order → orderId, Settlement.order → orderId)
