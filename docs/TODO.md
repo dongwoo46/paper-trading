@@ -11,8 +11,8 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 ## 현재 실행 우선순위 (2026-05-03)
 
 - [x] trading-api: DDD Aggregate 경계 수정 | phase: ddd-aggregate-fix | priority: P2 | done: 2026-05-03 | pr: #TBD
-- [ ] trading-api: 세금 정산 자동화 | phase: tax-summary | priority: P2
-- [ ] trading-api: 거래 일지 자동 생성 | phase: trading-journal | priority: P2
+- [x] trading-api: 세금 정산 자동화 | phase: tax-summary | priority: P2 | done: 2026-05-03 | pr: #TBD
+- [x] trading-api: 거래 일지 자동 생성 | phase: trading-journal | priority: P2 | done: 2026-05-03 | pr: #TBD
 - [ ] collector-api: 구독 우선순위 라우팅 | phase: subscription-routing | priority: P2
 
 보류 정책
@@ -66,8 +66,8 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 모든 접근을 Aggregate Root Repository(OrderRepository, AccountRepository)를 통하도록 변경
   - Aggregate 간 객체 직접 참조 → ID 참조로 변경 (Execution.order → orderId, Settlement.order → orderId)
 
-- [ ] 세금 정산 자동화 | project: trading-api | phase: tax-summary | priority: P2
-- [ ] 거래 일지 자동 생성 | project: trading-api | phase: trading-journal | priority: P2
+- [x] 세금 정산 자동화 | project: trading-api | phase: tax-summary | priority: P2 | done: 2026-05-03 | pr: #TBD
+- [x] 거래 일지 자동 생성 | project: trading-api | phase: trading-journal | priority: P2 | done: 2026-05-03 | pr: #TBD
 
 ### 완료
 - [x] 계좌 관리 (AccountCommandService, AccountQueryService, 입출금 원장)
@@ -172,3 +172,5 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
+
