@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { OrderTablePanel } from './OrderTablePanel';
@@ -12,10 +12,9 @@ vi.mock('../../../entities/order/api/orderApi', () => ({
   fetchListAccounts: vi.fn(),
 }));
 
-import { fetchListOrders, fetchCancelOrder } from '../../../entities/order/api/orderApi';
+import { fetchListOrders } from '../../../entities/order/api/orderApi';
 
 const mockedFetchListOrders = fetchListOrders as ReturnType<typeof vi.fn>;
-const mockedFetchCancelOrder = fetchCancelOrder as ReturnType<typeof vi.fn>;
 
 function makeOrder(overrides: Partial<OrderResponse> = {}): OrderResponse {
   return {
