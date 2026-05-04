@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { ChartLine, ClipboardList, Globe, History, Home, TrendingUp, Wallet, X, Zap } from "lucide-react";
+import { ChartLine, ClipboardList, Globe, History, Home, ReceiptText, TrendingUp, Wallet, X, Zap } from "lucide-react";
 
 export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boolean) => void }) {
   const closeOnMobile = () => {
@@ -48,6 +48,10 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boo
           <NavLink to="/portfolio" className="nav-link" onClick={closeOnMobile}>
             <ChartLine size={18} />
             <span>포트폴리오 차트</span>
+          </NavLink>
+          <NavLink to="/tax-summary" className="nav-link" onClick={closeOnMobile}>
+            <ReceiptText size={18} />
+            <span>세금 요약</span>
           </NavLink>
         </nav>
 

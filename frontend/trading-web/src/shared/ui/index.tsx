@@ -1,5 +1,8 @@
 import React from "react";
 import { RefreshCw, Activity } from "lucide-react";
+import type { LucideProps } from "lucide-react";
+
+type IconComponent = React.ComponentType<LucideProps>;
 
 // --- Base UI Components ---
 
@@ -11,7 +14,7 @@ export const Card = ({ children, className = "" }: { children: React.ReactNode; 
 
 export const SectionCard = ({ title, icon: Icon, children, headerAction, className = "" }: { 
   title: string; 
-  icon?: any; 
+  icon?: IconComponent; 
   children: React.ReactNode; 
   headerAction?: React.ReactNode; 
   className?: string;
@@ -60,7 +63,7 @@ export const Chip = ({ children, statusColor, className = "", style = {} }: {
 
 // --- Layout & Feedback Components ---
 
-export const StatusBar = ({ message, loading, icon: Icon = Activity }: { message: string; loading: boolean; icon?: any }) => (
+export const StatusBar = ({ message, loading, icon: Icon = Activity }: { message: string; loading: boolean; icon?: IconComponent }) => (
   <div className="status-bar">
     {loading ? <RefreshCw size={16} className="spin" /> : <Icon size={16} color="var(--brand-primary)" />}
     <span>{message}</span>

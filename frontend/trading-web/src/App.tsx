@@ -7,6 +7,7 @@ import { MacroPage } from "./pages/macro/ui/MacroPage";
 import { OrderPage } from "./pages/order/ui/OrderPage";
 import { PortfolioChartPage } from "./pages/portfolio/ui/PortfolioChartPage";
 import { RealtimePage } from "./pages/realtime/ui/RealtimePage";
+import { TaxSummaryPage } from "./pages/tax-summary/ui/TaxSummaryPage";
 import { Sidebar } from "./shared/ui/Sidebar";
 import { TopBar } from "./shared/ui/TopBar";
 import { ExecutionToastProvider } from "./features/execution-toast/ui/ExecutionToastProvider";
@@ -47,6 +48,8 @@ function App() {
         return "주문 관리";
       case "/portfolio":
         return "포트폴리오 차트";
+      case "/tax-summary":
+        return "세금 요약";
       default:
         return "Trading Console";
     }
@@ -70,6 +73,7 @@ function App() {
             <Route path="/account" element={<AccountDashboardPage />} />
             <Route path="/orders" element={<OrderPage />} />
             <Route path="/portfolio" element={<PortfolioChartPage />} />
+            <Route path="/tax-summary" element={<TaxSummaryPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
