@@ -1,4 +1,4 @@
-﻿# TODO — Paper Trading
+# TODO — Paper Trading
 
 Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
@@ -58,6 +58,11 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - StrategyCommandService: 전략 활성화/비활성화
   - 시그널(OrderSignal) 수신 → 자동 주문 생성
   - 전략 성과 스냅샷 기록 (StrategyPerformanceSnapshot)
+
+- [x] Slack 알림 시스템 연동 | project: trading-api | phase: slack-notification | priority: P1 | done: 2026-05-04 | pr: #TBD
+  - 체결/오류/리스크 이벤트 Slack Webhook 전송
+  - 환경변수 기반 Webhook URL 관리 (비밀값 하드코딩 금지)
+  - 실패 재시도/로깅 및 알림 비활성화 토글 지원
 
 ### P2 — 고도화
 
@@ -188,6 +193,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
 
 
 
