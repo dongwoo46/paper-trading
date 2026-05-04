@@ -13,7 +13,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [x] trading-api: DDD Aggregate 경계 수정 | phase: ddd-aggregate-fix | priority: P2 | done: 2026-05-03 | pr: #TBD
 - [x] trading-api: 세금 정산 자동화 | phase: tax-summary | priority: P2 | done: 2026-05-03 | pr: #TBD
 - [x] trading-api: 거래 일지 자동 생성 | phase: trading-journal | priority: P2 | done: 2026-05-03 | pr: #TBD
-- [ ] collector-api: 구독 우선순위 라우팅 | phase: subscription-routing | priority: P2
+- [x] collector-api: 구독 우선순위 라우팅 | phase: subscription-routing | priority: P2 | done: 2026-05-04 | pr: #TBD
 
 보류 정책
 - 전략/퀀트 기반 자동매수 관련 개발은 후순위 보류.
@@ -88,7 +88,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 재연결 시 활성 구독 자동 복구
   - GET /api/kis/ws/health — 모드별 연결 상태 노출
 
-- [ ] 구독 우선순위 라우팅 | project: collector-api | phase: subscription-routing | priority: P2
+- [x] 구독 우선순위 라우팅 | project: collector-api | phase: subscription-routing | priority: P2 | done: 2026-05-04 | pr: #TBD
   - 전략 종목 WS 우선 배정, 초과 시 REST overflow 자동화
   - WS 슬롯 해제 시 REST → WS 자동 승격
   - 내부 priority API (strategy-execution에서 호출)
