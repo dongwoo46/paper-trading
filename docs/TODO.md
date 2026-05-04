@@ -103,6 +103,11 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - GET /api/subscriptions/status — 현재 구독 종목·연결 상태 조회
   - 운영 대시보드 연동용
 
+- [x] 구독 라우팅 외부 API 계약/구현 | project: collector-api | phase: subscription-routing-public-api | priority: P1 | done: 2026-05-05 | pr: #TBD
+  - 목적: front/subscription-routing-ui 차단 해제용 외부 API 제공
+  - 범위: favorites CRUD, strategy-priority symbol CRUD, routing status 조회 API
+  - 계약 고정: request/response schema, error code, idempotency, mode/channel validation
+
 ### 완료
 - [x] KIS WebSocket 시세 수집 + Redis Pub/Sub 발행 (RawEventPipeline)
 - [x] FRED 거시지표 수집 및 조회
@@ -165,13 +170,17 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - trading-api 거래 일지 생성/조회/수정 API 연동
   - 목록/상세/수정 플로우 및 ticker 필터 UX
 
-- [ ] 구독 상태 모니터링 대시보드 UI | project: front | phase: subscription-monitor-ui | priority: P1
-  - collector-api GET /api/subscriptions/status 연동
-  - WS/REST 구독 현황 및 연결 상태 표시
+- [x] 구독 상태 모니터링 대시보드 UI | project: front | phase: subscription-monitor-ui | priority: P1 | done: 2026-05-05 | pr: #TBD
+  - 목표: **읽기 전용 모니터링 화면** (제어 액션 없음)
+  - collector-api `GET /api/subscriptions/status` 연동
+  - 표시 항목: `generatedAt`, `totalWsSlotUsed/Max`, mode별 `connectionStatus`, `reconnectAttempts`, `wsSymbols/restSymbols`, `wsSlotUsed/Max`
+  - 기존 `RealtimePage > KisPanel`의 구독 제어 UI와 시각적으로 섹션 분리
 
-- [ ] 구독 라우팅 운영 UI | project: front | phase: subscription-routing-ui | priority: P1
-  - collector-api 구독 라우팅/즐겨찾기/전략 종목 API 연동
-  - 수동 등록·해제, 즐겨찾기, 전략 우선 라우팅 운영 화면
+- [x] 구독 라우팅 운영 UI | project: front | phase: subscription-routing-ui | priority: P1 | done: 2026-05-05 | pr: #TBD
+  - 목표: **쓰기 중심 운영 화면** (수동 제어/정책 반영)
+  - 필수 API: 수동 등록·해제, 즐겨찾기 토글/조회, 전략 종목 등록·해제, 라우팅 상태 조회
+  - 운영 액션: 수동 등록·해제, 즐겨찾기 관리, 전략 우선 라우팅 반영 상태 확인
+  - 선행조건: collector-api 외부 노출 API 스펙 확정(현재 내부 API/기존 KIS 구독 API와 경계 정리 필요)
 
 ### 완료
 - [x] 실시간 시세 페이지 (RealtimePage — KIS WebSocket 연동)
