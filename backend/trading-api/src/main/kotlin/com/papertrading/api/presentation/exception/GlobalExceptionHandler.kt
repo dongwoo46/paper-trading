@@ -1,5 +1,6 @@
 package com.papertrading.api.presentation.exception
 
+import com.papertrading.api.application.notification.SlackWebhookFailedException
 import com.papertrading.api.application.account.kis.KisAuthorizationException
 import com.papertrading.api.application.account.kis.KisForbiddenException
 import com.papertrading.api.application.account.kis.KisRemoteCallException
@@ -22,6 +23,12 @@ class GlobalExceptionHandler {
     fun handleIllegalState(ex: IllegalStateException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             ApiErrorResponse(400, "BAD_REQUEST", ex.message ?: "잘못된 상태입니다.")
+        )
+
+    @ExceptionHandler(SlackWebhookFailedException::class)
+    fun handleSlackWebhookFailed(ex: SlackWebhookFailedException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
+            ApiErrorResponse(502, "BAD_GATEWAY", ex.message ?: "Slack webhook 호출에 실패했습니다.")
         )
 
     @ExceptionHandler(NoSuchElementException::class)

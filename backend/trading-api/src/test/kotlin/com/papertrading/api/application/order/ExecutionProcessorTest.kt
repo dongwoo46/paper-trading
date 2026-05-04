@@ -1,5 +1,6 @@
 package com.papertrading.api.application.order
 
+import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
@@ -53,6 +54,9 @@ class ExecutionProcessorTest {
     private val eventPublisher = mockk<ApplicationEventPublisher>().also {
         justRun { it.publishEvent(any<Any>()) }
     }
+    private val slackNotificationEventPublisher = mockk<SlackNotificationEventPublisher>().also {
+        justRun { it.publishExecutionFilled(any(), any(), any(), any(), any()) }
+    }
 
     private val processor = ExecutionProcessor(
         orderRepository = orderRepository,
@@ -66,6 +70,7 @@ class ExecutionProcessorTest {
         settlementRepository = settlementRepository,
         settlementExecutionRepository = settlementExecutionRepository,
         eventPublisher = eventPublisher,
+        slackNotificationEventPublisher = slackNotificationEventPublisher,
     )
 
     private fun account(tradingMode: TradingMode, deposit: BigDecimal = BigDecimal("1000000")): Account =
