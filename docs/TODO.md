@@ -1,4 +1,4 @@
-# TODO — Paper Trading
+﻿# TODO — Paper Trading
 
 Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
@@ -156,7 +156,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - trading-api 세금 요약 조회/재계산 API 연동
   - 계좌/연도별 세금 요약 조회 및 수동 재계산 UX
 
-- [ ] 거래 일지 관리 UI | project: front | phase: trading-journal-ui | priority: P1
+- [x] 거래 일지 관리 UI | project: front | phase: trading-journal-ui | priority: P1 | done: 2026-05-04 | pr: #TBD
   - trading-api 거래 일지 생성/조회/수정 API 연동
   - 목록/상세/수정 플로우 및 ticker 필터 UX
 
@@ -188,5 +188,6 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
 
 
