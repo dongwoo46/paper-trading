@@ -1,4 +1,4 @@
-# Orchestrator State
+﻿# Orchestrator State
 
 ## 모드
 auto
@@ -10,8 +10,7 @@ idle
 - 없음
 
 ## 마지막 액션
-2026-05-04: front/tax-summary-ui Step 5 (cleanup) completed — summary 작성, TODO/state/index 갱신, worktree 기준 테스트/빌드 검증 완료.
+2026-05-04: front/trading-journal-ui Step 7 (cleanup) completed — summary/PR 체크리스트 작성, phase index/state/TODO 갱신, trading-web 빌드 검증 완료.
 
 ## 다음 액션
-front/trading-journal-ui phase 착수 여부 결정 (step-1 spec/planning 시작).
-
+front/subscription-monitor-ui phase 착수 여부 결정 (step-1 spec/planning 시작).
