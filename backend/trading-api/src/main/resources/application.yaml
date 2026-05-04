@@ -46,6 +46,14 @@ trading:
     ws-reconnect-initial-backoff-millis: ${KIS_WS_RECONNECT_INITIAL_BACKOFF_MILLIS:1000}
     ws-reconnect-max-backoff-millis: ${KIS_WS_RECONNECT_MAX_BACKOFF_MILLIS:30000}
     ws-reconnect-max-attempts: ${KIS_WS_RECONNECT_MAX_ATTEMPTS:5}
+  notification:
+    slack:
+      enabled: ${TRADING_NOTIFICATION_SLACK_ENABLED:false}
+      webhook-url: ${TRADING_NOTIFICATION_SLACK_WEBHOOK_URL:}
+      timeout-millis: ${TRADING_NOTIFICATION_SLACK_TIMEOUT_MILLIS:3000}
+      max-retries: ${TRADING_NOTIFICATION_SLACK_MAX_RETRIES:1}
+      retry-backoff-millis: ${TRADING_NOTIFICATION_SLACK_RETRY_BACKOFF_MILLIS:500}
+      enabled-types: ${TRADING_NOTIFICATION_SLACK_ENABLED_TYPES:}
 
 server:
   port: 8080

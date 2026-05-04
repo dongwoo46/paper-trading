@@ -5,6 +5,7 @@ import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.event.ExecutionFilledEvent
+import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.domain.model.AccountLedger
 import com.papertrading.api.domain.model.Execution
 import com.papertrading.api.domain.model.PendingSettlement
@@ -51,6 +52,7 @@ class ExecutionProcessor(
     private val settlementRepository: SettlementRepository,
     private val settlementExecutionRepository: SettlementExecutionRepository,
     private val eventPublisher: ApplicationEventPublisher,
+    private val slackNotificationEventPublisher: SlackNotificationEventPublisher,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -228,6 +230,14 @@ class ExecutionProcessor(
                 currency = requireNotNull(account.baseCurrency) { "account.baseCurrency is null: accountId=$accountId" },
                 executedAt = executedAt,
             )
+        )
+        val side = requireNotNull(order.orderSide) { "order.orderSide is null: orderId=$orderId" }
+        slackNotificationEventPublisher.publishExecutionFilled(
+            accountId = accountId,
+            orderId = orderId,
+            executionId = executionId,
+            message = "Execution filled: ticker=$ticker, side=$side, qty=$fillQty, price=$fillPrice",
+            occurredAt = executedAt,
         )
     }
 
