@@ -152,6 +152,22 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 일별 평가금액 추이 (DailyBalance 기반)
   - 벤치마크(KOSPI) 대비 수익률
 
+- [x] 세금 요약 대시보드 UI | project: front | phase: tax-summary-ui | priority: P1 | done: 2026-05-04 | pr: #TBD
+  - trading-api 세금 요약 조회/재계산 API 연동
+  - 계좌/연도별 세금 요약 조회 및 수동 재계산 UX
+
+- [ ] 거래 일지 관리 UI | project: front | phase: trading-journal-ui | priority: P1
+  - trading-api 거래 일지 생성/조회/수정 API 연동
+  - 목록/상세/수정 플로우 및 ticker 필터 UX
+
+- [ ] 구독 상태 모니터링 대시보드 UI | project: front | phase: subscription-monitor-ui | priority: P1
+  - collector-api GET /api/subscriptions/status 연동
+  - WS/REST 구독 현황 및 연결 상태 표시
+
+- [ ] 구독 라우팅 운영 UI | project: front | phase: subscription-routing-ui | priority: P1
+  - collector-api 구독 라우팅/즐겨찾기/전략 종목 API 연동
+  - 수동 등록·해제, 즐겨찾기, 전략 우선 라우팅 운영 화면
+
 ### 완료
 - [x] 실시간 시세 페이지 (RealtimePage — KIS WebSocket 연동)
 - [x] 일봉 차트 페이지 (HistoricalPage — OHLCV 조회)
