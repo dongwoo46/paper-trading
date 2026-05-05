@@ -20,7 +20,7 @@ class RiskPolicyService(
 
         // 기존 활성 정책 비활성화 (dirty checking으로 자동 반영)
         riskPolicyRepository.findByAccountIdAndIsActiveTrue(accountId)
-            .ifPresent { it.isActive = false }
+            .ifPresent { it.deactivate() }
 
         // Account Aggregate Root를 통해 새 정책 생성
         val newPolicy = account.createRiskPolicy(

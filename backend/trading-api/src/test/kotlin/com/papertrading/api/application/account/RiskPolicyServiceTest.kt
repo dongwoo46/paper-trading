@@ -50,12 +50,7 @@ class RiskPolicyServiceTest {
 
     @Test
     fun `기존_활성_정책이_있으면_비활성화하고_새_정책을_생성한다`() {
-        val existingPolicy = RiskPolicy(
-            id = 1L,
-            account = account,
-            maxPositionRatio = BigDecimal("0.1"),
-            isActive = true
-        )
+        val existingPolicy = account.createRiskPolicy(BigDecimal("0.1"), null, null)
         val command = UpsertRiskPolicyCommand(
             maxPositionRatio = BigDecimal("0.3"),
             maxDailyLoss = null,
@@ -74,7 +69,7 @@ class RiskPolicyServiceTest {
 
     @Test
     fun `활성_리스크_정책을_조회한다`() {
-        val policy = RiskPolicy(id = 1L, account = account, maxPositionRatio = BigDecimal("0.2"), isActive = true)
+        val policy = account.createRiskPolicy(BigDecimal("0.2"), null, null)
         every { riskPolicyRepository.findByAccountIdAndIsActiveTrue(1L) } returns Optional.of(policy)
 
         val result = service.getActiveRiskPolicy(1L)

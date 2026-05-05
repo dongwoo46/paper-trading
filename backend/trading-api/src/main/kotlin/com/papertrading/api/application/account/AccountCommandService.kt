@@ -4,7 +4,6 @@ import com.papertrading.api.application.account.command.CreateAccountCommand
 import com.papertrading.api.application.account.command.DepositCommand
 import com.papertrading.api.application.account.command.UpdateAccountCommand
 import com.papertrading.api.application.account.command.WithdrawCommand
-import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
@@ -32,15 +31,7 @@ class AccountCommandService(
         val saved = accountRepository.save(account)
 
         if (command.initialDeposit > BigDecimal.ZERO) {
-            accountLedgerRepository.save(
-                AccountLedger(
-                    account = saved,
-                    transactionType = TransactionType.DEPOSIT,
-                    amount = command.initialDeposit,
-                    balanceAfter = saved.availableDeposit,
-                    idempotencyKey = "init-account-${saved.id}"
-                )
-            )
+            accountLedgerRepository.save(saved.recordInitialDeposit("init-account-${saved.id}"))
         }
         return saved
     }
@@ -52,17 +43,8 @@ class AccountCommandService(
         accountLedgerRepository.findByIdempotencyKey(command.idempotencyKey)
             ?.let { return it }
 
-        account.deposit(command.amount)
-
         return accountLedgerRepository.save(
-            AccountLedger(
-                account = account,
-                transactionType = TransactionType.DEPOSIT,
-                amount = command.amount,
-                balanceAfter = account.availableDeposit,
-                description = command.description,
-                idempotencyKey = command.idempotencyKey
-            )
+            account.recordDeposit(command.amount, command.idempotencyKey, command.description)
         )
     }
 
@@ -73,17 +55,8 @@ class AccountCommandService(
         accountLedgerRepository.findByIdempotencyKey(command.idempotencyKey)
             ?.let { return it }
 
-        account.withdraw(command.amount)
-
         return accountLedgerRepository.save(
-            AccountLedger(
-                account = account,
-                transactionType = TransactionType.WITHDRAWAL,
-                amount = command.amount,
-                balanceAfter = account.availableDeposit,
-                description = command.description,
-                idempotencyKey = command.idempotencyKey
-            )
+            account.recordWithdrawal(command.amount, command.idempotencyKey, command.description)
         )
     }
 

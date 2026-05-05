@@ -1,5 +1,6 @@
 package com.papertrading.api.application.order
 
+import com.papertrading.api.support.withId
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
@@ -106,7 +107,7 @@ class KisExecutionNoticeServiceTest {
             tradingMode = TradingMode.KIS_PAPER,
             initialDeposit = BigDecimal("1000000"),
             externalAccountId = "12345678-01",
-        ).apply { id = 1L }
+        ).withId(1L)
         return Order(
             id = 10L,
             account = account,

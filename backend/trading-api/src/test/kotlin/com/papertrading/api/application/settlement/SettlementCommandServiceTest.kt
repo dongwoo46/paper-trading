@@ -1,5 +1,6 @@
 package com.papertrading.api.application.settlement
 
+import com.papertrading.api.support.withId
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.SettlementStatus
 import com.papertrading.api.domain.enums.TradingMode
@@ -33,7 +34,7 @@ class SettlementCommandServiceTest {
             accountType = AccountType.STOCK,
             tradingMode = TradingMode.LOCAL,
             initialDeposit = deposit,
-        ).apply { id = 1L }
+        ).withId(1L)
 
     private fun pendingSettlement(
         id: Long,
@@ -65,8 +66,8 @@ class SettlementCommandServiceTest {
 
     @Test
     fun `배치 처리 — 한 건 실패해도 나머지 계속 처리, count=1`() {
-        val account1 = account(BigDecimal("100000")).also { it.id = 1L }
-        val account2 = account(BigDecimal("200000")).also { it.id = 2L }
+        val account1 = account(BigDecimal("100000")).withId(1L)
+        val account2 = account(BigDecimal("200000")).withId(2L)
 
         val ps1 = pendingSettlement(id = 10L, account = account1, amount = BigDecimal("10000"))
         val ps2 = pendingSettlement(id = 11L, account = account2, amount = BigDecimal("20000"))

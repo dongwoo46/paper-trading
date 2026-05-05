@@ -10,6 +10,7 @@ import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.SettlementStatus
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.support.withId
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.feepolicy.FeePolicy
 import com.papertrading.api.domain.entity.order.Order
@@ -79,7 +80,7 @@ class ExecutionProcessorTest {
             accountType = AccountType.STOCK,
             tradingMode = tradingMode,
             initialDeposit = deposit,
-        ).apply { id = 1L }
+        ).withId(1L)
 
     private fun sellOrder(account: Account, qty: BigDecimal = BigDecimal("5")): Order = Order(
         id = 10L,

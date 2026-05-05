@@ -1,7 +1,5 @@
 package com.papertrading.api.application.settlement
 
-import com.papertrading.api.domain.enums.TransactionType
-import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.settlement.PendingSettlement
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
@@ -41,20 +39,13 @@ class SettlementProcessor(
             .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. accountId=$accountId") }
 
         val amount = ps.amount.setScale(4, RoundingMode.HALF_UP)
-        account.receiveSellProceeds(amount)
         accountRepository.save(account)
 
         ps.complete()
         pendingSettlementRepository.save(ps)
 
         accountLedgerRepository.save(
-            AccountLedger(
-                account = account,
-                transactionType = TransactionType.SETTLEMENT,
-                amount = amount,
-                balanceAfter = account.availableDeposit,
-                idempotencyKey = "settlement-${ps.id}",
-            )
+            account.recordSettlement(amount, "settlement-${ps.id}")
         )
     }
 }

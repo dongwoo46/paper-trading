@@ -1,5 +1,6 @@
 package com.papertrading.api.application.settlement
 
+import com.papertrading.api.support.withId
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.SettlementStatus
 import com.papertrading.api.domain.enums.TransactionType
@@ -39,7 +40,7 @@ class SettlementProcessorTest {
             accountType = AccountType.STOCK,
             tradingMode = TradingMode.LOCAL,
             initialDeposit = deposit,
-        ).apply { id = 1L }
+        ).withId(1L)
 
     private fun pendingSettlement(
         id: Long,

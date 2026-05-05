@@ -6,7 +6,6 @@ import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
-import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Order
@@ -80,9 +79,7 @@ class OrderCommandService(
                     quote.price
                 }
             }
-            val amount = unitPrice.multiply(command.quantity)
-            account.lockDeposit(amount)
-            amount
+            unitPrice.multiply(command.quantity)
         } else {
             BigDecimal.ZERO
         }
@@ -107,14 +104,9 @@ class OrderCommandService(
         val orderId = requireNotNull(order.id) { "saved order.id is null" }
 
         if (command.orderSide == OrderSide.BUY && lockedAmount > BigDecimal.ZERO) {
-            accountLedgerRepository.save(AccountLedger(
-                account = account,
-                transactionType = TransactionType.BUY_LOCK,
-                amount = lockedAmount,
-                balanceAfter = account.availableDeposit,
-                refOrderId = orderId,
-                idempotencyKey = "buy-lock-$orderId",
-            ))
+            accountLedgerRepository.save(
+                account.recordBuyLock(lockedAmount, orderId, "buy-lock-$orderId")
+            )
         }
 
         val mode = collectorMode(tradingMode.name)
@@ -168,15 +160,9 @@ class OrderCommandService(
                 .multiply(releasedQty)
 
             if (releaseAmount > BigDecimal.ZERO) {
-                account.unlockDeposit(releaseAmount)
-                accountLedgerRepository.save(AccountLedger(
-                    account = account,
-                    transactionType = TransactionType.BUY_UNLOCK,
-                    amount = releaseAmount,
-                    balanceAfter = account.availableDeposit,
-                    refOrderId = orderId,
-                    idempotencyKey = "cancel-unlock-$orderId",
-                ))
+                accountLedgerRepository.save(
+                    account.recordBuyUnlock(releaseAmount, orderId, "cancel-unlock-$orderId")
+                )
             }
         }
 

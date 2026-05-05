@@ -3,6 +3,7 @@ package com.papertrading.api.domain.entity.account
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
+import com.papertrading.api.domain.enums.TransactionType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -22,54 +23,95 @@ import java.math.BigDecimal
 @Entity
 @Table(name = "accounts")
 @Check(constraints = "deposit >= 0 AND available_deposit >= 0 AND locked_deposit >= 0")
-class Account protected constructor(
+class Account protected constructor() : BaseAuditEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @Column(name = "account_name", nullable = false, length = 100)
-    var accountName: String? = null,
+    lateinit var accountName: String
+        private set
 
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false, length = 20)
-    var accountType: AccountType? = null,
+    lateinit var accountType: AccountType
+        private set
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trading_mode", nullable = false, length = 20)
-    var tradingMode: TradingMode? = null,
+    lateinit var tradingMode: TradingMode
+        private set
 
     @Column(name = "deposit", nullable = false, precision = 20, scale = 4)
-    var deposit: BigDecimal = BigDecimal.ZERO,
+    lateinit var deposit: BigDecimal
+        private set
 
     @Column(name = "available_deposit", nullable = false, precision = 20, scale = 4)
-    var availableDeposit: BigDecimal = BigDecimal.ZERO,
+    lateinit var availableDeposit: BigDecimal
+        private set
 
     @Column(name = "locked_deposit", nullable = false, precision = 20, scale = 4)
-    var lockedDeposit: BigDecimal = BigDecimal.ZERO,
+    lateinit var lockedDeposit: BigDecimal
+        private set
 
     @Column(name = "base_currency", nullable = false, length = 3)
-    var baseCurrency: String = "KRW",
+    lateinit var baseCurrency: String
+        private set
 
     @Column(name = "external_account_id", length = 100)
-    var externalAccountId: String? = null,
+    var externalAccountId: String? = null
+        private set
 
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true
-) : BaseAuditEntity() {
+        private set
 
-    // 입금: 총 예수금과 가용 예수금을 동시에 증가시킨다.
-    fun deposit(amount: BigDecimal) {
+    fun addDeposit(amount: BigDecimal) {
         require(amount > BigDecimal.ZERO) { "입금 금액은 0보다 커야 합니다." }
         deposit = deposit.add(amount)
         availableDeposit = availableDeposit.add(amount)
     }
 
-    // 출금: 가용 예수금이 충분한 경우에만 감소시킨다.
+    fun recordDeposit(amount: BigDecimal, idempotencyKey: String, description: String? = null): AccountLedger {
+        addDeposit(amount)
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.DEPOSIT,
+            amount = amount,
+            balanceAfter = availableDeposit,
+            idempotencyKey = idempotencyKey,
+            description = description
+        )
+    }
+
+    fun recordInitialDeposit(idempotencyKey: String): AccountLedger {
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.DEPOSIT,
+            amount = deposit,
+            balanceAfter = availableDeposit,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
     fun withdraw(amount: BigDecimal) {
         require(amount > BigDecimal.ZERO) { "출금 금액은 0보다 커야 합니다." }
         require(availableDeposit >= amount) { "가용 예수금이 부족합니다." }
         deposit = deposit.subtract(amount)
         availableDeposit = availableDeposit.subtract(amount)
+    }
+
+    fun recordWithdrawal(amount: BigDecimal, idempotencyKey: String, description: String? = null): AccountLedger {
+        withdraw(amount)
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.WITHDRAWAL,
+            amount = amount,
+            balanceAfter = availableDeposit,
+            idempotencyKey = idempotencyKey,
+            description = description
+        )
     }
 
     fun lockDeposit(amount: BigDecimal) {
@@ -79,11 +121,35 @@ class Account protected constructor(
         lockedDeposit = lockedDeposit.add(amount)
     }
 
+    fun recordBuyLock(amount: BigDecimal, refOrderId: Long, idempotencyKey: String): AccountLedger {
+        lockDeposit(amount)
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.BUY_LOCK,
+            amount = amount,
+            balanceAfter = availableDeposit,
+            refOrderId = refOrderId,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
     fun unlockDeposit(amount: BigDecimal) {
         require(amount > BigDecimal.ZERO) { "해제 금액은 0보다 커야 합니다." }
         require(lockedDeposit >= amount) { "잠금 예수금이 부족합니다." }
         lockedDeposit = lockedDeposit.subtract(amount)
         availableDeposit = availableDeposit.add(amount)
+    }
+
+    fun recordBuyUnlock(amount: BigDecimal, refOrderId: Long, idempotencyKey: String): AccountLedger {
+        unlockDeposit(amount)
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.BUY_UNLOCK,
+            amount = amount,
+            balanceAfter = availableDeposit,
+            refOrderId = refOrderId,
+            idempotencyKey = idempotencyKey
+        )
     }
 
     fun confirmBuy(amount: BigDecimal) {
@@ -93,10 +159,58 @@ class Account protected constructor(
         deposit = deposit.subtract(amount)
     }
 
+    fun recordBuyExecution(cost: BigDecimal, refOrderId: Long, refExecutionId: Long, idempotencyKey: String): AccountLedger {
+        confirmBuy(cost)
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.BUY_EXECUTE,
+            amount = cost,
+            balanceAfter = availableDeposit,
+            refOrderId = refOrderId,
+            refExecutionId = refExecutionId,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
     fun receiveSellProceeds(amount: BigDecimal) {
         require(amount > BigDecimal.ZERO) { "매도 대금은 0보다 커야 합니다." }
         deposit = deposit.add(amount)
         availableDeposit = availableDeposit.add(amount)
+    }
+
+    fun recordSellExecution(netProceeds: BigDecimal, refOrderId: Long, refExecutionId: Long, idempotencyKey: String): AccountLedger {
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.SELL_EXECUTE,
+            amount = netProceeds,
+            balanceAfter = availableDeposit,
+            refOrderId = refOrderId,
+            refExecutionId = refExecutionId,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
+    fun recordFee(fee: BigDecimal, refOrderId: Long, refExecutionId: Long, idempotencyKey: String): AccountLedger {
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.FEE,
+            amount = fee,
+            balanceAfter = availableDeposit,
+            refOrderId = refOrderId,
+            refExecutionId = refExecutionId,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
+    fun recordSettlement(amount: BigDecimal, idempotencyKey: String): AccountLedger {
+        receiveSellProceeds(amount)
+        return AccountLedger.create(
+            account = this,
+            transactionType = TransactionType.SETTLEMENT,
+            amount = amount,
+            balanceAfter = availableDeposit,
+            idempotencyKey = idempotencyKey
+        )
     }
 
     fun rename(newName: String) {
@@ -113,7 +227,21 @@ class Account protected constructor(
         isActive = false
     }
 
-    // RiskPolicy 생성은 반드시 Account(Aggregate Root)를 통해 수행한다
+    fun activate() {
+        check(!isActive) { "이미 활성화된 계좌입니다." }
+        isActive = true
+    }
+
+    fun updateRiskPolicy(
+        existing: RiskPolicy,
+        maxPositionRatio: BigDecimal?,
+        maxDailyLoss: BigDecimal?,
+        maxOrderAmount: BigDecimal?
+    ): RiskPolicy {
+        existing.deactivate()
+        return createRiskPolicy(maxPositionRatio, maxDailyLoss, maxOrderAmount)
+    }
+
     fun createRiskPolicy(
         maxPositionRatio: BigDecimal?,
         maxDailyLoss: BigDecimal?,
@@ -128,17 +256,15 @@ class Account protected constructor(
         require(maxOrderAmount == null || maxOrderAmount > BigDecimal.ZERO) {
             "maxOrderAmount는 0보다 커야 합니다."
         }
-        return RiskPolicy(
+        return RiskPolicy.create(
             account = this,
             maxPositionRatio = maxPositionRatio,
             maxDailyLoss = maxDailyLoss,
-            maxOrderAmount = maxOrderAmount,
-            isActive = true
+            maxOrderAmount = maxOrderAmount
         )
     }
 
     companion object {
-        // 계좌 생성 규칙을 도메인 내부에 고정한다.
         fun create(
             accountName: String,
             accountType: AccountType,
@@ -152,17 +278,17 @@ class Account protected constructor(
             require(baseCurrency.length == 3) { "기준 통화는 3자리 코드여야 합니다." }
             validateTradingMode(accountType, tradingMode)
 
-            return Account(
-                accountName = accountName,
-                accountType = accountType,
-                tradingMode = tradingMode,
-                deposit = initialDeposit,
-                availableDeposit = initialDeposit,
-                lockedDeposit = BigDecimal.ZERO,
-                baseCurrency = baseCurrency.uppercase(),
-                externalAccountId = externalAccountId,
-                isActive = true
-            )
+            return Account().apply {
+                this.accountName = accountName
+                this.accountType = accountType
+                this.tradingMode = tradingMode
+                this.deposit = initialDeposit
+                this.availableDeposit = initialDeposit
+                this.lockedDeposit = BigDecimal.ZERO
+                this.baseCurrency = baseCurrency.uppercase()
+                this.externalAccountId = externalAccountId
+                this.isActive = true
+            }
         }
 
         private fun validateTradingMode(accountType: AccountType, tradingMode: TradingMode) {

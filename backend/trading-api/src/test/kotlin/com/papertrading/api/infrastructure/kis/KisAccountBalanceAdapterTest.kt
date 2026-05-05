@@ -1,5 +1,6 @@
 package com.papertrading.api.infrastructure.kis
 
+import com.papertrading.api.support.withId
 import com.papertrading.api.application.account.kis.KisAuthorizationException
 import com.papertrading.api.application.account.kis.KisForbiddenException
 import com.papertrading.api.application.account.kis.KisRemoteCallException
@@ -143,5 +144,5 @@ class KisAccountBalanceAdapterTest {
         tradingMode = TradingMode.KIS_PAPER,
         initialDeposit = BigDecimal("1000000"),
         externalAccountId = "12345678-01",
-    ).apply { id = 1L }
+    ).withId(1L)
 }

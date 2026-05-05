@@ -9,6 +9,7 @@ import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.support.withId
 import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
@@ -51,7 +52,7 @@ class OrderCommandServiceTest {
     private fun localAccount(deposit: BigDecimal = BigDecimal("1000000")): Account = Account.create(
         accountName = "test", accountType = AccountType.STOCK,
         tradingMode = TradingMode.LOCAL, initialDeposit = deposit
-    ).apply { id = 1L }
+    ).withId(1L)
 
     private fun savedOrder(account: Account): Order = Order(
         id = 10L, account = account, ticker = "005930",

@@ -1,5 +1,4 @@
 package com.papertrading.api.domain.entity.account
-import com.papertrading.api.domain.entity.account.Account
 
 import com.papertrading.api.domain.entity.base.BaseTimeEntity
 import com.papertrading.api.domain.enums.TransactionType
@@ -27,34 +26,65 @@ import java.math.BigDecimal
     name = "account_ledger",
     uniqueConstraints = [UniqueConstraint(name = "uk_account_ledger_idempotency", columnNames = ["idempotency_key"])]
 )
-class AccountLedger(
+class AccountLedger protected constructor() : BaseTimeEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false, length = 30)
-    var transactionType: TransactionType? = null,
+    lateinit var transactionType: TransactionType
+        private set
 
     @Column(name = "amount", nullable = false, precision = 20, scale = 4)
-    var amount: BigDecimal = BigDecimal.ZERO,
+    lateinit var amount: BigDecimal
+        private set
 
     @Column(name = "balance_after", nullable = false, precision = 20, scale = 4)
-    var balanceAfter: BigDecimal = BigDecimal.ZERO,
+    lateinit var balanceAfter: BigDecimal
+        private set
 
     @Column(name = "ref_order_id")
-    var refOrderId: Long? = null,
+    var refOrderId: Long? = null
+        private set
 
     @Column(name = "ref_execution_id")
-    var refExecutionId: Long? = null,
+    var refExecutionId: Long? = null
+        private set
 
     @Column(name = "description", length = 500)
-    var description: String? = null,
+    var description: String? = null
+        private set
 
     @Column(name = "idempotency_key", nullable = false, length = 100)
-    var idempotencyKey: String? = null
-) : BaseTimeEntity()
+    lateinit var idempotencyKey: String
+        private set
+
+    companion object {
+        internal fun create(
+            account: Account,
+            transactionType: TransactionType,
+            amount: BigDecimal,
+            balanceAfter: BigDecimal,
+            idempotencyKey: String,
+            refOrderId: Long? = null,
+            refExecutionId: Long? = null,
+            description: String? = null
+        ): AccountLedger = AccountLedger().apply {
+            this.account = account
+            this.transactionType = transactionType
+            this.amount = amount
+            this.balanceAfter = balanceAfter
+            this.idempotencyKey = idempotencyKey
+            this.refOrderId = refOrderId
+            this.refExecutionId = refExecutionId
+            this.description = description
+        }
+    }
+}

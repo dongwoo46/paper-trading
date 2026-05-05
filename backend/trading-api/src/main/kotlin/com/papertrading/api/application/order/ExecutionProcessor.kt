@@ -2,7 +2,6 @@ package com.papertrading.api.application.order
 
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
-import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.event.ExecutionFilledEvent
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
@@ -119,17 +118,9 @@ class ExecutionProcessor(
             positionRepository.save(position)
 
             val cost = fillPrice.multiply(fillQty)
-            account.confirmBuy(cost)
-
-            accountLedgerRepository.save(AccountLedger(
-                account = account,
-                transactionType = TransactionType.BUY_EXECUTE,
-                amount = cost,
-                balanceAfter = account.availableDeposit,
-                refOrderId = orderId,
-                refExecutionId = executionId,
-                idempotencyKey = "buy-exec-$executionId",
-            ))
+            accountLedgerRepository.save(
+                account.recordBuyExecution(cost, orderId, executionId, "buy-exec-$executionId")
+            )
         } else {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, ticker)
                 .orElseThrow { IllegalStateException("포지션을 찾을 수 없습니다. ticker=$ticker") }
@@ -164,15 +155,9 @@ class ExecutionProcessor(
                 }
             }
 
-            accountLedgerRepository.save(AccountLedger(
-                account = account,
-                transactionType = TransactionType.SELL_EXECUTE,
-                amount = netProceeds,
-                balanceAfter = account.availableDeposit,
-                refOrderId = orderId,
-                refExecutionId = executionId,
-                idempotencyKey = "sell-exec-$executionId",
-            ))
+            accountLedgerRepository.save(
+                account.recordSellExecution(netProceeds, orderId, executionId, "sell-exec-$executionId")
+            )
 
             if (order.orderStatus == OrderStatus.FILLED && order.orderSide == OrderSide.SELL) {
                 val realizedPnl = grossProceeds.subtract(fee).setScale(4, RoundingMode.HALF_UP)
@@ -200,15 +185,9 @@ class ExecutionProcessor(
         }
 
         if (fee > BigDecimal.ZERO) {
-            accountLedgerRepository.save(AccountLedger(
-                account = account,
-                transactionType = TransactionType.FEE,
-                amount = fee,
-                balanceAfter = account.availableDeposit,
-                refOrderId = orderId,
-                refExecutionId = executionId,
-                idempotencyKey = "fee-$executionId",
-            ))
+            accountLedgerRepository.save(
+                account.recordFee(fee, orderId, executionId, "fee-$executionId")
+            )
         }
 
         if (order.orderStatus == OrderStatus.FILLED) {
@@ -247,15 +226,9 @@ class ExecutionProcessor(
         val excess = lockedAmount.subtract(actualCost)
         if (excess <= BigDecimal.ZERO) return
 
-        account.unlockDeposit(excess)
-        accountLedgerRepository.save(AccountLedger(
-            account = account,
-            transactionType = TransactionType.BUY_UNLOCK,
-            amount = excess,
-            balanceAfter = account.availableDeposit,
-            refOrderId = orderId,
-            idempotencyKey = "unlock-excess-$orderId",
-        ))
+        accountLedgerRepository.save(
+            account.recordBuyUnlock(excess, orderId, "unlock-excess-$orderId")
+        )
     }
 
     /** 해당 ticker의 활성 주문이 없으면 collector-api 구독 해제 */

@@ -1,5 +1,4 @@
 package com.papertrading.api.domain.entity.account
-import com.papertrading.api.domain.entity.account.Account
 
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
 import jakarta.persistence.Column
@@ -24,24 +23,49 @@ import java.math.BigDecimal
  */
 @Entity
 @Table(name = "risk_policies")
-class RiskPolicy(
+class RiskPolicy protected constructor() : BaseAuditEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @Column(name = "max_position_ratio", precision = 5, scale = 4)
-    var maxPositionRatio: BigDecimal? = null,
+    var maxPositionRatio: BigDecimal? = null
+        private set
 
     @Column(name = "max_daily_loss", precision = 20, scale = 4)
-    var maxDailyLoss: BigDecimal? = null,
+    var maxDailyLoss: BigDecimal? = null
+        private set
 
     @Column(name = "max_order_amount", precision = 20, scale = 4)
-    var maxOrderAmount: BigDecimal? = null,
+    var maxOrderAmount: BigDecimal? = null
+        private set
 
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true
-) : BaseAuditEntity()
+        private set
+
+    fun deactivate() {
+        isActive = false
+    }
+
+    companion object {
+        internal fun create(
+            account: Account,
+            maxPositionRatio: BigDecimal?,
+            maxDailyLoss: BigDecimal?,
+            maxOrderAmount: BigDecimal?
+        ): RiskPolicy = RiskPolicy().apply {
+            this.account = account
+            this.maxPositionRatio = maxPositionRatio
+            this.maxDailyLoss = maxDailyLoss
+            this.maxOrderAmount = maxOrderAmount
+            this.isActive = true
+        }
+    }
+}

@@ -1,5 +1,4 @@
 package com.papertrading.api.domain.entity.account
-import com.papertrading.api.domain.entity.account.Account
 
 import com.papertrading.api.domain.entity.base.BaseTimeEntity
 import jakarta.persistence.Column
@@ -20,25 +19,46 @@ import java.time.Instant
  */
 @Entity
 @Table(name = "risk_events")
-class RiskEvent(
+class RiskEvent protected constructor() : BaseTimeEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "risk_policy_id")
-    var riskPolicy: RiskPolicy? = null,
+    var riskPolicy: RiskPolicy? = null
+        private set
 
     @Column(name = "event_type", nullable = false, length = 50)
-    var eventType: String? = null,
+    lateinit var eventType: String
+        private set
 
     @Column(name = "description", length = 500)
-    var description: String? = null,
+    var description: String? = null
+        private set
 
     @Column(name = "triggered_at", nullable = false)
-    var triggeredAt: Instant = Instant.now()
-) : BaseTimeEntity()
+    lateinit var triggeredAt: Instant
+        private set
+
+    companion object {
+        internal fun create(
+            account: Account,
+            eventType: String,
+            riskPolicy: RiskPolicy? = null,
+            description: String? = null
+        ): RiskEvent = RiskEvent().apply {
+            this.account = account
+            this.eventType = eventType
+            this.riskPolicy = riskPolicy
+            this.description = description
+            this.triggeredAt = Instant.now()
+        }
+    }
+}
