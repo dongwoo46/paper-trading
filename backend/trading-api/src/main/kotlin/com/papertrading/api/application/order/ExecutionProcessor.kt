@@ -13,7 +13,7 @@ import com.papertrading.api.domain.entity.settlement.PendingSettlement
 import com.papertrading.api.domain.entity.settlement.Settlement
 import com.papertrading.api.domain.entity.settlement.SettlementExecution
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
-import com.papertrading.api.domain.util.BusinessDayCalculator
+import com.papertrading.api.domain.entity.settlement.BusinessDayCalculator
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository

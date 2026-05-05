@@ -1,4 +1,4 @@
-package com.papertrading.api.domain.util
+package com.papertrading.api.domain.entity.settlement
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

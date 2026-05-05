@@ -1,6 +1,5 @@
-package com.papertrading.api.domain.model
+package com.papertrading.api.domain.entity.account
 
-import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
 import org.junit.jupiter.api.Assertions.assertEquals
