@@ -2,7 +2,7 @@ package com.papertrading.api.application.position.result
 
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.PriceSource
-import com.papertrading.api.domain.model.Position
+import com.papertrading.api.domain.entity.position.Position
 import java.math.BigDecimal
 import java.time.Instant
 

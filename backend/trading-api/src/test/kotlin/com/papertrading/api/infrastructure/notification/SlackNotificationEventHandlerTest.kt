@@ -1,10 +1,10 @@
 package com.papertrading.api.infrastructure.notification
 
 import com.papertrading.api.application.notification.SlackNotificationPolicyStore
-import com.papertrading.api.domain.entity.NotificationDeliveryLog
+import com.papertrading.api.domain.entity.notification.NotificationDeliveryLog
 import com.papertrading.api.domain.enums.DeliveryStatus
 import com.papertrading.api.domain.enums.NotificationEventType
-import com.papertrading.api.domain.event.SlackNotificationRequestedEvent
+import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot

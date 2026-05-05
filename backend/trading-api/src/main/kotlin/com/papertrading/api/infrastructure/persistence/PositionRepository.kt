@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.Position
+import com.papertrading.api.domain.entity.position.Position
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock

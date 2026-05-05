@@ -1,8 +1,8 @@
 package com.papertrading.api.application.settlement
 
 import com.papertrading.api.domain.enums.TransactionType
-import com.papertrading.api.domain.model.AccountLedger
-import com.papertrading.api.domain.model.PendingSettlement
+import com.papertrading.api.domain.entity.account.AccountLedger
+import com.papertrading.api.domain.entity.settlement.PendingSettlement
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository

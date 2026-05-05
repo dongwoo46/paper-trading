@@ -5,8 +5,8 @@ import com.papertrading.api.domain.enums.AccountSource
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Account
-import com.papertrading.api.domain.model.AccountLedger
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.account.AccountLedger
 import java.math.BigDecimal
 import java.time.Instant
 

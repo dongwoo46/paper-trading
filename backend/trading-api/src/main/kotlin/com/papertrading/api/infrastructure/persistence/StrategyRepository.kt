@@ -1,7 +1,7 @@
 package com.papertrading.api.infrastructure.persistence
 
 import com.papertrading.api.domain.enums.ApprovalStatus
-import com.papertrading.api.domain.model.Strategy
+import com.papertrading.api.domain.entity.strategy.Strategy
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface StrategyRepository : JpaRepository<Strategy, Long> {

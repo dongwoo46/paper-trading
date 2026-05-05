@@ -1,7 +1,7 @@
 package com.papertrading.api.infrastructure.persistence
 
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Account
+import com.papertrading.api.domain.entity.account.Account
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.JpaRepository

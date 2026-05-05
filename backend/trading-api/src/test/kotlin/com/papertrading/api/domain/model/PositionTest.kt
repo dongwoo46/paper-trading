@@ -1,5 +1,6 @@
 package com.papertrading.api.domain.model
 
+import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.PriceSource
 import org.junit.jupiter.api.Assertions.assertEquals

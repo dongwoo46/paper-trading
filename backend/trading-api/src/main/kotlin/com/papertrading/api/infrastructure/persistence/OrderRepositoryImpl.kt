@@ -2,8 +2,8 @@ package com.papertrading.api.infrastructure.persistence
 
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Order
-import com.papertrading.api.domain.model.QOrder
+import com.papertrading.api.domain.entity.order.Order
+import com.papertrading.api.domain.entity.order.QOrder
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import java.time.Instant

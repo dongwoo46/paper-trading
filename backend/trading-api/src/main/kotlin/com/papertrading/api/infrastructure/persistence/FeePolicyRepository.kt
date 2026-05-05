@@ -2,7 +2,7 @@ package com.papertrading.api.infrastructure.persistence
 
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.FeePolicy
+import com.papertrading.api.domain.entity.feepolicy.FeePolicy
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param

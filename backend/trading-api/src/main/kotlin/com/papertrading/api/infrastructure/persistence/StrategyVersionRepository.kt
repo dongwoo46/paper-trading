@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.StrategyVersion
+import com.papertrading.api.domain.entity.strategy.StrategyVersion
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.Optional
 

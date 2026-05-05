@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.notification
 
-import com.papertrading.api.domain.entity.NotificationDeliveryLog
+import com.papertrading.api.domain.entity.notification.NotificationDeliveryLog
 import com.papertrading.api.domain.enums.DeliveryStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying

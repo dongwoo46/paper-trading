@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.Settlement
+import com.papertrading.api.domain.entity.settlement.Settlement
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.Optional
 

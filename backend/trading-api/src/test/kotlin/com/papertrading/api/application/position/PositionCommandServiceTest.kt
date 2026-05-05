@@ -4,8 +4,8 @@ import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.PriceSource
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Account
-import com.papertrading.api.domain.model.Position
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.assertj.core.api.Assertions.assertThat

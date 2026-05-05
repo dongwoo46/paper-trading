@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.SettlementExecution
+import com.papertrading.api.domain.entity.settlement.SettlementExecution
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface SettlementExecutionRepository : JpaRepository<SettlementExecution, Long> {

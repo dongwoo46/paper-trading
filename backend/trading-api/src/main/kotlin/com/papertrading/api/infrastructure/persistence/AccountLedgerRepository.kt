@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.AccountLedger
+import com.papertrading.api.domain.entity.account.AccountLedger
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface AccountLedgerRepository : JpaRepository<AccountLedger, Long>, AccountLedgerRepositoryCustom {

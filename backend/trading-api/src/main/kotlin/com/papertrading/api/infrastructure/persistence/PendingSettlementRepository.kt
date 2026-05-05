@@ -1,7 +1,7 @@
 package com.papertrading.api.infrastructure.persistence
 
 import com.papertrading.api.domain.enums.SettlementStatus
-import com.papertrading.api.domain.model.PendingSettlement
+import com.papertrading.api.domain.entity.settlement.PendingSettlement
 import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDate
 

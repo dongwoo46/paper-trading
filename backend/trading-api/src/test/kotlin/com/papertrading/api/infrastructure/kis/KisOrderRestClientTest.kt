@@ -6,8 +6,8 @@ import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Account
-import com.papertrading.api.domain.model.Order
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.order.Order
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals

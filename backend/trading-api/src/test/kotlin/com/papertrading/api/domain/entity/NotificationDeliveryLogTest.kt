@@ -1,4 +1,4 @@
-package com.papertrading.api.domain.entity
+package com.papertrading.api.domain.entity.notification
 
 import com.papertrading.api.domain.enums.DeliveryStatus
 import com.papertrading.api.domain.enums.NotificationEventType

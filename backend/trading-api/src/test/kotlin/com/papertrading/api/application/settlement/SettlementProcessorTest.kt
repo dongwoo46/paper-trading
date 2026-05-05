@@ -4,9 +4,9 @@ import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.SettlementStatus
 import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Account
-import com.papertrading.api.domain.model.AccountLedger
-import com.papertrading.api.domain.model.PendingSettlement
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.account.AccountLedger
+import com.papertrading.api.domain.entity.settlement.PendingSettlement
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository

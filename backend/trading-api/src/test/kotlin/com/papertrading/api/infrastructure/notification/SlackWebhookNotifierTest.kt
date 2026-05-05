@@ -1,7 +1,7 @@
 package com.papertrading.api.infrastructure.notification
 
 import com.papertrading.api.domain.enums.NotificationEventType
-import com.papertrading.api.domain.event.SlackNotificationRequestedEvent
+import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify

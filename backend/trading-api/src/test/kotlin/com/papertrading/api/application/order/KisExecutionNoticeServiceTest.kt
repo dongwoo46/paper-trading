@@ -7,9 +7,9 @@ import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Account
-import com.papertrading.api.domain.model.Execution
-import com.papertrading.api.domain.model.Order
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.order.Execution
+import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.infrastructure.kis.KisExecutionNotice
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository

@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.StrategyLog
+import com.papertrading.api.domain.entity.strategy.StrategyLog
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface StrategyLogRepository : JpaRepository<StrategyLog, Long> {

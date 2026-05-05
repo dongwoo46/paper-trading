@@ -3,8 +3,8 @@ package com.papertrading.api.application.settlement
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.SettlementStatus
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Account
-import com.papertrading.api.domain.model.PendingSettlement
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.settlement.PendingSettlement
 import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository
 import io.mockk.every
 import io.mockk.justRun

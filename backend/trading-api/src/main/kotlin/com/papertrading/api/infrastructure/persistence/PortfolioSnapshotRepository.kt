@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.PortfolioSnapshot
+import com.papertrading.api.domain.entity.portfolio.PortfolioSnapshot
 import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDate
 import java.util.Optional

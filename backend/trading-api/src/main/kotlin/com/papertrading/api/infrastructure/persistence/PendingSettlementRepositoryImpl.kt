@@ -2,7 +2,7 @@ package com.papertrading.api.infrastructure.persistence
 
 import com.papertrading.api.application.account.query.PendingSettlementFilter
 import com.papertrading.api.application.account.result.PendingSettlementResult
-import com.papertrading.api.domain.model.QPendingSettlement
+import com.papertrading.api.domain.entity.settlement.QPendingSettlement
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.impl.JPAQueryFactory

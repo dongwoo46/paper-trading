@@ -5,8 +5,8 @@ import com.papertrading.api.application.account.command.DepositCommand
 import com.papertrading.api.application.account.command.UpdateAccountCommand
 import com.papertrading.api.application.account.command.WithdrawCommand
 import com.papertrading.api.domain.enums.TransactionType
-import com.papertrading.api.domain.model.Account
-import com.papertrading.api.domain.model.AccountLedger
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import org.springframework.stereotype.Service

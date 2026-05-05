@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.StrategyPerformanceSnapshot
+import com.papertrading.api.domain.entity.strategy.StrategyPerformanceSnapshot
 import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDate
 

@@ -1,7 +1,7 @@
 package com.papertrading.api.application.account
 
 import com.papertrading.api.application.account.command.UpsertRiskPolicyCommand
-import com.papertrading.api.domain.model.RiskPolicy
+import com.papertrading.api.domain.entity.account.RiskPolicy
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.RiskPolicyRepository
 import org.springframework.stereotype.Service

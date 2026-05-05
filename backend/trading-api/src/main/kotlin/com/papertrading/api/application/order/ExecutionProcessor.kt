@@ -6,12 +6,12 @@ import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.event.ExecutionFilledEvent
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
-import com.papertrading.api.domain.model.AccountLedger
-import com.papertrading.api.domain.model.Execution
-import com.papertrading.api.domain.model.PendingSettlement
-import com.papertrading.api.domain.model.Position
-import com.papertrading.api.domain.model.Settlement
-import com.papertrading.api.domain.model.SettlementExecution
+import com.papertrading.api.domain.entity.account.AccountLedger
+import com.papertrading.api.domain.entity.order.Execution
+import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.entity.settlement.PendingSettlement
+import com.papertrading.api.domain.entity.settlement.Settlement
+import com.papertrading.api.domain.entity.settlement.SettlementExecution
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.domain.util.BusinessDayCalculator
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
@@ -242,7 +242,7 @@ class ExecutionProcessor(
     }
 
     /** LIMIT 매수에서 실제 체결가가 잠금 금액보다 낮을 때 차액을 해제 */
-    private fun releaseLockedExcess(orderId: Long, lockedAmount: BigDecimal, fillPrice: BigDecimal, fillQty: BigDecimal, account: com.papertrading.api.domain.model.Account) {
+    private fun releaseLockedExcess(orderId: Long, lockedAmount: BigDecimal, fillPrice: BigDecimal, fillQty: BigDecimal, account: com.papertrading.api.domain.entity.account.Account) {
         val actualCost = fillPrice.multiply(fillQty)
         val excess = lockedAmount.subtract(actualCost)
         if (excess <= BigDecimal.ZERO) return

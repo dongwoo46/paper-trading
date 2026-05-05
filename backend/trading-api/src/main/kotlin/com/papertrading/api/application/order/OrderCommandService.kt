@@ -8,8 +8,8 @@ import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.AccountLedger
-import com.papertrading.api.domain.model.Order
+import com.papertrading.api.domain.entity.account.AccountLedger
+import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.domain.port.MarketQuotePort
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository

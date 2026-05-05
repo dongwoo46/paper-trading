@@ -1,6 +1,6 @@
 package com.papertrading.api.presentation.dto.account
 
-import com.papertrading.api.domain.model.RiskPolicy
+import com.papertrading.api.domain.entity.account.RiskPolicy
 import java.math.BigDecimal
 
 data class UpsertRiskPolicyRequest(

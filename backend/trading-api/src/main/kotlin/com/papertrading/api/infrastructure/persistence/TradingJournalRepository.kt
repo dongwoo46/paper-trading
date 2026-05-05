@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.TradingJournal
+import com.papertrading.api.domain.entity.portfolio.TradingJournal
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface TradingJournalRepository : JpaRepository<TradingJournal, Long> {

@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.Execution
+import com.papertrading.api.domain.entity.order.Execution
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.Optional
 

@@ -4,7 +4,7 @@ import com.papertrading.api.application.account.kis.KisAccountBalancePort
 import com.papertrading.api.application.account.kis.KisAccountMode
 import com.papertrading.api.application.account.kis.KisBalancePosition
 import com.papertrading.api.application.account.kis.KisBalanceSnapshot
-import com.papertrading.api.domain.model.Position
+import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import io.mockk.every
 import io.mockk.mockk

@@ -5,8 +5,8 @@ import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
-import com.papertrading.api.domain.model.Execution
-import com.papertrading.api.domain.model.Order
+import com.papertrading.api.domain.entity.order.Execution
+import com.papertrading.api.domain.entity.order.Order
 import java.math.BigDecimal
 import java.time.Instant
 

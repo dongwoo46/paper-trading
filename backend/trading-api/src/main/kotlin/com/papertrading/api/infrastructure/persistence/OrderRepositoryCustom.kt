@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.Order
+import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.enums.TradingMode
 import java.time.Instant
 import java.util.Optional

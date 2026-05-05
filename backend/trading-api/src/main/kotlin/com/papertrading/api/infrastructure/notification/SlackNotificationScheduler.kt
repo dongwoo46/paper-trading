@@ -2,7 +2,7 @@ package com.papertrading.api.infrastructure.notification
 
 import com.papertrading.api.application.notification.SlackNotificationPolicyStore
 import com.papertrading.api.domain.enums.DeliveryStatus
-import com.papertrading.api.domain.event.SlackNotificationRequestedEvent
+import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
 import mu.KotlinLogging
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component

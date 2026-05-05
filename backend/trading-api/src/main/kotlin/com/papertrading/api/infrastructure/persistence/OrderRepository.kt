@@ -1,7 +1,7 @@
 package com.papertrading.api.infrastructure.persistence
 
 import com.papertrading.api.domain.enums.OrderStatus
-import com.papertrading.api.domain.model.Order
+import com.papertrading.api.domain.entity.order.Order
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock

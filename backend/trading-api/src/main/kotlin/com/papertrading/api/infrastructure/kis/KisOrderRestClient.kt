@@ -2,7 +2,7 @@ package com.papertrading.api.infrastructure.kis
 
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderType
-import com.papertrading.api.domain.model.Order
+import com.papertrading.api.domain.entity.order.Order
 import mu.KotlinLogging
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders

@@ -3,7 +3,7 @@ package com.papertrading.api.application.account
 import com.papertrading.api.application.account.query.LedgerFilter
 import com.papertrading.api.application.account.result.LedgerResult
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.model.Account
+import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import org.springframework.data.domain.Page

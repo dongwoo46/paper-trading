@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.notification
 
-import com.papertrading.api.domain.entity.NotificationDeliveryLog
+import com.papertrading.api.domain.entity.notification.NotificationDeliveryLog
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional

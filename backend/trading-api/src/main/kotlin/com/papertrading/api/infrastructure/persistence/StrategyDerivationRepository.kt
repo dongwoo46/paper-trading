@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.domain.model.StrategyDerivation
+import com.papertrading.api.domain.entity.strategy.StrategyDerivation
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface StrategyDerivationRepository : JpaRepository<StrategyDerivation, Long> {

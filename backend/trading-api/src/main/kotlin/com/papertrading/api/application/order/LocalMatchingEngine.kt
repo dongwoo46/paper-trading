@@ -1,8 +1,8 @@
 package com.papertrading.api.application.order
 
+import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderType
-import com.papertrading.api.domain.model.Order
 import com.papertrading.api.domain.port.QuoteSnapshot
 import com.papertrading.api.infrastructure.persistence.OrderRepository
 import mu.KotlinLogging

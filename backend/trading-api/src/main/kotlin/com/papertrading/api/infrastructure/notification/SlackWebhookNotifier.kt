@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.notification
 
-import com.papertrading.api.domain.event.SlackNotificationRequestedEvent
+import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
 import mu.KotlinLogging
 import org.springframework.http.HttpEntity
 import org.springframework.stereotype.Component

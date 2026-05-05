@@ -2,7 +2,7 @@ package com.papertrading.api.infrastructure.persistence
 
 import com.papertrading.api.application.account.query.LedgerFilter
 import com.papertrading.api.application.account.result.LedgerResult
-import com.papertrading.api.domain.model.QAccountLedger
+import com.papertrading.api.domain.entity.account.QAccountLedger
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.impl.JPAQueryFactory

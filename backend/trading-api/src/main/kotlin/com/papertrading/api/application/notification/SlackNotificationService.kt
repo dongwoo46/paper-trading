@@ -1,7 +1,7 @@
 package com.papertrading.api.application.notification
 
 import com.papertrading.api.domain.enums.NotificationEventType
-import com.papertrading.api.domain.event.SlackNotificationRequestedEvent
+import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
 import com.papertrading.api.infrastructure.notification.NotificationSender
 import com.papertrading.api.infrastructure.notification.SlackNotificationProperties
 import org.springframework.stereotype.Component
