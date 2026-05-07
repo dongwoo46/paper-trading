@@ -10,7 +10,7 @@ idle
 - 없음
 
 ## 마지막 액션
-2026-05-07: trading-api/trading-journal-service phase 완료 처리 (done 이동 + TODO 반영)
+2026-05-07: trading-api/tax-summary-service phase 완료 (cleanup 반영)
 
 ## 다음 액션
-다음 미완료 TODO 선택 (예: quant-worker/batch-schedule)
+`$orchestrate` 실행 시 TODO에서 다음 미완료 항목 선택

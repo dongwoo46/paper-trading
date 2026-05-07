@@ -72,7 +72,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - TradingJournalController + DTO 연결
   - ⚠️ 프론트 trading-journal-ui가 API 없이 완성된 상태 — 우선 연결 필요
 
-- [ ] 세금 정산 서비스 구현 | project: trading-api | phase: tax-summary-service | priority: P2
+- [x] 세금 정산 서비스 구현 | project: trading-api | phase: tax-summary-service | priority: P2 | done: 2026-05-07 | pr: #TBD
   - TaxSummaryCommandService: 연간 집계 생성·재계산
   - TaxSummaryQueryService: 계좌·연도별 조회
   - TaxSummaryController + DTO 연결
@@ -220,6 +220,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
 
 
 

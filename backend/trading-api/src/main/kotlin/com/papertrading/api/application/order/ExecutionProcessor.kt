@@ -113,7 +113,7 @@ class ExecutionProcessor(
 
         if (order.orderSide == OrderSide.BUY) {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, ticker)
-                .orElseGet { Position(account = account, ticker = ticker, marketType = marketType) }
+                .orElseGet { Position.create(account = account, ticker = ticker, marketType = marketType) }
             position.applyBuy(fillQty, fillPrice)
             positionRepository.save(position)
 
