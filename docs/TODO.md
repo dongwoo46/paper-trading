@@ -1,4 +1,4 @@
-﻿# TODO — Paper Trading
+# TODO — Paper Trading
 
 Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
@@ -78,7 +78,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - TaxSummaryController + DTO 연결
   - ⚠️ 프론트 tax-summary-ui가 API 없이 완성된 상태 — 우선 연결 필요
 
-- [ ] 포트폴리오 스냅샷 서비스 구현 | project: trading-api | phase: portfolio-snapshot-service | priority: P2
+- [x] 포트폴리오 스냅샷 서비스 구현 | project: trading-api | phase: portfolio-snapshot-service | priority: P2 | done: 2026-05-08 | pr: pending
   - DailyBalanceCommandService: 장 마감 후 일별 잔고 집계·저장 (배치)
   - PortfolioSnapshotCommandService: 종목 비중 스냅샷 생성 (배치)
   - QueryService + Controller: 기간별 잔고 조회 API
@@ -220,6 +220,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
 
 
 
