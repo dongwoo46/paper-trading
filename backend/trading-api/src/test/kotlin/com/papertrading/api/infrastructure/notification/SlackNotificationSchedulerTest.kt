@@ -1,9 +1,10 @@
 package com.papertrading.api.infrastructure.notification
 
 import com.papertrading.api.application.notification.SlackNotificationPolicyStore
-import com.papertrading.api.domain.entity.notification.NotificationDeliveryLog
+import com.papertrading.api.domain.entity.notification.Notification
 import com.papertrading.api.domain.enums.DeliveryStatus
 import com.papertrading.api.domain.enums.NotificationEventType
+import com.papertrading.api.infrastructure.persistence.NotificationRepository
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test
 
 class SlackNotificationSchedulerTest {
 
-    private val repository = mockk<NotificationDeliveryLogRepository>()
+    private val repository = mockk<NotificationRepository>()
     private val sender = mockk<NotificationSender>()
     private val retryProcessor = mockk<NotificationRetryProcessor>()
 
@@ -26,18 +27,21 @@ class SlackNotificationSchedulerTest {
         enabledTypes = listOf(NotificationEventType.EXECUTION_FILLED),
     )
 
-    private fun makeLog(
+    private fun makeNotification(
         id: Long = 1L,
         attemptCount: Int = 0,
         status: DeliveryStatus = DeliveryStatus.PENDING,
-    ) = NotificationDeliveryLog(
-        id = id,
-        eventType = NotificationEventType.EXECUTION_FILLED,
-        sourceRef = "execution:$id",
-        status = status,
-        attemptCount = attemptCount,
-        message = "체결 알림 $id",
-    )
+    ): Notification {
+        val notification = Notification.create(
+            eventType = NotificationEventType.EXECUTION_FILLED,
+            sourceRef = "execution:$id",
+            title = NotificationEventType.EXECUTION_FILLED.name,
+            message = "체결 알림 $id",
+        )
+        // status와 attemptCount를 반영
+        if (status == DeliveryStatus.DELIVERING) notification.markDelivering()
+        return notification
+    }
 
     @Test
     fun `PENDING 레코드가 없으면 sender send를 호출하지 않는다`() {
@@ -60,20 +64,20 @@ class SlackNotificationSchedulerTest {
         val policyStore = SlackNotificationPolicyStore(props)
         val scheduler = SlackNotificationScheduler(repository, sender, policyStore, retryProcessor)
 
-        val log = makeLog()
+        val notification = makeNotification()
         every {
             repository.findByStatusAndAttemptCountLessThan(DeliveryStatus.PENDING, props.maxRetries)
-        } returns listOf(log)
-        every { retryProcessor.markDelivering(log) } answers {
-            log.markDelivering()
-            log
+        } returns listOf(notification)
+        every { retryProcessor.markDelivering(notification) } answers {
+            notification.markDelivering()
+            notification
         }
         justRun { retryProcessor.markDelivered(any()) }
         every { sender.send(any()) } returns true
 
         scheduler.retryPending()
 
-        verify(exactly = 1) { retryProcessor.markDelivering(log) }
+        verify(exactly = 1) { retryProcessor.markDelivering(notification) }
         verify(exactly = 1) { retryProcessor.markDelivered(any()) }
         verify(exactly = 0) { retryProcessor.markFailed(any(), any(), any()) }
     }
@@ -85,21 +89,21 @@ class SlackNotificationSchedulerTest {
         val policyStore = SlackNotificationPolicyStore(props)
         val scheduler = SlackNotificationScheduler(repository, sender, policyStore, retryProcessor)
 
-        val log = makeLog(attemptCount = 0)
+        val notification = makeNotification(attemptCount = 0)
         every {
             repository.findByStatusAndAttemptCountLessThan(DeliveryStatus.PENDING, maxRetries)
-        } returns listOf(log)
-        every { retryProcessor.markDelivering(log) } answers {
-            log.markDelivering()
-            log
+        } returns listOf(notification)
+        every { retryProcessor.markDelivering(notification) } answers {
+            notification.markDelivering()
+            notification
         }
         justRun { retryProcessor.markFailed(any(), any(), any()) }
         every { sender.send(any()) } returns false
 
         scheduler.retryPending()
 
-        verify(exactly = 1) { retryProcessor.markDelivering(log) }
-        verify(exactly = 1) { retryProcessor.markFailed(log, "Slack webhook returned failure", maxRetries) }
+        verify(exactly = 1) { retryProcessor.markDelivering(notification) }
+        verify(exactly = 1) { retryProcessor.markFailed(notification, "Slack webhook returned failure", maxRetries) }
         verify(exactly = 0) { retryProcessor.markDelivered(any()) }
     }
 
@@ -109,12 +113,12 @@ class SlackNotificationSchedulerTest {
         val policyStore = SlackNotificationPolicyStore(props)
         val scheduler = SlackNotificationScheduler(repository, sender, policyStore, retryProcessor)
 
-        val log = makeLog()
+        val notification = makeNotification()
         every {
             repository.findByStatusAndAttemptCountLessThan(DeliveryStatus.PENDING, props.maxRetries)
-        } returns listOf(log)
+        } returns listOf(notification)
         // markDelivering returns null — already claimed by another instance
-        every { retryProcessor.markDelivering(log) } returns null
+        every { retryProcessor.markDelivering(notification) } returns null
 
         scheduler.retryPending()
 
@@ -129,31 +133,31 @@ class SlackNotificationSchedulerTest {
         val policyStore = SlackNotificationPolicyStore(props)
         val scheduler = SlackNotificationScheduler(repository, sender, policyStore, retryProcessor)
 
-        val failingLog = makeLog(id = 1L)
-        val successLog = makeLog(id = 2L)
+        val failingNotification = makeNotification(id = 1L)
+        val successNotification = makeNotification(id = 2L)
 
         every {
             repository.findByStatusAndAttemptCountLessThan(DeliveryStatus.PENDING, props.maxRetries)
-        } returns listOf(failingLog, successLog)
+        } returns listOf(failingNotification, successNotification)
 
         // 첫 번째 레코드의 markDelivering은 예외를 던짐
-        every { retryProcessor.markDelivering(failingLog) } throws RuntimeException("slack 서버 다운")
-        justRun { retryProcessor.markFailed(failingLog, any(), any()) }
+        every { retryProcessor.markDelivering(failingNotification) } throws RuntimeException("slack 서버 다운")
+        justRun { retryProcessor.markFailed(failingNotification, any(), any()) }
 
         // 두 번째 레코드는 성공
-        every { retryProcessor.markDelivering(successLog) } answers {
-            successLog.markDelivering()
-            successLog
+        every { retryProcessor.markDelivering(successNotification) } answers {
+            successNotification.markDelivering()
+            successNotification
         }
         every { sender.send(match { it.message == "체결 알림 2" }) } returns true
-        justRun { retryProcessor.markDelivered(successLog) }
+        justRun { retryProcessor.markDelivered(successNotification) }
 
         scheduler.retryPending()
 
         // 두 번째 레코드는 성공적으로 처리되어야 한다
-        verify(exactly = 1) { retryProcessor.markDelivered(successLog) }
+        verify(exactly = 1) { retryProcessor.markDelivered(successNotification) }
         // 첫 번째 레코드는 markFailed가 호출되어야 한다
-        verify(exactly = 1) { retryProcessor.markFailed(failingLog, any(), any()) }
+        verify(exactly = 1) { retryProcessor.markFailed(failingNotification, any(), any()) }
         verify(exactly = 1) { sender.send(any()) }
     }
 
@@ -164,19 +168,19 @@ class SlackNotificationSchedulerTest {
         val policyStore = SlackNotificationPolicyStore(props)
         val scheduler = SlackNotificationScheduler(repository, sender, policyStore, retryProcessor)
 
-        val log = makeLog(attemptCount = maxRetries - 1)
+        val notification = makeNotification(attemptCount = maxRetries - 1)
         every {
             repository.findByStatusAndAttemptCountLessThan(DeliveryStatus.PENDING, maxRetries)
-        } returns listOf(log)
-        every { retryProcessor.markDelivering(log) } answers {
-            log.markDelivering()
-            log
+        } returns listOf(notification)
+        every { retryProcessor.markDelivering(notification) } answers {
+            notification.markDelivering()
+            notification
         }
         justRun { retryProcessor.markFailed(any(), any(), any()) }
         every { sender.send(any()) } returns false
 
         scheduler.retryPending()
 
-        verify(exactly = 1) { retryProcessor.markFailed(log, "Slack webhook returned failure", maxRetries) }
+        verify(exactly = 1) { retryProcessor.markFailed(notification, "Slack webhook returned failure", maxRetries) }
     }
 }

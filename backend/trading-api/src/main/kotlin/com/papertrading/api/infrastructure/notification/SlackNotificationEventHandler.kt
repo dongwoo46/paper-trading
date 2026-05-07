@@ -1,9 +1,9 @@
 package com.papertrading.api.infrastructure.notification
 
 import com.papertrading.api.application.notification.SlackNotificationPolicyStore
-import com.papertrading.api.domain.entity.notification.NotificationDeliveryLog
-import com.papertrading.api.domain.enums.DeliveryStatus
 import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
+import com.papertrading.api.domain.entity.notification.Notification
+import com.papertrading.api.infrastructure.persistence.NotificationRepository
 import mu.KotlinLogging
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
@@ -14,8 +14,8 @@ import org.springframework.transaction.event.TransactionalEventListener
 class SlackNotificationEventHandler(
     private val sender: NotificationSender,
     private val policyStore: SlackNotificationPolicyStore,
-    private val repository: NotificationDeliveryLogRepository,
-    private val logSaver: NotificationDeliveryLogSaver,
+    private val repository: NotificationRepository,
+    private val notificationSaver: NotificationSaver,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -27,18 +27,18 @@ class SlackNotificationEventHandler(
         if (event.eventType !in policy.enabledTypes) return
 
         val sourceRef = buildSourceRef(event)
-        val deliveryLog = logSaver.save(
-            NotificationDeliveryLog(
+        val notification = notificationSaver.save(
+            Notification.create(
                 eventType = event.eventType,
                 sourceRef = sourceRef,
-                status = DeliveryStatus.PENDING,
+                title = event.eventType.name,
                 message = event.message,
             ),
         )
 
         val success = sender.send(event)
         if (success) {
-            val updated = deliveryLog.markDelivered()
+            val updated = notification.markDelivered()
             repository.save(updated)
         } else {
             log.warn { "Slack send failed on first attempt — leaving PENDING for scheduler retry: sourceRef=$sourceRef" }
