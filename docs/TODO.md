@@ -66,7 +66,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P2 — 고도화
 
-- [x] 거래 일지 서비스 구현 | project: trading-api | phase: trading-journal-service | priority: P2 | done: 2026-05-07 | pr: #TBD
+- [x] 거래 일지 서비스 구현 | project: trading-api | phase: trading-journal-service | priority: P2 | done: 2026-05-07 | pr: #20
   - TradingJournalCommandService: 일지 생성·수정
   - TradingJournalQueryService: 목록·상세 조회 (ticker/계좌 필터)
   - TradingJournalController + DTO 연결
@@ -220,6 +220,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
 
 
 

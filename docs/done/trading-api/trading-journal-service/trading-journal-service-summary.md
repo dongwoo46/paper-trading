@@ -33,4 +33,5 @@ Create/Update/List/Detail 요청 -> Controller DTO 검증 -> Application Service
   - `(account_id, ticker, created_at desc)`
 
 ## Completed / PR
-2026-05-07 / PR 미생성 (draft 준비 완료)
+2026-05-07 / #20
+
