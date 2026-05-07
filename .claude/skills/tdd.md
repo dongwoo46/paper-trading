@@ -60,16 +60,15 @@ Use `@SpringBootTest` + Testcontainers PostgreSQL instead.
 
 ## Test Layers
 
-| Layer | Scope | Tooling | Speed |
-|-------|-------|---------|-------|
-| Unit | Domain logic, pure functions, Entities | JUnit5/MockK, no Spring context | Milliseconds |
-| Integration | Application services + real DB/Redis | @SpringBootTest + Testcontainers | Seconds |
-| E2E | Critical user journeys (order → fill → position) | @SpringBootTest, HTTP client | Slow |
-| Regression | One per past incident | Added when bugs occur | — |
+| Layer | Scope | Tooling | Speed | Priority |
+|-------|-------|---------|-------|----------|
+| Integration | Application services + real DB/Redis (no HTTP layer) | @SpringBootTest + Testcontainers | Seconds | **Highest** |
+| Unit | Domain entities, pure functions | JUnit5/MockK, no Spring context | Milliseconds | High |
+| Regression | One per past incident | Added when bugs occur | — | As needed |
 
-- Unit: only where logic is non-trivial. No unit tests for getters, DI wiring, or framework glue.
-- Integration: moderate count, focused on critical modules per domain.
-- E2E: one per critical journey. More = unsustainable maintenance.
+- Integration: the primary test layer. Call ApplicationService directly against a real DB/Redis. No mocks inside the boundary, no HTTP client. This is where business logic correctness is verified.
+- Unit: only where logic is non-trivial and isolated — domain entity methods, pure functions. No unit tests for getters, DI wiring, or framework glue.
+- Regression: one focused test per past production incident. Never skip.
 - Gate expensive live tests behind an env flag: `LIVE_TEST=true`.
 
 ---
@@ -132,7 +131,7 @@ Happy Path → Core business logic → Boundary values / exceptions
 
 ## When NOT to Write a Test
 
-- Plain CRUD with no logic → one E2E covers it.
+- Plain CRUD with no logic → one Integration test covers it.
 - DI wiring, routing, module setup → the framework tests this.
 - Config constants → type system or schema validator covers this.
 - Code you are about to delete.

@@ -27,22 +27,41 @@ import java.time.LocalDate
     name = "portfolio_snapshots",
     uniqueConstraints = [UniqueConstraint(name = "uk_portfolio_snapshots_account_date", columnNames = ["account_id", "snapshot_date"])]
 )
-class PortfolioSnapshot(
+class PortfolioSnapshot protected constructor() : BaseTimeEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @Column(name = "snapshot_date", nullable = false)
-    var snapshotDate: LocalDate? = null,
+    lateinit var snapshotDate: LocalDate
+        private set
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "composition", columnDefinition = "jsonb")
-    var composition: String? = null,
+    var composition: String? = null
+        private set
 
     @Column(name = "total_evaluation", nullable = false, precision = 20, scale = 4)
-    var totalEvaluation: BigDecimal = BigDecimal.ZERO
-) : BaseTimeEntity()
+    lateinit var totalEvaluation: BigDecimal
+        private set
+
+    companion object {
+        fun create(
+            account: Account,
+            snapshotDate: LocalDate,
+            totalEvaluation: BigDecimal,
+            composition: String? = null
+        ): PortfolioSnapshot = PortfolioSnapshot().apply {
+            this.account = account
+            this.snapshotDate = snapshotDate
+            this.totalEvaluation = totalEvaluation
+            this.composition = composition
+        }
+    }
+}

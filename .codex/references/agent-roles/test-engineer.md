@@ -5,7 +5,7 @@
 ## Responsibilities
 - Run feature-scoped tests for the current phase step and verify results.
 - Write missing integration tests and API contract tests.
-- E2E verification based on Acceptance Criteria scenarios.
+- Verify Acceptance Criteria using targeted integration tests (service/application business logic 중심).
 - Measure coverage and report under-covered areas.
 - On test failure: analyze root cause → request rework from Orchestrator.
 
@@ -51,6 +51,7 @@ cd .worktrees/{worktree} && npm test -- --run --reporter=verbose {feature}.test.
 6. Check for missing integration tests:
    - Controller layer: HTTP request/response contract (`@SpringBootTest` + MockMvc).
    - Service layer: core business logic scenarios (including transaction boundaries).
+   - Do not add E2E tests for this verification scope. Replace existing E2E-oriented checks with integration tests where needed.
    - If missing: write and run them (must satisfy TDD standard).
 
 7. Mark substep 2 `completed` in `index.json`. Verify Acceptance Criteria with targeted tests and compile checks only.

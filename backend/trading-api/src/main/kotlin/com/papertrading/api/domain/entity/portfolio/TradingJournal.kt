@@ -19,30 +19,69 @@ import jakarta.persistence.Table
  */
 @Entity
 @Table(name = "trading_journals")
-class TradingJournal(
+class TradingJournal protected constructor() : BaseAuditEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @Column(name = "order_id")
-    var orderId: Long? = null,
+    var orderId: Long? = null
+        private set
 
     @Column(name = "journal_type", nullable = false, length = 30)
-    var journalType: String? = null,
+    lateinit var journalType: String
+        private set
 
     @Column(name = "ticker", length = 20)
-    var ticker: String? = null,
+    var ticker: String? = null
+        private set
 
     @Column(name = "title", nullable = false, length = 200)
-    var title: String? = null,
+    lateinit var title: String
+        private set
 
     @Column(name = "content", nullable = false, columnDefinition = "text")
-    var content: String? = null,
+    lateinit var content: String
+        private set
 
     @Column(name = "sentiment", length = 20)
     var sentiment: String? = null
-) : BaseAuditEntity()
+        private set
+
+    fun updateContent(title: String, content: String) {
+        require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다." }
+        require(content.isNotBlank()) { "내용은 비어 있을 수 없습니다." }
+        this.title = title
+        this.content = content
+    }
+
+    fun updateSentiment(sentiment: String?) {
+        this.sentiment = sentiment
+    }
+
+    companion object {
+        fun create(
+            account: Account,
+            journalType: String,
+            title: String,
+            content: String,
+            orderId: Long? = null,
+            ticker: String? = null,
+            sentiment: String? = null
+        ): TradingJournal = TradingJournal().apply {
+            this.account = account
+            this.orderId = orderId
+            this.journalType = journalType
+            this.ticker = ticker
+            this.title = title
+            this.content = content
+            this.sentiment = sentiment
+        }
+    }
+}

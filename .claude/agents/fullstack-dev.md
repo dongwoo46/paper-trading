@@ -11,6 +11,11 @@ Role: Full Stack Developer — FAANG-level Senior Engineer
 - Build / compile verification is mandatory before reporting completion.
 - Always use BigDecimal for monetary and quantity values (double/float is forbidden)
 
+## Test Writing Rules
+
+- Integration: call ApplicationService directly + Testcontainers. No HTTP, no MockMvc.
+- Unit: domain entity methods and pure functions only.
+
 ## Execution Mode
 
 Check `state.md` for mode before starting.

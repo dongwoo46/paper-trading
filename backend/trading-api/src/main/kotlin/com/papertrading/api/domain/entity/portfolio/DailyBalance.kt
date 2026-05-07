@@ -25,30 +25,58 @@ import java.time.LocalDate
     name = "daily_balances",
     uniqueConstraints = [UniqueConstraint(name = "uk_daily_balances_account_date", columnNames = ["account_id", "balance_date"])]
 )
-class DailyBalance(
+class DailyBalance protected constructor() : BaseTimeEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @Column(name = "balance_date", nullable = false)
-    var balanceDate: LocalDate? = null,
+    lateinit var balanceDate: LocalDate
+        private set
 
     @Column(name = "deposit", nullable = false, precision = 20, scale = 4)
-    var deposit: BigDecimal = BigDecimal.ZERO,
+    lateinit var deposit: BigDecimal
+        private set
 
     @Column(name = "evaluation_amount", nullable = false, precision = 20, scale = 4)
-    var evaluationAmount: BigDecimal = BigDecimal.ZERO,
+    lateinit var evaluationAmount: BigDecimal
+        private set
 
     @Column(name = "total_asset", nullable = false, precision = 20, scale = 4)
-    var totalAsset: BigDecimal = BigDecimal.ZERO,
+    lateinit var totalAsset: BigDecimal
+        private set
 
     @Column(name = "total_pnl", nullable = false, precision = 20, scale = 4)
-    var totalPnl: BigDecimal = BigDecimal.ZERO,
+    lateinit var totalPnl: BigDecimal
+        private set
 
     @Column(name = "daily_pnl", nullable = false, precision = 20, scale = 4)
-    var dailyPnl: BigDecimal = BigDecimal.ZERO
-) : BaseTimeEntity()
+    lateinit var dailyPnl: BigDecimal
+        private set
+
+    companion object {
+        fun create(
+            account: Account,
+            balanceDate: LocalDate,
+            deposit: BigDecimal,
+            evaluationAmount: BigDecimal,
+            totalAsset: BigDecimal,
+            totalPnl: BigDecimal,
+            dailyPnl: BigDecimal
+        ): DailyBalance = DailyBalance().apply {
+            this.account = account
+            this.balanceDate = balanceDate
+            this.deposit = deposit
+            this.evaluationAmount = evaluationAmount
+            this.totalAsset = totalAsset
+            this.totalPnl = totalPnl
+            this.dailyPnl = dailyPnl
+        }
+    }
+}
