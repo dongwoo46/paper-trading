@@ -22,16 +22,29 @@ import jakarta.persistence.UniqueConstraint
     name = "settlement_executions",
     uniqueConstraints = [UniqueConstraint(name = "uk_settlement_executions", columnNames = ["settlement_id", "execution_id"])]
 )
-class SettlementExecution(
+class SettlementExecution protected constructor() : BaseTimeEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    var id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "settlement_id", nullable = false)
-    var settlement: Settlement? = null,
+    lateinit var settlement: Settlement
+        private set
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "execution_id", nullable = false)
-    var execution: Execution? = null
-) : BaseTimeEntity()
+    lateinit var execution: Execution
+        private set
+
+    companion object {
+        fun create(
+            settlement: Settlement,
+            execution: Execution,
+        ): SettlementExecution =
+            SettlementExecution().apply {
+                this.settlement = settlement
+                this.execution = execution
+            }
+    }
+}

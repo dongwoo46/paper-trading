@@ -1,12 +1,14 @@
 package com.papertrading.api.application.settlement
 
+import com.papertrading.api.application.settlement.command.ProcessSettlementCommand
+import com.papertrading.api.application.settlement.command.ProcessSettlementsCommand
 import com.papertrading.api.support.withId
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.SettlementStatus
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.Account
-import com.papertrading.api.domain.entity.settlement.PendingSettlement
-import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository
+import com.papertrading.api.domain.entity.settlement.ReceivableSettlement
+import com.papertrading.api.infrastructure.persistence.ReceivableSettlementRepository
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -20,11 +22,11 @@ import java.util.Optional
 
 class SettlementCommandServiceTest {
 
-    private val pendingSettlementRepository = mockk<PendingSettlementRepository>()
+    private val ReceivableSettlementRepository = mockk<ReceivableSettlementRepository>()
     private val settlementProcessor = mockk<SettlementProcessor>()
 
     private val service = SettlementCommandService(
-        pendingSettlementRepository,
+        ReceivableSettlementRepository,
         settlementProcessor,
     )
 
@@ -36,29 +38,27 @@ class SettlementCommandServiceTest {
             initialDeposit = deposit,
         ).withId(1L)
 
-    private fun pendingSettlement(
+    private fun ReceivableSettlement(
         id: Long,
         account: Account,
         amount: BigDecimal = BigDecimal("50000"),
         date: LocalDate = LocalDate.of(2024, 1, 10),
-    ): PendingSettlement = PendingSettlement(
-        id = id,
+    ): ReceivableSettlement = ReceivableSettlement.create(
         account = account,
         orderId = 100L,
         settlementDate = date,
         amount = amount,
-        status = SettlementStatus.PENDING,
-    )
+    ).also { it.id = id }
 
     @Test
     fun `PENDING 없을 때 0 반환, processor 호출 없음`() {
         val targetDate = LocalDate.of(2024, 1, 10)
 
         every {
-            pendingSettlementRepository.findBySettlementDateLessThanEqualAndStatus(targetDate, SettlementStatus.PENDING)
+            ReceivableSettlementRepository.findBySettlementDateLessThanEqualAndStatus(targetDate, SettlementStatus.PENDING)
         } returns emptyList()
 
-        val count = service.processSettlements(targetDate)
+        val count = service.processSettlements(ProcessSettlementsCommand(targetDate = targetDate))
 
         assertEquals(0, count)
         verify(exactly = 0) { settlementProcessor.processOne(any()) }
@@ -69,19 +69,19 @@ class SettlementCommandServiceTest {
         val account1 = account(BigDecimal("100000")).withId(1L)
         val account2 = account(BigDecimal("200000")).withId(2L)
 
-        val ps1 = pendingSettlement(id = 10L, account = account1, amount = BigDecimal("10000"))
-        val ps2 = pendingSettlement(id = 11L, account = account2, amount = BigDecimal("20000"))
+        val ps1 = ReceivableSettlement(id = 10L, account = account1, amount = BigDecimal("10000"))
+        val ps2 = ReceivableSettlement(id = 11L, account = account2, amount = BigDecimal("20000"))
         val targetDate = LocalDate.of(2024, 1, 10)
 
         every {
-            pendingSettlementRepository.findBySettlementDateLessThanEqualAndStatus(targetDate, SettlementStatus.PENDING)
+            ReceivableSettlementRepository.findBySettlementDateLessThanEqualAndStatus(targetDate, SettlementStatus.PENDING)
         } returns listOf(ps1, ps2)
 
         // ps1 처리 시 예외 발생
         every { settlementProcessor.processOne(ps1) } throws RuntimeException("DB 오류")
         justRun { settlementProcessor.processOne(ps2) }
 
-        val count = service.processSettlements(targetDate)
+        val count = service.processSettlements(ProcessSettlementsCommand(targetDate = targetDate))
 
         // ps1 실패, ps2 성공 → 1건
         assertEquals(1, count)
@@ -92,22 +92,22 @@ class SettlementCommandServiceTest {
     @Test
     fun `processSettlement — 정상 케이스 - processor에 위임`() {
         val account = account()
-        val ps = pendingSettlement(id = 2L, account = account)
+        val ps = ReceivableSettlement(id = 2L, account = account)
 
-        every { pendingSettlementRepository.findById(2L) } returns Optional.of(ps)
+        every { ReceivableSettlementRepository.findById(2L) } returns Optional.of(ps)
         justRun { settlementProcessor.processOne(ps) }
 
-        service.processSettlement(2L)
+        service.processSettlement(ProcessSettlementCommand(ReceivableSettlementId = 2L))
 
         verify(exactly = 1) { settlementProcessor.processOne(ps) }
     }
 
     @Test
     fun `processSettlement — ID 없으면 NoSuchElementException`() {
-        every { pendingSettlementRepository.findById(99L) } returns Optional.empty()
+        every { ReceivableSettlementRepository.findById(99L) } returns Optional.empty()
 
         assertThrows<NoSuchElementException> {
-            service.processSettlement(99L)
+            service.processSettlement(ProcessSettlementCommand(ReceivableSettlementId = 99L))
         }
 
         verify(exactly = 0) { settlementProcessor.processOne(any()) }
@@ -116,17 +116,18 @@ class SettlementCommandServiceTest {
     @Test
     fun `배치 처리 — 모두 성공 시 전체 건수 반환`() {
         val account = account()
-        val ps1 = pendingSettlement(id = 1L, account = account, amount = BigDecimal("10000"))
-        val ps2 = pendingSettlement(id = 2L, account = account, amount = BigDecimal("20000"))
+        val ps1 = ReceivableSettlement(id = 1L, account = account, amount = BigDecimal("10000"))
+        val ps2 = ReceivableSettlement(id = 2L, account = account, amount = BigDecimal("20000"))
         val targetDate = LocalDate.of(2024, 1, 10)
 
         every {
-            pendingSettlementRepository.findBySettlementDateLessThanEqualAndStatus(targetDate, SettlementStatus.PENDING)
+            ReceivableSettlementRepository.findBySettlementDateLessThanEqualAndStatus(targetDate, SettlementStatus.PENDING)
         } returns listOf(ps1, ps2)
         justRun { settlementProcessor.processOne(any()) }
 
-        val count = service.processSettlements(targetDate)
+        val count = service.processSettlements(ProcessSettlementsCommand(targetDate = targetDate))
 
         assertEquals(2, count)
     }
 }
+

@@ -202,7 +202,7 @@ class Account protected constructor() : BaseAuditEntity() {
         )
     }
 
-    fun recordSettlement(amount: BigDecimal, idempotencyKey: String): AccountLedger {
+    fun recordDepositWithLedger(amount: BigDecimal, idempotencyKey: String): AccountLedger {
         receiveSellProceeds(amount)
         return AccountLedger.create(
             account = this,

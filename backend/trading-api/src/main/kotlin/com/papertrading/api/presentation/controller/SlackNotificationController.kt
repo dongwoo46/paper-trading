@@ -6,6 +6,7 @@ import com.papertrading.api.presentation.dto.notification.SlackNotificationConfi
 import com.papertrading.api.presentation.dto.notification.SlackNotificationTestRequest
 import com.papertrading.api.presentation.dto.notification.SlackNotificationTestResponse
 import com.papertrading.api.presentation.dto.notification.UpdateSlackNotificationConfigRequest
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -27,14 +28,14 @@ class SlackNotificationController(
 
     @PutMapping
     fun updateConfig(
-        @RequestBody request: UpdateSlackNotificationConfigRequest,
+        @Valid @RequestBody request: UpdateSlackNotificationConfigRequest,
     ): SlackNotificationConfigResponse =
         SlackNotificationConfigResponse.from(commandService.updateConfig(request.toCommand()))
 
     @PostMapping("/test")
     @ResponseStatus(HttpStatus.ACCEPTED)
     fun sendTest(
-        @RequestBody request: SlackNotificationTestRequest,
+        @Valid @RequestBody request: SlackNotificationTestRequest,
     ): SlackNotificationTestResponse =
         SlackNotificationTestResponse(
             accepted = true,

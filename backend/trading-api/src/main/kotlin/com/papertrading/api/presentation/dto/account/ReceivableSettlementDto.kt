@@ -1,11 +1,11 @@
 package com.papertrading.api.presentation.dto.account
 
-import com.papertrading.api.application.account.result.PendingSettlementResult
+import com.papertrading.api.application.account.result.ReceivableSettlementResult
 import com.papertrading.api.domain.enums.SettlementStatus
 import java.math.BigDecimal
 import java.time.LocalDate
 
-data class PendingSettlementResponse(
+data class ReceivableSettlementResponse(
     val id: Long,
     val orderId: Long,
     val settlementDate: LocalDate,
@@ -13,7 +13,7 @@ data class PendingSettlementResponse(
     val status: SettlementStatus
 ) {
     companion object {
-        fun from(result: PendingSettlementResult) = PendingSettlementResponse(
+        fun from(result: ReceivableSettlementResult) = ReceivableSettlementResponse(
             id = result.id,
             orderId = result.orderId,
             settlementDate = result.settlementDate,

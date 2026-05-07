@@ -1,22 +1,22 @@
 package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.application.account.query.PendingSettlementFilter
-import com.papertrading.api.application.account.result.PendingSettlementResult
-import com.papertrading.api.domain.entity.settlement.QPendingSettlement
+import com.papertrading.api.application.account.query.ReceivableSettlementFilter
+import com.papertrading.api.application.account.result.ReceivableSettlementResult
+import com.papertrading.api.domain.entity.settlement.QReceivableSettlement
 import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.impl.JPAQueryFactory
 
-class PendingSettlementRepositoryImpl(
+class ReceivableSettlementRepositoryImpl(
     private val queryFactory: JPAQueryFactory
-) : PendingSettlementRepositoryCustom {
+) : ReceivableSettlementRepositoryCustom {
 
-    private val ps = QPendingSettlement.pendingSettlement
+    private val ps = QReceivableSettlement.receivableSettlement
 
     override fun findByAccountIdAndFilter(
         accountId: Long,
-        filter: PendingSettlementFilter
-    ): List<PendingSettlementResult> {
+        filter: ReceivableSettlementFilter
+    ): List<ReceivableSettlementResult> {
         val where = BooleanBuilder()
             .and(ps.account.id.eq(accountId))
             .and(filter.status?.let { ps.status.eq(it) })
@@ -26,7 +26,7 @@ class PendingSettlementRepositoryImpl(
         return queryFactory
             .select(
                 Projections.constructor(
-                    PendingSettlementResult::class.java,
+                    ReceivableSettlementResult::class.java,
                     ps.id,
                     ps.orderId,
                     ps.settlementDate,

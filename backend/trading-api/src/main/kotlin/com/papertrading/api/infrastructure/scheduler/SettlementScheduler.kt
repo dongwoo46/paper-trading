@@ -1,6 +1,7 @@
 package com.papertrading.api.infrastructure.scheduler
 
 import com.papertrading.api.application.settlement.SettlementCommandService
+import com.papertrading.api.application.settlement.command.ProcessSettlementsCommand
 import mu.KotlinLogging
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -21,7 +22,7 @@ class SettlementScheduler(
     fun runDailySettlement() {
         val today = LocalDate.now(ZoneId.of("Asia/Seoul"))
         log.info { "정산 스케줄러 시작: targetDate=$today" }
-        val count = settlementCommandService.processSettlements(today)
+        val count = settlementCommandService.processSettlements(ProcessSettlementsCommand(targetDate = today))
         log.info { "정산 스케줄러 완료: 처리 건수=$count" }
     }
 }

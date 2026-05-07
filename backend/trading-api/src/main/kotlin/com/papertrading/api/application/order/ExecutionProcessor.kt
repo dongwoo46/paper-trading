@@ -8,7 +8,7 @@ import com.papertrading.api.application.notification.SlackNotificationEventPubli
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.position.Position
-import com.papertrading.api.domain.entity.settlement.PendingSettlement
+import com.papertrading.api.domain.entity.settlement.ReceivableSettlement
 import com.papertrading.api.domain.entity.settlement.Settlement
 import com.papertrading.api.domain.entity.settlement.SettlementExecution
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
@@ -18,7 +18,7 @@ import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
 import com.papertrading.api.infrastructure.persistence.FeePolicyRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
-import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository
+import com.papertrading.api.infrastructure.persistence.ReceivableSettlementRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementExecutionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementRepository
@@ -47,7 +47,7 @@ class ExecutionProcessor(
     private val accountLedgerRepository: AccountLedgerRepository,
     private val feePolicyRepository: FeePolicyRepository,
     private val collectorSubscriptionPort: CollectorSubscriptionPort,
-    private val pendingSettlementRepository: PendingSettlementRepository,
+    private val ReceivableSettlementRepository: ReceivableSettlementRepository,
     private val settlementRepository: SettlementRepository,
     private val settlementExecutionRepository: SettlementExecutionRepository,
     private val eventPublisher: ApplicationEventPublisher,
@@ -139,12 +139,12 @@ class ExecutionProcessor(
                     account.receiveSellProceeds(netProceeds)
                 }
                 TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> {
-                    // KIS 모드: T+2 결제 — 즉시 입금 없이 PendingSettlement 생성
+                    // KIS 모드: T+2 결제 — 즉시 입금 없이 ReceivableSettlement 생성
                     val settlementDate = BusinessDayCalculator.addBusinessDays(
                         LocalDate.now(ZoneId.of("Asia/Seoul")), 2
                     )
-                    pendingSettlementRepository.save(
-                        PendingSettlement(
+                    ReceivableSettlementRepository.save(
+                        ReceivableSettlement.create(
                             account = account,
                             orderId = orderId,
                             settlementDate = settlementDate,
@@ -163,23 +163,17 @@ class ExecutionProcessor(
             )
 
             if (order.orderStatus == OrderStatus.FILLED && order.orderSide == OrderSide.SELL) {
-                val realizedPnl = grossProceeds.subtract(fee).setScale(4, RoundingMode.HALF_UP)
                 val settlement = settlementRepository.save(
-                    Settlement(
+                    Settlement.createFromExecution(
                         order = order,
                         account = account,
-                        ticker = ticker,
-                        realizedPnl = realizedPnl,
-                        fee = fee,
+                        execution = execution,
                         tax = BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP),
-                        netPnl = realizedPnl,
-                        currency = account.baseCurrency,
-                        krwNetPnl = realizedPnl,
                         settledAt = Instant.now(),
                     )
                 )
                 settlementExecutionRepository.save(
-                    SettlementExecution(
+                    SettlementExecution.create(
                         settlement = settlement,
                         execution = execution,
                     )
@@ -248,3 +242,4 @@ class ExecutionProcessor(
 /** TradingMode.name → collector-api mode 문자열 변환 */
 internal fun collectorMode(tradingModeName: String): String =
     if (tradingModeName == "KIS_PAPER") "paper" else "live"
+

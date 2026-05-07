@@ -4,6 +4,7 @@ import com.papertrading.api.application.account.RiskPolicyService
 import com.papertrading.api.application.account.command.UpsertRiskPolicyCommand
 import com.papertrading.api.presentation.dto.account.RiskPolicyResponse
 import com.papertrading.api.presentation.dto.account.UpsertRiskPolicyRequest
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -24,7 +25,7 @@ class RiskPolicyController(
     @PostMapping
     fun upsertRiskPolicy(
         @PathVariable accountId: Long,
-        @RequestBody request: UpsertRiskPolicyRequest
+        @Valid @RequestBody request: UpsertRiskPolicyRequest
     ): RiskPolicyResponse {
         val policy = riskPolicyService.upsertRiskPolicy(
             accountId,

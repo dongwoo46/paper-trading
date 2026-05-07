@@ -3,6 +3,9 @@ package com.papertrading.api.presentation.dto.notification
 import com.papertrading.api.application.notification.SlackNotificationConfigResult
 import com.papertrading.api.application.notification.UpdateSlackNotificationConfigCommand
 import com.papertrading.api.domain.enums.NotificationEventType
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import java.time.Instant
 
 data class SlackNotificationConfigResponse(
@@ -30,8 +33,11 @@ data class SlackNotificationConfigResponse(
 
 data class UpdateSlackNotificationConfigRequest(
     val enabled: Boolean,
+    @field:Min(1)
     val maxRetries: Int,
+    @field:Min(0)
     val retryBackoffMillis: Long,
+    @field:NotEmpty
     val enabledTypes: List<NotificationEventType>,
 ) {
     fun toCommand(): UpdateSlackNotificationConfigCommand =
@@ -44,6 +50,7 @@ data class UpdateSlackNotificationConfigRequest(
 }
 
 data class SlackNotificationTestRequest(
+    @field:NotBlank
     val message: String,
 )
 

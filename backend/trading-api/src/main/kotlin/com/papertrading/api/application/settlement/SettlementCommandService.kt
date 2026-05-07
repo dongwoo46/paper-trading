@@ -1,15 +1,16 @@
 package com.papertrading.api.application.settlement
 
+import com.papertrading.api.application.settlement.command.ProcessSettlementCommand
+import com.papertrading.api.application.settlement.command.ProcessSettlementsCommand
 import com.papertrading.api.domain.enums.SettlementStatus
-import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository
+import com.papertrading.api.infrastructure.persistence.ReceivableSettlementRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDate
 
 @Service
 class SettlementCommandService(
-    private val pendingSettlementRepository: PendingSettlementRepository,
+    private val ReceivableSettlementRepository: ReceivableSettlementRepository,
     private val settlementProcessor: SettlementProcessor,
 ) {
     private val log = KotlinLogging.logger {}
@@ -23,16 +24,16 @@ class SettlementCommandService(
      *
      * @return 성공 처리 건수
      */
-    fun processSettlements(targetDate: LocalDate): Int {
-        val pendings = pendingSettlementRepository
-            .findBySettlementDateLessThanEqualAndStatus(targetDate, SettlementStatus.PENDING)
+    fun processSettlements(command: ProcessSettlementsCommand): Int {
+        val pendings = ReceivableSettlementRepository
+            .findBySettlementDateLessThanEqualAndStatus(command.targetDate, SettlementStatus.PENDING)
 
         var successCount = 0
         for (ps in pendings) {
             runCatching { settlementProcessor.processOne(ps) }
                 .onSuccess { successCount++ }
                 .onFailure { ex ->
-                    log.warn { "정산 처리 실패: pendingSettlementId=${ps.id}, reason=${ex.message}" }
+                    log.warn { "정산 처리 실패: ReceivableSettlementId=${ps.id}, reason=${ex.message}" }
                 }
         }
         return successCount
@@ -42,9 +43,10 @@ class SettlementCommandService(
      * 단건 정산 재처리. 예외는 호출자에게 전파된다.
      */
     @Transactional
-    fun processSettlement(pendingSettlementId: Long) {
-        val ps = pendingSettlementRepository.findById(pendingSettlementId)
-            .orElseThrow { NoSuchElementException("PendingSettlement을 찾을 수 없습니다. id=$pendingSettlementId") }
+    fun processSettlement(command: ProcessSettlementCommand) {
+        val ps = ReceivableSettlementRepository.findById(command.ReceivableSettlementId)
+            .orElseThrow { NoSuchElementException("ReceivableSettlement을 찾을 수 없습니다. id=${command.ReceivableSettlementId}") }
         settlementProcessor.processOne(ps)
     }
 }
+

@@ -1,13 +1,15 @@
 package com.papertrading.api.application.settlement
 
-import com.papertrading.api.domain.entity.settlement.PendingSettlement
+import com.papertrading.api.domain.entity.settlement.ReceivableSettlement
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
-import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository
+import com.papertrading.api.infrastructure.persistence.ReceivableSettlementRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.math.RoundingMode
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * 단건 정산 처리 빈.
@@ -19,7 +21,7 @@ import java.math.RoundingMode
  */
 @Service
 class SettlementProcessor(
-    private val pendingSettlementRepository: PendingSettlementRepository,
+    private val ReceivableSettlementRepository: ReceivableSettlementRepository,
     private val accountRepository: AccountRepository,
     private val accountLedgerRepository: AccountLedgerRepository,
 ) {
@@ -29,23 +31,21 @@ class SettlementProcessor(
      * 1. 비관적 락으로 계좌 조회
      * 2. account.receiveSellProceeds(amount) — 예수금 증가
      * 3. accountRepository.save(account) — REQUIRES_NEW 범위에서 명시적 영속
-     * 4. pendingSettlement.complete()
+     * 4. ReceivableSettlement.complete()
      * 5. AccountLedger(SETTLEMENT) 저장
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun processOne(ps: PendingSettlement) {
-        val accountId = requireNotNull(ps.account?.id) { "account.id is null: pendingSettlementId=${ps.id}" }
+    fun processOne(ps: ReceivableSettlement) {
+        val accountId = requireNotNull(ps.account?.id) { "account.id is null: ReceivableSettlementId=${ps.id}" }
         val account = accountRepository.findByIdWithLock(accountId)
             .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. accountId=$accountId") }
 
         val amount = ps.amount.setScale(4, RoundingMode.HALF_UP)
-        accountRepository.save(account)
+        val ledger = account.recordDepositWithLedger(amount, "settlement-${ps.id}")
 
-        ps.complete()
-        pendingSettlementRepository.save(ps)
+        ps.complete(LocalDate.now(ZoneId.of("Asia/Seoul")))
 
-        accountLedgerRepository.save(
-            account.recordSettlement(amount, "settlement-${ps.id}")
-        )
+        accountLedgerRepository.save(ledger)
     }
 }
+

@@ -7,10 +7,10 @@ import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.account.AccountLedger
-import com.papertrading.api.domain.entity.settlement.PendingSettlement
+import com.papertrading.api.domain.entity.settlement.ReceivableSettlement
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
-import com.papertrading.api.infrastructure.persistence.PendingSettlementRepository
+import com.papertrading.api.infrastructure.persistence.ReceivableSettlementRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -24,12 +24,12 @@ import java.util.Optional
 
 class SettlementProcessorTest {
 
-    private val pendingSettlementRepository = mockk<PendingSettlementRepository>()
+    private val ReceivableSettlementRepository = mockk<ReceivableSettlementRepository>()
     private val accountRepository = mockk<AccountRepository>()
     private val accountLedgerRepository = mockk<AccountLedgerRepository>()
 
     private val processor = SettlementProcessor(
-        pendingSettlementRepository,
+        ReceivableSettlementRepository,
         accountRepository,
         accountLedgerRepository,
     )
@@ -42,57 +42,54 @@ class SettlementProcessorTest {
             initialDeposit = deposit,
         ).withId(1L)
 
-    private fun pendingSettlement(
+    private fun ReceivableSettlement(
         id: Long,
         account: Account,
         amount: BigDecimal = BigDecimal("50000"),
         date: LocalDate = LocalDate.of(2024, 1, 10),
-    ): PendingSettlement = PendingSettlement(
-        id = id,
+    ): ReceivableSettlement = ReceivableSettlement.create(
         account = account,
         orderId = 100L,
         settlementDate = date,
         amount = amount,
-        status = SettlementStatus.PENDING,
-    )
+    ).also { it.id = id }
 
     @Test
     fun `processOne — 계좌 잔액 증가, ps 상태 COMPLETED, AccountLedger(SETTLEMENT) 저장, accountRepository 저장`() {
         val initialDeposit = BigDecimal("1000000")
         val amount = BigDecimal("50000")
         val account = account(initialDeposit)
-        val ps = pendingSettlement(id = 1L, account = account, amount = amount)
+        val ps = ReceivableSettlement(id = 1L, account = account, amount = amount)
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
-        every { accountRepository.save(account) } returns account
-        every { pendingSettlementRepository.save(ps) } returns ps
         val ledgerSlot = slot<AccountLedger>()
         every { accountLedgerRepository.save(capture(ledgerSlot)) } answers { firstArg() }
 
         processor.processOne(ps)
 
         // 계좌 잔액 증가 검증: 1000000 + 50000 = 1050000
-        assertEquals(BigDecimal("1050000.0000"), account.availableDeposit)
-        assertEquals(BigDecimal("1050000.0000"), account.deposit)
+        assertEquals(0, BigDecimal("1050000.0000").compareTo(account.availableDeposit))
+        assertEquals(0, BigDecimal("1050000.0000").compareTo(account.deposit))
 
-        // pendingSettlement.complete() 호출 검증
+        // ReceivableSettlement.complete() 호출 검증
         assertEquals(SettlementStatus.COMPLETED, ps.status)
 
         // AccountLedger(SETTLEMENT) 저장 검증
         val ledger = ledgerSlot.captured
         assertEquals(TransactionType.SETTLEMENT, ledger.transactionType)
-        assertEquals(BigDecimal("50000.0000"), ledger.amount)
-        assertEquals(BigDecimal("1050000.0000"), ledger.balanceAfter)
+        assertEquals(0, BigDecimal("50000.0000").compareTo(ledger.amount))
+        assertEquals(0, BigDecimal("1050000.0000").compareTo(ledger.balanceAfter))
         assertEquals("settlement-1", ledger.idempotencyKey)
 
-        // accountRepository.save 호출 검증
-        verify(exactly = 1) { accountRepository.save(account) }
+        // dirty checking 사용: 명시적 save 호출 없음
+        verify(exactly = 0) { accountRepository.save(any()) }
+        verify(exactly = 0) { ReceivableSettlementRepository.save(any()) }
     }
 
     @Test
     fun `processOne — 계좌 없으면 NoSuchElementException`() {
         val account = account()
-        val ps = pendingSettlement(id = 5L, account = account)
+        val ps = ReceivableSettlement(id = 5L, account = account)
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.empty()
 
@@ -105,32 +102,24 @@ class SettlementProcessorTest {
     }
 
     @Test
-    fun `processOne — account id null이면 IllegalArgumentException`() {
-        val ps = PendingSettlement(
-            id = 7L,
-            account = null,
-            orderId = 100L,
-            settlementDate = LocalDate.of(2024, 1, 10),
-            amount = BigDecimal("10000"),
-            status = SettlementStatus.PENDING,
-        )
+    fun `processOne — 이미 COMPLETED 상태면 예외`() {
+        val account = account()
+        val ps = ReceivableSettlement(id = 7L, account = account)
+        ps.complete(ps.settlementDate)
+        every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
 
-        assertThrows<IllegalArgumentException> {
+        assertThrows<IllegalStateException> {
             processor.processOne(ps)
         }
-
-        verify(exactly = 0) { accountRepository.findByIdWithLock(any()) }
     }
 
     @Test
     fun `processOne — amount 소수점 4자리 스케일 정규화 후 저장`() {
         val account = account(BigDecimal("500000"))
         // 소수점 있는 금액
-        val ps = pendingSettlement(id = 3L, account = account, amount = BigDecimal("12345.6789"))
+        val ps = ReceivableSettlement(id = 3L, account = account, amount = BigDecimal("12345.6789"))
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
-        every { accountRepository.save(account) } returns account
-        every { pendingSettlementRepository.save(ps) } returns ps
         val ledgerSlot = slot<AccountLedger>()
         every { accountLedgerRepository.save(capture(ledgerSlot)) } answers { firstArg() }
 
@@ -140,3 +129,4 @@ class SettlementProcessorTest {
         assertEquals(SettlementStatus.COMPLETED, ps.status)
     }
 }
+

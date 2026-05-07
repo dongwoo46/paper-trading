@@ -522,7 +522,7 @@ class AccountTest {
     fun recordSettlement_정산입금과_원장을_동시에_반환한다() {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
 
-        val ledger = account.recordSettlement(BigDecimal("50000.0000"), "settlement-1")
+        val ledger = account.recordDepositWithLedger(BigDecimal("50000.0000"), "settlement-1")
 
         assertEquals(BigDecimal("150000.0000"), account.deposit)
         assertEquals(BigDecimal("150000.0000"), account.availableDeposit)
