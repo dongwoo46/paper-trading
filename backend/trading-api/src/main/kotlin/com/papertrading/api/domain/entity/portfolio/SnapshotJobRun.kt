@@ -2,6 +2,7 @@ package com.papertrading.api.domain.entity.portfolio
 
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
+import com.papertrading.api.domain.enums.SnapshotJobRunStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -70,8 +71,3 @@ class SnapshotJobRun protected constructor() : BaseAuditEntity() {
     }
 }
 
-enum class SnapshotJobRunStatus {
-    RUNNING,
-    SUCCESS,
-    FAILED,
-}
