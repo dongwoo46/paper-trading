@@ -33,11 +33,14 @@ class DailyBalanceCommandServiceTest {
     @Test
     fun `recalculate computes and creates daily balance`() {
         val account = account()
-        val position = Position.create(account, "005930", MarketType.KOSPI).apply {
-            quantity = BigDecimal("10")
-            currentPrice = BigDecimal("70000")
-            avgBuyPrice = BigDecimal("65000")
-        }
+        val position = Position.createWithHolding(
+            account = account,
+            ticker = "005930",
+            marketType = MarketType.KOSPI,
+            quantity = BigDecimal("10"),
+            avgBuyPrice = BigDecimal("65000"),
+            currentPrice = BigDecimal("70000"),
+        )
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { positionRepository.findByAccountIdAndQuantityGreaterThan(1L, BigDecimal.ZERO) } returns listOf(position)

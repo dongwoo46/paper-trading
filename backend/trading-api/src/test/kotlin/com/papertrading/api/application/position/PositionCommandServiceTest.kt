@@ -63,16 +63,13 @@ class PositionCommandServiceTest {
     }
 
     private fun savePosition(ticker: String, qty: BigDecimal, avgPrice: BigDecimal): Position {
-        val pos = Position(
+        val pos = Position.createWithHolding(
+            account = account,
             ticker = ticker,
             marketType = MarketType.KOSPI,
             quantity = qty,
-            lockedQuantity = BigDecimal.ZERO,
-            orderableQuantity = qty,
             avgBuyPrice = avgPrice,
-            totalBuyAmount = avgPrice.multiply(qty),
         )
-        pos.account = account
         return positionRepository.save(pos)
     }
 

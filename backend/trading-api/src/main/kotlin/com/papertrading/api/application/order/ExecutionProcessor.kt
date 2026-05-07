@@ -124,8 +124,11 @@ class ExecutionProcessor(
         } else {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, ticker)
                 .orElseThrow { IllegalStateException("포지션을 찾을 수 없습니다. ticker=$ticker") }
-            position.applySell(fillQty)
-            positionRepository.save(position)
+            val positionId = requireNotNull(position.id) { "position.id is null: accountId=$accountId, ticker=$ticker" }
+            val updatedRows = positionRepository.applySellExecutionAtomically(positionId, fillQty)
+            check(updatedRows == 1) {
+                "원자적 매도 반영 실패: positionId=$positionId, qty=$fillQty"
+            }
 
             val grossProceeds = fillPrice.multiply(fillQty).setScale(4, RoundingMode.HALF_UP)
             val netProceeds = grossProceeds.subtract(fee).setScale(4, RoundingMode.HALF_UP)

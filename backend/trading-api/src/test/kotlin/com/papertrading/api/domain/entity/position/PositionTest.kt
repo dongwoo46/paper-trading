@@ -2,6 +2,9 @@ package com.papertrading.api.domain.entity.position
 
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.PriceSource
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.enums.AccountType
+import com.papertrading.api.domain.enums.TradingMode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -10,16 +13,22 @@ import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
 
 class PositionTest {
-
-    private fun position(qty: BigDecimal = BigDecimal("10"), locked: BigDecimal = BigDecimal.ZERO) = Position(
-        ticker = "005930",
-        marketType = MarketType.KOSPI,
-        quantity = qty,
-        lockedQuantity = locked,
-        orderableQuantity = qty.subtract(locked),
-        avgBuyPrice = BigDecimal("70000"),
-        totalBuyAmount = BigDecimal("70000").multiply(qty),
+    private val account = Account.create(
+        accountName = "test",
+        accountType = AccountType.STOCK,
+        tradingMode = TradingMode.LOCAL,
+        initialDeposit = BigDecimal.ZERO,
     )
+
+    private fun position(qty: BigDecimal = BigDecimal("10"), locked: BigDecimal = BigDecimal.ZERO) =
+        Position.createWithHolding(
+            account = account,
+            ticker = "005930",
+            marketType = MarketType.KOSPI,
+            quantity = qty,
+            avgBuyPrice = BigDecimal("70000"),
+            lockedQuantity = locked,
+        )
 
     @Test
     fun `lockQuantity 정상 잠금`() {
@@ -79,14 +88,12 @@ class PositionTest {
     @Test
     fun `position_avg_price_recalculated_after_buy_fill`() {
         // 초기 0주 상태에서 첫 매수
-        val p = Position(
+        val p = Position.createWithHolding(
+            account = account,
             ticker = "005930",
             marketType = MarketType.KOSPI,
             quantity = BigDecimal.ZERO,
-            lockedQuantity = BigDecimal.ZERO,
-            orderableQuantity = BigDecimal.ZERO,
             avgBuyPrice = BigDecimal.ZERO,
-            totalBuyAmount = BigDecimal.ZERO,
         )
         p.applyBuy(BigDecimal("10"), BigDecimal("70000"))
         assertEquals(0, p.avgBuyPrice.compareTo(BigDecimal("70000")))
@@ -122,14 +129,12 @@ class PositionTest {
 
     @Test
     fun `position_return_rate_not_set_when_avg_buy_price_is_zero`() {
-        val p = Position(
+        val p = Position.createWithHolding(
+            account = account,
             ticker = "005930",
             marketType = MarketType.KOSPI,
             quantity = BigDecimal("10"),
-            lockedQuantity = BigDecimal.ZERO,
-            orderableQuantity = BigDecimal("10"),
             avgBuyPrice = BigDecimal.ZERO,
-            totalBuyAmount = BigDecimal.ZERO,
         )
         p.updatePrice(BigDecimal("75000"), PriceSource.REDIS_LIVE)
         // avgBuyPrice == 0이면 returnRate 계산 안 함

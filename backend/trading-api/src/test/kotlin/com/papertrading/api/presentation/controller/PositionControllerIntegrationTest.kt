@@ -88,16 +88,13 @@ class PositionControllerIntegrationTest {
     }
 
     private fun savePosition(ticker: String, qty: BigDecimal, avgPrice: BigDecimal = BigDecimal("70000")): Position {
-        val pos = Position(
+        val pos = Position.createWithHolding(
+            account = account,
             ticker = ticker,
             marketType = MarketType.KOSPI,
             quantity = qty,
-            lockedQuantity = BigDecimal.ZERO,
-            orderableQuantity = qty,
             avgBuyPrice = avgPrice,
-            totalBuyAmount = avgPrice.multiply(qty),
         )
-        pos.account = account
         return positionRepository.save(pos)
     }
 
@@ -218,16 +215,13 @@ class PositionControllerIntegrationTest {
     // -------------------------------------------------------------------
     @Test
     fun `avgBuyPrice가_0인_포지션은_returnRate가_null이다`() {
-        val pos = Position(
+        val pos = Position.createWithHolding(
+            account = account,
             ticker = "TEST",
             marketType = MarketType.KOSPI,
             quantity = BigDecimal("10"),
-            lockedQuantity = BigDecimal.ZERO,
-            orderableQuantity = BigDecimal("10"),
             avgBuyPrice = BigDecimal.ZERO,
-            totalBuyAmount = BigDecimal.ZERO,
         )
-        pos.account = account
         positionRepository.save(pos)
 
         mockMvc.get("/api/v1/accounts/${account.id}/positions/TEST").andExpect {
@@ -242,16 +236,14 @@ class PositionControllerIntegrationTest {
     // -------------------------------------------------------------------
     @Test
     fun `잠금수량이_있는_포지션은_orderableQuantity가_올바르게_반환된다`() {
-        val pos = Position(
+        val pos = Position.createWithHolding(
+            account = account,
             ticker = "005930",
             marketType = MarketType.KOSPI,
             quantity = BigDecimal("10"),
-            lockedQuantity = BigDecimal("3"),
-            orderableQuantity = BigDecimal("7"),
             avgBuyPrice = BigDecimal("70000"),
-            totalBuyAmount = BigDecimal("700000"),
+            lockedQuantity = BigDecimal("3"),
         )
-        pos.account = account
         positionRepository.save(pos)
 
         mockMvc.get("/api/v1/accounts/${account.id}/positions/005930").andExpect {

@@ -80,15 +80,12 @@ class SnapshotJobServiceAtomicRollbackIntegrationTest {
         )
         val businessDate = LocalDate.of(2026, 5, 2)
 
-        val position = Position(
+        val position = Position.createWithHolding(
             account = account,
             ticker = "005930",
             marketType = MarketType.KOSPI,
             quantity = BigDecimal("10"),
-            lockedQuantity = BigDecimal.ZERO,
-            orderableQuantity = BigDecimal("10"),
             avgBuyPrice = BigDecimal("70000"),
-            totalBuyAmount = BigDecimal("700000"),
             currentPrice = BigDecimal("71000"),
         )
         positionRepository.save(position)

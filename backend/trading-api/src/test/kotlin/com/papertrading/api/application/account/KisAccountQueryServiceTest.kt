@@ -4,7 +4,11 @@ import com.papertrading.api.application.account.kis.KisAccountBalancePort
 import com.papertrading.api.application.account.kis.KisAccountMode
 import com.papertrading.api.application.account.kis.KisBalancePosition
 import com.papertrading.api.application.account.kis.KisBalanceSnapshot
+import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.enums.AccountType
+import com.papertrading.api.domain.enums.MarketType
+import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import io.mockk.every
 import io.mockk.mockk
@@ -20,6 +24,12 @@ class KisAccountQueryServiceTest {
     private val kisAccountBalancePort = mockk<KisAccountBalancePort>()
     private val positionRepository = mockk<PositionRepository>()
     private lateinit var service: KisAccountQueryService
+    private val dummyAccount = Account.create(
+        accountName = "dummy",
+        accountType = AccountType.STOCK,
+        tradingMode = TradingMode.LOCAL,
+        initialDeposit = BigDecimal.ZERO,
+    )
 
     @BeforeEach
     fun setUp() {
@@ -77,15 +87,19 @@ class KisAccountQueryServiceTest {
             )
         )
         every { positionRepository.findByAccountIdAndQuantityGreaterThan(any(), BigDecimal.ZERO) } returns listOf(
-            Position(
+            Position.createWithHolding(
+                account = dummyAccount,
                 ticker = "005930",
+                marketType = MarketType.KOSPI,
                 quantity = BigDecimal("1"),
-                avgBuyPrice = BigDecimal("70000")
+                avgBuyPrice = BigDecimal("70000"),
             ),
-            Position(
+            Position.createWithHolding(
+                account = dummyAccount,
                 ticker = "000660",
+                marketType = MarketType.KOSPI,
                 quantity = BigDecimal("2"),
-                avgBuyPrice = BigDecimal("90000")
+                avgBuyPrice = BigDecimal("90000"),
             )
         )
 

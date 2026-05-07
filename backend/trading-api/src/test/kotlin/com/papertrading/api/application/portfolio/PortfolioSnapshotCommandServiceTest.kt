@@ -39,14 +39,20 @@ class PortfolioSnapshotCommandServiceTest {
     fun `recalculate computes ticker weights and upserts by account-date-ticker`() {
         val account = account()
         val businessDate = LocalDate.of(2026, 5, 6)
-        val a = Position.create(account, "005930", MarketType.KOSPI).apply {
-            quantity = BigDecimal("10")
-            avgBuyPrice = BigDecimal("65000")
-        }
-        val b = Position.create(account, "000660", MarketType.KOSPI).apply {
-            quantity = BigDecimal("5")
-            avgBuyPrice = BigDecimal("200000")
-        }
+        val a = Position.createWithHolding(
+            account = account,
+            ticker = "005930",
+            marketType = MarketType.KOSPI,
+            quantity = BigDecimal("10"),
+            avgBuyPrice = BigDecimal("65000"),
+        )
+        val b = Position.createWithHolding(
+            account = account,
+            ticker = "000660",
+            marketType = MarketType.KOSPI,
+            quantity = BigDecimal("5"),
+            avgBuyPrice = BigDecimal("200000"),
+        )
         val existingA = PortfolioSnapshot.create(
             account = account,
             businessDate = businessDate,

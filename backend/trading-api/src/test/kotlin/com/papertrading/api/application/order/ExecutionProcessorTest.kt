@@ -97,15 +97,17 @@ class ExecutionProcessorTest {
     )
 
     private fun setupCommonMocks(account: Account, order: Order) {
-        val position = Position(account = account, ticker = "005930", marketType = MarketType.KOSPI).apply {
+        val position = Position.create(account = account, ticker = "005930", marketType = MarketType.KOSPI).apply {
             applyBuy(order.quantity, BigDecimal("60000"))
-        }
+            lockQuantity(order.quantity)
+        }.withId(99L)
         every { orderRepository.findByIdWithOptimisticLock(10L) } returns Optional.of(order)
         every { executionRepository.findByExternalExecutionId(any()) } returns Optional.empty()
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { feePolicyRepository.findActivePolicy(any(), any(), any()) } returns Optional.empty()
         every { positionRepository.findByAccountIdAndTickerWithLock(1L, "005930") } returns Optional.of(position)
         every { positionRepository.save(any()) } answers { firstArg() }
+        every { positionRepository.applySellExecutionAtomically(any(), any()) } returns 1
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { orderRepository.findByAccountIdAndOrderStatusIn(any(), any()) } returns emptyList()
         every { collectorSubscriptionPort.unsubscribe(any(), any()) } just runs
