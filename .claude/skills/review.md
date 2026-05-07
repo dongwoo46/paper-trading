@@ -41,6 +41,8 @@ Skill: Code Review
 
 ## Test Quality
 
+- Integration tests call ApplicationService directly — no MockMvc, no HTTP layer. Flag any Controller-level integration test as 🔴.
+- No DB or Redis mocked — Testcontainers only. Flag any `mock(Repository)` or `mock(RedisTemplate)` as 🔴.
 - Tests assert on observable behavior only (no implementation detail assertions).
 - No domain objects mocked.
 - AAA (Arrange / Act / Assert) pattern applied.

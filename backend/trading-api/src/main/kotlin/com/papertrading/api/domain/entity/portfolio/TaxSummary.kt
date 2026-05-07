@@ -24,24 +24,53 @@ import java.math.BigDecimal
     name = "tax_summaries",
     uniqueConstraints = [UniqueConstraint(name = "uk_tax_summaries_account_year", columnNames = ["account_id", "tax_year"])]
 )
-class TaxSummary(
+class TaxSummary protected constructor() : BaseAuditEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @Column(name = "tax_year", nullable = false)
-    var taxYear: Int = 0,
+    var taxYear: Int = 0
+        private set
 
     @Column(name = "total_realized_pnl", nullable = false, precision = 20, scale = 4)
-    var totalRealizedPnl: BigDecimal = BigDecimal.ZERO,
+    lateinit var totalRealizedPnl: BigDecimal
+        private set
 
     @Column(name = "taxable_pnl", nullable = false, precision = 20, scale = 4)
-    var taxablePnl: BigDecimal = BigDecimal.ZERO,
+    lateinit var taxablePnl: BigDecimal
+        private set
 
     @Column(name = "estimated_tax", nullable = false, precision = 20, scale = 4)
-    var estimatedTax: BigDecimal = BigDecimal.ZERO
-) : BaseAuditEntity()
+    lateinit var estimatedTax: BigDecimal
+        private set
+
+    fun recalculate(totalRealizedPnl: BigDecimal, taxablePnl: BigDecimal, estimatedTax: BigDecimal) {
+        require(estimatedTax >= BigDecimal.ZERO) { "예상 세금은 0 이상이어야 합니다." }
+        this.totalRealizedPnl = totalRealizedPnl
+        this.taxablePnl = taxablePnl
+        this.estimatedTax = estimatedTax
+    }
+
+    companion object {
+        fun create(
+            account: Account,
+            taxYear: Int,
+            totalRealizedPnl: BigDecimal,
+            taxablePnl: BigDecimal,
+            estimatedTax: BigDecimal
+        ): TaxSummary = TaxSummary().apply {
+            this.account = account
+            this.taxYear = taxYear
+            this.totalRealizedPnl = totalRealizedPnl
+            this.taxablePnl = taxablePnl
+            this.estimatedTax = estimatedTax
+        }
+    }
+}

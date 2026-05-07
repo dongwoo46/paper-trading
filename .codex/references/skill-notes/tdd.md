@@ -64,12 +64,11 @@ Use `@SpringBootTest` + Testcontainers PostgreSQL instead.
 |-------|-------|---------|-------|
 | Unit | Domain logic, pure functions, Entities | JUnit5/MockK, no Spring context | Milliseconds |
 | Integration | Application services + real DB/Redis | @SpringBootTest + Testcontainers | Seconds |
-| E2E | Critical user journeys (order → fill → position) | @SpringBootTest, HTTP client | Slow |
 | Regression | One per past incident | Added when bugs occur | — |
 
 - Unit: only where logic is non-trivial. No unit tests for getters, DI wiring, or framework glue.
 - Integration: moderate count, focused on critical modules per domain.
-- E2E: one per critical journey. More = unsustainable maintenance.
+  Integration tests are the default high-value tests and must verify service/application business logic with real managed dependencies (DB/Redis via Testcontainers).
 - Gate expensive live tests behind an env flag: `LIVE_TEST=true`.
 
 ---
@@ -132,7 +131,7 @@ Happy Path → Core business logic → Boundary values / exceptions
 
 ## When NOT to Write a Test
 
-- Plain CRUD with no logic → one E2E covers it.
+- Plain CRUD with no logic → skip extra tests beyond minimal safety coverage.
 - DI wiring, routing, module setup → the framework tests this.
 - Config constants → type system or schema validator covers this.
 - Code you are about to delete.
@@ -169,6 +168,7 @@ Do not rewrite everything at once. Apply incrementally:
 - `@Disabled` without a linked issue and owner.
 - Test names change every time the function under test is renamed (implementation leak).
 - Internal persistence layer (e.g. `PositionRepository`) replaced with a mock.
+- New E2E test introduced for service verification that should be covered by integration tests.
 
 ---
 
@@ -182,3 +182,4 @@ Do not rewrite everything at once. Apply incrementally:
 - Testing multiple behaviors in a single test.
 - Changing production code for test convenience.
 - Replacing DB / Redis with mocks — use Testcontainers.
+- Adding or expanding E2E tests for service/business-logic verification.

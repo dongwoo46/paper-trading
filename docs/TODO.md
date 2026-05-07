@@ -1,4 +1,4 @@
-# TODO — Paper Trading
+﻿# TODO — Paper Trading
 
 Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
@@ -65,6 +65,24 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 실패 재시도/로깅 및 알림 비활성화 토글 지원
 
 ### P2 — 고도화
+
+- [x] 거래 일지 서비스 구현 | project: trading-api | phase: trading-journal-service | priority: P2 | done: 2026-05-07 | pr: #20
+  - TradingJournalCommandService: 일지 생성·수정
+  - TradingJournalQueryService: 목록·상세 조회 (ticker/계좌 필터)
+  - TradingJournalController + DTO 연결
+  - ⚠️ 프론트 trading-journal-ui가 API 없이 완성된 상태 — 우선 연결 필요
+
+- [ ] 세금 정산 서비스 구현 | project: trading-api | phase: tax-summary-service | priority: P2
+  - TaxSummaryCommandService: 연간 집계 생성·재계산
+  - TaxSummaryQueryService: 계좌·연도별 조회
+  - TaxSummaryController + DTO 연결
+  - ⚠️ 프론트 tax-summary-ui가 API 없이 완성된 상태 — 우선 연결 필요
+
+- [ ] 포트폴리오 스냅샷 서비스 구현 | project: trading-api | phase: portfolio-snapshot-service | priority: P2
+  - DailyBalanceCommandService: 장 마감 후 일별 잔고 집계·저장 (배치)
+  - PortfolioSnapshotCommandService: 종목 비중 스냅샷 생성 (배치)
+  - QueryService + Controller: 기간별 잔고 조회 API
+  - ⚠️ 프론트 portfolio-chart가 API 없이 완성된 상태 — 우선 연결 필요
 
 - [x] DDD Aggregate 경계 수정 | project: trading-api | phase: ddd-aggregate-fix | priority: P2 | done: 2026-05-03 | pr: #TBD
   - 내부 Entity Repository 제거: ExecutionRepository, SettlementRepository, RiskPolicyRepository, PendingSettlementRepository, OrderAmendmentRepository, SettlementExecutionRepository
@@ -202,6 +220,8 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
+
 
 
 

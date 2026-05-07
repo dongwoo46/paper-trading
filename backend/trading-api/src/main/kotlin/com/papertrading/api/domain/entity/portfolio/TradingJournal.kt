@@ -1,4 +1,4 @@
-package com.papertrading.api.domain.entity.portfolio
+﻿package com.papertrading.api.domain.entity.portfolio
 
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
@@ -19,48 +19,58 @@ import jakarta.persistence.Table
  */
 @Entity
 @Table(name = "trading_journals")
-class TradingJournal(
+class TradingJournal protected constructor() : BaseAuditEntity() {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @Column(name = "order_id")
-    var orderId: Long? = null,
+    var orderId: Long? = null
+        private set
 
     @Column(name = "journal_type", nullable = false, length = 30)
-    var journalType: String? = null,
+    lateinit var journalType: String
+        private set
 
     @Column(name = "ticker", length = 20)
-    var ticker: String? = null,
+    var ticker: String? = null
+        private set
 
     @Column(name = "title", nullable = false, length = 200)
-    var title: String? = null,
+    lateinit var title: String
+        private set
 
     @Column(name = "content", nullable = false, columnDefinition = "text")
-    var content: String? = null,
+    lateinit var content: String
+        private set
 
     @Column(name = "sentiment", length = 20)
     var sentiment: String? = null
-) : BaseAuditEntity()
+        private set
 
-{
-    fun update(
-        title: String,
-        content: String,
-        sentiment: String?
-    ) {
+    fun update(title: String, content: String, sentiment: String?) {
         require(title.isNotBlank()) { "title은 비어 있을 수 없습니다." }
         require(content.isNotBlank()) { "content는 비어 있을 수 없습니다." }
-        this.title = title
-        this.content = content
-        this.sentiment = sentiment?.uppercase()
+        this.title = title.trim()
+        this.content = content.trim()
+        this.sentiment = sentiment?.trim()?.uppercase()
     }
 
-    fun belongsTo(accountId: Long): Boolean = account?.id == accountId
+    fun updateContent(title: String, content: String) {
+        update(title = title, content = content, sentiment = this.sentiment)
+    }
+
+    fun updateSentiment(sentiment: String?) {
+        this.sentiment = sentiment?.trim()?.uppercase()
+    }
+
+    fun belongsTo(accountId: Long): Boolean = account.id == accountId
 
     companion object {
         fun create(
@@ -68,22 +78,22 @@ class TradingJournal(
             journalType: String,
             title: String,
             content: String,
-            orderId: Long?,
-            ticker: String?,
-            sentiment: String?
+            orderId: Long? = null,
+            ticker: String? = null,
+            sentiment: String? = null
         ): TradingJournal {
             require(journalType.isNotBlank()) { "journalType은 비어 있을 수 없습니다." }
             require(title.isNotBlank()) { "title은 비어 있을 수 없습니다." }
             require(content.isNotBlank()) { "content는 비어 있을 수 없습니다." }
-            return TradingJournal(
-                account = account,
-                orderId = orderId,
-                journalType = journalType.trim().uppercase(),
-                ticker = ticker?.trim()?.uppercase(),
-                title = title.trim(),
-                content = content.trim(),
-                sentiment = sentiment?.trim()?.uppercase()
-            )
+            return TradingJournal().apply {
+                this.account = account
+                this.orderId = orderId
+                this.journalType = journalType.trim().uppercase()
+                this.ticker = ticker?.trim()?.uppercase()
+                this.title = title.trim()
+                this.content = content.trim()
+                this.sentiment = sentiment?.trim()?.uppercase()
+            }
         }
     }
 }

@@ -4,8 +4,8 @@ Role: Test Engineer — QA Specialist + Test Automation Engineer
 
 ## Responsibilities
 - Run the full test suite and verify results.
-- Write missing integration tests and API contract tests.
-- E2E verification based on Acceptance Criteria scenarios.
+- Write missing integration tests (application service layer, real DB/Redis — no HTTP layer).
+- Unit tests for non-trivial domain logic.
 - Measure coverage and report under-covered areas.
 - On test failure: analyze root cause → request rework from Orchestrator.
 
@@ -46,8 +46,7 @@ cd .worktrees/{worktree} && npm test -- --run --reporter=verbose {feature}.test.
      - Environment issue: report to Orchestrator.
 
 6. Check for missing integration tests:
-   - Controller layer: HTTP request/response contract (`@SpringBootTest` + MockMvc).
-   - Service layer: core business logic scenarios (including transaction boundaries).
+   - Call ApplicationService directly. No HTTP, no MockMvc.
    - If missing: write and run them (must satisfy TDD standard).
 
 7. Mark substep 2 `completed` in `index.json`. Verify Acceptance Criteria (run the command in the step file directly).
@@ -81,12 +80,20 @@ cd backend/quant-worker && python -m pytest tests/ --cov=src --cov-report=term-m
 
 ### Kotlin / Spring Boot
 ```kotlin
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
 @Transactional
-class {Feature}IntegrationTest {
+class {Feature}ServiceIntegrationTest {
+
+    @Autowired
+    lateinit var {feature}CommandService: {Feature}CommandService
+
+    @Autowired
+    lateinit var {feature}QueryService: {Feature}QueryService
+
     // given-when-then structure
-    // Real DB via Testcontainers (never mock DB or Redis)
-    // HTTP contract verified via MockMvc
+    // Call ApplicationService directly — no HTTP layer, no MockMvc
+    // Real DB/Redis via Testcontainers (never mock managed dependencies)
+    // Assert on return values and observable DB state
 }
 ```
 

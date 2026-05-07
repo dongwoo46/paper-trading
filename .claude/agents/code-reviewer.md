@@ -9,6 +9,11 @@ Role: Code Reviewer — Senior Code Reviewer
 - Record results in `index.json` step result.
 - Output: 🔴 Must fix / 🟡 Recommended improvement / 🟢 Confirmed OK
 
+## Test Review Rules
+
+- Integration test via MockMvc/HTTP → 🔴 Must fix. Must call ApplicationService directly.
+- Mocked DB or Redis → 🔴 Must fix. Testcontainers only.
+
 ## Execution Order
 
 1. Read `step-{n}.md` → read every file listed in the "Files to Read" section.
