@@ -6,8 +6,18 @@ import java.time.LocalDate
 import java.util.Optional
 
 interface PortfolioSnapshotRepository : JpaRepository<PortfolioSnapshot, Long> {
-    fun findByAccountIdAndSnapshotDate(accountId: Long, date: LocalDate): Optional<PortfolioSnapshot>
-    fun findByAccountIdAndSnapshotDateBetweenOrderBySnapshotDateAsc(
+    fun findByAccountIdAndBusinessDateAndTicker(
+        accountId: Long,
+        businessDate: LocalDate,
+        ticker: String
+    ): Optional<PortfolioSnapshot>
+
+    fun findByAccountIdAndBusinessDateOrderByTickerAsc(
+        accountId: Long,
+        businessDate: LocalDate
+    ): List<PortfolioSnapshot>
+
+    fun findByAccountIdAndBusinessDateBetweenOrderByBusinessDateAsc(
         accountId: Long,
         from: LocalDate,
         to: LocalDate

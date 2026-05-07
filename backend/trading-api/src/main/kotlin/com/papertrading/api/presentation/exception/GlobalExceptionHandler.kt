@@ -1,16 +1,18 @@
 package com.papertrading.api.presentation.exception
 
-import com.papertrading.api.application.notification.SlackWebhookFailedException
-import com.papertrading.api.application.portfolio.tax.TaxSummaryDomainException
 import com.papertrading.api.application.account.kis.KisAuthorizationException
 import com.papertrading.api.application.account.kis.KisForbiddenException
 import com.papertrading.api.application.account.kis.KisRemoteCallException
 import com.papertrading.api.application.account.kis.KisTimeoutException
+import com.papertrading.api.application.notification.SlackWebhookFailedException
+import com.papertrading.api.application.portfolio.PortfolioSnapshotDomainException
+import com.papertrading.api.application.portfolio.tax.TaxSummaryDomainException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -29,6 +31,24 @@ class GlobalExceptionHandler {
         )
     }
 
+    @ExceptionHandler(PortfolioSnapshotDomainException::class)
+    fun handlePortfolioSnapshotDomain(ex: PortfolioSnapshotDomainException): ResponseEntity<ApiErrorResponse> {
+        val status = when (ex.errorCode) {
+            "INVALID_DATE_RANGE", "INVALID_BUSINESS_DATE" -> HttpStatus.BAD_REQUEST
+            "SNAPSHOT_ALREADY_RUNNING" -> HttpStatus.CONFLICT
+            "SNAPSHOT_COMPUTE_FAILED" -> HttpStatus.INTERNAL_SERVER_ERROR
+            else -> HttpStatus.BAD_REQUEST
+        }
+        return ResponseEntity.status(status).body(
+            ApiErrorResponse(status.value(), ex.errorCode, ex.message ?: "포트폴리오 스냅샷 처리 중 오류가 발생했습니다.")
+        )
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ApiErrorResponse(400, "INVALID_BUSINESS_DATE", ex.message ?: "날짜 형식이 올바르지 않습니다.")
+        )
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<ApiErrorResponse> =

@@ -37,7 +37,7 @@ import java.time.Instant
         Index(name = "idx_positions_ticker_qty", columnList = "ticker, quantity"),
     ]
 )
-class Position protected constructor(
+class Position constructor(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,

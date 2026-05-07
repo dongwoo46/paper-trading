@@ -12,20 +12,20 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
-import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.type.SqlTypes
+import org.hibernate.annotations.UpdateTimestamp
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 
-/**
- * 일별 포트폴리오 구성 스냅샷
- * 매일 장 마감 시점의 종목별 보유 비중·평가금액을 JSONB로 저장.
- * composition 예시: [{"ticker":"005930","weight":0.35,"evaluation":3500000}, ...]
- */
 @Entity
 @Table(
     name = "portfolio_snapshots",
-    uniqueConstraints = [UniqueConstraint(name = "uk_portfolio_snapshots_account_date", columnNames = ["account_id", "snapshot_date"])]
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_portfolio_snapshots_account_date_ticker",
+            columnNames = ["account_id", "business_date", "ticker"]
+        )
+    ]
 )
 class PortfolioSnapshot protected constructor() : BaseTimeEntity() {
 
@@ -38,30 +38,80 @@ class PortfolioSnapshot protected constructor() : BaseTimeEntity() {
     lateinit var account: Account
         private set
 
-    @Column(name = "snapshot_date", nullable = false)
-    lateinit var snapshotDate: LocalDate
+    @Column(name = "business_date", nullable = false)
+    lateinit var businessDate: LocalDate
         private set
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "composition", columnDefinition = "jsonb")
-    var composition: String? = null
+    @Column(name = "ticker", nullable = false, length = 20)
+    lateinit var ticker: String
         private set
 
-    @Column(name = "total_evaluation", nullable = false, precision = 20, scale = 4)
-    lateinit var totalEvaluation: BigDecimal
+    @Column(name = "quantity", nullable = false, precision = 20, scale = 8)
+    lateinit var quantity: BigDecimal
         private set
+
+    @Column(name = "avg_buy_price", nullable = false, precision = 20, scale = 4)
+    lateinit var avgBuyPrice: BigDecimal
+        private set
+
+    @Column(name = "close_price", nullable = false, precision = 20, scale = 4)
+    lateinit var closePrice: BigDecimal
+        private set
+
+    @Column(name = "market_value", nullable = false, precision = 20, scale = 4)
+    lateinit var marketValue: BigDecimal
+        private set
+
+    @Column(name = "weight", nullable = false, precision = 10, scale = 6)
+    lateinit var weight: BigDecimal
+        private set
+
+    @Column(name = "unrealized_pnl", nullable = false, precision = 20, scale = 4)
+    lateinit var unrealizedPnl: BigDecimal
+        private set
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    var updatedAt: Instant? = null
+        private set
+
+    fun refresh(
+        quantity: BigDecimal,
+        avgBuyPrice: BigDecimal,
+        closePrice: BigDecimal,
+        marketValue: BigDecimal,
+        weight: BigDecimal,
+        unrealizedPnl: BigDecimal
+    ) {
+        this.quantity = quantity
+        this.avgBuyPrice = avgBuyPrice
+        this.closePrice = closePrice
+        this.marketValue = marketValue
+        this.weight = weight
+        this.unrealizedPnl = unrealizedPnl
+    }
 
     companion object {
         fun create(
             account: Account,
-            snapshotDate: LocalDate,
-            totalEvaluation: BigDecimal,
-            composition: String? = null
+            businessDate: LocalDate,
+            ticker: String,
+            quantity: BigDecimal,
+            avgBuyPrice: BigDecimal,
+            closePrice: BigDecimal,
+            marketValue: BigDecimal,
+            weight: BigDecimal,
+            unrealizedPnl: BigDecimal
         ): PortfolioSnapshot = PortfolioSnapshot().apply {
             this.account = account
-            this.snapshotDate = snapshotDate
-            this.totalEvaluation = totalEvaluation
-            this.composition = composition
+            this.businessDate = businessDate
+            this.ticker = ticker
+            this.quantity = quantity
+            this.avgBuyPrice = avgBuyPrice
+            this.closePrice = closePrice
+            this.marketValue = marketValue
+            this.weight = weight
+            this.unrealizedPnl = unrealizedPnl
         }
     }
 }
