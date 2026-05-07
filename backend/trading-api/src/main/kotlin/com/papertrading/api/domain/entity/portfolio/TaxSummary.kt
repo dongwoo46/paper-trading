@@ -2,8 +2,11 @@ package com.papertrading.api.domain.entity.portfolio
 
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
+import com.papertrading.api.domain.enums.TaxSummaryStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -13,6 +16,8 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import java.math.BigDecimal
+import java.math.RoundingMode
+import java.time.Instant
 
 /**
  * 연간 세금 정산 요약
@@ -51,11 +56,22 @@ class TaxSummary protected constructor() : BaseAuditEntity() {
     lateinit var estimatedTax: BigDecimal
         private set
 
+    @Column(name = "computed_at", nullable = false)
+    var computedAt: Instant = Instant.now()
+        private set
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    var status: TaxSummaryStatus = TaxSummaryStatus.DRAFT
+        private set
+
     fun recalculate(totalRealizedPnl: BigDecimal, taxablePnl: BigDecimal, estimatedTax: BigDecimal) {
         require(estimatedTax >= BigDecimal.ZERO) { "예상 세금은 0 이상이어야 합니다." }
-        this.totalRealizedPnl = totalRealizedPnl
-        this.taxablePnl = taxablePnl
-        this.estimatedTax = estimatedTax
+        this.totalRealizedPnl = totalRealizedPnl.setScale(4, RoundingMode.HALF_UP)
+        this.taxablePnl = taxablePnl.setScale(4, RoundingMode.HALF_UP)
+        this.estimatedTax = estimatedTax.setScale(4, RoundingMode.HALF_UP)
+        this.computedAt = Instant.now()
+        this.status = TaxSummaryStatus.DRAFT
     }
 
     companion object {
@@ -68,9 +84,11 @@ class TaxSummary protected constructor() : BaseAuditEntity() {
         ): TaxSummary = TaxSummary().apply {
             this.account = account
             this.taxYear = taxYear
-            this.totalRealizedPnl = totalRealizedPnl
-            this.taxablePnl = taxablePnl
-            this.estimatedTax = estimatedTax
+            this.totalRealizedPnl = totalRealizedPnl.setScale(4, RoundingMode.HALF_UP)
+            this.taxablePnl = taxablePnl.setScale(4, RoundingMode.HALF_UP)
+            this.estimatedTax = estimatedTax.setScale(4, RoundingMode.HALF_UP)
+            this.computedAt = Instant.now()
+            this.status = TaxSummaryStatus.DRAFT
         }
     }
 }
