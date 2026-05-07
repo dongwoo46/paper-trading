@@ -1,6 +1,7 @@
 package com.papertrading.api.presentation.exception
 
 import com.papertrading.api.application.notification.SlackWebhookFailedException
+import com.papertrading.api.application.portfolio.tax.TaxSummaryDomainException
 import com.papertrading.api.application.account.kis.KisAuthorizationException
 import com.papertrading.api.application.account.kis.KisForbiddenException
 import com.papertrading.api.application.account.kis.KisRemoteCallException
@@ -13,6 +14,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+    @ExceptionHandler(TaxSummaryDomainException::class)
+    fun handleTaxSummaryDomain(ex: TaxSummaryDomainException): ResponseEntity<ApiErrorResponse> {
+        val status = when (ex.errorCode) {
+            "INVALID_TAX_YEAR_RANGE", "TAX_YEAR_NOT_CLOSED" -> HttpStatus.BAD_REQUEST
+            "ACCOUNT_NOT_FOUND", "TAX_SUMMARY_NOT_FOUND" -> HttpStatus.NOT_FOUND
+            "TAX_SUMMARY_ALREADY_RUNNING" -> HttpStatus.CONFLICT
+            "UNSUPPORTED_CURRENCY" -> HttpStatus.UNPROCESSABLE_ENTITY
+            "TAX_SUMMARY_COMPUTE_FAILED" -> HttpStatus.INTERNAL_SERVER_ERROR
+            else -> HttpStatus.BAD_REQUEST
+        }
+        return ResponseEntity.status(status).body(
+            ApiErrorResponse(status.value(), ex.errorCode, ex.message ?: "세금 요약 처리 중 오류가 발생했습니다.")
+        )
+    }
+
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<ApiErrorResponse> =
@@ -41,7 +57,11 @@ class GlobalExceptionHandler {
     @ExceptionHandler(NoSuchElementException::class)
     fun handleNoSuchElement(ex: NoSuchElementException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-            ApiErrorResponse(404, "NOT_FOUND", ex.message ?: "리소스를 찾을 수 없습니다.")
+            ApiErrorResponse(
+                404,
+                if ((ex.message ?: "").contains("계좌")) "ACCOUNT_NOT_FOUND" else "NOT_FOUND",
+                ex.message ?: "리소스를 찾을 수 없습니다."
+            )
         )
 
     @ExceptionHandler(KisAuthorizationException::class)

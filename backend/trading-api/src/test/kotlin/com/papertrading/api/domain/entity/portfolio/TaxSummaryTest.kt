@@ -54,7 +54,7 @@ class TaxSummaryTest {
             estimatedTax = BigDecimal.ZERO
         )
 
-        assertEquals(BigDecimal.ZERO, summary.estimatedTax)
+        assertEquals(BigDecimal("0.0000"), summary.estimatedTax)
     }
 
     @Test

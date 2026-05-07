@@ -6,4 +6,5 @@ import java.util.Optional
 
 interface TaxSummaryRepository : JpaRepository<TaxSummary, Long> {
     fun findByAccountIdAndTaxYear(accountId: Long, taxYear: Int): Optional<TaxSummary>
+    fun findByAccountIdAndTaxYearBetweenOrderByTaxYearDesc(accountId: Long, fromYear: Int, toYear: Int): List<TaxSummary>
 }

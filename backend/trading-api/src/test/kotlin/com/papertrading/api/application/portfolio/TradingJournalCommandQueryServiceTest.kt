@@ -49,7 +49,9 @@ class TradingJournalCommandQueryServiceTest {
         val journalSlot = slot<TradingJournal>()
 
         every { accountRepository.findById(1L) } returns Optional.of(account)
-        every { tradingJournalRepository.save(capture(journalSlot)) } answers { journalSlot.captured.apply { id = 10L } }
+        every { tradingJournalRepository.save(capture(journalSlot)) } answers {
+            journalSlot.captured.also { setJournalId(it, 10L) }
+        }
 
         val result = commandService.create(command)
 
@@ -63,8 +65,8 @@ class TradingJournalCommandQueryServiceTest {
     fun `update는 동일 계좌 journal만 수정한다`() {
         val account = Account.create("acc", AccountType.STOCK, TradingMode.LOCAL, BigDecimal.ZERO)
         setId(account, 1L)
-        val journal = TradingJournal(account = account, journalType = "MANUAL", title = "old", content = "old")
-        journal.id = 9L
+        val journal = TradingJournal.create(account = account, journalType = "MANUAL", title = "old", content = "old")
+        setJournalId(journal, 9L)
         val command = UpdateTradingJournalCommand(
             accountId = 1L,
             title = "new",
@@ -85,8 +87,8 @@ class TradingJournalCommandQueryServiceTest {
     fun `update에서 account mismatch면 예외를 던진다`() {
         val account = Account.create("acc", AccountType.STOCK, TradingMode.LOCAL, BigDecimal.ZERO)
         setId(account, 1L)
-        val journal = TradingJournal(account = account, journalType = "MANUAL", title = "old", content = "old")
-        journal.id = 9L
+        val journal = TradingJournal.create(account = account, journalType = "MANUAL", title = "old", content = "old")
+        setJournalId(journal, 9L)
         every { tradingJournalRepository.findById(9L) } returns Optional.of(journal)
 
         assertThatThrownBy {
@@ -98,8 +100,14 @@ class TradingJournalCommandQueryServiceTest {
     fun `list는 ticker가 있으면 ticker 조건으로 조회한다`() {
         val account = Account.create("acc", AccountType.STOCK, TradingMode.LOCAL, BigDecimal.ZERO)
         setId(account, 1L)
-        val journal = TradingJournal(account = account, journalType = "MANUAL", title = "t", content = "c", ticker = "005930")
-        journal.id = 1L
+        val journal = TradingJournal.create(
+            account = account,
+            journalType = "MANUAL",
+            title = "t",
+            content = "c",
+            ticker = "005930"
+        )
+        setJournalId(journal, 1L)
         every { accountRepository.existsById(1L) } returns true
         every {
             tradingJournalRepository.findByAccountIdAndTicker(1L, "005930", any())
@@ -114,5 +122,11 @@ class TradingJournalCommandQueryServiceTest {
         val field = Account::class.java.getDeclaredField("id")
         field.isAccessible = true
         field.set(account, id)
+    }
+
+    private fun setJournalId(journal: TradingJournal, id: Long) {
+        val field = TradingJournal::class.java.getDeclaredField("id")
+        field.isAccessible = true
+        field.set(journal, id)
     }
 }
