@@ -1,5 +1,6 @@
 package com.papertrading.api.application.portfolio
 
+import com.papertrading.api.common.exception.InvalidDateRangeException
 import com.papertrading.api.domain.entity.portfolio.DailyBalance
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.DailyBalanceRepository

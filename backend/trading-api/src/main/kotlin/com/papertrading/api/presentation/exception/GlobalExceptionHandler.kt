@@ -5,8 +5,8 @@ import com.papertrading.api.application.account.kis.KisForbiddenException
 import com.papertrading.api.application.account.kis.KisRemoteCallException
 import com.papertrading.api.application.account.kis.KisTimeoutException
 import com.papertrading.api.application.notification.SlackWebhookFailedException
-import com.papertrading.api.application.portfolio.PortfolioSnapshotDomainException
 import com.papertrading.api.application.portfolio.tax.TaxSummaryDomainException
+import com.papertrading.api.common.exception.PortfolioSnapshotDomainException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException

@@ -1,4 +1,4 @@
-package com.papertrading.api.application.portfolio
+package com.papertrading.api.common.exception
 
 open class PortfolioSnapshotDomainException(
     val errorCode: String,

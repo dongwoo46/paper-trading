@@ -1,9 +1,9 @@
 package com.papertrading.api.presentation.controller
 
 import com.papertrading.api.application.portfolio.DailyBalanceQueryService
-import com.papertrading.api.application.portfolio.InvalidBusinessDateException
 import com.papertrading.api.application.portfolio.PortfolioSnapshotQueryService
 import com.papertrading.api.application.portfolio.SnapshotJobService
+import com.papertrading.api.common.exception.InvalidBusinessDateException
 import com.papertrading.api.presentation.dto.portfolio.DailyBalanceResponse
 import com.papertrading.api.presentation.dto.portfolio.PortfolioSnapshotJobResponse
 import com.papertrading.api.presentation.dto.portfolio.PortfolioSnapshotResponse
