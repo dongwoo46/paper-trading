@@ -46,3 +46,44 @@ class TradingJournal(
     @Column(name = "sentiment", length = 20)
     var sentiment: String? = null
 ) : BaseAuditEntity()
+
+{
+    fun update(
+        title: String,
+        content: String,
+        sentiment: String?
+    ) {
+        require(title.isNotBlank()) { "title은 비어 있을 수 없습니다." }
+        require(content.isNotBlank()) { "content는 비어 있을 수 없습니다." }
+        this.title = title
+        this.content = content
+        this.sentiment = sentiment?.uppercase()
+    }
+
+    fun belongsTo(accountId: Long): Boolean = account?.id == accountId
+
+    companion object {
+        fun create(
+            account: Account,
+            journalType: String,
+            title: String,
+            content: String,
+            orderId: Long?,
+            ticker: String?,
+            sentiment: String?
+        ): TradingJournal {
+            require(journalType.isNotBlank()) { "journalType은 비어 있을 수 없습니다." }
+            require(title.isNotBlank()) { "title은 비어 있을 수 없습니다." }
+            require(content.isNotBlank()) { "content는 비어 있을 수 없습니다." }
+            return TradingJournal(
+                account = account,
+                orderId = orderId,
+                journalType = journalType.trim().uppercase(),
+                ticker = ticker?.trim()?.uppercase(),
+                title = title.trim(),
+                content = content.trim(),
+                sentiment = sentiment?.trim()?.uppercase()
+            )
+        }
+    }
+}
