@@ -1,6 +1,8 @@
 spring:
   application:
     name: trading-api
+  config:
+    import: optional:file:.env[.properties]
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/paper}
@@ -49,7 +51,7 @@ trading:
   notification:
     slack:
       enabled: ${TRADING_NOTIFICATION_SLACK_ENABLED:false}
-      webhook-url: ${TRADING_NOTIFICATION_SLACK_WEBHOOK_URL:}
+      webhook-url: ${SLACK_WEBHOOK_URL:}
       timeout-millis: ${TRADING_NOTIFICATION_SLACK_TIMEOUT_MILLIS:3000}
       max-retries: ${TRADING_NOTIFICATION_SLACK_MAX_RETRIES:1}
       retry-backoff-millis: ${TRADING_NOTIFICATION_SLACK_RETRY_BACKOFF_MILLIS:500}
