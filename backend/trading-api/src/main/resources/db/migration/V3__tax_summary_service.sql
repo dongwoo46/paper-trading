@@ -1,4 +1,4 @@
-﻿ALTER TABLE tax_summaries
+ALTER TABLE tax_summaries
     ADD COLUMN IF NOT EXISTS computed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE tax_summaries

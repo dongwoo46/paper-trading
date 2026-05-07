@@ -37,7 +37,7 @@ import java.time.Instant
         Index(name = "idx_positions_ticker_qty", columnList = "ticker, quantity"),
     ]
 )
-class Position(
+class Position protected constructor(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
@@ -87,6 +87,17 @@ class Position(
     @Column(name = "price_source", length = 20)
     var priceSource: PriceSource = PriceSource.UNKNOWN
 ) : BaseAuditEntity() {
+    companion object {
+        fun create(
+            account: Account,
+            ticker: String,
+            marketType: MarketType,
+        ): Position = Position(
+            account = account,
+            ticker = ticker,
+            marketType = marketType,
+        )
+    }
 
     fun applyBuy(executedQty: BigDecimal, executedPrice: BigDecimal) {
         val newTotalBuyAmount = totalBuyAmount.add(executedQty.multiply(executedPrice))
