@@ -7,6 +7,7 @@ import com.papertrading.api.application.account.kis.KisRemoteCallException
 import com.papertrading.api.application.account.kis.KisTimeoutException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -23,6 +24,12 @@ class GlobalExceptionHandler {
     fun handleIllegalState(ex: IllegalStateException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             ApiErrorResponse(400, "BAD_REQUEST", ex.message ?: "잘못된 상태입니다.")
+        )
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ApiErrorResponse(400, "BAD_REQUEST", "요청 본문 검증에 실패했습니다.")
         )
 
     @ExceptionHandler(SlackWebhookFailedException::class)

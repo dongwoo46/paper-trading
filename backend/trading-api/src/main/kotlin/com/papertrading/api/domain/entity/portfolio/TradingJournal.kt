@@ -1,4 +1,4 @@
-package com.papertrading.api.domain.entity.portfolio
+﻿package com.papertrading.api.domain.entity.portfolio
 
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
@@ -54,16 +54,23 @@ class TradingJournal protected constructor() : BaseAuditEntity() {
     var sentiment: String? = null
         private set
 
+    fun update(title: String, content: String, sentiment: String?) {
+        require(title.isNotBlank()) { "title은 비어 있을 수 없습니다." }
+        require(content.isNotBlank()) { "content는 비어 있을 수 없습니다." }
+        this.title = title.trim()
+        this.content = content.trim()
+        this.sentiment = sentiment?.trim()?.uppercase()
+    }
+
     fun updateContent(title: String, content: String) {
-        require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다." }
-        require(content.isNotBlank()) { "내용은 비어 있을 수 없습니다." }
-        this.title = title
-        this.content = content
+        update(title = title, content = content, sentiment = this.sentiment)
     }
 
     fun updateSentiment(sentiment: String?) {
-        this.sentiment = sentiment
+        this.sentiment = sentiment?.trim()?.uppercase()
     }
+
+    fun belongsTo(accountId: Long): Boolean = account.id == accountId
 
     companion object {
         fun create(
@@ -74,14 +81,19 @@ class TradingJournal protected constructor() : BaseAuditEntity() {
             orderId: Long? = null,
             ticker: String? = null,
             sentiment: String? = null
-        ): TradingJournal = TradingJournal().apply {
-            this.account = account
-            this.orderId = orderId
-            this.journalType = journalType
-            this.ticker = ticker
-            this.title = title
-            this.content = content
-            this.sentiment = sentiment
+        ): TradingJournal {
+            require(journalType.isNotBlank()) { "journalType은 비어 있을 수 없습니다." }
+            require(title.isNotBlank()) { "title은 비어 있을 수 없습니다." }
+            require(content.isNotBlank()) { "content는 비어 있을 수 없습니다." }
+            return TradingJournal().apply {
+                this.account = account
+                this.orderId = orderId
+                this.journalType = journalType.trim().uppercase()
+                this.ticker = ticker?.trim()?.uppercase()
+                this.title = title.trim()
+                this.content = content.trim()
+                this.sentiment = sentiment?.trim()?.uppercase()
+            }
         }
     }
 }
