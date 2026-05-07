@@ -1,9 +1,9 @@
 package com.papertrading.api.infrastructure.notification
 
-import com.papertrading.api.application.notification.SlackNotificationPolicyStore
+import com.papertrading.api.application.notification.SlackNotificationPolicy
 import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
 import com.papertrading.api.domain.entity.notification.Notification
-import com.papertrading.api.infrastructure.persistence.NotificationRepository
+import com.papertrading.api.domain.port.NotificationSender
 import mu.KotlinLogging
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
@@ -13,9 +13,8 @@ import org.springframework.transaction.event.TransactionalEventListener
 @Component
 class SlackNotificationEventHandler(
     private val sender: NotificationSender,
-    private val policyStore: SlackNotificationPolicyStore,
-    private val repository: NotificationRepository,
-    private val notificationSaver: NotificationSaver,
+    private val policyStore: SlackNotificationPolicy,
+    private val txService: NotificationPersistenceTxService,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -27,7 +26,7 @@ class SlackNotificationEventHandler(
         if (event.eventType !in policy.enabledTypes) return
 
         val sourceRef = buildSourceRef(event)
-        val notification = notificationSaver.save(
+        val notification = txService.save(
             Notification.create(
                 eventType = event.eventType,
                 sourceRef = sourceRef,
@@ -36,10 +35,9 @@ class SlackNotificationEventHandler(
             ),
         )
 
-        val success = sender.send(event)
+        val success = sender.send(event.message)
         if (success) {
-            val updated = notification.markDelivered()
-            repository.save(updated)
+            txService.markDelivered(notification)
         } else {
             log.warn { "Slack send failed on first attempt — leaving PENDING for scheduler retry: sourceRef=$sourceRef" }
         }

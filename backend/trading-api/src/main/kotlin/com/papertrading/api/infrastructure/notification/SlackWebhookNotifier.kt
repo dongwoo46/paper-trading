@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.notification
 
-import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
+import com.papertrading.api.domain.port.NotificationSender
 import mu.KotlinLogging
 import org.springframework.http.HttpEntity
 import org.springframework.stereotype.Component
@@ -13,18 +13,18 @@ class SlackWebhookNotifier(
 ) : NotificationSender {
     private val log = KotlinLogging.logger {}
 
-    override fun send(event: SlackNotificationRequestedEvent): Boolean {
+    override fun send(message: String): Boolean {
         if (properties.webhookUrl.isBlank()) return false
 
         return try {
             restTemplate.postForEntity(
                 properties.webhookUrl,
-                HttpEntity(mapOf("text" to event.message)),
+                HttpEntity(mapOf("text" to message)),
                 String::class.java,
             )
             true
         } catch (ex: Exception) {
-            log.warn { "Slack webhook call failed for eventType=${event.eventType}: ${ex.message}" }
+            log.warn { "Slack webhook call failed: ${ex.message}" }
             false
         }
     }

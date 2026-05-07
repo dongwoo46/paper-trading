@@ -1,18 +1,23 @@
 package com.papertrading.api.infrastructure.notification
 
 import com.papertrading.api.domain.entity.notification.Notification
+import com.papertrading.api.domain.enums.DeliveryStatus
 import com.papertrading.api.infrastructure.persistence.NotificationRepository
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 @Component
-class NotificationRetryProcessor(
+class NotificationPersistenceTxService(
     private val repository: NotificationRepository,
 ) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun save(notification: Notification): Notification =
+        repository.save(notification)
+
     /**
-     * Atomically claims the record from PENDING → DELIVERING.
-     * Returns the updated notification if claimed, or null if another instance already claimed it.
+     * PENDING → DELIVERING 원자적 전환.
+     * 다른 인스턴스가 이미 선점했으면 null 반환.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun markDelivering(notification: Notification): Notification? {
@@ -33,4 +38,7 @@ class NotificationRetryProcessor(
         notification.markFailed(error, maxRetries)
         repository.save(notification)
     }
+
+    fun findPendingForRetry(maxAttempts: Int): List<Notification> =
+        repository.findByStatusAndAttemptCountLessThan(DeliveryStatus.PENDING, maxAttempts)
 }
