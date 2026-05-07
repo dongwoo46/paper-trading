@@ -82,8 +82,7 @@ class ExecutionProcessorTest {
             initialDeposit = deposit,
         ).withId(1L)
 
-    private fun sellOrder(account: Account, qty: BigDecimal = BigDecimal("5")): Order = Order(
-        id = 10L,
+    private fun sellOrder(account: Account, qty: BigDecimal = BigDecimal("5")): Order = Order.create(
         account = account,
         ticker = "005930",
         marketType = MarketType.KOSPI,
@@ -94,7 +93,7 @@ class ExecutionProcessorTest {
         limitPrice = BigDecimal("70000"),
         lockedAmount = BigDecimal.ZERO,
         idempotencyKey = "sell-key-1",
-    )
+    ).withId(10L)
 
     private fun setupCommonMocks(account: Account, order: Order) {
         val position = Position.create(account = account, ticker = "005930", marketType = MarketType.KOSPI).apply {
@@ -125,7 +124,7 @@ class ExecutionProcessorTest {
 
         setupCommonMocks(account, order)
         every { executionRepository.save(any()) } answers {
-            firstArg<Execution>().apply { id = 100L }
+            firstArg<Execution>().withId(100L)
         }
 
         val initialDeposit = account.availableDeposit
@@ -156,7 +155,7 @@ class ExecutionProcessorTest {
 
         setupCommonMocks(account, order)
         every { executionRepository.save(any()) } answers {
-            firstArg<Execution>().apply { id = 200L }
+            firstArg<Execution>().withId(200L)
         }
         val pendingSlot = slot<ReceivableSettlement>()
         every { ReceivableSettlementRepository.save(capture(pendingSlot)) } answers { firstArg() }
@@ -188,7 +187,7 @@ class ExecutionProcessorTest {
 
         setupCommonMocks(account, order)
         every { executionRepository.save(any()) } answers {
-            firstArg<Execution>().apply { id = 300L }
+            firstArg<Execution>().withId(300L)
         }
 
         val eventSlot = slot<ExecutionFilledEvent>()

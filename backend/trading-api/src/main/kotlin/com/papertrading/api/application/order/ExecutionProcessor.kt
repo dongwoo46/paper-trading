@@ -96,7 +96,7 @@ class ExecutionProcessor(
         order.applyExecution(fillQty, newAvgPrice, fee)
 
         val execution = executionRepository.save(
-            Execution(
+            Execution.create(
                 order = order,
                 account = account,
                 ticker = ticker,

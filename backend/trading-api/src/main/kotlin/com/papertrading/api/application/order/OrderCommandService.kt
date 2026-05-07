@@ -85,7 +85,7 @@ class OrderCommandService(
         }
 
         val order = orderRepository.save(
-            Order(
+            Order.create(
                 account = account,
                 ticker = command.ticker,
                 marketType = command.marketType,
@@ -146,7 +146,7 @@ class OrderCommandService(
             "취소 불가 상태입니다. status=${order.orderStatus}"
         }
 
-        order.updateStatus(OrderStatus.CANCELLED)
+        order.cancel()
 
         // 매수 잔여 잠금 해제
         if (order.orderSide == OrderSide.BUY && order.lockedAmount > BigDecimal.ZERO) {

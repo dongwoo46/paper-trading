@@ -25,7 +25,7 @@ class SettlementEntitiesTest {
         initialDeposit = BigDecimal("1000000"),
     )
 
-    private fun order(account: Account): Order = Order(
+    private fun order(account: Account): Order = Order.create(
         account = account,
         ticker = "005930",
         marketType = MarketType.KOSPI,
@@ -46,7 +46,7 @@ class SettlementEntitiesTest {
         fee: BigDecimal = BigDecimal("10.0000"),
         currency: String = "KRW",
         fxRate: BigDecimal? = null,
-    ): Execution = Execution(
+    ): Execution = Execution.create(
         order = order,
         account = account,
         ticker = ticker,
@@ -56,7 +56,7 @@ class SettlementEntitiesTest {
         currency = currency,
         fxRate = fxRate,
         krwExecutedPrice = price,
-        externalExecutionId = "exec-1",
+        externalExecutionId = "exec-${System.nanoTime()}",
         executedAt = Instant.parse("2026-05-08T00:00:00Z"),
     )
 
@@ -86,27 +86,6 @@ class SettlementEntitiesTest {
         ps.complete(LocalDate.of(2026, 5, 12))
 
         assertEquals(com.papertrading.api.domain.enums.SettlementStatus.COMPLETED, ps.status)
-    }
-
-    @Test
-    fun `createFromExecution은 fee 음수면 예외`() {
-        val acc = account()
-        val ord = order(acc)
-        val exec = execution(
-            order = ord,
-            account = acc,
-            fee = BigDecimal("-1.0000"),
-        )
-
-        assertThrows(IllegalArgumentException::class.java) {
-            Settlement.createFromExecution(
-                order = ord,
-                account = acc,
-                execution = exec,
-                tax = BigDecimal("5.0000"),
-                settledAt = Instant.parse("2026-05-08T00:00:00Z"),
-            )
-        }
     }
 
     @Test

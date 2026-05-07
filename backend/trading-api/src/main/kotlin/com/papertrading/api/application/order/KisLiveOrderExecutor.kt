@@ -24,7 +24,7 @@ class KisLiveOrderExecutor(
         val orderId = order.id ?: return
         runCatching {
             val orno = kisOrderRestClient.placeOrder(order, "live")
-            order.externalOrderId = orno
+            order.assignExternalOrderId(orno)
             log.info { "KIS_LIVE 주문 접수: orderId=$orderId, orno=$orno, ticker=${order.ticker}" }
         }.onFailure {
             log.error { "KIS_LIVE 주문 접수 실패: orderId=$orderId, reason=${it.message}" }

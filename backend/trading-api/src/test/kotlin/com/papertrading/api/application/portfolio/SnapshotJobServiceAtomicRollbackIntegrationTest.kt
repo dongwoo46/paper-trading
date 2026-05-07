@@ -102,7 +102,7 @@ class SnapshotJobServiceAtomicRollbackIntegrationTest {
         val runningAfter = snapshotJobRunRepository.existsByAccountIdAndBusinessDateAndStatus(
             account.id!!,
             businessDate,
-            com.papertrading.api.domain.entity.portfolio.SnapshotJobRunStatus.RUNNING,
+            com.papertrading.api.domain.enums.SnapshotJobRunStatus.RUNNING,
         )
 
         org.assertj.core.api.Assertions.assertThat(dailyBalanceAfter).isEmpty

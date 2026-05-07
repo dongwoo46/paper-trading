@@ -60,8 +60,7 @@ class KisOrderRestClientTest {
             initialDeposit = BigDecimal("1000000"),
             externalAccountId = "12345678-01",
         ).withId(1L)
-        return Order(
-            id = 10L,
+        return Order.create(
             account = account,
             ticker = "005930",
             marketType = MarketType.KOSPI,
@@ -72,6 +71,6 @@ class KisOrderRestClientTest {
             limitPrice = BigDecimal("70000"),
             lockedAmount = BigDecimal("70000"),
             idempotencyKey = "key",
-        )
+        ).withId(10L)
     }
 }

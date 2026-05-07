@@ -54,20 +54,25 @@ class OrderCommandServiceTest {
         tradingMode = TradingMode.LOCAL, initialDeposit = deposit
     ).withId(1L)
 
-    private fun savedOrder(account: Account): Order = Order(
-        id = 10L, account = account, ticker = "005930",
-        marketType = MarketType.KOSPI, orderType = OrderType.LIMIT,
-        orderSide = OrderSide.BUY, orderCondition = OrderCondition.DAY,
-        quantity = BigDecimal("5"), limitPrice = BigDecimal("70000"),
-        lockedAmount = BigDecimal("350000"), idempotencyKey = "key-1",
-    )
+    private fun savedOrder(account: Account): Order = Order.create(
+        account = account,
+        ticker = "005930",
+        marketType = MarketType.KOSPI,
+        orderType = OrderType.LIMIT,
+        orderSide = OrderSide.BUY,
+        orderCondition = OrderCondition.DAY,
+        quantity = BigDecimal("5"),
+        limitPrice = BigDecimal("70000"),
+        lockedAmount = BigDecimal("350000"),
+        idempotencyKey = "key-1",
+    ).withId(10L)
 
     @Test
     fun `지정가 매수 주문 정상 접수`() {
         val account = localAccount()
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-1") } returns null
-        every { orderRepository.save(any()) } answers { firstArg<Order>().apply { id = 10L } }
+        every { orderRepository.save(any()) } answers { firstArg<Order>().withId(10L) }
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { collectorSubscriptionPort.subscribe("live", "005930") } just runs
         every { localMatchingEngine.determineFillPrice(any(), any()) } returns null
@@ -148,7 +153,7 @@ class OrderCommandServiceTest {
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-5") } returns null
         every { marketQuotePort.getQuote("005930") } returns quote
-        every { orderRepository.save(any()) } answers { firstArg<Order>().apply { id = 11L } }
+        every { orderRepository.save(any()) } answers { firstArg<Order>().withId(11L) }
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { collectorSubscriptionPort.subscribe("live", "005930") } just runs
 

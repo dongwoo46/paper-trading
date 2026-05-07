@@ -34,7 +34,7 @@ class KisExecutionNoticeServiceTest {
     @Test
     fun `duplicate notice does not mutate financial state again`() {
         val notice = sampleNotice()
-        every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns Optional.of(Execution())
+        every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns Optional.of(mockk<Execution>(relaxed = true))
 
         service.handle(notice)
 
@@ -108,20 +108,17 @@ class KisExecutionNoticeServiceTest {
             initialDeposit = BigDecimal("1000000"),
             externalAccountId = "12345678-01",
         ).withId(1L)
-        return Order(
-            id = 10L,
+        return Order.create(
             account = account,
             ticker = "005930",
             marketType = MarketType.KOSPI,
             orderType = OrderType.LIMIT,
             orderSide = OrderSide.BUY,
             orderCondition = OrderCondition.DAY,
-            orderStatus = OrderStatus.PENDING,
             quantity = BigDecimal("3"),
             limitPrice = BigDecimal("70000"),
             lockedAmount = BigDecimal("210000"),
             idempotencyKey = "key",
-            externalOrderId = "10000001",
-        )
+        ).withId(10L).also { it.assignExternalOrderId("10000001") }
     }
 }
