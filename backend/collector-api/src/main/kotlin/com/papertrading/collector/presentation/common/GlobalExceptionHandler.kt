@@ -1,6 +1,8 @@
 package com.papertrading.collector.presentation.common
 
 import com.papertrading.collector.application.market.service.InsufficientBarsForRequestedRangeException
+import com.papertrading.collector.application.market.service.InsufficientDataForRsException
+import com.papertrading.collector.application.market.service.SymbolNotFoundOrNoDataException
 import com.papertrading.collector.application.market.service.SymbolNotFoundOrNoBarsException
 import jakarta.servlet.http.HttpServletRequest
 import mu.KotlinLogging
@@ -61,6 +63,24 @@ class GlobalExceptionHandler {
 		)
 	}
 
+	@ExceptionHandler(SymbolNotFoundOrNoDataException::class)
+	fun handleNotFoundNoData(
+		ex: SymbolNotFoundOrNoDataException,
+		request: HttpServletRequest,
+	): ResponseEntity<ErrorResponse> {
+		log.warn(ex) { "Not found: ${request.method} ${request.requestURI}" }
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+			ErrorResponse(
+				status = HttpStatus.NOT_FOUND.value(),
+				error = "not_found",
+				code = "SYMBOL_NOT_FOUND_OR_NO_DATA",
+				message = ex.message ?: "Not found",
+				path = request.requestURI,
+				timestamp = Instant.now().toString(),
+			),
+		)
+	}
+
 	@ExceptionHandler(InsufficientBarsForRequestedRangeException::class)
 	fun handleUnprocessable(
 		ex: InsufficientBarsForRequestedRangeException,
@@ -72,6 +92,24 @@ class GlobalExceptionHandler {
 				status = HttpStatus.UNPROCESSABLE_ENTITY.value(),
 				error = "unprocessable_entity",
 				code = "INSUFFICIENT_BARS_FOR_REQUESTED_RANGE",
+				message = ex.message ?: "Unprocessable request",
+				path = request.requestURI,
+				timestamp = Instant.now().toString(),
+			),
+		)
+	}
+
+	@ExceptionHandler(InsufficientDataForRsException::class)
+	fun handleUnprocessableRs(
+		ex: InsufficientDataForRsException,
+		request: HttpServletRequest,
+	): ResponseEntity<ErrorResponse> {
+		log.warn(ex) { "Unprocessable request: ${request.method} ${request.requestURI}" }
+		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(
+			ErrorResponse(
+				status = HttpStatus.UNPROCESSABLE_ENTITY.value(),
+				error = "unprocessable_entity",
+				code = "INSUFFICIENT_DATA_FOR_RS",
 				message = ex.message ?: "Unprocessable request",
 				path = request.requestURI,
 				timestamp = Instant.now().toString(),
@@ -103,6 +141,7 @@ class GlobalExceptionHandler {
 			message.startsWith("INVALID_INTERVAL") -> "INVALID_INTERVAL"
 			message.startsWith("INVALID_PERIOD_QUERY") -> "INVALID_PERIOD_QUERY"
 			message.startsWith("INVALID_INDICATOR_PARAM") -> "INVALID_INDICATOR_PARAM"
+			message.startsWith("INVALID_SESSION") -> "INVALID_SESSION"
 			else -> "INVALID_REQUEST"
 		}
 	}
