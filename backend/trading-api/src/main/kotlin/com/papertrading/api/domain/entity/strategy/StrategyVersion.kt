@@ -25,28 +25,68 @@ import java.util.UUID
     name = "strategy_versions",
     uniqueConstraints = [UniqueConstraint(name = "uk_strategy_versions_strategy_version", columnNames = ["strategy_id", "version_no"])]
 )
-class StrategyVersion(
+class StrategyVersion protected constructor() : BaseTimeEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "strategy_id", nullable = false)
-    var strategy: Strategy? = null,
+    lateinit var strategy: Strategy
+        private set
 
     @Column(name = "version_no", nullable = false)
-    var versionNo: Int = 0,
+    var versionNo: Int = 0
+        private set
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "rules", nullable = false, columnDefinition = "jsonb")
-    var rules: String? = null,
+    lateinit var rules: String
+        private set
 
     @Column(name = "backtest_run_id")
-    var backtestRunId: UUID? = null,
+    var backtestRunId: UUID? = null
+        private set
 
     @Column(name = "change_note", columnDefinition = "text")
-    var changeNote: String? = null,
+    var changeNote: String? = null
+        private set
 
     @Column(name = "created_by", length = 100)
     var createdBy: String? = null
-) : BaseTimeEntity()
+        private set
+
+    fun attachBacktestRun(backtestRunId: UUID) {
+        this.backtestRunId = backtestRunId
+    }
+
+    fun updateChangeNote(changeNote: String?) {
+        this.changeNote = changeNote?.trim()?.ifBlank { null }
+    }
+
+    companion object {
+        fun create(
+            strategy: Strategy,
+            versionNo: Int,
+            rules: String,
+            createdBy: String? = null,
+            changeNote: String? = null,
+            backtestRunId: UUID? = null
+        ): StrategyVersion {
+            require(versionNo > 0) { "versionNo는 1 이상이어야 합니다." }
+            require(rules.isNotBlank()) { "rules는 비어 있을 수 없습니다." }
+            val normalizedCreatedBy = createdBy?.trim()?.ifBlank { null }
+            require(normalizedCreatedBy == null || normalizedCreatedBy.length <= 100) {
+                "createdBy 길이는 100자를 초과할 수 없습니다."
+            }
+            return StrategyVersion().apply {
+                this.strategy = strategy
+                this.versionNo = versionNo
+                this.rules = rules
+                this.createdBy = normalizedCreatedBy
+                this.changeNote = changeNote?.trim()?.ifBlank { null }
+                this.backtestRunId = backtestRunId
+            }
+        }
+    }
+}

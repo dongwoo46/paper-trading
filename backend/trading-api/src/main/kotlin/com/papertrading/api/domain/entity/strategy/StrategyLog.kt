@@ -22,29 +22,70 @@ import java.time.Instant
  */
 @Entity
 @Table(name = "strategy_logs")
-class StrategyLog(
+class StrategyLog protected constructor() : BaseTimeEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "strategy_id", nullable = false)
-    var strategy: Strategy? = null,
+    lateinit var strategy: Strategy
+        private set
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
-    var account: Account? = null,
+    lateinit var account: Account
+        private set
 
     @Column(name = "log_level", nullable = false, length = 10)
-    var logLevel: String? = null,
+    lateinit var logLevel: String
+        private set
 
     @Column(name = "message", nullable = false, columnDefinition = "text")
-    var message: String? = null,
+    lateinit var message: String
+        private set
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "context", columnDefinition = "jsonb")
-    var context: String? = null,
+    var context: String? = null
+        private set
 
     @Column(name = "logged_at", nullable = false)
     var loggedAt: Instant = Instant.now()
-) : BaseTimeEntity()
+        private set
+
+    fun updateContext(newContext: String?) {
+        context = newContext?.trim()?.ifBlank { null }
+    }
+
+    companion object {
+        private val ALLOWED_LOG_LEVELS = setOf("INFO", "WARN", "ERROR")
+
+        fun create(
+            strategy: Strategy,
+            account: Account,
+            logLevel: String,
+            message: String,
+            context: String? = null,
+            loggedAt: Instant = Instant.now()
+        ): StrategyLog {
+            val normalizedLevel = logLevel.trim().uppercase()
+            require(normalizedLevel in ALLOWED_LOG_LEVELS) {
+                "logLevel은 INFO/WARN/ERROR 중 하나여야 합니다."
+            }
+            require(message.isNotBlank()) { "로그 메시지는 비어 있을 수 없습니다." }
+            require(!loggedAt.isAfter(Instant.now().plusSeconds(5))) {
+                "loggedAt은 미래 시각일 수 없습니다."
+            }
+
+            return StrategyLog().apply {
+                this.strategy = strategy
+                this.account = account
+                this.logLevel = normalizedLevel
+                this.message = message
+                this.context = context?.trim()?.ifBlank { null }
+                this.loggedAt = loggedAt
+            }
+        }
+    }
+}

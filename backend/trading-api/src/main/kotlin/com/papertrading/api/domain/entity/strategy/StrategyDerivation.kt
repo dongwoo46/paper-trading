@@ -18,22 +18,54 @@ import jakarta.persistence.Table
  */
 @Entity
 @Table(name = "strategy_derivations")
-class StrategyDerivation(
+class StrategyDerivation protected constructor() : BaseTimeEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "parent_strategy_id", nullable = false)
-    var parentStrategy: Strategy? = null,
+    lateinit var parentStrategy: Strategy
+        private set
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "child_strategy_id", nullable = false)
-    var childStrategy: Strategy? = null,
+    lateinit var childStrategy: Strategy
+        private set
 
     @Column(name = "derivation_type", nullable = false, length = 30)
-    var derivationType: String? = null,
+    lateinit var derivationType: String
+        private set
 
     @Column(name = "note", columnDefinition = "text")
     var note: String? = null
-) : BaseTimeEntity()
+        private set
+
+    fun updateNote(newNote: String?) {
+        note = newNote?.trim()?.ifBlank { null }
+    }
+
+    companion object {
+        private val ALLOWED_DERIVATION_TYPES = setOf("FORK", "TUNE", "ENSEMBLE")
+
+        fun create(
+            parentStrategy: Strategy,
+            childStrategy: Strategy,
+            derivationType: String,
+            note: String? = null
+        ): StrategyDerivation {
+            require(parentStrategy !== childStrategy) { "부모와 자식 전략은 같을 수 없습니다." }
+            val normalizedType = derivationType.trim().uppercase()
+            require(normalizedType in ALLOWED_DERIVATION_TYPES) {
+                "derivationType은 FORK/TUNE/ENSEMBLE 중 하나여야 합니다."
+            }
+
+            return StrategyDerivation().apply {
+                this.parentStrategy = parentStrategy
+                this.childStrategy = childStrategy
+                this.derivationType = normalizedType
+                this.note = note?.trim()?.ifBlank { null }
+            }
+        }
+    }
+}
