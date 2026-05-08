@@ -1,5 +1,8 @@
 package com.papertrading.api.domain.entity.account
 
+import com.papertrading.api.common.exception.BadRequestException
+import com.papertrading.api.common.exception.ConflictException
+import com.papertrading.api.common.exception.EntityMappingException
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
@@ -262,6 +265,70 @@ class Account protected constructor() : BaseAuditEntity() {
             maxDailyLoss = maxDailyLoss,
             maxOrderAmount = maxOrderAmount
         )
+    }
+
+    fun createExitTriggerDefault(
+        enabled: Boolean,
+        stopLossPercent: BigDecimal?,
+        takeProfitPercent: BigDecimal?,
+    ): AccountExitTriggerDefault {
+        validateExitTriggerDefault(enabled, stopLossPercent, takeProfitPercent)
+        val accountId = id ?: throw EntityMappingException("account id가 없습니다.")
+        return AccountExitTriggerDefault.create(
+            accountId = accountId,
+            enabled = enabled,
+            stopLossPercent = stopLossPercent,
+            takeProfitPercent = takeProfitPercent,
+        )
+    }
+
+    fun updateExitTriggerDefault(
+        existing: AccountExitTriggerDefault,
+        enabled: Boolean,
+        stopLossPercent: BigDecimal?,
+        takeProfitPercent: BigDecimal?,
+    ): AccountExitTriggerDefault {
+        val accountId = id ?: throw EntityMappingException("account id가 없습니다.")
+        if (existing.accountId != accountId) {
+            throw ConflictException(
+                "ACCOUNT_EXIT_TRIGGER_OWNER_MISMATCH",
+                "계좌 소유자 불일치: accountId=$accountId, defaultAccountId=${existing.accountId}"
+            )
+        }
+        validateExitTriggerDefault(enabled, stopLossPercent, takeProfitPercent)
+        existing.enabled = enabled
+        existing.stopLossPercent = stopLossPercent
+        existing.takeProfitPercent = takeProfitPercent
+        return existing
+    }
+
+    private fun validateExitTriggerDefault(
+        enabled: Boolean,
+        stopLossPercent: BigDecimal?,
+        takeProfitPercent: BigDecimal?,
+    ) {
+        validatePercentScale(stopLossPercent)
+        validatePercentScale(takeProfitPercent)
+        validatePercentRange(stopLossPercent)
+        validatePercentRange(takeProfitPercent)
+        if (enabled && stopLossPercent == null && takeProfitPercent == null) {
+            throw BadRequestException(
+                "EXIT_TRIGGER_PERCENT_REQUIRED",
+                "enabled trigger needs at least one percent"
+            )
+        }
+    }
+
+    private fun validatePercentScale(value: BigDecimal?) {
+        if (value != null && value.stripTrailingZeros().scale() > 4) {
+            throw BadRequestException("INVALID_PERCENT_SCALE", "percent scale must be <= 4")
+        }
+    }
+
+    private fun validatePercentRange(value: BigDecimal?) {
+        if (value != null && (value <= BigDecimal.ZERO || value >= BigDecimal("100"))) {
+            throw BadRequestException("INVALID_PERCENT_RANGE", "percent must be in (0,100)")
+        }
     }
 
     companion object {

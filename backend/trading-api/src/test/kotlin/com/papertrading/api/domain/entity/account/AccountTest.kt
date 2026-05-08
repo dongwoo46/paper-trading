@@ -1,8 +1,11 @@
 package com.papertrading.api.domain.entity.account
 
+import com.papertrading.api.common.exception.BadRequestException
+import com.papertrading.api.common.exception.ConflictException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.enums.TransactionType
+import com.papertrading.api.support.withId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -240,6 +243,71 @@ class AccountTest {
         val policy = account.createRiskPolicy(null, null, null)
 
         assertTrue(policy.isActive)
+    }
+
+    @Test
+    fun createExitTriggerDefault_유효한_값이면_생성된다() {
+        val account = createAccount(initialDeposit = BigDecimal.ZERO).withId(1L)
+
+        val trigger = account.createExitTriggerDefault(
+            enabled = true,
+            stopLossPercent = BigDecimal("2.5"),
+            takeProfitPercent = BigDecimal("7.0"),
+        )
+
+        assertEquals(1L, trigger.accountId)
+        assertTrue(trigger.enabled)
+        assertEquals(BigDecimal("2.5"), trigger.stopLossPercent)
+        assertEquals(BigDecimal("7.0"), trigger.takeProfitPercent)
+    }
+
+    @Test
+    fun createExitTriggerDefault_enabled인데_퍼센트가_모두_null이면_예외를_던진다() {
+        val account = createAccount(initialDeposit = BigDecimal.ZERO).withId(1L)
+
+        val ex = assertThrows(BadRequestException::class.java) {
+            account.createExitTriggerDefault(
+                enabled = true,
+                stopLossPercent = null,
+                takeProfitPercent = null,
+            )
+        }
+        assertEquals("EXIT_TRIGGER_PERCENT_REQUIRED", ex.errorCode)
+    }
+
+    @Test
+    fun createExitTriggerDefault_퍼센트_scale이_4초과면_예외를_던진다() {
+        val account = createAccount(initialDeposit = BigDecimal.ZERO).withId(1L)
+
+        val ex = assertThrows(BadRequestException::class.java) {
+            account.createExitTriggerDefault(
+                enabled = true,
+                stopLossPercent = BigDecimal("2.12345"),
+                takeProfitPercent = null,
+            )
+        }
+        assertEquals("INVALID_PERCENT_SCALE", ex.errorCode)
+    }
+
+    @Test
+    fun updateExitTriggerDefault_소유자_계좌가_다르면_예외를_던진다() {
+        val account = createAccount(initialDeposit = BigDecimal.ZERO).withId(1L)
+        val otherOwnerTrigger = AccountExitTriggerDefault.create(
+            accountId = 999L,
+            enabled = true,
+            stopLossPercent = BigDecimal("2.0"),
+            takeProfitPercent = null,
+        )
+
+        val ex = assertThrows(ConflictException::class.java) {
+            account.updateExitTriggerDefault(
+                existing = otherOwnerTrigger,
+                enabled = false,
+                stopLossPercent = null,
+                takeProfitPercent = null,
+            )
+        }
+        assertEquals("ACCOUNT_EXIT_TRIGGER_OWNER_MISMATCH", ex.errorCode)
     }
 
     @Test

@@ -157,6 +157,13 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - interval(1m/5m/10m/1d/1w), 기간(limit/from~to), 다중 indicator 파라미터 지원
   - 차트용 응답 스키마 표준화(시점별 indicator 값, 결측 처리 규칙 포함)
 
+- [ ] 트레이딩 마이크로구조/상대강도 조회 API 확장 (뉴스/공시 제외) | project: collector-api | phase: market-microstructure-rs-api | priority: P1
+  - 호가/잔량 기반 응답: best bid/ask, spread, bid-ask imbalance, depth summary
+  - 체결강도/볼륨 기반 응답: buyVolume, sellVolume, tradeIntensity, vwap, rvol
+  - 상대강도(RS) 응답: symbol vs benchmark/sector ratio 및 기간 수익률 상대값
+  - 국내/해외 공통 조회 계약: session 구분(regular/pre/after), timezone 정규화, 결측 정책
+  - 프론트 통합 차트가 바로 소비 가능한 단일 schema 제공
+
 ### 완료
 - [x] KIS WebSocket 시세 수집 + Redis Pub/Sub 발행 (RawEventPipeline)
 - [x] FRED 거시지표 수집 및 조회
@@ -191,6 +198,13 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 외국인/기관/개인 순매수(일자별) 수집기 추가
   - 수급 데이터 저장 모델/리포지토리 및 배치 적재 구현
   - collector-api 조회 API에서 사용할 수 있도록 적재 계약 정리
+
+- [ ] 트레이딩 지표 원천 데이터 수집 확장 (뉴스/공시 제외) | project: quant-worker | phase: trading-indicator-source-pipeline | priority: P1
+  - 국내: 호가 잔량/스프레드/체결강도/누적 거래대금(VWAP 원천)/벤치마크-섹터 RS 원천 적재
+  - 해외: regular + pre/after OHLCV, bid/ask + spread + depth(가능 범위), VWAP/RVOL 원천 적재
+  - 해외 수급 대체 지표: short interest, days-to-cover, shares outstanding/float 수집 파이프라인
+  - 심볼 메타데이터 표준화: exchange, currency, timezone, market cap, free-float
+  - collector-api 조회 API에서 바로 사용할 수 있도록 테이블/인덱스/파티션 전략 정리
 
 ### 완료
 - [x] pykrx 일봉 수집기 (pykrx_daily_collector.py)

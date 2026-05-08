@@ -1,6 +1,5 @@
 package com.papertrading.api.application.portfolio
 
-import com.papertrading.api.common.exception.InvalidDateRangeException
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.portfolio.DailyBalance
 import com.papertrading.api.domain.enums.AccountType

@@ -1,10 +1,8 @@
 package com.papertrading.api.application.account
 
 import com.papertrading.api.common.exception.AccountNotFoundException
-import com.papertrading.api.common.exception.BadRequestException
-import com.papertrading.api.domain.account.AccountExitTriggerDefault
-import com.papertrading.api.domain.account.AccountExitTriggerDefaultRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
+import com.papertrading.api.infrastructure.persistence.AccountExitTriggerDefaultRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -32,23 +30,22 @@ class AccountExitTriggerDefaultCommandService(
 ) {
     @Transactional
     fun upsert(command: UpsertAccountExitTriggerDefaultCommand): AccountExitTriggerDefaultResult {
-        accountRepository.findById(command.accountId).orElseThrow { AccountNotFoundException(command.accountId) }
-        validatePercentScale(command.stopLossPercent)
-        validatePercentScale(command.takeProfitPercent)
+        val account = accountRepository.findById(command.accountId)
+            .orElseThrow { AccountNotFoundException(command.accountId) }
         val current = accountExitTriggerDefaultRepository.findByAccountId(command.accountId)
         val entity = if (current == null) {
-            AccountExitTriggerDefault.create(
-                accountId = command.accountId,
+            account.createExitTriggerDefault(
                 enabled = command.enabled,
                 stopLossPercent = command.stopLossPercent,
                 takeProfitPercent = command.takeProfitPercent,
             )
         } else {
-            current.enabled = command.enabled
-            current.stopLossPercent = command.stopLossPercent
-            current.takeProfitPercent = command.takeProfitPercent
-            current.validate()
-            current
+            account.updateExitTriggerDefault(
+                existing = current,
+                enabled = command.enabled,
+                stopLossPercent = command.stopLossPercent,
+                takeProfitPercent = command.takeProfitPercent,
+            )
         }
         val saved = accountExitTriggerDefaultRepository.save(entity)
         return AccountExitTriggerDefaultResult(
@@ -58,11 +55,5 @@ class AccountExitTriggerDefaultCommandService(
             takeProfitPercent = saved.takeProfitPercent,
             updatedAt = saved.updatedAt,
         )
-    }
-
-    private fun validatePercentScale(value: BigDecimal?) {
-        if (value != null && value.stripTrailingZeros().scale() > 4) {
-            throw BadRequestException("INVALID_PERCENT_SCALE", "percent scale must be <= 4")
-        }
     }
 }
