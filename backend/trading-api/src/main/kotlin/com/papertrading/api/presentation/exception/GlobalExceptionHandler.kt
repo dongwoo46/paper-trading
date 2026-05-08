@@ -5,6 +5,8 @@ import com.papertrading.api.application.account.kis.KisForbiddenException
 import com.papertrading.api.application.account.kis.KisRemoteCallException
 import com.papertrading.api.application.account.kis.KisTimeoutException
 import com.papertrading.api.application.notification.SlackWebhookFailedException
+import com.papertrading.api.application.position.PositionNotEligibleException
+import com.papertrading.api.application.position.StaleTriggerVersionException
 import com.papertrading.api.application.portfolio.tax.TaxSummaryDomainException
 import com.papertrading.api.common.exception.PortfolioSnapshotDomainException
 import org.springframework.http.HttpStatus
@@ -62,10 +64,22 @@ class GlobalExceptionHandler {
             ApiErrorResponse(400, "BAD_REQUEST", ex.message ?: "잘못된 상태입니다.")
         )
 
+    @ExceptionHandler(PositionNotEligibleException::class)
+    fun handlePositionNotEligible(ex: PositionNotEligibleException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(
+            ApiErrorResponse(422, "POSITION_NOT_ELIGIBLE", ex.message ?: "포지션이 트리거 대상이 아닙니다.")
+        )
+
+    @ExceptionHandler(StaleTriggerVersionException::class)
+    fun handleStaleTriggerVersion(ex: StaleTriggerVersionException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.CONFLICT).body(
+            ApiErrorResponse(409, "STALE_TRIGGER_VERSION", ex.message ?: "트리거 버전 충돌이 발생했습니다.")
+        )
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            ApiErrorResponse(400, "BAD_REQUEST", "요청 본문 검증에 실패했습니다.")
+            ApiErrorResponse(400, "INVALID_PERCENT_VALUE", "요청 본문 검증에 실패했습니다.")
         )
 
     @ExceptionHandler(SlackWebhookFailedException::class)

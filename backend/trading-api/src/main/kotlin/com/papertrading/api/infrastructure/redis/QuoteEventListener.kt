@@ -1,6 +1,7 @@
 package com.papertrading.api.infrastructure.redis
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.papertrading.api.application.market.QuoteEventListener as ExitTriggerQuoteEventListener
 import com.papertrading.api.application.order.LocalMatchingEngine
 import com.papertrading.api.application.position.PositionCommandService
 import com.papertrading.api.domain.enums.PriceSource
@@ -21,6 +22,7 @@ import java.time.Instant
 class QuoteEventListener(
     private val localMatchingEngine: LocalMatchingEngine,
     private val positionCommandService: PositionCommandService,
+    private val exitTriggerQuoteEventListener: ExitTriggerQuoteEventListener,
     private val objectMapper: ObjectMapper,
 ) : MessageListener {
 
@@ -33,6 +35,8 @@ class QuoteEventListener(
         // 포지션 평가손익 갱신 (체결 엔진과 독립적으로 처리)
         runCatching { positionCommandService.updateCurrentPriceByTicker(quote.ticker, quote.price, PriceSource.REDIS_LIVE) }
             .onFailure { log.warn { "포지션 시세 갱신 오류: ticker=${quote.ticker}, reason=${it.message}" } }
+        runCatching { exitTriggerQuoteEventListener.onQuote(quote.ticker, quote.price, quote.updatedAt) }
+            .onFailure { log.warn { "exit trigger 처리 오류: ticker=${quote.ticker}, reason=${it.message}" } }
     }
 
     private fun parseMessage(body: ByteArray): QuoteSnapshot? = runCatching {

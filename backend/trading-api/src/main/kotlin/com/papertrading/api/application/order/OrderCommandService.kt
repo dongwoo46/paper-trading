@@ -9,6 +9,8 @@ import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Order
+import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.position.TriggerType
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.domain.port.MarketQuotePort
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
@@ -134,6 +136,27 @@ class OrderCommandService(
 
         log.info { "order placed: orderId=$orderId, mode=$tradingMode, ticker=${command.ticker}" }
         return order
+    }
+
+    @Transactional
+    fun createAutoExitSellOrder(position: Position, triggerVersion: Long, triggerType: TriggerType): Order {
+        val positionId = requireNotNull(position.id) { "position.id is null" }
+        val accountId = requireNotNull(position.account.id) { "position.account.id is null" }
+        val key = "auto-exit:$positionId:$triggerVersion:${triggerType.name}"
+        return placeOrder(
+            accountId,
+            PlaceOrderCommand(
+                ticker = position.ticker,
+                marketType = position.marketType,
+                orderType = OrderType.MARKET,
+                orderSide = OrderSide.SELL,
+                orderCondition = OrderCondition.DAY,
+                quantity = position.orderableQuantity,
+                limitPrice = null,
+                expireAt = null,
+                idempotencyKey = key,
+            )
+        )
     }
 
     @Transactional
