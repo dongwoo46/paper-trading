@@ -18,12 +18,12 @@ const EMPTY_KIS_CATALOG: CatalogResponse<KrSymbol> = {
   totalSubscribedCount: 0
 };
 
-const INPUT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
-const SELECT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
+const INPUT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
+const SELECT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
 const BTN_BASE = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
-const BTN_PRIMARY = `${BTN_BASE} bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow border-transparent hover:-translate-y-0.5 hover:brightness-110`;
-const BTN_OUTLINE = `${BTN_BASE} bg-transparent border-white/12 text-text-primary hover:bg-white/5 hover:border-text-muted`;
-const BTN_DANGER = `${BTN_BASE} bg-red-500/8 text-red-500 border-red-500/20 hover:bg-red-500/15 hover:-translate-y-0.5`;
+const BTN_PRIMARY = `${BTN_BASE} bg-brand-primary text-white shadow-sm border-transparent hover:bg-brand-primary/90`;
+const BTN_OUTLINE = `${BTN_BASE} bg-white border-border-primary text-text-primary hover:bg-bg-input hover:border-text-muted`;
+const BTN_DANGER = `${BTN_BASE} bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm`;
 
 export function KisPanel() {
   const queryClient = useQueryClient();
@@ -125,15 +125,15 @@ export function KisPanel() {
     <div className="flex flex-col gap-6">
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-1">
-        <div className="border border-white/12 rounded-[20px] bg-white/[0.03] px-5 py-4 flex flex-col gap-1">
+        <div className="border border-border-primary rounded-[16px] bg-bg-card shadow-sm px-5 py-4 flex flex-col gap-1">
           <span className="text-text-muted text-[13px] font-medium">계좌 모드</span>
           <strong className="text-xl text-brand-primary tracking-tight">{mode === "paper" ? "모의투자" : "실전투자"}</strong>
         </div>
-        <div className="border border-white/12 rounded-[20px] bg-white/[0.03] px-5 py-4 flex flex-col gap-1">
+        <div className="border border-border-primary rounded-[16px] bg-bg-card shadow-sm px-5 py-4 flex flex-col gap-1">
           <span className="text-text-muted text-[13px] font-medium">수집 채널</span>
           <strong className="text-xl text-brand-primary tracking-tight">{channel === "ws" ? "실시간 (WS)" : "일반 (REST)"}</strong>
         </div>
-        <div className="border border-white/12 rounded-[20px] bg-white/[0.03] px-5 py-4 flex flex-col gap-1">
+        <div className="border border-border-primary rounded-[16px] bg-bg-card shadow-sm px-5 py-4 flex flex-col gap-1">
           <span className="text-text-muted text-[13px] font-medium">현재 구독 수</span>
           <strong className="text-xl text-brand-primary tracking-tight">{modeSubscriptions.items?.length ?? 0} 건</strong>
         </div>
@@ -168,9 +168,9 @@ export function KisPanel() {
           )}
         >
           <div className="flex gap-2.5 flex-wrap px-6 pb-3.5">
-            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 카탈로그: {catalog.totalCatalogCount}</span>
-            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 구독 중: {catalog.totalSubscribedCount}</span>
-            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">조회 결과: {catalog.returnedCount}</span>
+            <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 카탈로그: {catalog.totalCatalogCount}</span>
+            <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 구독 중: {catalog.totalSubscribedCount}</span>
+            <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과: {catalog.returnedCount}</span>
           </div>
           <KisSearchList
             results={catalog.items}
@@ -180,7 +180,7 @@ export function KisPanel() {
           />
           {catalog.items.length < catalog.totalCatalogCount && (
             <button
-              className="inline-flex items-center gap-1.5 px-4 py-2 my-2 mx-6 text-[13px] font-semibold text-text-muted bg-transparent border border-white/12 rounded-lg cursor-pointer transition-all hover:bg-white/5 hover:text-text-primary"
+              className="load-more-btn"
               onClick={() => setCatalogLimit(prev => prev + 20)}
             >
               <RefreshCw size={14} /> 더보기 ({catalog.items.length} / {catalog.totalCatalogCount})
@@ -205,8 +205,8 @@ export function KisPanel() {
               </button>
             </div>
             <div className="flex gap-2.5 flex-wrap">
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">선택된 종목: {symbol || "-"}</span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">구독 중인 종목: {selectedSet.size}건</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">선택된 종목: {symbol || "-"}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">구독 중인 종목: {selectedSet.size}건</span>
             </div>
             <div className="flex flex-col">
               <KisModeList data={asModeSubscriptions(modeSubscriptions.items ?? [], mode)} symbolNameMap={symbolNameMap} />
@@ -230,7 +230,7 @@ export function KisPanel() {
               </button>
             </div>
             <div className="flex gap-2.5 flex-wrap">
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">조회 결과 로드: {priceResult ? "성공" : "없음"}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과 로드: {priceResult ? "성공" : "없음"}</span>
             </div>
           </div>
         </SectionCard>
@@ -238,9 +238,9 @@ export function KisPanel() {
         <SectionCard title="레거시 API 연결 상태 (WS/REST 목록)" icon={Activity}>
           <div className="px-6 py-4 flex flex-col gap-2.5">
             <div className="flex gap-2.5 flex-wrap">
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">모의투자 구독: {oldModeSubscriptions.paper.length}건</span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">실전투자 구독: {oldModeSubscriptions.live.length}건</span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">엔드포인트: {oldPath}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">모의투자 구독: {oldModeSubscriptions.paper.length}건</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">실전투자 구독: {oldModeSubscriptions.live.length}건</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">엔드포인트: {oldPath}</span>
             </div>
           </div>
         </SectionCard>
@@ -264,24 +264,24 @@ export function KisPanel() {
             {!isSubscriptionStatusLoading && !isSubscriptionStatusError && subscriptionStatus && (
               <>
                 <div className="flex gap-2.5 flex-wrap">
-                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">생성 시각: {subscriptionStatus.generatedAt}</span>
-                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전역 WS 슬롯: {subscriptionStatus.totalWsSlotUsed} / {subscriptionStatus.totalWsSlotMax}</span>
+                  <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">생성 시각: {subscriptionStatus.generatedAt}</span>
+                  <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전역 WS 슬롯: {subscriptionStatus.totalWsSlotUsed} / {subscriptionStatus.totalWsSlotMax}</span>
                 </div>
                 {subscriptionStatus.modes.length === 0 && <div>모드 상태 데이터가 없습니다.</div>}
                 {subscriptionStatus.modes.map((item) => (
-                  <div key={item.mode} className="border border-white/12 rounded-[8px] p-3 grid gap-2">
+                  <div key={item.mode} className="border border-border-primary rounded-[8px] p-3 grid gap-2">
                     <div className="flex gap-2.5 flex-wrap">
                       <strong>{item.mode}</strong>
-                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">{item.connectionStatus}</span>
-                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">마지막 연결: {item.lastConnectedAt ?? "-"}</span>
-                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">재연결 횟수: {item.reconnectAttempts}</span>
-                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">WS 슬롯: {item.wsSlotUsed} / {item.wsSlotMax}</span>
+                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">{item.connectionStatus}</span>
+                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">마지막 연결: {item.lastConnectedAt ?? "-"}</span>
+                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">재연결 횟수: {item.reconnectAttempts}</span>
+                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">WS 슬롯: {item.wsSlotUsed} / {item.wsSlotMax}</span>
                     </div>
                     <div className="flex gap-2.5 flex-wrap">
-                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">WS 심볼({item.wsSymbols.length}): {item.wsSymbols.join(", ") || "-"}</span>
+                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">WS 심볼({item.wsSymbols.length}): {item.wsSymbols.join(", ") || "-"}</span>
                     </div>
                     <div className="flex gap-2.5 flex-wrap">
-                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">REST 심볼({item.restSymbols.length}): {item.restSymbols.join(", ") || "-"}</span>
+                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">REST 심볼({item.restSymbols.length}): {item.restSymbols.join(", ") || "-"}</span>
                     </div>
                   </div>
                 ))}

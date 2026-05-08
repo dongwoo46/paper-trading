@@ -16,11 +16,11 @@ const EMPTY: CatalogResponse<SymbolCatalogItem> = {
   totalSubscribedCount: 0
 };
 
-const INPUT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
-const SELECT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
+const INPUT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
+const SELECT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
 const BTN_BASE = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
-const BTN_PRIMARY = `${BTN_BASE} bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow border-transparent hover:-translate-y-0.5 hover:brightness-110`;
-const BTN_OUTLINE = `${BTN_BASE} bg-transparent border-white/12 text-text-primary hover:bg-white/5 hover:border-text-muted`;
+const BTN_PRIMARY = `${BTN_BASE} bg-brand-primary text-white shadow-sm border-transparent hover:bg-brand-primary/90`;
+const BTN_OUTLINE = `${BTN_BASE} bg-white border-border-primary text-text-primary hover:bg-bg-input hover:border-text-muted`;
 
 export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: string }) {
   const queryClient = useQueryClient();
@@ -173,11 +173,11 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
   };
 
   const subTabCls = (active: boolean) =>
-    `px-4 py-2 rounded-xl text-xs font-semibold transition-all ${active ? "bg-blue-400/25 text-brand-primary" : "text-text-muted hover:text-text-primary"}`;
+    `px-4 py-2 rounded-xl text-sm font-semibold transition-all ${active ? "bg-white text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"}`;
 
   return (
     <div className="flex flex-col gap-2.5 mt-5">
-      <div className="flex gap-2 p-1 bg-black/20 rounded-[16px] mb-5 border border-white/12 w-fit">
+      <div className="flex gap-2 p-1 bg-bg-input rounded-[16px] mb-5 border border-border-primary w-fit">
         <button className={subTabCls(activeTab === "catalog")} onClick={() => setActiveTab("catalog")}>
           종목 탐색
         </button>
@@ -224,9 +224,9 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
             )}
           >
             <div className="flex gap-2.5 flex-wrap px-6 pb-3.5">
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 카탈로그: {catalog.totalCatalogCount}</span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 구독 중: {catalog.totalSubscribedCount}</span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">조회 결과: {catalog.returnedCount}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 카탈로그: {catalog.totalCatalogCount}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 구독 중: {catalog.totalSubscribedCount}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과: {catalog.returnedCount}</span>
             </div>
             <CatalogTable
               rows={catalog.items.map((item) => {
@@ -237,7 +237,7 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
             />
             {catalog.items.length < catalog.totalCatalogCount && (
               <button
-                className="inline-flex items-center gap-1.5 px-4 py-2 my-2 mx-6 text-[13px] font-semibold text-text-muted bg-transparent border border-white/12 rounded-lg cursor-pointer transition-all hover:bg-white/5 hover:text-text-primary"
+                className="load-more-btn"
                 onClick={() => setCatalogLimit(prev => prev + 20)}
               >
                 <RefreshCw size={14} /> 더보기 ({catalog.items.length} / {catalog.totalCatalogCount})
@@ -313,8 +313,8 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
           <SectionCard title="과거 시세 조회 (OHLCV)" icon={Database}>
             <div className="px-6 py-4 flex flex-col gap-3">
               <div className="flex gap-2.5 flex-wrap">
-                <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">데이터 수집 상태 통합 확인</span>
-                <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">DB 로드 가능 종목: {ohlcvSymbols.length}</span>
+                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">데이터 수집 상태 통합 확인</span>
+                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">DB 로드 가능 종목: {ohlcvSymbols.length}</span>
               </div>
               <div className="flex gap-3 flex-wrap">
                 <input className={`${INPUT_CLS} w-[160px]`} value={ohlcvSymbol} onChange={(e) => setOhlcvSymbol(e.target.value.toUpperCase())} placeholder="심볼" />
@@ -325,7 +325,7 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
                 </button>
               </div>
               <div className="flex gap-2.5 flex-wrap">
-                <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">조회 결과: {dailyBars.length}건</span>
+                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과: {dailyBars.length}건</span>
               </div>
             </div>
           </SectionCard>

@@ -77,7 +77,7 @@ function App() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <TopBar title={getPageTitle(location.pathname)} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
 
-        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 flex flex-col gap-5 sm:gap-6 lg:gap-8 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.03),transparent_400px)]">
+        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 flex flex-col gap-5 sm:gap-6 lg:gap-8 bg-bg-main">
           <Suspense fallback={<div className="text-sm text-text-secondary">페이지 로딩 중...</div>}>
             <Routes>
               <Route path="/" element={<HomePage />} />

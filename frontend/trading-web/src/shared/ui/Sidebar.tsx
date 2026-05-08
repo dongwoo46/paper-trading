@@ -1,9 +1,9 @@
 import { NavLink } from "react-router-dom";
 import { BookOpen, CandlestickChart, ChartLine, ClipboardList, Globe, History, Home, ReceiptText, TrendingUp, Wallet, X, Zap } from "lucide-react";
 
-const NAV_LINK_BASE = "flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-[14.5px] transition-all duration-250 border";
-const NAV_LINK_ACTIVE = "bg-blue-400/25 text-brand-primary border-blue-400/50 shadow";
-const NAV_LINK_INACTIVE = "text-text-secondary border-transparent hover:bg-white/[0.04] hover:text-text-primary";
+const NAV_LINK_BASE = "flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-[14.5px] transition-all duration-200 border";
+const NAV_LINK_ACTIVE = "bg-brand-secondary text-brand-primary border-transparent font-bold";
+const NAV_LINK_INACTIVE = "text-text-secondary border-transparent hover:bg-bg-input hover:text-text-primary";
 
 export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boolean) => void }) {
   const closeOnMobile = () => {
@@ -14,19 +14,19 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boo
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] transition-opacity duration-300 lg:hidden ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] transition-opacity duration-300 lg:hidden ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
         onClick={() => setOpen(false)}
       />
 
       {/* Sidebar */}
       <aside
-        className={`w-[280px] bg-bg-sidebar border-r border-white/12 flex flex-col shrink-0 z-[100] transition-transform duration-400 shadow-[10px_0_30px_rgba(0,0,0,0.2)] max-lg:fixed max-lg:h-full ${isOpen ? "translate-x-0" : "max-lg:-translate-x-full"}`}
+        className={`w-[280px] bg-bg-sidebar border-r border-border-primary flex flex-col shrink-0 z-[100] transition-transform duration-400 shadow-[4px_0_16px_rgba(0,0,0,0.04)] max-lg:fixed max-lg:h-full ${isOpen ? "translate-x-0" : "max-lg:-translate-x-full"}`}
       >
-        <div className="h-[72px] px-6 flex items-center gap-3 border-b border-white/12">
-          <div className="w-9 h-9 flex items-center justify-center rounded-[10px] -rotate-3 shadow-lg bg-gradient-to-br from-blue-500 to-emerald-500">
+        <div className="h-[72px] px-6 flex items-center gap-3 border-b border-border-primary">
+          <div className="w-9 h-9 flex items-center justify-center rounded-[10px] bg-brand-primary">
             <TrendingUp size={20} color="white" />
           </div>
-          <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+          <h1 className="text-[19px] font-bold tracking-tight text-text-primary">
             트레이딩 콘솔
           </h1>
           <button
@@ -37,7 +37,7 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boo
           </button>
         </div>
 
-        <nav className="flex-1 py-6 px-4 flex flex-col gap-1.5">
+        <nav className="flex-1 py-6 px-4 flex flex-col gap-1.5 overflow-y-auto">
           <NavLink
             to="/"
             end
@@ -121,7 +121,7 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boo
           </NavLink>
         </nav>
 
-        <div className="p-6 border-t border-white/12 text-xs text-text-muted flex flex-col gap-1">
+        <div className="p-6 border-t border-border-primary text-xs text-text-muted flex flex-col gap-1">
           <p>Trading Hub v1.2.0</p>
           <p>© 2026 Paper Trading</p>
         </div>

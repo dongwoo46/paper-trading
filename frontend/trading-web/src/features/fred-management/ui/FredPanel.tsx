@@ -14,13 +14,13 @@ const EMPTY: CatalogResponse<FredCatalogItem> = {
   totalSubscribedCount: 0
 };
 
-const INPUT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
-const SELECT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
+const INPUT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
+const SELECT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
 const BTN_BASE = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
-const BTN_PRIMARY = `${BTN_BASE} bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow border-transparent hover:-translate-y-0.5 hover:brightness-110`;
-const BTN_OUTLINE = `${BTN_BASE} bg-transparent border-white/12 text-text-primary hover:bg-white/5 hover:border-text-muted`;
-const BTN_PRIMARY_SM = "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs cursor-pointer transition-all border border-transparent bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow hover:brightness-110 whitespace-nowrap";
-const BTN_DANGER_SM = "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs cursor-pointer transition-all border bg-red-500/8 text-red-500 border-red-500/20 hover:bg-red-500/15 whitespace-nowrap";
+const BTN_PRIMARY = `${BTN_BASE} bg-brand-primary text-white shadow-sm border-transparent hover:bg-brand-primary/90`;
+const BTN_OUTLINE = `${BTN_BASE} bg-white border-border-primary text-text-primary hover:bg-bg-input hover:border-text-muted`;
+const BTN_PRIMARY_SM = "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs cursor-pointer transition-all border border-transparent bg-brand-primary text-white shadow-sm hover:bg-brand-primary/90 whitespace-nowrap";
+const BTN_DANGER_SM = "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs cursor-pointer transition-all border bg-red-50 text-red-600 border-red-200 hover:bg-red-100 whitespace-nowrap";
 
 export function FredPanel() {
   const queryClient = useQueryClient();
@@ -111,11 +111,11 @@ export function FredPanel() {
   };
 
   const subTabCls = (active: boolean) =>
-    `px-4 py-2 rounded-xl text-xs font-semibold transition-all ${active ? "bg-blue-400/25 text-brand-primary" : "text-text-muted hover:text-text-primary"}`;
+    `px-4 py-2 rounded-xl text-sm font-semibold transition-all ${active ? "bg-white text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"}`;
 
   return (
     <div className="flex flex-col gap-2.5 mt-5">
-      <div className="flex gap-2 p-1 bg-black/20 rounded-[16px] mb-5 border border-white/12 w-fit">
+      <div className="flex gap-2 p-1 bg-bg-input rounded-[16px] mb-5 border border-border-primary w-fit">
         <button className={subTabCls(activeTab === "catalog")} onClick={() => setActiveTab("catalog")}>
           경제지표 탐색
         </button>
@@ -162,29 +162,29 @@ export function FredPanel() {
             )}
           >
             <div className="flex gap-2.5 flex-wrap px-6 pb-3.5">
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 카탈로그: {catalog.totalCatalogCount}</span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 구독 중: {catalog.totalSubscribedCount}</span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">조회 결과: {catalog.returnedCount}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 카탈로그: {catalog.totalCatalogCount}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 구독 중: {catalog.totalSubscribedCount}</span>
+              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과: {catalog.returnedCount}</span>
             </div>
-            <div className="overflow-x-auto rounded-[16px] bg-black/20 border border-white/12 flex-1 min-h-[300px]">
+            <div className="overflow-x-auto rounded-[16px] bg-white border border-border-primary flex-1 min-h-[300px]">
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">시리즈 ID</th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">지표명 (Title)</th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">주기</th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-center text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">구독 상태</th>
+                    <th className="bg-bg-input px-6 py-3.5 text-left text-[12px] text-text-secondary font-semibold border-b border-border-primary whitespace-nowrap">시리즈 ID</th>
+                    <th className="bg-bg-input px-6 py-3.5 text-left text-[12px] text-text-secondary font-semibold border-b border-border-primary whitespace-nowrap">지표명 (Title)</th>
+                    <th className="bg-bg-input px-6 py-3.5 text-left text-[12px] text-text-secondary font-semibold border-b border-border-primary whitespace-nowrap">주기</th>
+                    <th className="bg-bg-input px-6 py-3.5 text-center text-[12px] text-text-secondary font-semibold border-b border-border-primary whitespace-nowrap">구독 상태</th>
                   </tr>
                 </thead>
                 <tbody>
                   {catalog.items.map((row) => {
                     const active = isSubscribed(row.seriesId);
                     return (
-                      <tr key={row.seriesId} className="hover:bg-white/[0.02]">
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap font-bold text-brand-primary">{row.seriesId}</td>
-                        <td className="px-6 py-4 text-[13px] border-b border-white/12 whitespace-nowrap text-text-secondary">{row.title}</td>
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">{row.frequency || "-"}</td>
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-center">
+                      <tr key={row.seriesId} className="hover:bg-bg-input transition-colors">
+                        <td className="px-6 py-4 text-[14px] border-b border-border-primary whitespace-nowrap font-bold text-text-primary">{row.seriesId}</td>
+                        <td className="px-6 py-4 text-[14px] border-b border-border-primary whitespace-nowrap text-text-secondary">{row.title}</td>
+                        <td className="px-6 py-4 text-[14px] border-b border-border-primary whitespace-nowrap text-text-secondary">{row.frequency || "-"}</td>
+                        <td className="px-6 py-4 text-[14px] border-b border-border-primary whitespace-nowrap text-center">
                           <button
                             className={active ? BTN_DANGER_SM : BTN_PRIMARY_SM}
                             onClick={() => subscriptionMutation.mutate({ method: active ? "DELETE" : "POST", selectedSeriesId: row.seriesId })}
@@ -200,7 +200,7 @@ export function FredPanel() {
             </div>
             {catalog.items.length < catalog.totalCatalogCount && (
               <button
-                className="inline-flex items-center gap-1.5 px-4 py-2 my-2 mx-6 text-[13px] font-semibold text-text-muted bg-transparent border border-white/12 rounded-lg cursor-pointer transition-all hover:bg-white/5 hover:text-text-primary"
+                className="load-more-btn"
                 onClick={() => setCatalogLimit(prev => prev + 20)}
               >
                 <RefreshCw size={14} /> 더보기 ({catalog.items.length} / {catalog.totalCatalogCount})
@@ -257,8 +257,8 @@ export function FredPanel() {
                 </button>
               </div>
               <div className="flex gap-2.5 flex-wrap">
-                <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">상세정보 로드: {infoResult ? "성공" : "없음"}</span>
-                <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">관측치 수: {observationCount}건</span>
+                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">상세정보 로드: {infoResult ? "성공" : "없음"}</span>
+                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">관측치 수: {observationCount}건</span>
               </div>
             </div>
           </SectionCard>

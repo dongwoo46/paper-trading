@@ -54,7 +54,7 @@ export function HomePage() {
           <p className="text-text-secondary text-sm sm:text-[15px] leading-[1.65] mt-2">
             전체 카탈로그 규모, 실시간 구독 현황, 필터링된 결과 개수를 실시간으로 모니터링합니다.
           </p>
-          <Chip className="w-fit bg-emerald-500/12 text-emerald-500 border-0">
+          <Chip className="w-fit bg-green-50 text-green-600 border-0">
             <Activity size={14} /> 시스템 운영 준비 완료
           </Chip>
         </Card>

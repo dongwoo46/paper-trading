@@ -37,7 +37,7 @@ export function KisModeList({ data, symbolNameMap }: Props) {
               marginLeft: "auto",
               fontSize: "10px",
               padding: "2px 6px",
-              background: "rgba(255,255,255,0.08)",
+              background: "rgba(0,0,0,0.06)",
               borderRadius: "4px",
               color: "var(--text-muted)",
               fontWeight: 700
