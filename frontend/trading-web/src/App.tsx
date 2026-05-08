@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AccountDashboardPage } from "./pages/account/ui/AccountDashboardPage";
 import { HistoricalPage } from "./pages/historical/ui/HistoricalPage";
 import { HomePage } from "./pages/home/ui/HomePage";
+import { MarketBarsChartPage } from "./pages/market-bars/ui/MarketBarsChartPage";
 import { MacroPage } from "./pages/macro/ui/MacroPage";
 import { OrderPage } from "./pages/order/ui/OrderPage";
 import { PortfolioChartPage } from "./pages/portfolio/ui/PortfolioChartPage";
@@ -43,6 +44,8 @@ function App() {
         return "과거 OHLCV 수집";
       case "/macro":
         return "거시경제 데이터";
+      case "/market-bars":
+        return "분봉 히스토리 차트";
       case "/account":
         return "계좌·포지션";
       case "/orders":
@@ -73,6 +76,7 @@ function App() {
             <Route path="/realtime" element={<RealtimePage />} />
             <Route path="/historical" element={<HistoricalPage />} />
             <Route path="/macro" element={<MacroPage />} />
+            <Route path="/market-bars" element={<MarketBarsChartPage />} />
             <Route path="/account" element={<AccountDashboardPage />} />
             <Route path="/orders" element={<OrderPage />} />
             <Route path="/portfolio" element={<PortfolioChartPage />} />

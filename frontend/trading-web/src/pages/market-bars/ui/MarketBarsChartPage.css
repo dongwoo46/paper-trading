@@ -1,0 +1,72 @@
+.market-bars-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.market-bars-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.market-bars-symbol-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.market-bars-second-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.market-bars-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.market-bars-btn,
+.market-bars-tab,
+.market-bars-select,
+.market-bars-input {
+  min-height: 40px;
+}
+
+.market-bars-chart-wrap {
+  min-height: 280px;
+  overflow: auto;
+}
+
+.market-bars-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.market-bars-table th,
+.market-bars-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.market-bars-table th {
+  text-align: left;
+}
+
+.market-bars-number {
+  text-align: right;
+}
+
+@media (min-width: 768px) {
+  .market-bars-controls {
+    gap: 12px;
+  }
+
+  .market-bars-second-row {
+    grid-template-columns: 1fr auto;
+  }
+}

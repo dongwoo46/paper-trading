@@ -13,4 +13,14 @@ describe("Sidebar", () => {
 
     expect(screen.getByRole("link", { name: "세금 요약" })).toBeInTheDocument();
   });
+
+  it("shows market bars chart menu", () => {
+    render(
+      <MemoryRouter>
+        <Sidebar isOpen={true} setOpen={() => {}} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole("link", { name: "분봉 히스토리 차트" })).toBeInTheDocument();
+  });
 });
