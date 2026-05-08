@@ -1,4 +1,4 @@
-package com.papertrading.api.interfaces.rest.position.dto
+package com.papertrading.api.presentation.dto.position
 
 import com.papertrading.api.application.position.EffectivePositionExitTriggerResult
 import com.papertrading.api.application.position.PositionExitTriggerResult

@@ -1,4 +1,4 @@
-package com.papertrading.api.interfaces.rest.account.dto
+package com.papertrading.api.presentation.dto.account
 
 import com.papertrading.api.application.account.AccountExitTriggerDefaultResult
 import com.papertrading.api.application.account.UpsertAccountExitTriggerDefaultCommand

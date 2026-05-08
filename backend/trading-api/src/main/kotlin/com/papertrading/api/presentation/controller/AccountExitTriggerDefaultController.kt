@@ -1,8 +1,8 @@
-package com.papertrading.api.interfaces.rest.account
+package com.papertrading.api.presentation.controller
 
 import com.papertrading.api.application.account.AccountExitTriggerDefaultCommandService
-import com.papertrading.api.interfaces.rest.account.dto.UpsertAccountExitTriggerDefaultRequest
-import com.papertrading.api.interfaces.rest.account.dto.toResponse
+import com.papertrading.api.presentation.dto.account.UpsertAccountExitTriggerDefaultRequest
+import com.papertrading.api.presentation.dto.account.toResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping

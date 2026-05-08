@@ -1,9 +1,9 @@
-package com.papertrading.api.interfaces.rest.position
+package com.papertrading.api.presentation.controller
 
 import com.papertrading.api.application.position.PositionExitTriggerCommandService
 import com.papertrading.api.application.position.PositionExitTriggerQueryService
-import com.papertrading.api.interfaces.rest.position.dto.UpsertPositionExitTriggerRequest
-import com.papertrading.api.interfaces.rest.position.dto.toResponse
+import com.papertrading.api.presentation.dto.position.UpsertPositionExitTriggerRequest
+import com.papertrading.api.presentation.dto.position.toResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

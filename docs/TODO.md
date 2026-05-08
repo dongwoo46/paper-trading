@@ -157,12 +157,23 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - interval(1m/5m/10m/1d/1w), 기간(limit/from~to), 다중 indicator 파라미터 지원
   - 차트용 응답 스키마 표준화(시점별 indicator 값, 결측 처리 규칙 포함)
 
-- [ ] 트레이딩 마이크로구조/상대강도 조회 API 확장 (뉴스/공시 제외) | project: collector-api | phase: market-microstructure-rs-api | priority: P1
+- [x] 트레이딩 마이크로구조/상대강도 조회 API 확장 (뉴스/공시 제외) | project: collector-api | phase: market-microstructure-rs-api | priority: P1 | done: 2026-05-09 | pr: #TBD
   - 호가/잔량 기반 응답: best bid/ask, spread, bid-ask imbalance, depth summary
   - 체결강도/볼륨 기반 응답: buyVolume, sellVolume, tradeIntensity, vwap, rvol
   - 상대강도(RS) 응답: symbol vs benchmark/sector ratio 및 기간 수익률 상대값
   - 국내/해외 공통 조회 계약: session 구분(regular/pre/after), timezone 정규화, 결측 정책
   - 프론트 통합 차트가 바로 소비 가능한 단일 schema 제공
+
+- [ ] 마이크로구조 API 호가 WebSocket 적재/매핑 완성 | project: collector-api | phase: market-microstructure-orderbook-ws | priority: P1
+  - KIS WebSocket 호가/호가잔량 이벤트 수집 채널 연결 및 파서/검증 추가
+  - Redis 적재 키 표준화 (`quote:{symbol}`, `orderbook:{symbol}`) 및 TTL/결측 정책 확정
+  - market microstructure API에서 bestBid/bestAsk/spread/depth 필드 실데이터 매핑
+  - 기존 1d/1w 분기와 충돌 없이 intraday 마이크로구조 응답 안정성 검증
+  - Step A: 호가 이벤트 ingest health check/metrics 추가 (수신량, 파싱 실패율, 지연)
+  - Step B: Redis `orderbook:{symbol}` 스키마 고정 (topN depth, timestamp, source)
+  - Step C: API 매핑 테스트 추가 (bestBid/bestAsk/spread/depth null 탈출 케이스)
+  - Step D: `1d/1w` 요청 시 DB 소스 분기 강제 및 회귀 테스트 추가
+  - Step E: RS 타임스탬프 정렬 검증(교집합 정렬 또는 timestamp join) 적용
 
 ### 완료
 - [x] KIS WebSocket 시세 수집 + Redis Pub/Sub 발행 (RawEventPipeline)

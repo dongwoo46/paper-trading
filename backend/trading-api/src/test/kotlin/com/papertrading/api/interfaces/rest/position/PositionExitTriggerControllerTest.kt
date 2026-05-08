@@ -7,6 +7,7 @@ import com.papertrading.api.application.position.PositionExitTriggerCommandServi
 import com.papertrading.api.application.position.PositionExitTriggerQueryService
 import com.papertrading.api.application.position.PositionExitTriggerResult
 import com.papertrading.api.application.position.UpsertPositionExitTriggerCommand
+import com.papertrading.api.presentation.controller.PositionExitTriggerController
 import com.papertrading.api.presentation.exception.GlobalExceptionHandler
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
