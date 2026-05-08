@@ -30,6 +30,11 @@ const DEFAULT_FORM: FormState = {
   expireAt: '',
 };
 
+const INPUT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
+const SELECT_CLS = INPUT_CLS;
+const LABEL_CLS = "min-w-[80px] text-text-secondary text-[13px]";
+const BTN_PRIMARY = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border border-transparent bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow hover:-translate-y-0.5 hover:brightness-110 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed";
+
 export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
@@ -88,21 +93,22 @@ export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
     };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px 0' }}>
-      <div className="form-row">
-        <label style={{ minWidth: '80px', color: 'var(--text-secondary)', fontSize: '13px' }}>종목코드</label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
+      <div className="flex gap-3 flex-wrap">
+        <label className={LABEL_CLS}>종목코드</label>
         <input
+          className={INPUT_CLS}
+          style={{ width: '160px' }}
           value={form.ticker}
           onChange={set('ticker')}
           placeholder="예: 005930"
-          style={{ width: '160px' }}
           required
         />
       </div>
 
-      <div className="form-row">
-        <label style={{ minWidth: '80px', color: 'var(--text-secondary)', fontSize: '13px' }}>시장</label>
-        <select value={form.marketType} onChange={set('marketType')} style={{ width: '160px' }}>
+      <div className="flex gap-3 flex-wrap">
+        <label className={LABEL_CLS}>시장</label>
+        <select className={SELECT_CLS} style={{ width: '160px' }} value={form.marketType} onChange={set('marketType')}>
           <option value="KOSPI">KOSPI</option>
           <option value="KOSDAQ">KOSDAQ</option>
           <option value="NASDAQ">NASDAQ</option>
@@ -111,25 +117,25 @@ export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
         </select>
       </div>
 
-      <div className="form-row">
-        <label style={{ minWidth: '80px', color: 'var(--text-secondary)', fontSize: '13px' }}>주문 유형</label>
-        <select value={form.orderType} onChange={set('orderType')} style={{ width: '160px' }}>
+      <div className="flex gap-3 flex-wrap">
+        <label className={LABEL_CLS}>주문 유형</label>
+        <select className={SELECT_CLS} style={{ width: '160px' }} value={form.orderType} onChange={set('orderType')}>
           <option value="MARKET">MARKET (시장가)</option>
           <option value="LIMIT">LIMIT (지정가)</option>
         </select>
       </div>
 
-      <div className="form-row">
-        <label style={{ minWidth: '80px', color: 'var(--text-secondary)', fontSize: '13px' }}>매매 방향</label>
-        <select value={form.orderSide} onChange={set('orderSide')} style={{ width: '160px' }}>
+      <div className="flex gap-3 flex-wrap">
+        <label className={LABEL_CLS}>매매 방향</label>
+        <select className={SELECT_CLS} style={{ width: '160px' }} value={form.orderSide} onChange={set('orderSide')}>
           <option value="BUY">BUY (매수)</option>
           <option value="SELL">SELL (매도)</option>
         </select>
       </div>
 
-      <div className="form-row">
-        <label style={{ minWidth: '80px', color: 'var(--text-secondary)', fontSize: '13px' }}>주문 조건</label>
-        <select value={form.orderCondition} onChange={set('orderCondition')} style={{ width: '160px' }}>
+      <div className="flex gap-3 flex-wrap">
+        <label className={LABEL_CLS}>주문 조건</label>
+        <select className={SELECT_CLS} style={{ width: '160px' }} value={form.orderCondition} onChange={set('orderCondition')}>
           <option value="DAY">DAY</option>
           <option value="GTC">GTC</option>
           <option value="IOC">IOC</option>
@@ -138,57 +144,60 @@ export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
         </select>
       </div>
 
-      <div className="form-row">
-        <label style={{ minWidth: '80px', color: 'var(--text-secondary)', fontSize: '13px' }}>수량</label>
+      <div className="flex gap-3 flex-wrap">
+        <label className={LABEL_CLS}>수량</label>
         <input
           type="number"
+          className={INPUT_CLS}
+          style={{ width: '160px' }}
           value={form.quantity}
           onChange={set('quantity')}
           placeholder="예: 10"
           min="0"
           step="any"
-          style={{ width: '160px' }}
           required
         />
       </div>
 
       {form.orderType === 'LIMIT' && (
-        <div className="form-row">
-          <label style={{ minWidth: '80px', color: 'var(--text-secondary)', fontSize: '13px' }}>지정가</label>
+        <div className="flex gap-3 flex-wrap">
+          <label className={LABEL_CLS}>지정가</label>
           <input
             type="number"
+            className={INPUT_CLS}
+            style={{ width: '160px' }}
             value={form.limitPrice}
             onChange={set('limitPrice')}
             placeholder="예: 75000"
             min="0"
             step="any"
-            style={{ width: '160px' }}
           />
         </div>
       )}
 
       {form.orderCondition === 'GTD' && (
-        <div className="form-row">
-          <label style={{ minWidth: '80px', color: 'var(--text-secondary)', fontSize: '13px' }}>만료일시</label>
+        <div className="flex gap-3 flex-wrap">
+          <label className={LABEL_CLS}>만료일시</label>
           <input
             type="datetime-local"
+            className={INPUT_CLS}
+            style={{ width: '220px' }}
             value={form.expireAt}
             onChange={set('expireAt')}
-            style={{ width: '220px' }}
           />
         </div>
       )}
 
       {(validationError ?? mutation.error) && (
-        <p style={{ color: 'var(--status-error)', fontSize: '13px', margin: 0 }}>
+        <p className="text-status-error text-[13px] m-0">
           {validationError ?? (mutation.error instanceof Error ? mutation.error.message : '주문 실패')}
         </p>
       )}
 
-      <div className="form-row">
+      <div className="flex gap-3 flex-wrap">
         <button
           type="submit"
-          className="btn btn-primary"
+          className={BTN_PRIMARY}
           disabled={mutation.isPending}
           style={{ minWidth: '120px' }}
         >

@@ -39,12 +39,16 @@ export function OrderTablePanel({ accountId }: OrderTablePanelProps) {
     : orders.filter((o) => o.orderStatus === filter);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
-      <div className="sub-tabs">
+    <div className="mt-3 flex flex-col gap-3">
+      <div className="inline-flex flex-wrap gap-2 rounded-[16px] border border-white/12 bg-white/[0.03] p-1">
         {FILTER_OPTIONS.map((status) => (
           <button
             key={status}
-            className={`sub-tab-btn ${filter === status ? 'active' : ''}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+              filter === status
+                ? 'bg-bg-card text-brand-primary border-white/12'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
+            }`}
             onClick={() => setFilter(status)}
           >
             {status === 'ALL' ? '전체' : status}
@@ -52,10 +56,10 @@ export function OrderTablePanel({ accountId }: OrderTablePanelProps) {
         ))}
       </div>
 
-      {isLoading && <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>주문 목록 로딩 중...</p>}
-      {isError && <p style={{ color: 'var(--status-error)', fontSize: '14px' }}>주문 목록 조회 실패</p>}
+      {isLoading && <p className="text-sm text-text-secondary">주문 목록 로딩 중...</p>}
+      {isError && <p className="text-sm text-status-error">주문 목록 조회 실패</p>}
       {cancelMutation.isError && (
-        <p style={{ color: 'var(--status-error)', fontSize: '13px' }}>
+        <p className="text-[13px] text-status-error">
           취소 실패: {cancelMutation.error instanceof Error ? cancelMutation.error.message : '알 수 없는 오류'}
         </p>
       )}

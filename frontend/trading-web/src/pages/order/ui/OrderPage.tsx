@@ -15,31 +15,31 @@ export function OrderPage() {
   };
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <ClipboardList size={32} color="var(--brand-primary)" />
-          <h2>주문 관리</h2>
+    <section className="flex flex-col gap-5 animate-fade-in">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-4">
+          <ClipboardList size={32} className="text-brand-primary" />
+          <h2 className="text-[28px] font-bold tracking-tight">주문 관리</h2>
         </div>
-        <p className="lead">
+        <p className="text-text-secondary text-[15px] max-w-3xl">
           계좌를 선택하고 주문을 생성하거나 주문 내역을 조회하고 취소할 수 있습니다.
         </p>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-        <span style={{ color: 'var(--text-secondary)', fontSize: '14px', minWidth: '48px' }}>계좌</span>
+      <div className="flex items-center gap-3 mb-4">
+        <span className="text-text-secondary text-sm min-w-[48px]">계좌</span>
         <AccountSelector value={accountId} onChange={setAccountId} />
       </div>
 
-      <div className="sub-tabs" style={{ marginBottom: '16px' }}>
+      <div className="flex gap-2 p-1 bg-black/20 rounded-[16px] border border-white/12 w-fit mb-4">
         <button
-          className={`sub-tab-btn ${activeTab === 'form' ? 'active' : ''}`}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'form' ? 'bg-blue-400/25 text-brand-primary' : 'text-text-muted hover:text-text-primary'}`}
           onClick={() => setActiveTab('form')}
         >
           주문 생성
         </button>
         <button
-          className={`sub-tab-btn ${activeTab === 'list' ? 'active' : ''}`}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${activeTab === 'list' ? 'bg-blue-400/25 text-brand-primary' : 'text-text-muted hover:text-text-primary'}`}
           onClick={() => setActiveTab('list')}
         >
           주문 내역
@@ -47,9 +47,7 @@ export function OrderPage() {
       </div>
 
       {accountId === null ? (
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', textAlign: 'center', padding: '32px 0' }}>
-          계좌를 선택해 주세요.
-        </p>
+        <p className="text-text-secondary text-sm text-center py-8">계좌를 선택해 주세요.</p>
       ) : (
         <>
           {activeTab === 'form' && (

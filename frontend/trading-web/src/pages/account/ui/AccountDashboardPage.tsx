@@ -41,36 +41,30 @@ export function AccountDashboardPage() {
   };
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <h2>계좌·포지션</h2>
-        <p className="lead">
+    <section className="flex flex-col gap-5 animate-fade-in">
+      <div className="flex flex-col gap-1.5">
+        <h2 className="text-[28px] font-bold tracking-tight">계좌·포지션</h2>
+        <p className="text-text-secondary text-[15px] max-w-3xl">
           계좌별 예수금 현황과 보유 포지션을 확인합니다. 포지션의 현재가는 Redis 시세 기준이며, 장 외 시간에는 "-"로 표시될 수 있습니다.
         </p>
       </div>
 
       {/* Account List Section */}
-      <div style={{ marginBottom: "24px" }}>
-        <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-secondary, #6b7280)" }}>
-          계좌 목록
-        </h3>
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold mb-3 text-text-muted">계좌 목록</h3>
         {isAccountsLoading && (
-          <div style={{ padding: "24px", textAlign: "center", color: "var(--text-secondary, #6b7280)" }}>
-            계좌 정보를 불러오는 중...
-          </div>
+          <div className="py-6 text-center text-text-muted">계좌 정보를 불러오는 중...</div>
         )}
         {isAccountsError && (
-          <div style={{ padding: "16px", color: "#ef4444", backgroundColor: "#fef2f2", borderRadius: "6px" }}>
+          <div className="p-4 text-status-error bg-red-500/8 border border-red-500/20 rounded-xl">
             계좌 목록을 불러오지 못했습니다.
           </div>
         )}
         {!isAccountsLoading && !isAccountsError && accounts.length === 0 && (
-          <div style={{ padding: "24px", textAlign: "center", color: "var(--text-secondary, #6b7280)" }}>
-            등록된 계좌가 없습니다.
-          </div>
+          <div className="py-6 text-center text-text-muted">등록된 계좌가 없습니다.</div>
         )}
         {!isAccountsLoading && !isAccountsError && accounts.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "12px" }}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
             {accounts.map((account) => (
               <AccountCard
                 key={account.id}
@@ -86,24 +80,13 @@ export function AccountDashboardPage() {
       {/* Position Section */}
       {resolvedAccountId !== null && (
         <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-            <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-secondary, #6b7280)" }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-text-muted">
               포지션 — {selectedAccount?.accountName ?? ""}
             </h3>
             <button
               onClick={handleRefresh}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 12px",
-                fontSize: "13px",
-                border: "1px solid var(--border, #e5e7eb)",
-                borderRadius: "6px",
-                background: "transparent",
-                cursor: "pointer",
-                color: "var(--text-primary, #111827)",
-              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] border border-white/12 rounded-lg bg-transparent text-text-primary hover:bg-white/5 transition-all cursor-pointer"
             >
               <RefreshCw size={14} />
               새로고침
@@ -111,17 +94,15 @@ export function AccountDashboardPage() {
           </div>
 
           {isPositionsLoading && (
-            <div style={{ padding: "24px", textAlign: "center", color: "var(--text-secondary, #6b7280)" }}>
-              포지션을 불러오는 중...
-            </div>
+            <div className="py-6 text-center text-text-muted">포지션을 불러오는 중...</div>
           )}
           {isPositionsError && (
-            <div style={{ padding: "16px", color: "#ef4444", backgroundColor: "#fef2f2", borderRadius: "6px" }}>
+            <div className="p-4 text-status-error bg-red-500/8 border border-red-500/20 rounded-xl">
               포지션 정보를 불러오지 못했습니다.
             </div>
           )}
           {!isPositionsLoading && !isPositionsError && (
-            <div style={{ overflowX: "auto" }}>
+            <div className="overflow-x-auto">
               <PositionTable positions={positions} />
             </div>
           )}

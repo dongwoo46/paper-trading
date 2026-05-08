@@ -32,23 +32,25 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
   }, [toast.id, onDismiss]);
 
   return (
-    <div className={`toast-item ${isBuy ? 'toast-buy' : 'toast-sell'}`}>
-      <div className="toast-icon">
+    <div
+      className={`pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-lg min-w-[280px] max-w-[360px] bg-bg-card text-text-primary shadow-[0_4px_16px_rgba(0,0,0,0.4)] border-l-4 animate-toast-in ${isBuy ? 'border-status-success' : 'border-status-error'}`}
+    >
+      <div className="shrink-0 mt-0.5">
         {isBuy ? (
-          <TrendingUp size={18} className="toast-icon--buy" />
+          <TrendingUp size={18} className="text-status-success" />
         ) : (
-          <TrendingDown size={18} className="toast-icon--sell" />
+          <TrendingDown size={18} className="text-status-error" />
         )}
       </div>
-      <div className="toast-content">
-        <div className="toast-label">{label}</div>
-        <div className="toast-main">
+      <div className="flex-1 min-w-0">
+        <div className="text-[11px] font-semibold tracking-[0.04em] uppercase opacity-70 mb-0.5">{label}</div>
+        <div className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
           {tickerDisplay} {quantity}주 @ {priceDisplay}
         </div>
-        <div className="toast-sub">주문 #{event.orderId}</div>
+        <div className="text-xs opacity-60 mt-0.5">주문 #{event.orderId}</div>
       </div>
       <button
-        className="toast-dismiss"
+        className="shrink-0 p-0.5 text-text-secondary opacity-60 hover:opacity-100 transition-opacity mt-0.5"
         onClick={() => onDismiss(toast.id)}
         aria-label="닫기"
       >

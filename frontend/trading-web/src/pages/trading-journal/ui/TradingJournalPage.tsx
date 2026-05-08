@@ -55,9 +55,9 @@ export function TradingJournalPage() {
   });
 
   return (
-    <section>
-      <div className="panel-header">
-        <h2>거래 일지</h2>
+    <section className="flex flex-col gap-5 animate-fade-in">
+      <div className="flex flex-col gap-1.5">
+        <h2 className="text-[28px] font-bold tracking-tight">거래 일지</h2>
       </div>
       <TradingJournalFilterPanel
         ticker={tickerInput}
@@ -68,7 +68,7 @@ export function TradingJournalPage() {
         onChangeTo={setTo}
         onSubmit={() => setTicker(tickerInput.trim())}
       />
-      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 1fr" }}>
+      <div className="grid gap-4 grid-cols-[1fr_1fr]">
         <TradingJournalListPanel
           items={listQuery.data?.items ?? []}
           selectedJournalId={selectedJournalId}

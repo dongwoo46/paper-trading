@@ -9,14 +9,14 @@ interface Props {
 
 export function CatalogSelectionList({ items, onRemove }: Props) {
   return (
-    <div className="chips-container">
-      {items.length === 0 && <p className="empty-state">선택된 항목이 없습니다.</p>}
+    <div className="flex flex-wrap gap-2.5 p-6">
+      {items.length === 0 && <p className="py-10 px-6 text-center text-text-muted italic w-full">선택된 항목이 없습니다.</p>}
       {items.map((row) => {
         const id = row.symbol ?? row.ticker;
         return (
           <Chip key={`sel-${id}`} style={{ width: "100%", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span className="chip-status"></span>
+              <span className="w-2 h-2 rounded-full bg-status-success" style={{ boxShadow: "0 0 8px var(--status-success)" }} />
               <strong>{id}</strong>
               <span style={{ color: "var(--text-secondary)", fontSize: "12px" }}>{row.name}</span>
             </div>

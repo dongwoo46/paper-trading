@@ -1,22 +1,29 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { AccountDashboardPage } from "./pages/account/ui/AccountDashboardPage";
-import { HistoricalPage } from "./pages/historical/ui/HistoricalPage";
 import { HomePage } from "./pages/home/ui/HomePage";
-import { MacroPage } from "./pages/macro/ui/MacroPage";
-import { MarketUnifiedChartPage } from "./pages/market-unified/ui/MarketUnifiedChartPage";
-import { OrderPage } from "./pages/order/ui/OrderPage";
-import { PortfolioChartPage } from "./pages/portfolio/ui/PortfolioChartPage";
-import { RealtimePage } from "./pages/realtime/ui/RealtimePage";
-import { TaxSummaryPage } from "./pages/tax-summary/ui/TaxSummaryPage";
-import { TradingJournalPage } from "./pages/trading-journal/ui/TradingJournalPage";
 import { Sidebar } from "./shared/ui/Sidebar";
 import { TopBar } from "./shared/ui/TopBar";
 import { ExecutionToastProvider } from "./features/execution-toast/ui/ExecutionToastProvider";
 import { useToastStore } from "./features/execution-toast/model/useToastStore";
 import { ToastContainer } from "./shared/ui/Toast";
-import "./app/styles/App.css";
-import "./shared/ui/Toast/toast.css";
+
+const RealtimePage = lazy(() => import("./pages/realtime/ui/RealtimePage").then((m) => ({ default: m.RealtimePage })));
+const HistoricalPage = lazy(() => import("./pages/historical/ui/HistoricalPage").then((m) => ({ default: m.HistoricalPage })));
+const MacroPage = lazy(() => import("./pages/macro/ui/MacroPage").then((m) => ({ default: m.MacroPage })));
+const MarketUnifiedChartPage = lazy(() =>
+  import("./pages/market-unified/ui/MarketUnifiedChartPage").then((m) => ({ default: m.MarketUnifiedChartPage })),
+);
+const AccountDashboardPage = lazy(() =>
+  import("./pages/account/ui/AccountDashboardPage").then((m) => ({ default: m.AccountDashboardPage })),
+);
+const OrderPage = lazy(() => import("./pages/order/ui/OrderPage").then((m) => ({ default: m.OrderPage })));
+const PortfolioChartPage = lazy(() =>
+  import("./pages/portfolio/ui/PortfolioChartPage").then((m) => ({ default: m.PortfolioChartPage })),
+);
+const TaxSummaryPage = lazy(() => import("./pages/tax-summary/ui/TaxSummaryPage").then((m) => ({ default: m.TaxSummaryPage })));
+const TradingJournalPage = lazy(() =>
+  import("./pages/trading-journal/ui/TradingJournalPage").then((m) => ({ default: m.TradingJournalPage })),
+);
 
 function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -62,28 +69,30 @@ function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className="flex min-h-screen w-screen bg-bg-main overflow-hidden">
       <ExecutionToastProvider />
 
       <Sidebar isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
 
-      <main className="main-wrapper">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <TopBar title={getPageTitle(location.pathname)} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
 
-        <div className="page-content">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/realtime" element={<RealtimePage />} />
-            <Route path="/historical" element={<HistoricalPage />} />
-            <Route path="/macro" element={<MacroPage />} />
-            <Route path="/market-unified" element={<MarketUnifiedChartPage />} />
-            <Route path="/account" element={<AccountDashboardPage />} />
-            <Route path="/orders" element={<OrderPage />} />
-            <Route path="/portfolio" element={<PortfolioChartPage />} />
-            <Route path="/tax-summary" element={<TaxSummaryPage />} />
-            <Route path="/trading-journals" element={<TradingJournalPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 flex flex-col gap-5 sm:gap-6 lg:gap-8 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.03),transparent_400px)]">
+          <Suspense fallback={<div className="text-sm text-text-secondary">페이지 로딩 중...</div>}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/realtime" element={<RealtimePage />} />
+              <Route path="/historical" element={<HistoricalPage />} />
+              <Route path="/macro" element={<MacroPage />} />
+              <Route path="/market-unified" element={<MarketUnifiedChartPage />} />
+              <Route path="/account" element={<AccountDashboardPage />} />
+              <Route path="/orders" element={<OrderPage />} />
+              <Route path="/portfolio" element={<PortfolioChartPage />} />
+              <Route path="/tax-summary" element={<TaxSummaryPage />} />
+              <Route path="/trading-journals" element={<TradingJournalPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </div>
       </main>
 

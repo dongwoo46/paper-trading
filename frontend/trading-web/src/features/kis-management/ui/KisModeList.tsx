@@ -17,11 +17,11 @@ export function KisModeList({ data, symbolNameMap }: Props) {
   ];
 
   if (allSymbols.length === 0) {
-    return <p className="empty-state" style={{ width: "100%" }}>구독 중인 종목이 없습니다.</p>;
+    return <p className="py-10 px-6 text-center text-text-muted italic w-full">구독 중인 종목이 없습니다.</p>;
   }
 
   return (
-    <div className="chips-container">
+    <div className="flex flex-wrap gap-2.5 p-6">
       {allSymbols.map(({ symbol, mode }) => (
         <Chip key={`${mode}-${symbol}`} statusColor={mode === "live" ? "var(--status-error)" : "var(--status-success)"}>
           <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>

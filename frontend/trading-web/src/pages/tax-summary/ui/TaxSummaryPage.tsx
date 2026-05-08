@@ -62,16 +62,16 @@ export function TaxSummaryPage() {
   });
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <h2>세금 요약</h2>
-        <p className="lead">계좌와 연도를 선택해 세금 요약을 조회하고 수동 재계산을 실행할 수 있습니다.</p>
+    <section className="flex flex-col gap-5 animate-fade-in">
+      <div className="flex flex-col gap-1.5">
+        <h2 className="text-[28px] font-bold tracking-tight">세금 요약</h2>
+        <p className="text-text-secondary text-[15px] max-w-3xl">계좌와 연도를 선택해 세금 요약을 조회하고 수동 재계산을 실행할 수 있습니다.</p>
       </div>
 
-      {isAccountsLoading && <div style={{ padding: "24px", textAlign: "center" }}>계좌 정보를 불러오는 중...</div>}
-      {isAccountsError && <div style={{ padding: "16px", color: "#ef4444" }}>계좌 목록을 불러오지 못했습니다.</div>}
+      {isAccountsLoading && <div className="py-6 text-center text-text-muted">계좌 정보를 불러오는 중...</div>}
+      {isAccountsError && <div className="p-4 text-status-error">계좌 목록을 불러오지 못했습니다.</div>}
       {!isAccountsLoading && !isAccountsError && accounts.length === 0 && (
-        <div style={{ padding: "24px", textAlign: "center" }}>등록된 계좌가 없습니다.</div>
+        <div className="py-6 text-center text-text-muted">등록된 계좌가 없습니다.</div>
       )}
 
       {resolvedAccountId !== null && (
@@ -96,17 +96,17 @@ export function TaxSummaryPage() {
             }}
           />
           {recalculateMutation.isError && (
-            <div style={{ padding: "8px 0 16px", color: "#ef4444" }}>
+            <div className="pb-4 text-status-error text-sm">
               {getRecalculateErrorMessage(recalculateMutation.error)}
             </div>
           )}
 
-          {summaryQuery.isLoading && <div style={{ padding: "24px", textAlign: "center" }}>세금 요약을 불러오는 중...</div>}
+          {summaryQuery.isLoading && <div className="py-6 text-center text-text-muted">세금 요약을 불러오는 중...</div>}
           {summaryQuery.isError && (
-            <div style={{ padding: "16px", color: "#ef4444" }}>{getSummaryErrorMessage(summaryQuery.error)}</div>
+            <div className="p-4 text-status-error">{getSummaryErrorMessage(summaryQuery.error)}</div>
           )}
           {!summaryQuery.isLoading && !summaryQuery.isError && summaryQuery.data === null && (
-            <div style={{ padding: "24px", textAlign: "center" }}>세금 요약 데이터가 없습니다.</div>
+            <div className="py-6 text-center text-text-muted">세금 요약 데이터가 없습니다.</div>
           )}
           {summaryQuery.data && <TaxSummarySummaryPanel summary={summaryQuery.data} />}
         </>

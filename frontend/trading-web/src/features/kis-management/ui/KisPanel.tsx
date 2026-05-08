@@ -18,6 +18,13 @@ const EMPTY_KIS_CATALOG: CatalogResponse<KrSymbol> = {
   totalSubscribedCount: 0
 };
 
+const INPUT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
+const SELECT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
+const BTN_BASE = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
+const BTN_PRIMARY = `${BTN_BASE} bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow border-transparent hover:-translate-y-0.5 hover:brightness-110`;
+const BTN_OUTLINE = `${BTN_BASE} bg-transparent border-white/12 text-text-primary hover:bg-white/5 hover:border-text-muted`;
+const BTN_DANGER = `${BTN_BASE} bg-red-500/8 text-red-500 border-red-500/20 hover:bg-red-500/15 hover:-translate-y-0.5`;
+
 export function KisPanel() {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>("paper");
@@ -54,7 +61,7 @@ export function KisPanel() {
   const { data: modeSubscriptions = { items: [] as string[] }, isLoading: isSubscriptionsLoading } = useQuery({
     queryKey: ["kis", mode, channel, "subscriptions"],
     queryFn: () => fetchJson<{ items: string[]; returnedCount: number }>(`/api/kis/symbols/subscriptions?mode=${mode}&channel=${channel}`),
-    staleTime: 0 // Ensure we get fresh data on channel switch
+    staleTime: 0
   });
   const {
     data: subscriptionStatus,
@@ -73,7 +80,6 @@ export function KisPanel() {
     catalog.items.forEach(item => {
       map[item.symbol] = item.name;
     });
-    // Fallback for those not in current catalog page but possibly in old search
     return map;
   }, [catalog.items]);
 
@@ -107,7 +113,7 @@ export function KisPanel() {
     subscriptionMutation.isPending ||
     isPriceLoading ||
     isSubscriptionStatusLoading;
-  
+
   const getStatusMessage = () => {
     if (subscriptionMutation.isError) return "요청 실패";
     if (subscriptionMutation.isSuccess) return "구독 상태가 변경되었습니다.";
@@ -116,43 +122,44 @@ export function KisPanel() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      <div className="summary-strip">
-        <div className="summary-item">
-          <span>계좌 모드</span>
-          <strong>{mode === "paper" ? "모의투자" : "실전투자"}</strong>
+    <div className="flex flex-col gap-6">
+      {/* Summary strip */}
+      <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-1">
+        <div className="border border-white/12 rounded-[20px] bg-white/[0.03] px-5 py-4 flex flex-col gap-1">
+          <span className="text-text-muted text-[13px] font-medium">계좌 모드</span>
+          <strong className="text-xl text-brand-primary tracking-tight">{mode === "paper" ? "모의투자" : "실전투자"}</strong>
         </div>
-        <div className="summary-item">
-          <span>수집 채널</span>
-          <strong>{channel === "ws" ? "실시간 (WS)" : "일반 (REST)"}</strong>
+        <div className="border border-white/12 rounded-[20px] bg-white/[0.03] px-5 py-4 flex flex-col gap-1">
+          <span className="text-text-muted text-[13px] font-medium">수집 채널</span>
+          <strong className="text-xl text-brand-primary tracking-tight">{channel === "ws" ? "실시간 (WS)" : "일반 (REST)"}</strong>
         </div>
-        <div className="summary-item">
-          <span>현재 구독 수</span>
-          <strong>{modeSubscriptions.items?.length ?? 0} 건</strong>
+        <div className="border border-white/12 rounded-[20px] bg-white/[0.03] px-5 py-4 flex flex-col gap-1">
+          <span className="text-text-muted text-[13px] font-medium">현재 구독 수</span>
+          <strong className="text-xl text-brand-primary tracking-tight">{modeSubscriptions.items?.length ?? 0} 건</strong>
         </div>
       </div>
 
-      <div className="feature-grid">
+      <div className="grid grid-cols-[2fr_1fr] gap-6 max-lg:grid-cols-1">
         <SectionCard
           title="한국투자증권(KIS) 종목 카탈로그"
           icon={Search}
           headerAction={(
-            <div className="form-row">
-              <select value={mode} onChange={(e) => setMode(e.target.value as Mode)} style={{ width: "120px" }}>
+            <div className="flex gap-3 flex-wrap">
+              <select className={`${SELECT_CLS} w-[120px]`} value={mode} onChange={(e) => setMode(e.target.value as Mode)}>
                 <option value="paper">모의투자</option>
                 <option value="live">실전투자</option>
               </select>
-              <select value={channel} onChange={(e) => setChannel(e.target.value as KisChannel)} style={{ width: "100px" }}>
+              <select className={`${SELECT_CLS} w-[100px]`} value={channel} onChange={(e) => setChannel(e.target.value as KisChannel)}>
                 <option value="ws">WS</option>
                 <option value="rest">REST</option>
               </select>
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="종목코드 또는 이름" style={{ width: "180px" }} />
-              <select value={market} onChange={(e) => setMarket(e.target.value)} style={{ width: "120px" }}>
+              <input className={`${INPUT_CLS} w-[180px]`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="종목코드 또는 이름" />
+              <select className={`${SELECT_CLS} w-[120px]`} value={market} onChange={(e) => setMarket(e.target.value)}>
                 <option value="">전체 시장</option>
                 <option value="KOSPI">KOSPI</option>
                 <option value="KOSDAQ">KOSDAQ</option>
               </select>
-              <select value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)} style={{ width: "140px" }}>
+              <select className={`${SELECT_CLS} w-[140px]`} value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
                 <option value="">전체 상태</option>
                 <option value="subscribed">구독 중</option>
                 <option value="unsubscribed">미구독</option>
@@ -160,10 +167,10 @@ export function KisPanel() {
             </div>
           )}
         >
-          <div className="meta-row">
-            <span>전체 카탈로그: {catalog.totalCatalogCount}</span>
-            <span>전체 구독 중: {catalog.totalSubscribedCount}</span>
-            <span>조회 결과: {catalog.returnedCount}</span>
+          <div className="flex gap-2.5 flex-wrap px-6 pb-3.5">
+            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 카탈로그: {catalog.totalCatalogCount}</span>
+            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 구독 중: {catalog.totalSubscribedCount}</span>
+            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">조회 결과: {catalog.returnedCount}</span>
           </div>
           <KisSearchList
             results={catalog.items}
@@ -172,96 +179,109 @@ export function KisPanel() {
             }}
           />
           {catalog.items.length < catalog.totalCatalogCount && (
-            <button className="load-more-btn" onClick={() => setCatalogLimit(prev => prev + 20)}>
+            <button
+              className="inline-flex items-center gap-1.5 px-4 py-2 my-2 mx-6 text-[13px] font-semibold text-text-muted bg-transparent border border-white/12 rounded-lg cursor-pointer transition-all hover:bg-white/5 hover:text-text-primary"
+              onClick={() => setCatalogLimit(prev => prev + 20)}
+            >
               <RefreshCw size={14} /> 더보기 ({catalog.items.length} / {catalog.totalCatalogCount})
             </button>
           )}
         </SectionCard>
 
         <SectionCard title="KIS 구독 제어" icon={Activity}>
-          <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div className="form-row">
-              <input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="종목코드" style={{ width: "150px" }} />
-              <button className="btn btn-primary" onClick={() => symbol && subscriptionMutation.mutate({ action: "add", targetSymbol: symbol })}>
+          <div className="px-6 py-4 flex flex-col gap-3">
+            <div className="flex gap-3 flex-wrap">
+              <input
+                className={`${INPUT_CLS} w-[150px]`}
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                placeholder="종목코드"
+              />
+              <button className={BTN_PRIMARY} onClick={() => symbol && subscriptionMutation.mutate({ action: "add", targetSymbol: symbol })}>
                 구독 추가
               </button>
-              <button className="btn btn-danger" onClick={() => symbol && subscriptionMutation.mutate({ action: "remove", targetSymbol: symbol })}>
+              <button className={BTN_DANGER} onClick={() => symbol && subscriptionMutation.mutate({ action: "remove", targetSymbol: symbol })}>
                 구독 해지
               </button>
             </div>
-            <div className="meta-row" style={{ padding: 0 }}>
-              <span>선택된 종목: {symbol || "-"}</span>
-              <span>구독 중인 종목: {selectedSet.size}건</span>
+            <div className="flex gap-2.5 flex-wrap">
+              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">선택된 종목: {symbol || "-"}</span>
+              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">구독 중인 종목: {selectedSet.size}건</span>
             </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <div className="flex flex-col">
               <KisModeList data={asModeSubscriptions(modeSubscriptions.items ?? [], mode)} symbolNameMap={symbolNameMap} />
             </div>
           </div>
         </SectionCard>
       </div>
 
-      <div className="feature-grid">
+      <div className="grid grid-cols-[2fr_1fr] gap-6 max-lg:grid-cols-1">
         <SectionCard title="KIS 실시간 시세 조회 (REST)" icon={DollarSign}>
-          <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div className="form-row">
-              <input value={priceSymbol} onChange={(e) => setPriceSymbol(e.target.value.toUpperCase())} placeholder="종목코드" style={{ width: "150px" }} />
-              <button className="btn btn-outline" onClick={() => void refetchPrice()}>
+          <div className="px-6 py-4 flex flex-col gap-3">
+            <div className="flex gap-3 flex-wrap">
+              <input
+                className={`${INPUT_CLS} w-[150px]`}
+                value={priceSymbol}
+                onChange={(e) => setPriceSymbol(e.target.value.toUpperCase())}
+                placeholder="종목코드"
+              />
+              <button className={BTN_OUTLINE} onClick={() => void refetchPrice()}>
                 현재가 조회
               </button>
             </div>
-            <div className="meta-row" style={{ padding: 0 }}>
-              <span>조회 결과 로드: {priceResult ? "성공" : "없음"}</span>
+            <div className="flex gap-2.5 flex-wrap">
+              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">조회 결과 로드: {priceResult ? "성공" : "없음"}</span>
             </div>
           </div>
         </SectionCard>
 
         <SectionCard title="레거시 API 연결 상태 (WS/REST 목록)" icon={Activity}>
-          <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div className="meta-row" style={{ padding: 0 }}>
-              <span>모의투자 구독: {oldModeSubscriptions.paper.length}건</span>
-              <span>실전투자 구독: {oldModeSubscriptions.live.length}건</span>
-              <span>엔드포인트: {oldPath}</span>
+          <div className="px-6 py-4 flex flex-col gap-2.5">
+            <div className="flex gap-2.5 flex-wrap">
+              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">모의투자 구독: {oldModeSubscriptions.paper.length}건</span>
+              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">실전투자 구독: {oldModeSubscriptions.live.length}건</span>
+              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">엔드포인트: {oldPath}</span>
             </div>
           </div>
         </SectionCard>
       </div>
 
-      <div className="feature-grid">
+      <div className="grid grid-cols-[2fr_1fr] gap-6 max-lg:grid-cols-1">
         <SectionCard
           title="구독 상태 모니터링 (읽기 전용)"
           icon={Activity}
           headerAction={(
-            <button className="btn btn-outline" onClick={() => void refetchSubscriptionStatus()}>
+            <button className={BTN_OUTLINE} onClick={() => void refetchSubscriptionStatus()}>
               새로고침
             </button>
           )}
         >
-          <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div className="px-6 py-4 flex flex-col gap-3">
             {isSubscriptionStatusLoading && <div>로딩 중</div>}
             {isSubscriptionStatusError && (
               <div>상태 조회 실패: {subscriptionStatusError instanceof Error ? subscriptionStatusError.message : "알 수 없는 오류"}</div>
             )}
             {!isSubscriptionStatusLoading && !isSubscriptionStatusError && subscriptionStatus && (
               <>
-                <div className="meta-row" style={{ padding: 0 }}>
-                  <span>생성 시각: {subscriptionStatus.generatedAt}</span>
-                  <span>전역 WS 슬롯: {subscriptionStatus.totalWsSlotUsed} / {subscriptionStatus.totalWsSlotMax}</span>
+                <div className="flex gap-2.5 flex-wrap">
+                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">생성 시각: {subscriptionStatus.generatedAt}</span>
+                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전역 WS 슬롯: {subscriptionStatus.totalWsSlotUsed} / {subscriptionStatus.totalWsSlotMax}</span>
                 </div>
                 {subscriptionStatus.modes.length === 0 && <div>모드 상태 데이터가 없습니다.</div>}
                 {subscriptionStatus.modes.map((item) => (
-                  <div key={item.mode} style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "12px", display: "grid", gap: "8px" }}>
-                    <div className="meta-row" style={{ padding: 0 }}>
+                  <div key={item.mode} className="border border-white/12 rounded-[8px] p-3 grid gap-2">
+                    <div className="flex gap-2.5 flex-wrap">
                       <strong>{item.mode}</strong>
-                      <span>{item.connectionStatus}</span>
-                      <span>마지막 연결: {item.lastConnectedAt ?? "-"}</span>
-                      <span>재연결 횟수: {item.reconnectAttempts}</span>
-                      <span>WS 슬롯: {item.wsSlotUsed} / {item.wsSlotMax}</span>
+                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">{item.connectionStatus}</span>
+                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">마지막 연결: {item.lastConnectedAt ?? "-"}</span>
+                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">재연결 횟수: {item.reconnectAttempts}</span>
+                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">WS 슬롯: {item.wsSlotUsed} / {item.wsSlotMax}</span>
                     </div>
-                    <div className="meta-row" style={{ padding: 0, alignItems: "flex-start" }}>
-                      <span>WS 심볼({item.wsSymbols.length}): {item.wsSymbols.join(", ") || "-"}</span>
+                    <div className="flex gap-2.5 flex-wrap">
+                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">WS 심볼({item.wsSymbols.length}): {item.wsSymbols.join(", ") || "-"}</span>
                     </div>
-                    <div className="meta-row" style={{ padding: 0, alignItems: "flex-start" }}>
-                      <span>REST 심볼({item.restSymbols.length}): {item.restSymbols.join(", ") || "-"}</span>
+                    <div className="flex gap-2.5 flex-wrap">
+                      <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">REST 심볼({item.restSymbols.length}): {item.restSymbols.join(", ") || "-"}</span>
                     </div>
                   </div>
                 ))}

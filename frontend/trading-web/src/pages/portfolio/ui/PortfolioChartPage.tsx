@@ -57,19 +57,19 @@ export function PortfolioChartPage() {
   });
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <h2>포트폴리오 차트</h2>
-        <p className="lead">일별 평가금액 추이와 KOSPI 대비 누적 수익률을 확인합니다.</p>
+    <section className="flex flex-col gap-5 animate-fade-in">
+      <div className="flex flex-col gap-1.5">
+        <h2 className="text-[28px] font-bold tracking-tight">포트폴리오 차트</h2>
+        <p className="text-text-secondary text-[15px] max-w-3xl">일별 평가금액 추이와 KOSPI 대비 누적 수익률을 확인합니다.</p>
       </div>
-      <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
-        <label>
+      <div className="flex gap-3 mb-4">
+        <label className="flex items-center gap-2 text-text-secondary text-sm">
           계좌 선택
           <select
             aria-label="계좌 선택"
+            className="bg-bg-input border border-white/12 text-text-primary px-3 py-2 rounded-xl outline-none transition-all focus:border-brand-primary focus:bg-bg-card"
             value={resolvedAccountId ?? ""}
             onChange={(e) => setSelectedAccountId(Number(e.target.value))}
-            style={{ marginLeft: "8px" }}
           >
             {accounts.map((account) => (
               <option key={account.id} value={account.id}>
@@ -78,13 +78,13 @@ export function PortfolioChartPage() {
             ))}
           </select>
         </label>
-        <label>
+        <label className="flex items-center gap-2 text-text-secondary text-sm">
           기간
           <select
             aria-label="기간 선택"
+            className="bg-bg-input border border-white/12 text-text-primary px-3 py-2 rounded-xl outline-none transition-all focus:border-brand-primary focus:bg-bg-card"
             value={rangeDays}
             onChange={(e) => setRangeDays(Number(e.target.value))}
-            style={{ marginLeft: "8px" }}
           >
             <option value={30}>1개월</option>
             <option value={90}>3개월</option>
