@@ -1,4 +1,4 @@
-# TODO — Paper Trading
+﻿# TODO — Paper Trading
 
 Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
@@ -58,6 +58,13 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - StrategyCommandService: 전략 활성화/비활성화
   - 시그널(OrderSignal) 수신 → 자동 주문 생성
   - 전략 성과 스냅샷 기록 (StrategyPerformanceSnapshot)
+
+- [x] 포지션 퍼센트 트리거 자동청산 (손절/익절) | project: trading-api | phase: position-trigger-exit | priority: P1 | done: 2026-05-08 | pr: #TBD
+  - 진입가 대비 손절/익절 퍼센트 설정 저장 (계좌/포지션 단위)
+  - 실시간 시세 기반 트리거 판정 (하락/상승 조건)
+  - 트리거 충족 시 자동 매도 주문 실행
+  - OCO 가드: 한쪽 체결 시 반대 트리거/대기주문 취소
+  - 중복 실행 방지(idempotency key) + 재시도/오류 알림
 
 - [x] Slack 알림 시스템 연동 | project: trading-api | phase: slack-notification | priority: P1 | done: 2026-05-04 | pr: #TBD
   - 체결/오류/리스크 이벤트 Slack Webhook 전송
@@ -125,6 +132,19 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 목적: front/subscription-routing-ui 차단 해제용 외부 API 제공
   - 범위: favorites CRUD, strategy-priority symbol CRUD, routing status 조회 API
   - 계약 고정: request/response schema, error code, idempotency, mode/channel validation
+
+- [ ] 실시간 전략 판단용 market feature 생성 | project: collector-api | phase: realtime-market-features | priority: P1
+  - 목적: WebSocket raw tick을 Redis에 장시간 누적하지 않고 전략이 바로 읽을 수 있는 feature snapshot 제공
+  - Redis latest 유지: `latest:{symbol}` 현재가/호가 최신 상태 계속 갱신
+  - Redis key 설계: `agg:1m:{symbol}:current`, `bars:1m:{symbol}`, `feature:{symbol}:1m`, `feature:{symbol}:5m`, `feature:{symbol}:10m`
+  - tick 수신 시 `agg:1m:{symbol}:current`를 실시간 갱신 (open/high/low/close, volume, tradeValue, buyVolume, sellVolume, tickCount)
+  - 분 롤오버(minute boundary) 시 기존 current bucket을 `bars:1m:{symbol}`에 append 후 새 1분 bucket 시작
+  - `feature:{symbol}:1m`은 현재 시점 최근 1분 특징 snapshot으로 매 주기 덮어쓰기 저장
+  - `feature:{symbol}:5m`, `feature:{symbol}:10m`은 최근 1분봉 5개/10개를 합산해 재계산 후 snapshot 갱신
+  - feature 필드 표준화: open/high/low/close, returnRate, volume, tradeValue, vwap, buyVolume, sellVolume, tradeImbalance, tickCount, startedAt, updatedAt
+  - `bars:1m:{symbol}`는 최근 필요 구간만 유지하도록 maxlen/TTL 정책 적용
+  - raw tick은 Redis에 장기 보관하지 않으며, 필요 시 최근 30~60초 디버깅/장애 복구용 ring buffer만 둠
+  - 원본 tick 장기 저장이 필요해지면 Redis가 아닌 별도 append-friendly 저장소(Kafka/ClickHouse/TimescaleDB 등)로 분리 검토
 
 ### 완료
 - [x] KIS WebSocket 시세 수집 + Redis Pub/Sub 발행 (RawEventPipeline)
@@ -220,6 +240,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
 
 
 
