@@ -175,6 +175,13 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 매 거래일 장 마감 후 자동 수집 스케줄 (KST 17:00)
   - 수집 실패 시 알림 + 재시도 로직
 
+- [ ] yfinance 주봉 수집 및 저장 | project: quant-worker | phase: weekly-ohlcv | priority: P1
+  - yfinance `interval="1wk"` 주봉 데이터 수집 (ticker.history)
+  - market_weekly_ohlcv 테이블 설계 및 SQLAlchemy 모델 추가
+  - Flyway 마이그레이션 또는 collector-api DB 적재 방식 결정 (일봉과 동일 패턴)
+  - POST /collect/weekly FastAPI 엔드포인트 추가
+  - GET /market/weekly/{symbol} 조회 API 추가
+
 ### 완료
 - [x] pykrx 일봉 수집기 (pykrx_daily_collector.py)
 - [x] yfinance 일봉 수집기 (yfinance_daily_collector.py)
@@ -225,6 +232,11 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 필수 API: 수동 등록·해제, 즐겨찾기 토글/조회, 전략 종목 등록·해제, 라우팅 상태 조회
   - 운영 액션: 수동 등록·해제, 즐겨찾기 관리, 전략 우선 라우팅 반영 상태 확인
   - 선행조건: collector-api 외부 노출 API 스펙 확정(현재 내부 API/기존 KIS 구독 API와 경계 정리 필요)
+
+- [ ] 분봉 히스토리 차트 UI | project: front | phase: market-bars-chart-ui | priority: P1
+  - collector-api `GET /api/market/bars/{symbol}?interval=1m|5m|10m&limit={n}` 연동
+  - interval 탭 전환(1m/5m/10m), limit 슬라이더 또는 선택
+  - OHLCV 바(캔들스틱 또는 라인) 차트 렌더링
 
 ### 완료
 - [x] 실시간 시세 페이지 (RealtimePage — KIS WebSocket 연동)
