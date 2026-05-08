@@ -1,6 +1,7 @@
 package com.papertrading.api.infrastructure.kis
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.papertrading.api.common.exception.ExternalServiceResponseException
 import mu.KotlinLogging
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
@@ -51,7 +52,7 @@ class KisTokenManager(
             "${properties.restBaseUrl(mode)}/oauth2/Approval",
             request,
             ApprovalResponse::class.java,
-        ) ?: throw IllegalStateException("KIS WebSocket approval response is null: mode=$mode")
+        ) ?: throw ExternalServiceResponseException("KIS WebSocket approval response is null: mode=$mode")
 
         val approvalKey = requireNotNull(response.approvalKey) { "approval_key null: mode=$mode" }
         redisTemplate.opsForValue().set(key, approvalKey, Duration.ofHours(20))
@@ -74,7 +75,7 @@ class KisTokenManager(
             properties.tokenUrl(mode),
             request,
             TokenResponse::class.java,
-        ) ?: throw IllegalStateException("KIS 토큰 발급 응답이 null: mode=$mode")
+        ) ?: throw ExternalServiceResponseException("KIS 토큰 발급 응답이 null: mode=$mode")
 
         val token = requireNotNull(response.accessToken) { "access_token null: mode=$mode" }
         val expiresAt = resolveExpiresAt(response)

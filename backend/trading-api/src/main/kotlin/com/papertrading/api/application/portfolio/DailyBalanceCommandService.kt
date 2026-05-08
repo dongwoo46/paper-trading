@@ -1,5 +1,6 @@
 package com.papertrading.api.application.portfolio
 
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.domain.entity.portfolio.DailyBalance
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.DailyBalanceRepository
@@ -19,7 +20,7 @@ class DailyBalanceCommandService(
     @Transactional
     fun recalculate(accountId: Long, businessDate: LocalDate): DailyBalance {
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
         val positions = positionRepository.findByAccountIdAndQuantityGreaterThan(accountId, BigDecimal.ZERO)
 
         val cashBalance = account.availableDeposit

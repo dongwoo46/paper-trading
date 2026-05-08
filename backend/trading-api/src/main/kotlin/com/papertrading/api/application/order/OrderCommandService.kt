@@ -2,6 +2,10 @@ package com.papertrading.api.application.order
 
 import com.papertrading.api.application.order.command.CancelOrderCommand
 import com.papertrading.api.application.order.command.PlaceOrderCommand
+import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.OrderNotFoundException
+import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.common.exception.QuoteUnavailableException
 import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
@@ -41,7 +45,7 @@ class OrderCommandService(
     @Transactional
     fun placeOrder(accountId: Long, command: PlaceOrderCommand): Order {
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. accountId=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
         check(account.isActive) { "비활성화된 계좌입니다." }
 
         val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null" }
@@ -61,7 +65,7 @@ class OrderCommandService(
         // 공매도 guard: 미보유 또는 수량 부족 시 거부
         if (command.orderSide == OrderSide.SELL) {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, command.ticker)
-                .orElseThrow { IllegalStateException("보유하지 않은 종목입니다. ticker=${command.ticker}") }
+                .orElseThrow { PositionNotFoundException(ticker = command.ticker) }
             check(position.orderableQuantity >= command.quantity) {
                 "주문 가능 수량 부족. available=${position.orderableQuantity}, requested=${command.quantity}"
             }
@@ -74,7 +78,7 @@ class OrderCommandService(
                 OrderType.LIMIT -> requireNotNull(command.limitPrice) { "limitPrice is null" }
                 OrderType.MARKET -> {
                     val quote = marketQuotePort.getQuote(command.ticker)
-                        ?: throw IllegalStateException("시세 정보가 없습니다. (stale > 60s) ticker=${command.ticker}")
+                        ?: throw QuoteUnavailableException(command.ticker)
                     check(Duration.between(quote.updatedAt, Instant.now()).seconds <= 60) {
                         "시세가 오래되었습니다. (stale) ticker=${command.ticker}"
                     }
@@ -162,7 +166,7 @@ class OrderCommandService(
     @Transactional
     fun cancelOrder(accountId: Long, orderId: Long, command: CancelOrderCommand): Order {
         val order = orderRepository.findByIdWithOptimisticLock(orderId)
-            .orElseThrow { NoSuchElementException("주문을 찾을 수 없습니다. orderId=$orderId") }
+            .orElseThrow { OrderNotFoundException(orderId) }
 
         check(order.account?.id == accountId) { "해당 계좌의 주문이 아닙니다." }
         check(order.orderStatus in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) {
@@ -175,7 +179,7 @@ class OrderCommandService(
         if (order.orderSide == OrderSide.BUY && order.lockedAmount > BigDecimal.ZERO) {
             val accountId2 = requireNotNull(order.account?.id) { "order.account.id is null" }
             val account = accountRepository.findByIdWithLock(accountId2)
-                .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다.") }
+                .orElseThrow { AccountNotFoundException(accountId2) }
 
             val releasedQty = order.quantity.subtract(order.filledQuantity)
             val releaseAmount = order.lockedAmount

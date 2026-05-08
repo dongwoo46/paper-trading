@@ -5,6 +5,8 @@ import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.event.ExecutionFilledEvent
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
+import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.position.Position
@@ -75,7 +77,7 @@ class ExecutionProcessor(
 
         val accountId = requireNotNull(order.account?.id) { "order.account.id is null: orderId=$orderId" }
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. accountId=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null: accountId=$accountId" }
         val marketType = requireNotNull(order.marketType) { "order.marketType is null: orderId=$orderId" }
@@ -123,7 +125,7 @@ class ExecutionProcessor(
             )
         } else {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, ticker)
-                .orElseThrow { IllegalStateException("포지션을 찾을 수 없습니다. ticker=$ticker") }
+                .orElseThrow { PositionNotFoundException(ticker = ticker) }
             val positionId = requireNotNull(position.id) { "position.id is null: accountId=$accountId, ticker=$ticker" }
             val updatedRows = positionRepository.applySellExecutionAtomically(positionId, fillQty)
             check(updatedRows == 1) {

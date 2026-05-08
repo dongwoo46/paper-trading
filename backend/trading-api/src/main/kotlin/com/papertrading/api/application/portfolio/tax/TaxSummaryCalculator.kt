@@ -1,4 +1,4 @@
-﻿package com.papertrading.api.application.portfolio.tax
+package com.papertrading.api.application.portfolio.tax
 
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -8,7 +8,9 @@ import java.math.RoundingMode
 class TaxSummaryCalculator {
 
     fun compute(input: SettlementTaxAggregate): TaxComputationResult {
-        require(input.currency == "KRW") { "지원하지 않는 통화입니다. currency=${input.currency}" }
+        if (input.currency != "KRW") {
+            throw UnsupportedCurrencyException("지원하지 않는 통화입니다. currency=${input.currency}")
+        }
 
         val totalRealized = input.totalRealizedPnl.setScale(4, RoundingMode.HALF_UP)
         val taxable = totalRealized.subtract(input.totalFee).subtract(input.totalTax).setScale(4, RoundingMode.HALF_UP)
@@ -26,3 +28,4 @@ class TaxSummaryCalculator {
         private val TAX_RATE = BigDecimal("0.2200")
     }
 }
+

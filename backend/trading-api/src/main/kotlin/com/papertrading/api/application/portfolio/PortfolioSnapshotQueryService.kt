@@ -1,5 +1,6 @@
 package com.papertrading.api.application.portfolio
 
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.domain.entity.portfolio.PortfolioSnapshot
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.PortfolioSnapshotRepository
@@ -15,7 +16,7 @@ class PortfolioSnapshotQueryService(
 ) {
     fun getPortfolioSnapshots(accountId: Long, businessDate: LocalDate): List<PortfolioSnapshot> {
         accountRepository.findById(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         return portfolioSnapshotRepository.findByAccountIdAndBusinessDateOrderByTickerAsc(
             accountId = accountId,

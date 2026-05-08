@@ -5,6 +5,7 @@ import com.papertrading.api.application.portfolio.TradingJournalQueryService
 import com.papertrading.api.application.portfolio.command.CreateTradingJournalCommand
 import com.papertrading.api.application.portfolio.command.UpdateTradingJournalCommand
 import com.papertrading.api.application.portfolio.query.TradingJournalFilter
+import com.papertrading.api.common.exception.InvalidPaginationException
 import com.papertrading.api.presentation.dto.portfolio.TradingJournalCreateRequest
 import com.papertrading.api.presentation.dto.portfolio.TradingJournalListResponse
 import com.papertrading.api.presentation.dto.portfolio.TradingJournalResponse
@@ -70,8 +71,8 @@ class TradingJournalController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
     ): TradingJournalListResponse {
-        require(page >= 0) { "page must be greater than or equal to 0" }
-        require(size in 1..100) { "size must be between 1 and 100" }
+        if (page < 0) throw InvalidPaginationException("page must be greater than or equal to 0")
+        if (size !in 1..100) throw InvalidPaginationException("size must be between 1 and 100")
 
         val result = tradingJournalQueryService.list(
             TradingJournalFilter(accountId, ticker),

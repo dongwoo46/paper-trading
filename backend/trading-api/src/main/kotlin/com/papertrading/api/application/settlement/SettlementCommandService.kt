@@ -2,6 +2,7 @@ package com.papertrading.api.application.settlement
 
 import com.papertrading.api.application.settlement.command.ProcessSettlementCommand
 import com.papertrading.api.application.settlement.command.ProcessSettlementsCommand
+import com.papertrading.api.common.exception.ReceivableSettlementNotFoundException
 import com.papertrading.api.domain.enums.SettlementStatus
 import com.papertrading.api.infrastructure.persistence.ReceivableSettlementRepository
 import mu.KotlinLogging
@@ -45,7 +46,7 @@ class SettlementCommandService(
     @Transactional
     fun processSettlement(command: ProcessSettlementCommand) {
         val ps = ReceivableSettlementRepository.findById(command.ReceivableSettlementId)
-            .orElseThrow { NoSuchElementException("ReceivableSettlement을 찾을 수 없습니다. id=${command.ReceivableSettlementId}") }
+            .orElseThrow { ReceivableSettlementNotFoundException(command.ReceivableSettlementId) }
         settlementProcessor.processOne(ps)
     }
 }

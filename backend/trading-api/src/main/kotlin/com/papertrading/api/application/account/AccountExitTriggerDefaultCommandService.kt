@@ -1,5 +1,7 @@
 package com.papertrading.api.application.account
 
+import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.BadRequestException
 import com.papertrading.api.domain.account.AccountExitTriggerDefault
 import com.papertrading.api.domain.account.AccountExitTriggerDefaultRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
@@ -30,7 +32,7 @@ class AccountExitTriggerDefaultCommandService(
 ) {
     @Transactional
     fun upsert(command: UpsertAccountExitTriggerDefaultCommand): AccountExitTriggerDefaultResult {
-        accountRepository.findById(command.accountId).orElseThrow { NoSuchElementException("account not found") }
+        accountRepository.findById(command.accountId).orElseThrow { AccountNotFoundException(command.accountId) }
         validatePercentScale(command.stopLossPercent)
         validatePercentScale(command.takeProfitPercent)
         val current = accountExitTriggerDefaultRepository.findByAccountId(command.accountId)
@@ -60,7 +62,7 @@ class AccountExitTriggerDefaultCommandService(
 
     private fun validatePercentScale(value: BigDecimal?) {
         if (value != null && value.stripTrailingZeros().scale() > 4) {
-            throw IllegalArgumentException("percent scale must be <= 4")
+            throw BadRequestException("INVALID_PERCENT_SCALE", "percent scale must be <= 4")
         }
     }
 }

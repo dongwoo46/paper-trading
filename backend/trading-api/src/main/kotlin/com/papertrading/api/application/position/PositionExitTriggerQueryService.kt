@@ -1,5 +1,6 @@
 package com.papertrading.api.application.position
 
+import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.domain.account.AccountExitTriggerDefaultRepository
 import com.papertrading.api.domain.position.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
@@ -22,7 +23,8 @@ class PositionExitTriggerQueryService(
     private val accountExitTriggerDefaultRepository: AccountExitTriggerDefaultRepository,
 ) {
     fun getEffectiveTrigger(positionId: Long): EffectivePositionExitTriggerResult {
-        val position = positionRepository.findById(positionId).orElseThrow { NoSuchElementException("position not found") }
+        val position = positionRepository.findById(positionId)
+            .orElseThrow { PositionNotFoundException(positionId = positionId) }
         val override = positionExitTriggerRepository.findByPositionId(positionId)
         if (override != null) return EffectivePositionExitTriggerResult(positionId, "POSITION_OVERRIDE", override.enabled, override.stopLossPercent, override.takeProfitPercent, override.triggerVersion)
         val accountDefault = accountExitTriggerDefaultRepository.findByAccountId(position.account.id!!)

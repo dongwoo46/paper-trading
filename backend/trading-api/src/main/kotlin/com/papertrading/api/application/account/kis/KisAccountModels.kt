@@ -1,6 +1,8 @@
 package com.papertrading.api.application.account.kis
 
+import com.papertrading.api.common.exception.ApiDomainException
 import com.papertrading.api.domain.enums.AccountSource
+import org.springframework.http.HttpStatus
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 
@@ -58,7 +60,11 @@ data class KisAccountBalanceResult(
     val reconciliation: KisReconciliationResult
 )
 
-class KisAuthorizationException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
-class KisForbiddenException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
-class KisRemoteCallException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
-class KisTimeoutException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+class KisAuthorizationException(message: String, cause: Throwable? = null) :
+    ApiDomainException("UNAUTHORIZED", HttpStatus.UNAUTHORIZED, message, cause)
+class KisForbiddenException(message: String, cause: Throwable? = null) :
+    ApiDomainException("FORBIDDEN", HttpStatus.FORBIDDEN, message, cause)
+class KisRemoteCallException(message: String, cause: Throwable? = null) :
+    ApiDomainException("BAD_GATEWAY", HttpStatus.BAD_GATEWAY, message, cause)
+class KisTimeoutException(message: String, cause: Throwable? = null) :
+    ApiDomainException("GATEWAY_TIMEOUT", HttpStatus.GATEWAY_TIMEOUT, message, cause)

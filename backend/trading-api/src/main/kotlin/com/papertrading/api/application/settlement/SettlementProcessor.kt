@@ -1,5 +1,6 @@
 package com.papertrading.api.application.settlement
 
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.domain.entity.settlement.ReceivableSettlement
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
@@ -38,7 +39,7 @@ class SettlementProcessor(
     fun processOne(ps: ReceivableSettlement) {
         val accountId = requireNotNull(ps.account?.id) { "account.id is null: ReceivableSettlementId=${ps.id}" }
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. accountId=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         val amount = ps.amount.setScale(4, RoundingMode.HALF_UP)
         val ledger = account.recordDepositWithLedger(amount, "settlement-${ps.id}")

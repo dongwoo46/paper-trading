@@ -1,5 +1,6 @@
 package com.papertrading.api.infrastructure.kis
 
+import com.papertrading.api.common.exception.KisResponseParseException
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.entity.order.Order
@@ -149,8 +150,10 @@ class KisOrderRestClient(
         }
         // 형식: "XXXXXXXX-XX"
         val parts = raw.split("-")
-        require(parts.size == 2) {
-            "externalAccountId 형식이 잘못되었습니다. expected: XXXXXXXX-XX, actual: $raw (orderId=${order.id})"
+        if (parts.size != 2) {
+            throw KisResponseParseException(
+                "externalAccountId 형식이 잘못되었습니다. expected: XXXXXXXX-XX, actual: $raw (orderId=${order.id})"
+            )
         }
         return Pair(parts[0], parts[1])
     }

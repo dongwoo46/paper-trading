@@ -1,5 +1,6 @@
-﻿package com.papertrading.api.application.portfolio.tax
+package com.papertrading.api.application.portfolio.tax
 
+import com.papertrading.api.common.exception.TaxComputationScaleException
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -9,9 +10,9 @@ data class TaxComputationResult(
     val estimatedTax: BigDecimal
 ) {
     init {
-        require(totalRealizedPnl.scale() == 4) { "totalRealizedPnl scale must be 4" }
-        require(taxablePnl.scale() == 4) { "taxablePnl scale must be 4" }
-        require(estimatedTax.scale() == 4) { "estimatedTax scale must be 4" }
+        if (totalRealizedPnl.scale() != 4) throw TaxComputationScaleException("totalRealizedPnl")
+        if (taxablePnl.scale() != 4) throw TaxComputationScaleException("taxablePnl")
+        if (estimatedTax.scale() != 4) throw TaxComputationScaleException("estimatedTax")
     }
 
     companion object {
@@ -23,3 +24,4 @@ data class TaxComputationResult(
             )
     }
 }
+

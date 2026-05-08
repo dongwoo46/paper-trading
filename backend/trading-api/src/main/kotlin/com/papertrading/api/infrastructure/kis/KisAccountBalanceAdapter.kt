@@ -7,6 +7,8 @@ import com.papertrading.api.application.account.kis.KisBalanceSnapshot
 import com.papertrading.api.application.account.kis.KisForbiddenException
 import com.papertrading.api.application.account.kis.KisRemoteCallException
 import com.papertrading.api.application.account.kis.KisTimeoutException
+import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.KisResponseParseException
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -31,7 +33,7 @@ class KisAccountBalanceAdapter(
 ) : KisAccountBalancePort {
     override fun fetchBalance(accountId: Long, trId: String): KisBalanceSnapshot {
         val account = accountRepository.findById(accountId)
-            .orElseThrow { NoSuchElementException("account not found: $accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
         val externalAccountId = requireNotNull(account.externalAccountId) {
             "externalAccountId is required for KIS account balance"
         }
@@ -110,8 +112,8 @@ class KisAccountBalanceAdapter(
 
     private fun parseExternalAccountId(value: String): Pair<String, String> {
         val parts = value.split("-")
-        require(parts.size == 2 && parts[0].isNotBlank() && parts[1].isNotBlank()) {
-            "externalAccountId format must be XXXXXXXX-XX"
+        if (!(parts.size == 2 && parts[0].isNotBlank() && parts[1].isNotBlank())) {
+            throw KisResponseParseException("externalAccountId format must be XXXXXXXX-XX")
         }
         return parts[0] to parts[1]
     }

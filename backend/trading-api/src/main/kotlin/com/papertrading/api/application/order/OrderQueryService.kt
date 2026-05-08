@@ -1,5 +1,6 @@
 package com.papertrading.api.application.order
 
+import com.papertrading.api.common.exception.OrderNotFoundException
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
@@ -15,7 +16,7 @@ class OrderQueryService(
 ) {
     fun getOrder(accountId: Long, orderId: Long): Order {
         val order = orderRepository.findById(orderId)
-            .orElseThrow { NoSuchElementException("주문을 찾을 수 없습니다. orderId=$orderId") }
+            .orElseThrow { OrderNotFoundException(orderId) }
         check(order.account?.id == accountId) { "해당 계좌의 주문이 아닙니다." }
         return order
     }

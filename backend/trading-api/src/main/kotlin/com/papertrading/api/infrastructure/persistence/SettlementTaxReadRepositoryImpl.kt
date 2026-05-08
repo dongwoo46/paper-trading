@@ -2,6 +2,7 @@
 
 import com.papertrading.api.application.portfolio.tax.SettlementTaxAggregate
 import com.papertrading.api.application.portfolio.tax.SettlementTaxReadRepository
+import com.papertrading.api.common.exception.UnsupportedSettlementCurrencyException
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
@@ -30,7 +31,7 @@ class SettlementTaxReadRepositoryImpl(
             .toLong()
 
         if (currencyCount > 1L) {
-            throw IllegalArgumentException("다중 통화 정산은 지원하지 않습니다. accountId=$accountId")
+            throw UnsupportedSettlementCurrencyException(accountId)
         }
 
         val row = entityManager.createQuery(

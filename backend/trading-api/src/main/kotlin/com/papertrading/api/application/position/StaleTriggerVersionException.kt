@@ -1,4 +1,8 @@
 package com.papertrading.api.application.position
 
-class StaleTriggerVersionException(message: String) : RuntimeException(message)
+import com.papertrading.api.common.exception.ApiDomainException
+import org.springframework.http.HttpStatus
+
+class StaleTriggerVersionException(message: String) :
+    ApiDomainException("STALE_TRIGGER_VERSION", HttpStatus.CONFLICT, message)
 

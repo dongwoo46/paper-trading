@@ -18,7 +18,7 @@ import java.time.Instant
  * collector-api가 quote:{ticker} 채널에 발행한 메시지를 수신해 LocalMatchingEngine 트리거.
  * 메시지 형식: {"ticker":"...","price":"...","askp1":"...","bidp1":"...","updatedAt":...}
  */
-@Component
+@Component("redisQuoteEventListener")
 class QuoteEventListener(
     private val localMatchingEngine: LocalMatchingEngine,
     private val positionCommandService: PositionCommandService,

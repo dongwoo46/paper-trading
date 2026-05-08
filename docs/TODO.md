@@ -152,7 +152,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 응답: startedAt/open/high/low/close/volume/tradeValue/vwap/tickCount
   - 정책: invalid interval/limit 400, 데이터 없음 404, 상한 limit 강제
 
-- [ ] 보조지표 계산/조회 API | project: collector-api | phase: market-indicators-api | priority: P1
+- [x] 보조지표 계산/조회 API | project: collector-api | phase: market-indicators-api | priority: P1 | done: 2026-05-09 | pr: #TBD
   - BB/RSI/MACD 서버 계산 및 조회 API 제공
   - interval(1m/5m/10m/1d/1w), 기간(limit/from~to), 다중 indicator 파라미터 지원
   - 차트용 응답 스키마 표준화(시점별 indicator 값, 결측 처리 규칙 포함)

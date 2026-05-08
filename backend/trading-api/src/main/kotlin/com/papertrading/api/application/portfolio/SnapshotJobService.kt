@@ -1,8 +1,6 @@
 package com.papertrading.api.application.portfolio
 
-import com.papertrading.api.common.exception.PortfolioSnapshotDomainException
-import com.papertrading.api.common.exception.SnapshotAlreadyRunningException
-import com.papertrading.api.common.exception.SnapshotComputeFailedException
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.portfolio.SnapshotJobRun
 import com.papertrading.api.infrastructure.persistence.AccountRepository
@@ -22,7 +20,7 @@ class SnapshotJobService(
     @Transactional
     fun generateDailySnapshots(accountId: Long, businessDate: LocalDate): Int {
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         val run = startRun(account, businessDate)
 

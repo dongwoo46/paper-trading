@@ -5,6 +5,7 @@ import com.papertrading.api.application.account.kis.KisAccountBalanceResult
 import com.papertrading.api.application.account.kis.KisAccountMode
 import com.papertrading.api.application.account.kis.KisBalancePositionResult
 import com.papertrading.api.application.account.kis.KisReconciliationResult
+import com.papertrading.api.common.exception.InvalidAccountIdException
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -15,7 +16,7 @@ class KisAccountQueryService(
     private val positionRepository: PositionRepository,
 ) {
     fun getBalance(accountId: Long, mode: KisAccountMode): KisAccountBalanceResult {
-        require(accountId > 0) { "accountId must be positive" }
+        if (accountId <= 0) throw InvalidAccountIdException(accountId)
 
         val trId = when (mode) {
             KisAccountMode.LIVE -> "TTTC8434R"

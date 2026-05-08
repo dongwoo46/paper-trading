@@ -1,6 +1,6 @@
 package com.papertrading.api.application.portfolio
 
-import com.papertrading.api.common.exception.InvalidDateRangeException
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.domain.entity.portfolio.DailyBalance
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.DailyBalanceRepository
@@ -19,7 +19,7 @@ class DailyBalanceQueryService(
             throw InvalidDateRangeException("fromDate는 toDate보다 이후일 수 없습니다. fromDate=$fromDate toDate=$toDate")
         }
         accountRepository.findById(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         return dailyBalanceRepository.findByAccountIdAndBusinessDateBetweenOrderByBusinessDateAsc(
             accountId = accountId,

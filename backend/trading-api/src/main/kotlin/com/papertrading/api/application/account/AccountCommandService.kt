@@ -6,6 +6,7 @@ import com.papertrading.api.application.account.command.UpdateAccountCommand
 import com.papertrading.api.application.account.command.WithdrawCommand
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.account.AccountLedger
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import org.springframework.stereotype.Service
@@ -38,7 +39,7 @@ class AccountCommandService(
 
     fun deposit(accountId: Long, command: DepositCommand): AccountLedger {
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         accountLedgerRepository.findByIdempotencyKey(command.idempotencyKey)
             ?.let { return it }
@@ -50,7 +51,7 @@ class AccountCommandService(
 
     fun withdraw(accountId: Long, command: WithdrawCommand): AccountLedger {
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         accountLedgerRepository.findByIdempotencyKey(command.idempotencyKey)
             ?.let { return it }
@@ -62,7 +63,7 @@ class AccountCommandService(
 
     fun updateAccount(accountId: Long, command: UpdateAccountCommand): Account {
         val account = accountRepository.findById(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         command.accountName?.let { account.rename(it) }
         command.externalAccountId?.let { account.updateExternalAccountId(it) }
@@ -72,7 +73,7 @@ class AccountCommandService(
 
     fun deactivateAccount(accountId: Long) {
         val account = accountRepository.findById(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
         account.deactivate()
     }
 }

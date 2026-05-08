@@ -2,6 +2,9 @@ package com.papertrading.api.application.portfolio
 
 import com.papertrading.api.application.portfolio.query.TradingJournalFilter
 import com.papertrading.api.application.portfolio.result.TradingJournalResult
+import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.TradingJournalNotFoundException
+import com.papertrading.api.common.exception.TradingJournalOwnershipMismatchException
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.TradingJournalRepository
 import org.springframework.data.domain.Page
@@ -17,7 +20,7 @@ class TradingJournalQueryService(
 ) {
     fun list(filter: TradingJournalFilter, pageable: Pageable): Page<TradingJournalResult> {
         if (!accountRepository.existsById(filter.accountId)) {
-            throw NoSuchElementException("계좌를 찾을 수 없습니다. id=${filter.accountId}")
+            throw AccountNotFoundException(filter.accountId)
         }
         val page = if (filter.ticker.isNullOrBlank()) {
             tradingJournalRepository.findByAccountId(filter.accountId, pageable)
@@ -33,9 +36,9 @@ class TradingJournalQueryService(
 
     fun get(journalId: Long, accountId: Long): TradingJournalResult {
         val journal = tradingJournalRepository.findById(journalId)
-            .orElseThrow { NoSuchElementException("거래 일지를 찾을 수 없습니다. id=$journalId") }
+            .orElseThrow { TradingJournalNotFoundException(journalId) }
         if (!journal.belongsTo(accountId)) {
-            throw NoSuchElementException("해당 계좌의 거래 일지가 아닙니다. journalId=$journalId, accountId=$accountId")
+            throw TradingJournalOwnershipMismatchException(journalId, accountId)
         }
         return TradingJournalResult.from(journal)
     }

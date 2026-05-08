@@ -3,6 +3,7 @@
 import com.papertrading.api.domain.entity.portfolio.TaxSummary
 import com.papertrading.api.domain.entity.portfolio.TaxSummaryRun
 import com.papertrading.api.domain.enums.TaxSummaryRunType
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.TaxSummaryRepository
 import com.papertrading.api.infrastructure.persistence.TaxSummaryRunRepository
@@ -40,7 +41,7 @@ class TaxSummaryCommandService(
         }
 
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
 
         val run = try {
             taxSummaryRunRepository.save(TaxSummaryRun.start(account, taxYear.value, runType))

@@ -1,5 +1,6 @@
 package com.papertrading.api.application.portfolio.result
 
+import com.papertrading.api.common.exception.EntityMappingException
 import com.papertrading.api.domain.entity.portfolio.TradingJournal
 import java.time.Instant
 
@@ -17,8 +18,8 @@ data class TradingJournalResult(
 ) {
     companion object {
         fun from(journal: TradingJournal): TradingJournalResult = TradingJournalResult(
-            id = journal.id ?: throw IllegalStateException("journal id가 없습니다."),
-            accountId = journal.account?.id ?: throw IllegalStateException("account id가 없습니다."),
+            id = journal.id ?: throw EntityMappingException("journal id가 없습니다."),
+            accountId = journal.account?.id ?: throw EntityMappingException("account id가 없습니다."),
             journalType = journal.journalType ?: "",
             title = journal.title ?: "",
             content = journal.content ?: "",

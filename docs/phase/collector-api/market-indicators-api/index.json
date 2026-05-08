@@ -1,0 +1,137 @@
+﻿{
+    "phase":  "market-indicators-api",
+    "project":  "collector-api",
+    "status":  "completed",
+    "current_step":  9,
+    "total_steps":  9,
+    "branch":  "feature/collector-api-market-indicators-api",
+    "worktree_path":  ".worktrees/collector-api-market-indicators-api",
+    "parallel_groups":  [
+
+                        ],
+    "steps":  [
+                  {
+                      "id":  1,
+                      "agent":  "service-planner",
+                      "name":  "Feature spec, API spec, step file generation",
+                      "file":  "step-1.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "spec.md 및 step-2~step-5 문서 생성 완료",
+                      "substeps":  [
+                                       {
+                                           "name":  "graphify + requirements",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "name":  "DDD model",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "name":  "API + DB design",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "name":  "spec.md",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "name":  "step files generation",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  2,
+                      "agent":  "fullstack-dev",
+                      "name":  "Implementation (TDD)",
+                      "file":  "step-2.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "Market indicators API 구현 및 단계 테스트/컴파일 통과",
+                      "substeps":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  3,
+                      "agent":  "test-engineer",
+                      "name":  "Testing and QA verification",
+                      "file":  "step-3.md",
+                      "status":  "failed",
+                      "retry_count":  1,
+                      "result":  "계약 불일치: 404/422 매핑, stable error code, 기본 limit=200 미구현",
+                      "substeps":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  4,
+                      "agent":  "code-reviewer",
+                      "name":  "Code review",
+                      "file":  "step-4.md",
+                      "status":  "review_failed",
+                      "retry_count":  1,
+                      "result":  "Must-fix: 1d/1w limit 경로, intraday from~to, response range/meta, weekly fallback"
+                  },
+                  {
+                      "id":  5,
+                      "agent":  "orchestrator",
+                      "name":  "Write summary + create PR",
+                      "file":  "step-5.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "최종 test/compile gate 통과, summary/pr-checklist 작성, TODO/state 동기화 완료"
+                  },
+                  {
+                      "id":  6,
+                      "agent":  "fullstack-dev",
+                      "name":  "Rework: indicator API contract gap fix",
+                      "file":  "step-3-rework.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "오류 계약(400/404/422) 및 기본 limit=200 반영, 테스트/컴파일 통과",
+                      "substeps":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  7,
+                      "agent":  "test-engineer",
+                      "name":  "Re-test after rework",
+                      "file":  "step-7-retest.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "Re-test 통과, 오류 계약 및 기본 limit 동작 확인",
+                      "substeps":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  8,
+                      "agent":  "fullstack-dev",
+                      "name":  "Rework: resolve code-review must-fix items",
+                      "file":  "step-8-review-rework.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "코드리뷰 must-fix 4건 보완 및 수용 테스트 통과",
+                      "substeps":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  9,
+                      "agent":  "code-reviewer",
+                      "name":  "Second code review",
+                      "file":  "step-9-review-2.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "2차 코드리뷰 PASS, non-blocking 테스트갭 1건"
+                  }
+              ],
+    "blockers":  [
+
+                 ],
+    "created":  "2026-05-09",
+    "updated":  "2026-05-09"
+}

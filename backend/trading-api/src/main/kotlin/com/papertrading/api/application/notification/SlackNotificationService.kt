@@ -2,6 +2,10 @@ package com.papertrading.api.application.notification
 
 import com.papertrading.api.domain.enums.NotificationEventType
 import com.papertrading.api.domain.port.NotificationSender
+import com.papertrading.api.common.exception.ApiDomainException
+import com.papertrading.api.common.exception.InvalidRetryPolicyException
+import com.papertrading.api.common.exception.WebhookNotConfiguredException
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.UUID
@@ -42,7 +46,8 @@ interface SlackNotificationCommandService {
     fun sendTestMessage(message: String): String
 }
 
-class SlackWebhookFailedException(message: String) : RuntimeException(message)
+class SlackWebhookFailedException(message: String) :
+    ApiDomainException("BAD_GATEWAY", HttpStatus.BAD_GATEWAY, message)
 
 @Service
 class SlackNotificationService(
@@ -54,11 +59,12 @@ class SlackNotificationService(
         policyStore.get().toResult()
 
     override fun updateConfig(request: UpdateSlackNotificationConfigCommand): SlackNotificationConfigResult {
-        require(request.maxRetries >= 1) { "INVALID_RETRY_POLICY" }
-        require(request.retryBackoffMillis >= 0) { "INVALID_RETRY_POLICY" }
+        if (request.maxRetries < 1 || request.retryBackoffMillis < 0) {
+            throw InvalidRetryPolicyException()
+        }
         val current = policyStore.get()
         if (request.enabled && !current.webhookConfigured) {
-            throw IllegalStateException("WEBHOOK_NOT_CONFIGURED")
+            throw WebhookNotConfiguredException()
         }
         val updated = policyStore.update(
             current.copy(
@@ -74,7 +80,7 @@ class SlackNotificationService(
 
     override fun sendTestMessage(message: String): String {
         if (!policyStore.get().webhookConfigured) {
-            throw IllegalStateException("WEBHOOK_NOT_CONFIGURED")
+            throw WebhookNotConfiguredException()
         }
         val requestId = UUID.randomUUID().toString()
         val sent = sender.send(message)

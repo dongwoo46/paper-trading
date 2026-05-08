@@ -1,6 +1,7 @@
 package com.papertrading.api.application.position
 
 import com.papertrading.api.application.position.result.PositionResult
+import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.domain.enums.PriceSource
 import com.papertrading.api.domain.port.MarketQuotePort
 import com.papertrading.api.infrastructure.persistence.PositionRepository
@@ -29,7 +30,7 @@ class PositionQueryService(
     /** 단건 조회. Redis 현재가 주입. */
     fun getPositionWithCurrentPrice(accountId: Long, ticker: String): PositionResult {
         val position = positionRepository.findByAccountIdAndTicker(accountId, ticker)
-            .orElseThrow { NoSuchElementException("포지션을 찾을 수 없습니다. ticker=$ticker") }
+            .orElseThrow { PositionNotFoundException(ticker = ticker) }
         val quote = marketQuotePort.getQuote(ticker)
         if (quote != null) {
             position.updatePrice(quote.price, PriceSource.REDIS_LIVE)

@@ -1,5 +1,6 @@
 package com.papertrading.api.application.portfolio
 
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.domain.entity.portfolio.PortfolioSnapshot
 import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.port.MarketQuotePort
@@ -22,7 +23,7 @@ class PortfolioSnapshotCommandService(
     @Transactional
     fun recalculate(accountId: Long, businessDate: LocalDate): List<PortfolioSnapshot> {
         val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId") }
+            .orElseThrow { AccountNotFoundException(accountId) }
         val positions = positionRepository.findByAccountIdAndQuantityGreaterThan(accountId, BigDecimal.ZERO)
 
         val priced = positions.map { position ->

@@ -1,5 +1,6 @@
 package com.papertrading.api.application.portfolio.tax
 
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.domain.entity.portfolio.TaxSummary
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.TaxSummaryRepository
@@ -15,7 +16,7 @@ class TaxSummaryQueryService(
     @Transactional(readOnly = true)
     fun get(accountId: Long, taxYear: TaxYear): TaxSummary {
         if (!accountRepository.existsById(accountId)) {
-            throw NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId")
+            throw AccountNotFoundException(accountId)
         }
 
         return taxSummaryRepository.findByAccountIdAndTaxYear(accountId, taxYear.value)
@@ -28,7 +29,7 @@ class TaxSummaryQueryService(
             throw InvalidTaxYearRangeException("fromYear는 toYear보다 클 수 없습니다. fromYear=${fromYear.value} toYear=${toYear.value}")
         }
         if (!accountRepository.existsById(accountId)) {
-            throw NoSuchElementException("계좌를 찾을 수 없습니다. id=$accountId")
+            throw AccountNotFoundException(accountId)
         }
 
         return taxSummaryRepository.findByAccountIdAndTaxYearBetweenOrderByTaxYearDesc(

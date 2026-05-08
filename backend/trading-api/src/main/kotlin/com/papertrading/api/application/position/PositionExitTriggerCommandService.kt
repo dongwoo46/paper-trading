@@ -1,5 +1,7 @@
 package com.papertrading.api.application.position
 
+import com.papertrading.api.common.exception.InvalidPercentScaleException
+import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.domain.position.PositionExitTrigger
 import com.papertrading.api.domain.position.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
@@ -31,7 +33,8 @@ class PositionExitTriggerCommandService(
 ) {
     @Transactional
     fun upsertPositionTrigger(command: UpsertPositionExitTriggerCommand): PositionExitTriggerResult {
-        val position = positionRepository.findById(command.positionId).orElseThrow { NoSuchElementException("position not found") }
+        val position = positionRepository.findById(command.positionId)
+            .orElseThrow { PositionNotFoundException(positionId = command.positionId) }
         if (position.quantity <= BigDecimal.ZERO) {
             throw PositionNotEligibleException("position not eligible: already closed")
         }
@@ -59,7 +62,7 @@ class PositionExitTriggerCommandService(
 
     private fun validatePercentScale(value: BigDecimal?) {
         if (value != null && value.stripTrailingZeros().scale() > 4) {
-            throw IllegalArgumentException("percent scale must be <= 4")
+            throw InvalidPercentScaleException()
         }
     }
 }
