@@ -10,6 +10,12 @@ import java.time.LocalDate
 interface MarketDailyOhlcvRepository : JpaRepository<MarketDailyOhlcv, Long> {
 	fun findBySourceAndSymbolOrderByTradeDateDesc(source: String, symbol: String): List<MarketDailyOhlcv>
 
+	fun findBySourceAndSymbolOrderByTradeDateDesc(
+		source: String,
+		symbol: String,
+		pageable: Pageable,
+	): List<MarketDailyOhlcv>
+
 	fun existsBySourceAndSymbolAndTradeDate(source: String, symbol: String, tradeDate: LocalDate): Boolean
 
 	fun findBySourceAndSymbolAndTradeDateBetweenOrderByTradeDateAsc(
@@ -43,5 +49,3 @@ interface MarketDailySymbolSummaryProjection {
 	fun getLatestTradeDate(): LocalDate
 	fun getTotalBars(): Long
 }
-
-
