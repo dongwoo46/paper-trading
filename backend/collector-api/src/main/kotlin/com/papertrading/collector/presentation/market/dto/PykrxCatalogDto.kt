@@ -1,6 +1,6 @@
 package com.papertrading.collector.presentation.market.dto
 
-import com.papertrading.collector.domain.market.PykrxSymbolCatalog
+import com.papertrading.collector.domain.entity.market.PykrxSymbolCatalog
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -46,3 +46,5 @@ fun PykrxSymbolCatalog.toResponse(): PykrxSymbolResponse {
 		lastCollectedAt = lastCollectedAt,
 	)
 }
+
+

@@ -1,6 +1,6 @@
-﻿package com.papertrading.collector.infra.kis.persistence
+package com.papertrading.collector.infra.kis.persistence
 
-import com.papertrading.collector.domain.kis.KisWsSubscription
+import com.papertrading.collector.domain.entity.kis.KisWsSubscription
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface KisWsSubscriptionRepository : JpaRepository<KisWsSubscription, Long> {
@@ -10,4 +10,6 @@ interface KisWsSubscriptionRepository : JpaRepository<KisWsSubscription, Long> {
 
 	fun deleteByModeAndSymbol(mode: String, symbol: String): Int
 }
+
+
 

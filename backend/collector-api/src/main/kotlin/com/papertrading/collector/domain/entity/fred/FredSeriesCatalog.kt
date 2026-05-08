@@ -1,4 +1,4 @@
-package com.papertrading.collector.domain.fred
+package com.papertrading.collector.domain.entity.fred
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -37,4 +37,7 @@ data class FredSeriesCatalog protected constructor(
 	@Column(name = "updated_at", nullable = false)
 	val updatedAt: LocalDateTime? = null,
 )
+
+
+
 

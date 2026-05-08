@@ -1,6 +1,6 @@
 package com.papertrading.collector.presentation.market.dto
 
-import com.papertrading.collector.domain.market.YfinanceSymbolCatalog
+import com.papertrading.collector.domain.entity.market.YfinanceSymbolCatalog
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -46,3 +46,5 @@ fun YfinanceSymbolCatalog.toResponse(): YfinanceSymbolResponse {
 		lastCollectedAt = lastCollectedAt,
 	)
 }
+
+

@@ -127,3 +127,5 @@ class YfinanceCatalogController(
 		return removeSelection(request)
 	}
 }
+
+

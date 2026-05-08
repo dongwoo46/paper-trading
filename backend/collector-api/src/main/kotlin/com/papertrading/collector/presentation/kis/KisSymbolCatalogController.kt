@@ -2,7 +2,7 @@ package com.papertrading.collector.presentation.kis
 
 import com.papertrading.collector.application.kis.service.KisRestWatchlistService
 import com.papertrading.collector.application.kis.service.KisWsSubscriptionService
-import com.papertrading.collector.domain.kis.SubscriptionChangeStatus
+import com.papertrading.collector.domain.enums.SubscriptionChangeStatus
 import com.papertrading.collector.infra.kis.KisProperties
 import com.papertrading.collector.infra.kis.persistence.KrSymbolRepository
 import com.papertrading.collector.presentation.kis.dto.KisSymbolSubscriptionChangeResponse
@@ -182,3 +182,5 @@ class KisSymbolCatalogController(
 		)
 	}
 }
+
+

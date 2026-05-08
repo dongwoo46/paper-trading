@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.kis.service
 
-import com.papertrading.collector.domain.kis.SubscriptionChangeStatus
+import com.papertrading.collector.domain.enums.SubscriptionChangeStatus
 import com.papertrading.collector.infra.kis.source.ws.KisWebSocketCollector
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -34,3 +34,5 @@ class KisSubscriptionOrchestrator(
         return status
     }
 }
+
+

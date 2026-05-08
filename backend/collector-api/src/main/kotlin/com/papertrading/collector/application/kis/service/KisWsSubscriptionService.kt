@@ -1,7 +1,7 @@
 package com.papertrading.collector.application.kis.service
 
-import com.papertrading.collector.domain.kis.KisWsSubscription
-import com.papertrading.collector.domain.kis.SubscriptionChangeStatus
+import com.papertrading.collector.domain.entity.kis.KisWsSubscription
+import com.papertrading.collector.domain.enums.SubscriptionChangeStatus
 import com.papertrading.collector.infra.kis.KisProperties
 import com.papertrading.collector.infra.kis.persistence.KisWsSubscriptionRepository
 import com.papertrading.collector.infra.redis.RedisSetClient
@@ -78,3 +78,4 @@ class KisWsSubscriptionService(
 
 	private fun cacheKey(mode: String) = "kis:ws:$mode"
 }
+

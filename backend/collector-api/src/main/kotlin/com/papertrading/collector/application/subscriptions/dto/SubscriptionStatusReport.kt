@@ -8,3 +8,5 @@ data class SubscriptionStatusReport(
     val totalWsSlotUsed: Int,
     val totalWsSlotMax: Int,
 )
+
+

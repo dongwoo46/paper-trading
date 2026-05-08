@@ -17,3 +17,5 @@ data class SubscriptionStatusResponse(
     val totalWsSlotMax: Int,
     val modes: List<SubscriptionModeStatusResponse>,
 )
+
+

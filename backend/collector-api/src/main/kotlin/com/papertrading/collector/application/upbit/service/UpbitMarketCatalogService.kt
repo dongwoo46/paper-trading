@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.upbit.service
 
-import com.papertrading.collector.domain.upbit.UpbitMarketCatalog
+import com.papertrading.collector.domain.entity.upbit.UpbitMarketCatalog
 import com.papertrading.collector.infra.upbit.persistence.UpbitMarketCatalogRepository
 import com.papertrading.collector.infra.upbit.source.rest.UpbitMarketClient
 import org.springframework.data.domain.PageRequest
@@ -93,3 +93,5 @@ class UpbitMarketCatalogService(
 		}
 	}
 }
+
+

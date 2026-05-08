@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.application.kis.runtime
+package com.papertrading.collector.application.kis.runtime
 
 import com.papertrading.collector.infra.kis.KisProperties
 import com.papertrading.collector.application.kis.service.KisRestWatchlistService
@@ -60,3 +60,5 @@ class KisRestPollingScheduler(
 		}
 	}
 }
+
+

@@ -188,3 +188,4 @@ class KisWebSocketCollector(
 		return String(bytes, StandardCharsets.UTF_8)
 	}
 }
+

@@ -1,4 +1,4 @@
-package com.papertrading.collector.domain.market
+package com.papertrading.collector.domain.entity.market
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -53,3 +53,6 @@ data class MarketDailyOhlcv protected constructor(
 	@Column(name = "updated_at", nullable = false)
 	val updatedAt: LocalDateTime? = null,
 )
+
+
+

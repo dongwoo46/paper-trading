@@ -3,7 +3,7 @@ package com.papertrading.collector.presentation.subscriptions
 import com.papertrading.collector.application.subscriptions.dto.SubscriptionModeStatus
 import com.papertrading.collector.application.subscriptions.dto.SubscriptionStatusReport
 import com.papertrading.collector.application.subscriptions.service.SubscriptionStatusService
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.BeforeEach
@@ -106,3 +106,5 @@ class SubscriptionStatusControllerTest {
             .andExpect(jsonPath("$.totalWsSlotUsed").value(0))
     }
 }
+
+

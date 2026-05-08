@@ -43,3 +43,5 @@ class InternalSubscriptionController(
         return ResponseEntity.ok(mapOf("ticker" to ticker, "mode" to mode, "status" to status.name))
     }
 }
+
+

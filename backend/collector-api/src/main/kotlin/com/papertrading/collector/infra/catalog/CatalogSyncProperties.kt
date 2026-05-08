@@ -13,3 +13,5 @@ class CatalogSyncProperties {
 	var fredMaxCategories: Int = 500
 	var fredPageSize: Int = 100
 }
+
+

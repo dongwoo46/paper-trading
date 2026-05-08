@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.market.service
 
-import com.papertrading.collector.domain.market.MarketDailyOhlcv
+import com.papertrading.collector.domain.entity.market.MarketDailyOhlcv
 import com.papertrading.collector.infra.market.persistence.MarketDailyOhlcvRepository
 import com.papertrading.collector.infra.market.persistence.MarketDailySymbolSummaryProjection
 import org.springframework.data.domain.PageRequest
@@ -39,4 +39,6 @@ class MarketDailyOhlcvQueryService(
 		)
 	}
 }
+
+
 

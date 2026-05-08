@@ -1,6 +1,6 @@
-﻿package com.papertrading.collector.infra.kis.persistence
+package com.papertrading.collector.infra.kis.persistence
 
-import com.papertrading.collector.domain.kis.KisRestWatchlist
+import com.papertrading.collector.domain.entity.kis.KisRestWatchlist
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface KisRestWatchlistRepository : JpaRepository<KisRestWatchlist, Long> {
@@ -10,4 +10,6 @@ interface KisRestWatchlistRepository : JpaRepository<KisRestWatchlist, Long> {
 
 	fun deleteByModeAndSymbol(mode: String, symbol: String): Int
 }
+
+
 

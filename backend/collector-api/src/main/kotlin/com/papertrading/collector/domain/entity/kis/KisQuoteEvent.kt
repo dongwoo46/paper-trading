@@ -1,4 +1,4 @@
-package com.papertrading.collector.domain.kis
+package com.papertrading.collector.domain.entity.kis
 
 import java.math.BigDecimal
 import java.time.Instant
@@ -15,3 +15,6 @@ data class KisQuoteEvent(
     val volume: BigDecimal,
     val receivedAt: Instant,
 )
+
+
+

@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.domain.kis
+package com.papertrading.collector.domain.entity.kis
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -32,4 +32,7 @@ data class KisWsSubscription protected constructor(
 		}
 	}
 }
+
+
+
 

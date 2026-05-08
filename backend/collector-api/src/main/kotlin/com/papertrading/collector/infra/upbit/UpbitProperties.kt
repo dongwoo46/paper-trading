@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.infra.upbit
+package com.papertrading.collector.infra.upbit
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
@@ -17,4 +17,6 @@ class UpbitProperties {
 	var reconnectMinDelay: Duration = Duration.ofSeconds(1)
 	var reconnectMaxDelay: Duration = Duration.ofSeconds(30)
 }
+
+
 

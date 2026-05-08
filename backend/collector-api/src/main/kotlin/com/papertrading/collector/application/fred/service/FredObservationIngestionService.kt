@@ -161,3 +161,5 @@ class FredObservationIngestionService(
 		return runCatching { BigDecimal(this) }.getOrNull()
 	}
 }
+
+

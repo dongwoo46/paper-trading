@@ -1,6 +1,6 @@
 package com.papertrading.collector.presentation.market.dto
 
-import com.papertrading.collector.domain.market.MarketDailyOhlcv
+import com.papertrading.collector.domain.entity.market.MarketDailyOhlcv
 import com.papertrading.collector.infra.market.persistence.MarketDailySymbolSummaryProjection
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -57,4 +57,6 @@ fun MarketDailyOhlcv.toResponse(): MarketDailyBarResponse {
 		collectedAt = collectedAt,
 	)
 }
+
+
 

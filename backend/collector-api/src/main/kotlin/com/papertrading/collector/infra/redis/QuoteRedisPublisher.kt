@@ -1,7 +1,7 @@
 package com.papertrading.collector.infra.redis
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.papertrading.collector.domain.kis.KisQuoteEvent
+import com.papertrading.collector.domain.entity.kis.KisQuoteEvent
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
 import java.time.Duration
@@ -58,3 +58,5 @@ class QuoteRedisPublisher(
         )
     }
 }
+
+

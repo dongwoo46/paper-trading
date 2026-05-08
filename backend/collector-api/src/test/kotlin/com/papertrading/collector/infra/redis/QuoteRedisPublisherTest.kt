@@ -1,7 +1,7 @@
 package com.papertrading.collector.infra.redis
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.papertrading.collector.domain.kis.KisQuoteEvent
+import com.papertrading.collector.domain.entity.kis.KisQuoteEvent
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -58,3 +58,5 @@ class QuoteRedisPublisherTest {
         assert(json["bidp1"].asText() == "74900")
     }
 }
+
+

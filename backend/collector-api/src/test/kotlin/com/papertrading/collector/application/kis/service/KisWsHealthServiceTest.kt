@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.kis.service
 
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import com.papertrading.collector.infra.kis.KisProperties
 import com.papertrading.collector.infra.kis.source.ws.KisWsConnectionRegistry
 import io.mockk.every
@@ -49,3 +49,5 @@ class KisWsHealthServiceTest {
         assertThat(snapshots[0].status).isEqualTo(WsConnectionStatus.CONNECTED)
     }
 }
+
+

@@ -1,7 +1,9 @@
-package com.papertrading.collector.domain.kis
+package com.papertrading.collector.domain.enums
 
 enum class WsConnectionStatus {
     CONNECTED,
     DISCONNECTED,
     RECONNECTING,
 }
+
+

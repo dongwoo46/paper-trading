@@ -91,3 +91,4 @@ class KisRawEventParserTest {
         assertNull(parser.parse(raw))
     }
 }
+

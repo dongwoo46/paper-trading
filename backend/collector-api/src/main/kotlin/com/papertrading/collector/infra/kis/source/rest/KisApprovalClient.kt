@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.infra.kis.source.rest
+package com.papertrading.collector.infra.kis.source.rest
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.papertrading.collector.infra.kis.KisProperties
@@ -44,5 +44,7 @@ private data class ApprovalRequest(
 private data class ApprovalResponse(
 	@JsonProperty("approval_key") val approvalKey: String?,
 )
+
+
 
 

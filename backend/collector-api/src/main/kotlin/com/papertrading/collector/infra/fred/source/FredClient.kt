@@ -131,3 +131,5 @@ class FredClient(
 			.bodyToMono(JsonNode::class.java)
 	}
 }
+
+

@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.application.kis.runtime
+package com.papertrading.collector.application.kis.runtime
 
 import com.papertrading.collector.infra.kis.source.ws.KisWebSocketCollector
 import org.springframework.boot.ApplicationArguments
@@ -14,4 +14,6 @@ class CollectorRuntime(
 		kisWebSocketCollector.start()
 	}
 }
+
+
 

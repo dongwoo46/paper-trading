@@ -1,6 +1,6 @@
 package com.papertrading.collector.infra.kis.source.ws
 
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -173,3 +173,5 @@ class KisWsConnectionRegistryTest {
         }
     }
 }
+
+

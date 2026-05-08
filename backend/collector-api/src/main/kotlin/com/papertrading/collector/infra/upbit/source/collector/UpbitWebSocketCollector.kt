@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.infra.upbit.source.collector
+package com.papertrading.collector.infra.upbit.source.collector
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.papertrading.collector.application.kis.pipeline.RawEventPipeline
@@ -144,4 +144,6 @@ class UpbitWebSocketCollector(
 		return payload.contains("\"cd\":\"$market\"") || payload.contains("\"code\":\"$market\"")
 	}
 }
+
+
 

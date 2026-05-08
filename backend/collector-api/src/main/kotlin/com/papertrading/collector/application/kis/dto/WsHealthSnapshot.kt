@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.kis.dto
 
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import java.time.Instant
 
 data class WsHealthSnapshot(
@@ -9,3 +9,5 @@ data class WsHealthSnapshot(
     val lastConnectedAt: Instant?,
     val reconnectAttempts: Long,
 )
+
+

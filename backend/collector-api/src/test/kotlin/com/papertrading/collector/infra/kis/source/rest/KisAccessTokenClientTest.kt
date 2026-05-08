@@ -50,3 +50,4 @@ class KisAccessTokenClientTest {
         verify { rateLimiter.acquireApproval("paper") }
     }
 }
+

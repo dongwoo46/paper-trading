@@ -1,7 +1,7 @@
-﻿package com.papertrading.collector.application.kis.service
+package com.papertrading.collector.application.kis.service
 
-import com.papertrading.collector.domain.kis.KisRestWatchlist
-import com.papertrading.collector.domain.kis.SubscriptionChangeStatus
+import com.papertrading.collector.domain.entity.kis.KisRestWatchlist
+import com.papertrading.collector.domain.enums.SubscriptionChangeStatus
 import com.papertrading.collector.infra.kis.KisProperties
 import com.papertrading.collector.infra.kis.persistence.KisRestWatchlistRepository
 import com.papertrading.collector.infra.redis.RedisSetClient
@@ -65,3 +65,5 @@ class KisRestWatchlistService(
 
 	private fun cacheKey(mode: String) = "kis:rest:$mode"
 }
+
+

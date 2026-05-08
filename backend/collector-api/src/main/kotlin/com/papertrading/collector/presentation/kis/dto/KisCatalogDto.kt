@@ -14,3 +14,5 @@ data class KisSymbolSubscriptionChangeResponse(
 	val totalSelected: Int,
 )
 
+
+

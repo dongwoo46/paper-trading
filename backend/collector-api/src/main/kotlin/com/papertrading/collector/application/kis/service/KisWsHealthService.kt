@@ -15,3 +15,5 @@ class KisWsHealthService(
             .sortedBy { it.mode }
     }
 }
+
+

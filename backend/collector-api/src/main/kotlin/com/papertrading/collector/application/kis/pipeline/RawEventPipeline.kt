@@ -18,3 +18,5 @@ class RawEventPipeline(
         log.debug { "quote published: source=$source, ticker=${event.ticker}, price=${event.price}" }
     }
 }
+
+

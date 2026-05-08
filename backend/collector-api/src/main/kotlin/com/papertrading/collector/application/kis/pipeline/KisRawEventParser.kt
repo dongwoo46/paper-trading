@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.kis.pipeline
 
-import com.papertrading.collector.domain.kis.KisQuoteEvent
+import com.papertrading.collector.domain.entity.kis.KisQuoteEvent
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -68,3 +68,4 @@ class KisRawEventParser {
         }
     }
 }
+

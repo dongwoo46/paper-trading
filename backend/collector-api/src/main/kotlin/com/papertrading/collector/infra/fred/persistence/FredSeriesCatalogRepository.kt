@@ -1,6 +1,6 @@
 package com.papertrading.collector.infra.fred.persistence
 
-import com.papertrading.collector.domain.fred.FredSeriesCatalog
+import com.papertrading.collector.domain.entity.fred.FredSeriesCatalog
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -51,3 +51,5 @@ interface FredSeriesCatalogRepository : JpaRepository<FredSeriesCatalog, Long> {
 	@Query("UPDATE FredSeriesCatalog f SET f.enabled = false WHERE f.seriesId = :seriesId AND f.enabled = true")
 	fun disableBySeriesId(@Param("seriesId") seriesId: String): Int
 }
+
+

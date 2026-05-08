@@ -1,7 +1,7 @@
 package com.papertrading.collector.infra.kis.source.ws
 
 import com.papertrading.collector.application.kis.dto.WsHealthSnapshot
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -72,3 +72,5 @@ class KisWsConnectionRegistry {
         }
     }
 }
+
+

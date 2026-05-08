@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.infra.kis.source.rest
+package com.papertrading.collector.infra.kis.source.rest
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.papertrading.collector.infra.kis.KisProperties
@@ -78,4 +78,6 @@ private data class TokenResponse(
 	@JsonProperty("expires_in") val expiresIn: String?,
 	@JsonProperty("access_token_token_expired") val accessTokenTokenExpired: String?,
 )
+
+
 

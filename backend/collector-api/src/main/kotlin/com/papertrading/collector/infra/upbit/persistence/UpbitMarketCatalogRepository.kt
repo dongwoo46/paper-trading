@@ -1,6 +1,6 @@
 package com.papertrading.collector.infra.upbit.persistence
 
-import com.papertrading.collector.domain.upbit.UpbitMarketCatalog
+import com.papertrading.collector.domain.entity.upbit.UpbitMarketCatalog
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -47,3 +47,5 @@ interface UpbitMarketCatalogRepository : JpaRepository<UpbitMarketCatalog, Long>
 	@Query("UPDATE UpbitMarketCatalog u SET u.enabled = false WHERE u.market = :market AND u.enabled = true")
 	fun disableByMarket(@Param("market") market: String): Int
 }
+
+

@@ -1,6 +1,6 @@
-﻿package com.papertrading.collector.infra.kis.persistence
+package com.papertrading.collector.infra.kis.persistence
 
-import com.papertrading.collector.domain.kis.KrSymbol
+import com.papertrading.collector.domain.entity.kis.KrSymbol
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -26,4 +26,6 @@ interface KrSymbolRepository : JpaRepository<KrSymbol, Long> {
 		pageable: Pageable,
 	): List<KrSymbol>
 }
+
+
 

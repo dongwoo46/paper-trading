@@ -1,6 +1,6 @@
 package com.papertrading.collector.infra.market.persistence
 
-import com.papertrading.collector.domain.market.PykrxSymbolCatalog
+import com.papertrading.collector.domain.entity.market.PykrxSymbolCatalog
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -62,3 +62,5 @@ interface PykrxSymbolCatalogRepository : JpaRepository<PykrxSymbolCatalog, Long>
 		@Param("fetchedUntilDate") fetchedUntilDate: LocalDate,
 	): Int
 }
+
+

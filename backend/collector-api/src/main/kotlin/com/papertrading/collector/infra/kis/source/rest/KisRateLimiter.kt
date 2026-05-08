@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.infra.kis.source.rest
+package com.papertrading.collector.infra.kis.source.rest
 
 import com.papertrading.collector.infra.kis.KisProperties
 import org.springframework.stereotype.Component
@@ -41,5 +41,7 @@ class KisRateLimiter(
 		}
 	}
 }
+
+
 
 

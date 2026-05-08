@@ -2,7 +2,7 @@ package com.papertrading.collector.presentation.kis
 
 import com.papertrading.collector.application.kis.dto.WsHealthSnapshot
 import com.papertrading.collector.application.kis.service.KisWsHealthService
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
@@ -98,3 +98,5 @@ class KisWsHealthControllerTest {
             }
     }
 }
+
+

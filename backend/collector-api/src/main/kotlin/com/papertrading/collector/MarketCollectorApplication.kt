@@ -11,3 +11,5 @@ class MarketCollectorApplication
 fun main(args: Array<String>) {
 	runApplication<MarketCollectorApplication>(*args)
 }
+
+

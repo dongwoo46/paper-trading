@@ -4,13 +4,13 @@
 auto
 
 ## 상태
-idle
+in_progress
 
 ## 활성 Phase
-- 없음
+- collector-api/realtime-market-features | step 2/5 | branch: feature/collector-api-realtime-market-features | worktree: .worktrees/collector-api-realtime-market-features
 
 ## 마지막 액션
-2026-05-08: trading-api/position-trigger-exit phase completed (step 1~9 PASS path confirmed)
+2026-05-08: Step 1 (service-planner) completed — spec and step files generated
 
 ## 다음 액션
-idle 상태 — `docs/TODO.md`의 미완료 항목 중 다음 phase 선택 대기
+Step 2 (fullstack-dev) — realtime feature aggregation implementation (TDD)

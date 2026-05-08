@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.fred.service
 
-import com.papertrading.collector.domain.fred.FredSeriesCatalog
+import com.papertrading.collector.domain.entity.fred.FredSeriesCatalog
 import com.papertrading.collector.infra.fred.source.FredClient
 import com.papertrading.collector.infra.fred.persistence.FredSeriesCatalogRepository
 import org.springframework.data.domain.PageRequest
@@ -161,3 +161,5 @@ class FredSeriesCatalogService(
 		}
 	}
 }
+
+

@@ -138,3 +138,5 @@ class PykrxCatalogController(
 		return removeSelection(request)
 	}
 }
+
+

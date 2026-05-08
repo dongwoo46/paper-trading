@@ -4,7 +4,7 @@ import com.papertrading.collector.application.kis.dto.WsHealthSnapshot
 import com.papertrading.collector.application.kis.service.KisRestWatchlistService
 import com.papertrading.collector.application.kis.service.KisWsHealthService
 import com.papertrading.collector.application.kis.service.KisWsSubscriptionService
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import com.papertrading.collector.infra.kis.KisProperties
 import io.mockk.every
 import io.mockk.mockk
@@ -185,3 +185,5 @@ class SubscriptionStatusServiceTest {
         assertThat(report.modes[0].wsSymbols).containsExactly("000660", "005930", "035720")
     }
 }
+
+

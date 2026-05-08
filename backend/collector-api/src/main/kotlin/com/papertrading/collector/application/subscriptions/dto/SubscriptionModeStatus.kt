@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.subscriptions.dto
 
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import java.time.Instant
 
 data class SubscriptionModeStatus(
@@ -13,3 +13,5 @@ data class SubscriptionModeStatus(
     val wsSlotUsed: Int,
     val wsSlotMax: Int,
 )
+
+

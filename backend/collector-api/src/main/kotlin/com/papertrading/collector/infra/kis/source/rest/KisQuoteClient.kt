@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.infra.kis.source.rest
+package com.papertrading.collector.infra.kis.source.rest
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.papertrading.collector.infra.kis.KisProperties
@@ -44,4 +44,6 @@ class KisQuoteClient(
 			}
 	}
 }
+
+
 

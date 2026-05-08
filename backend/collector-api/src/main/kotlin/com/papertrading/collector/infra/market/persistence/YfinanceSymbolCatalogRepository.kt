@@ -1,6 +1,6 @@
 package com.papertrading.collector.infra.market.persistence
 
-import com.papertrading.collector.domain.market.YfinanceSymbolCatalog
+import com.papertrading.collector.domain.entity.market.YfinanceSymbolCatalog
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -62,3 +62,5 @@ interface YfinanceSymbolCatalogRepository : JpaRepository<YfinanceSymbolCatalog,
 		@Param("fetchedUntilDate") fetchedUntilDate: LocalDate,
 	): Int
 }
+
+

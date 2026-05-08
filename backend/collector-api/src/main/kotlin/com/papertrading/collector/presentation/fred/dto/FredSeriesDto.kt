@@ -1,6 +1,6 @@
 package com.papertrading.collector.presentation.fred.dto
 
-import com.papertrading.collector.domain.fred.FredSeriesCatalog
+import com.papertrading.collector.domain.entity.fred.FredSeriesCatalog
 
 data class FredSeriesResponse(
 	val seriesId: String,
@@ -33,4 +33,6 @@ fun FredSeriesCatalog.toResponse(): FredSeriesResponse {
 		isDefault = isDefault,
 	)
 }
+
+
 

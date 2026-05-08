@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.market.service
 
-import com.papertrading.collector.domain.market.YfinanceSymbolCatalog
+import com.papertrading.collector.domain.entity.market.YfinanceSymbolCatalog
 import com.papertrading.collector.infra.market.persistence.YfinanceSymbolCatalogRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -70,3 +70,5 @@ class YfinanceSymbolCatalogService(
 		}
 	}
 }
+
+

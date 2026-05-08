@@ -13,3 +13,5 @@ data class FredSeriesInfoResponse(
 	val observations: JsonNode?,
 )
 
+
+

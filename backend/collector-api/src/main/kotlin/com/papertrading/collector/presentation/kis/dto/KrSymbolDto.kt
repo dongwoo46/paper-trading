@@ -1,6 +1,6 @@
-﻿package com.papertrading.collector.presentation.kis.dto
+package com.papertrading.collector.presentation.kis.dto
 
-import com.papertrading.collector.domain.kis.KrSymbol
+import com.papertrading.collector.domain.entity.kis.KrSymbol
 
 data class KrSymbolResponse(
 	val symbol: String,
@@ -15,5 +15,7 @@ fun KrSymbol.toResponse(): KrSymbolResponse {
 		market = market,
 	)
 }
+
+
 
 

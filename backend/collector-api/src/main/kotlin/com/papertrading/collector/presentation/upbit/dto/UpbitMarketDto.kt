@@ -1,6 +1,6 @@
 package com.papertrading.collector.presentation.upbit.dto
 
-import com.papertrading.collector.domain.upbit.UpbitMarketCatalog
+import com.papertrading.collector.domain.entity.upbit.UpbitMarketCatalog
 
 data class UpbitMarketResponse(
 	val market: String,
@@ -29,4 +29,6 @@ fun UpbitMarketCatalog.toResponse(): UpbitMarketResponse {
 		isDefault = isDefault,
 	)
 }
+
+
 

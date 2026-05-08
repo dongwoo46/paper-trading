@@ -80,3 +80,5 @@ data class StrategySymbolsWriteRequest(
     val mode: String?,
     val symbol: String?,
 )
+
+

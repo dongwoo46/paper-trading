@@ -6,7 +6,7 @@ import com.papertrading.collector.application.kis.service.KisWsHealthService
 import com.papertrading.collector.application.kis.service.KisWsSubscriptionService
 import com.papertrading.collector.application.subscriptions.dto.SubscriptionModeStatus
 import com.papertrading.collector.application.subscriptions.dto.SubscriptionStatusReport
-import com.papertrading.collector.domain.kis.WsConnectionStatus
+import com.papertrading.collector.domain.enums.WsConnectionStatus
 import com.papertrading.collector.infra.kis.KisProperties
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -57,3 +57,5 @@ class SubscriptionStatusService(
         )
     }
 }
+
+

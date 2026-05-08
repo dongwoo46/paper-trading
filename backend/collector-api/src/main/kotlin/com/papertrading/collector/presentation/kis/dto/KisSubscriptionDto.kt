@@ -13,3 +13,4 @@ data class KisSubscriptionChangeResponse(
 	val maxRegistrations: Int,
 	val subscriptions: Map<String, List<String>>,
 )
+

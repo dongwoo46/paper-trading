@@ -16,3 +16,5 @@ class FredProperties {
 	var pollingRequestIntervalMillis: Long = 1_500
 	var pollingMaxRetries: Int = 3
 }
+
+

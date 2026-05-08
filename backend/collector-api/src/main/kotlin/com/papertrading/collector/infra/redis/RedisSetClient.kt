@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.infra.redis
+package com.papertrading.collector.infra.redis
 
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
@@ -32,4 +32,6 @@ class RedisSetClient(
 		return ops.size(key) ?: 0L
 	}
 }
+
+
 

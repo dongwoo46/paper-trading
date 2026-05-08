@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.domain.kis
+package com.papertrading.collector.domain.enums
 
 enum class SubscriptionChangeStatus {
 	ADDED,
@@ -9,5 +9,7 @@ enum class SubscriptionChangeStatus {
 	INVALID_SYMBOL,
 	LIMIT_EXCEEDED,
 }
+
+
 
 

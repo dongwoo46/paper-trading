@@ -1,6 +1,6 @@
 package com.papertrading.collector.infra.market.persistence
 
-import com.papertrading.collector.domain.market.MarketDailyOhlcv
+import com.papertrading.collector.domain.entity.market.MarketDailyOhlcv
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -43,3 +43,5 @@ interface MarketDailySymbolSummaryProjection {
 	fun getLatestTradeDate(): LocalDate
 	fun getTotalBars(): Long
 }
+
+

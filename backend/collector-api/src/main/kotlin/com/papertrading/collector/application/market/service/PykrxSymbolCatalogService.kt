@@ -1,6 +1,6 @@
 package com.papertrading.collector.application.market.service
 
-import com.papertrading.collector.domain.market.PykrxSymbolCatalog
+import com.papertrading.collector.domain.entity.market.PykrxSymbolCatalog
 import com.papertrading.collector.infra.market.persistence.PykrxSymbolCatalogRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.jdbc.core.JdbcTemplate
@@ -86,3 +86,5 @@ class PykrxSymbolCatalogService(
 		}
 	}
 }
+
+

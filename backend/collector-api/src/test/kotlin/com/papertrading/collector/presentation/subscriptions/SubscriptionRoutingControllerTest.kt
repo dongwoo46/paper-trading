@@ -132,3 +132,5 @@ class SubscriptionRoutingControllerTest {
             .andExpect(jsonPath("$.items[0]").value("035420"))
     }
 }
+
+

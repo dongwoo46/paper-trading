@@ -1,4 +1,4 @@
-﻿package com.papertrading.collector.infra.kis
+package com.papertrading.collector.infra.kis
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
@@ -70,4 +70,6 @@ class KisProperties {
 		return listOf(trId)
 	}
 }
+
+
 
