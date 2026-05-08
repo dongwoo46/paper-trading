@@ -152,6 +152,11 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 응답: startedAt/open/high/low/close/volume/tradeValue/vwap/tickCount
   - 정책: invalid interval/limit 400, 데이터 없음 404, 상한 limit 강제
 
+- [ ] 보조지표 계산/조회 API | project: collector-api | phase: market-indicators-api | priority: P1
+  - BB/RSI/MACD 서버 계산 및 조회 API 제공
+  - interval(1m/5m/10m/1d/1w), 기간(limit/from~to), 다중 indicator 파라미터 지원
+  - 차트용 응답 스키마 표준화(시점별 indicator 값, 결측 처리 규칙 포함)
+
 ### 완료
 - [x] KIS WebSocket 시세 수집 + Redis Pub/Sub 발행 (RawEventPipeline)
 - [x] FRED 거시지표 수집 및 조회
@@ -175,12 +180,17 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 매 거래일 장 마감 후 자동 수집 스케줄 (KST 17:00)
   - 수집 실패 시 알림 + 재시도 로직
 
-- [ ] yfinance 주봉 수집 및 저장 | project: quant-worker | phase: weekly-ohlcv | priority: P1
+- [x] yfinance 주봉 수집 및 저장 | project: quant-worker | phase: weekly-ohlcv | priority: P1 | done: 2026-05-08 | pr: #TBD
   - yfinance `interval="1wk"` 주봉 데이터 수집 (ticker.history)
   - market_weekly_ohlcv 테이블 설계 및 SQLAlchemy 모델 추가
   - Flyway 마이그레이션 또는 collector-api DB 적재 방식 결정 (일봉과 동일 패턴)
   - POST /collect/weekly FastAPI 엔드포인트 추가
   - GET /market/weekly/{symbol} 조회 API 추가
+
+- [ ] 국내 수급 데이터 수집 파이프라인 (외국인/기관/개인) | project: quant-worker | phase: investor-flow-pipeline | priority: P1
+  - 외국인/기관/개인 순매수(일자별) 수집기 추가
+  - 수급 데이터 저장 모델/리포지토리 및 배치 적재 구현
+  - collector-api 조회 API에서 사용할 수 있도록 적재 계약 정리
 
 ### 완료
 - [x] pykrx 일봉 수집기 (pykrx_daily_collector.py)
@@ -233,10 +243,15 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 운영 액션: 수동 등록·해제, 즐겨찾기 관리, 전략 우선 라우팅 반영 상태 확인
   - 선행조건: collector-api 외부 노출 API 스펙 확정(현재 내부 API/기존 KIS 구독 API와 경계 정리 필요)
 
-- [ ] 분봉 히스토리 차트 UI | project: front | phase: market-bars-chart-ui | priority: P1
+- [x] 분봉 히스토리 차트 UI | project: front | phase: market-bars-chart-ui | priority: P1 | done: 2026-05-08 | pr: #25
   - collector-api `GET /api/market/bars/{symbol}?interval=1m|5m|10m&limit={n}` 연동
   - interval 탭 전환(1m/5m/10m), limit 슬라이더 또는 선택
   - OHLCV 바(캔들스틱 또는 라인) 차트 렌더링
+
+- [ ] 통합 차트 고도화 (거래량/보조지표/수급) | project: front | phase: market-unified-indicators-ui | priority: P1
+  - 거래량 패널, 볼린저 밴드(BB), RSI, MACD 표시 및 토글 UI 추가
+  - 포인트(크로스헤어) 기준 OHLCV + 보조지표 값 동시 표시
+  - 외국인/기관/개인 순매수 시계열 패널 추가 (collector-api 수급 API 연동)
 
 ### 완료
 - [x] 실시간 시세 페이지 (RealtimePage — KIS WebSocket 연동)

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BookOpen, ChartLine, ClipboardList, Globe, History, Home, ReceiptText, TrendingUp, Wallet, X, Zap } from "lucide-react";
+import { BookOpen, CandlestickChart, ChartLine, ClipboardList, Globe, History, Home, ReceiptText, TrendingUp, Wallet, X, Zap } from "lucide-react";
 
 export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boolean) => void }) {
   const closeOnMobile = () => {
@@ -40,6 +40,10 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boo
           <NavLink to="/macro" className="nav-link" onClick={closeOnMobile}>
             <Globe size={18} />
             <span>거시경제 지표</span>
+          </NavLink>
+          <NavLink to="/market-unified" className="nav-link" onClick={closeOnMobile}>
+            <CandlestickChart size={18} />
+            <span>통합 시세 차트</span>
           </NavLink>
           <NavLink to="/orders" className="nav-link" onClick={closeOnMobile}>
             <ClipboardList size={18} />

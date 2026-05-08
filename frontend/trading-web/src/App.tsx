@@ -4,6 +4,7 @@ import { AccountDashboardPage } from "./pages/account/ui/AccountDashboardPage";
 import { HistoricalPage } from "./pages/historical/ui/HistoricalPage";
 import { HomePage } from "./pages/home/ui/HomePage";
 import { MacroPage } from "./pages/macro/ui/MacroPage";
+import { MarketUnifiedChartPage } from "./pages/market-unified/ui/MarketUnifiedChartPage";
 import { OrderPage } from "./pages/order/ui/OrderPage";
 import { PortfolioChartPage } from "./pages/portfolio/ui/PortfolioChartPage";
 import { RealtimePage } from "./pages/realtime/ui/RealtimePage";
@@ -43,6 +44,8 @@ function App() {
         return "과거 OHLCV 수집";
       case "/macro":
         return "거시경제 데이터";
+      case "/market-unified":
+        return "통합 시세 차트";
       case "/account":
         return "계좌·포지션";
       case "/orders":
@@ -73,6 +76,7 @@ function App() {
             <Route path="/realtime" element={<RealtimePage />} />
             <Route path="/historical" element={<HistoricalPage />} />
             <Route path="/macro" element={<MacroPage />} />
+            <Route path="/market-unified" element={<MarketUnifiedChartPage />} />
             <Route path="/account" element={<AccountDashboardPage />} />
             <Route path="/orders" element={<OrderPage />} />
             <Route path="/portfolio" element={<PortfolioChartPage />} />

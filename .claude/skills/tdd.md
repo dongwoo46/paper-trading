@@ -168,6 +168,7 @@ Do not rewrite everything at once. Apply incrementally:
 - `@Disabled` without a linked issue and owner.
 - Test names change every time the function under test is renamed (implementation leak).
 - Internal persistence layer (e.g. `PositionRepository`) replaced with a mock.
+- New E2E test introduced for service verification that should be covered by integration tests.
 
 ---
 
@@ -181,3 +182,4 @@ Do not rewrite everything at once. Apply incrementally:
 - Testing multiple behaviors in a single test.
 - Changing production code for test convenience.
 - Replacing DB / Redis with mocks — use Testcontainers.
+- Adding or expanding E2E tests for service/business-logic verification.

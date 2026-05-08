@@ -6,6 +6,7 @@ Role: Code Reviewer — Senior Code Reviewer
 ## Responsibilities
 - Understand the change scope via `git diff`.
 - Review code quality, security, performance, and quant logic for mathematical errors.
+- Enforce test policy: service/application business logic must be verified by integration tests, not E2E additions.
 - Record results in `index.json` step result.
 - Output: 🔴 Must fix / 🟡 Recommended improvement / 🟢 Confirmed OK
 

@@ -5,13 +5,16 @@ import contextlib
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from src.application.daily_fetch_service import DailyFetchOptions, execute
+from src.application.daily_fetch_service import load_db_config_from_env
+from src.application.weekly_fetch_service import WeeklyFetchOptions, execute as execute_weekly
+from src.catalog.postgres_symbol_catalog import connect
 
 
 class CollectDailyRequest(BaseModel):
@@ -24,6 +27,24 @@ class CollectDailyRequest(BaseModel):
 
 
 class CollectDailyResponse(BaseModel):
+    provider: str
+    symbols: int
+    success_symbols: int
+    failed_symbols: int
+    total_rows_inserted: int
+    start: str
+    end: str
+
+
+class CollectWeeklyRequest(BaseModel):
+    provider: Literal["yfinance", "all"] = "yfinance"
+    start: str = "2010-01-01"
+    end: str = Field(default_factory=lambda: datetime.now().date().isoformat())
+    only_default: bool = False
+    auto_adjust: bool = False
+
+
+class CollectWeeklyResponse(BaseModel):
     provider: str
     symbols: int
     success_symbols: int
@@ -83,6 +104,55 @@ def collect_daily(request: CollectDailyRequest) -> CollectDailyResponse:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     return CollectDailyResponse(**result)
+
+
+@app.post("/collect/weekly", response_model=CollectWeeklyResponse)
+def collect_weekly(request: CollectWeeklyRequest) -> CollectWeeklyResponse:
+    try:
+        result = execute_weekly(
+            WeeklyFetchOptions(
+                provider=request.provider,
+                start=request.start,
+                end=request.end,
+                only_default=request.only_default,
+                auto_adjust=request.auto_adjust,
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return CollectWeeklyResponse(**result)
+
+
+@app.get("/market/weekly/{symbol}")
+def market_weekly(
+    symbol: str,
+    source: str = "yfinance",
+    from_date: date | None = Query(default=None, alias="from"),
+    to: date | None = None,
+    limit: int = 260,
+) -> list[dict[str, object]]:
+    trimmed_symbol = symbol.strip().upper()
+    if not trimmed_symbol:
+        raise HTTPException(status_code=400, detail="symbol must not be blank")
+
+    safe_to = to or datetime.now().date()
+    safe_from = from_date or (safe_to - timedelta(days=365))
+    if safe_from > safe_to:
+        raise HTTPException(status_code=400, detail="from must be <= to")
+
+    safe_limit = max(1, min(520, limit))
+    try:
+        return fetch_market_weekly_bars(
+            source=source.lower(),
+            symbol=trimmed_symbol,
+            from_date=safe_from,
+            to_date=safe_to,
+            limit=safe_limit,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.on_event("startup")
@@ -174,3 +244,44 @@ def _configure_logging() -> None:
     logging.getLogger("src").setLevel(logging.INFO)
     logging.getLogger("src.interfaces.api.app").setLevel(logging.INFO)
     logging.getLogger("src.application.daily_fetch_service").setLevel(logging.INFO)
+
+
+def fetch_market_weekly_bars(
+    source: str,
+    symbol: str,
+    from_date: date,
+    to_date: date,
+    limit: int,
+) -> list[dict[str, object]]:
+    db = load_db_config_from_env()
+    query = (
+        "SELECT source, symbol, market, trade_date, open_price, high_price, low_price, close_price, "
+        'volume, adj_close_price, provider, "interval", is_adjusted, collected_at '
+        "FROM market_weekly_ohlcv "
+        "WHERE source = %s AND symbol = %s AND trade_date BETWEEN %s AND %s "
+        "ORDER BY trade_date ASC "
+        "LIMIT %s"
+    )
+    with connect(db) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query, [source, symbol, from_date, to_date, limit])
+            rows = cursor.fetchall()
+    return [
+        {
+            "source": row[0],
+            "symbol": row[1],
+            "market": row[2],
+            "trade_date": row[3],
+            "open_price": row[4],
+            "high_price": row[5],
+            "low_price": row[6],
+            "close_price": row[7],
+            "volume": row[8],
+            "adj_close_price": row[9],
+            "provider": row[10],
+            "interval": row[11],
+            "is_adjusted": row[12],
+            "collected_at": row[13],
+        }
+        for row in rows
+    ]

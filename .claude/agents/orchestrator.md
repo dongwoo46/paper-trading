@@ -574,6 +574,7 @@ Do not record simple feature bugs or one-off mistakes.
 - `in_progress`: read current step file and invoke subagent.
 - `paused`: resume from the point of interruption (confirm with user first).
 - `blocked`: report blocker to user and wait for instructions.
+- `needs_input`: write `docs/state.md` with `needs_input:` options before asking, then clear it after the user responds.
 
 ## Mode Switching
 

@@ -7,10 +7,10 @@ auto
 idle
 
 ## 활성 Phase
-없음 — market-bars-history-api 완료
+- 없음
 
 ## 마지막 액션
-2026-05-08: market-bars-history-api 완료 — GET /api/market/bars/{symbol}?interval=1m|5m|10m&limit={n} 구현, 13/13 테스트 통과
+2026-05-08: market-bars-chart-ui Step 7 마감 PASS (build/test 검증, summary 작성, PR #25 생성)
 
 ## 다음 액션
-/orchestrate 실행 시 docs/TODO.md에서 다음 미완료 항목 선택
+docs/TODO.md 미완료 항목 중 다음 phase 선택

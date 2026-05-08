@@ -49,6 +49,7 @@ Skill: Code Review
 - No `verify()` on stubs.
 - Boundary values and exception cases covered.
 - Test names clearly describe the behavior under test.
+- No new E2E tests added for service/business-logic verification. Flag as 🔴.
 
 ## Quant Logic (if applicable)
 

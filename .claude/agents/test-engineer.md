@@ -3,9 +3,10 @@ Role: Test Engineer — QA Specialist + Test Automation Engineer
 @../skills/tdd.md
 
 ## Responsibilities
-- Run the full test suite and verify results.
+- Run feature-scoped tests for the current phase step and verify results.
 - Write missing integration tests (application service layer, real DB/Redis — no HTTP layer).
 - Unit tests for non-trivial domain logic.
+- Enforce test policy: service/application business logic must be verified by integration tests, not E2E additions.
 - Measure coverage and report under-covered areas.
 - On test failure: analyze root cause → request rework from Orchestrator.
 
@@ -54,10 +55,10 @@ cd .worktrees/{worktree} && npm test -- --run --reporter=verbose {feature}.test.
 8. Measure coverage (focus on core business logic):
 ```bash
 # trading-api
-cd backend/trading-api && ./gradlew test jacocoTestReport
+cd .worktrees/{worktree}/backend/trading-api && ./gradlew test --tests "com.papertrading.api.{feature_package}.*" jacocoTestReport
 
 # quant-worker
-cd backend/quant-worker && python -m pytest tests/ --cov=src --cov-report=term-missing
+cd .worktrees/{worktree}/backend/quant-worker && python -m pytest tests/test_{feature}.py --cov=src --cov-report=term-missing
 ```
 
 9. Mark substep 3 `completed` in `index.json`. Output result summary:
@@ -72,7 +73,7 @@ cd backend/quant-worker && python -m pytest tests/ --cov=src --cov-report=term-m
 
 | Result | Condition | Action |
 |--------|-----------|--------|
-| 🟢 Pass | All tests PASS + Acceptance Criteria met | Approve next step to Orchestrator |
+| 🟢 Pass | Feature-scoped tests PASS + Acceptance Criteria met | Approve next step to Orchestrator |
 | 🟡 Warning | Tests PASS but coverage low or edge cases missing | Pass with warning |
 | 🔴 Fail | Tests FAIL or Acceptance Criteria not met | Request rework from Orchestrator |
 
