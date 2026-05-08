@@ -133,7 +133,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 범위: favorites CRUD, strategy-priority symbol CRUD, routing status 조회 API
   - 계약 고정: request/response schema, error code, idempotency, mode/channel validation
 
-- [ ] 실시간 전략 판단용 market feature 생성 | project: collector-api | phase: realtime-market-features | priority: P1
+- [x] 실시간 전략 판단용 market feature 생성 | project: collector-api | phase: realtime-market-features | priority: P1 | done: 2026-05-08 | pr: #TBD
   - 목적: WebSocket raw tick을 Redis에 장시간 누적하지 않고 전략이 바로 읽을 수 있는 feature snapshot 제공
   - Redis latest 유지: `latest:{symbol}` 현재가/호가 최신 상태 계속 갱신
   - Redis key 설계: `agg:1m:{symbol}:current`, `bars:1m:{symbol}`, `feature:{symbol}:1m`, `feature:{symbol}:5m`, `feature:{symbol}:10m`
@@ -145,6 +145,12 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - `bars:1m:{symbol}`는 최근 필요 구간만 유지하도록 maxlen/TTL 정책 적용
   - raw tick은 Redis에 장기 보관하지 않으며, 필요 시 최근 30~60초 디버깅/장애 복구용 ring buffer만 둠
   - 원본 tick 장기 저장이 필요해지면 Redis가 아닌 별도 append-friendly 저장소(Kafka/ClickHouse/TimescaleDB 등)로 분리 검토
+
+- [ ] 차트용 1m/5m/10m 바 히스토리 조회 API | project: collector-api | phase: market-bars-history-api | priority: P1
+  - 목적: frontend가 Redis 직접 접근 없이 시계열 바(1분/5분/10분)를 API로 조회
+  - endpoint 예시: `GET /api/market/bars/{symbol}?interval=1m|5m|10m&limit={n}`
+  - 응답: startedAt/open/high/low/close/volume/tradeValue/vwap/tickCount
+  - 정책: invalid interval/limit 400, 데이터 없음 404, 상한 limit 강제
 
 ### 완료
 - [x] KIS WebSocket 시세 수집 + Redis Pub/Sub 발행 (RawEventPipeline)
