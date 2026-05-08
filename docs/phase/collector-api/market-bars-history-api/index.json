@@ -1,0 +1,13 @@
+{
+  "phase": "market-bars-history-api",
+  "project": "collector-api",
+  "priority": "P1",
+  "status": "in-progress",
+  "startedAt": "2026-05-08",
+  "steps": [
+    { "id": 1, "title": "도메인 모델 및 Redis 읽기 서비스 구현", "status": "done" },
+    { "id": 2, "title": "API 컨트롤러 및 DTO 구현", "status": "done" },
+    { "id": 3, "title": "테스트 작성 및 빌드 검증", "status": "in-progress" },
+    { "id": 4, "title": "문서 완료 처리", "status": "todo" }
+  ]
+}

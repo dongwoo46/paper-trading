@@ -1,16 +1,19 @@
-﻿# Orchestrator State
+# Orchestrator State
 
 ## 모드
 auto
 
 ## 상태
-idle
+active
 
 ## 활성 Phase
-- 없음
+- project: collector-api
+- phase: market-bars-history-api
+- step: 3
+- status: in-progress
 
 ## 마지막 액션
-2026-05-08: collector-api/realtime-market-features phase completed (step 1~7 PASS, rework 포함)
+2026-05-08: market-bars-history-api phase 시작 — 차트용 1m/5m/10m 바 히스토리 조회 API
 
 ## 다음 액션
-idle 상태 — `docs/TODO.md`의 미완료 항목 중 다음 phase 선택 대기
+/plan collector-api/market-bars-history-api 설계 완료 후 /build 위임
