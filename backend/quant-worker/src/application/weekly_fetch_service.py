@@ -6,6 +6,7 @@ from datetime import date, datetime
 
 from src.application.daily_fetch_service import load_db_config_from_env
 from src.catalog.postgres_symbol_catalog import PostgresSymbolCatalogRepository
+from src.collectors.pykrx_weekly_collector import PykrxWeeklyCollector
 from src.collectors.yfinance_weekly_collector import YFinanceWeeklyCollector
 from src.jobs.catalog_weekly_fetch_job import CatalogWeeklyFetchJob, FetchResult, FetchWindow
 from src.repositories.market_weekly_ohlcv_repository import MarketWeeklyOhlcvRepository
@@ -15,28 +16,42 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class WeeklyFetchOptions:
-    provider: str = "yfinance"
+    provider: str = "all"
     start: str = "2010-01-01"
     end: str = field(default_factory=lambda: datetime.now().date().isoformat())
     only_default: bool = False
     auto_adjust: bool = False
+    adjusted: bool = False
 
 
 def execute(options: WeeklyFetchOptions) -> dict[str, object]:
     window = FetchWindow(start_date=date.fromisoformat(options.start), end_date=date.fromisoformat(options.end))
     if window.start_date > window.end_date:
         raise ValueError("start date must be <= end date")
-    if options.provider not in ("yfinance", "all"):
-        raise ValueError("provider must be yfinance or all")
+    if options.provider not in ("yfinance", "pykrx", "all"):
+        raise ValueError("provider must be yfinance, pykrx, or all")
 
     db_config = load_db_config_from_env()
     repository = PostgresSymbolCatalogRepository(db_config)
     ohlcv_repository = MarketWeeklyOhlcvRepository(db_config)
-    job = CatalogWeeklyFetchJob(yfinance_collector=YFinanceWeeklyCollector(), ohlcv_repository=ohlcv_repository)
+    job = CatalogWeeklyFetchJob(
+        yfinance_collector=YFinanceWeeklyCollector(),
+        pykrx_collector=PykrxWeeklyCollector(),
+        ohlcv_repository=ohlcv_repository,
+    )
 
-    symbols = repository.list_symbols(provider="yfinance", only_default=options.only_default)
-    results = job.run_for_yfinance(symbols=symbols, window=window, auto_adjust=options.auto_adjust)
-    _sync_collection_status(repository, results)
+    results: list[FetchResult] = []
+    if options.provider in ("yfinance", "all"):
+        symbols = repository.list_symbols(provider="yfinance", only_default=options.only_default)
+        yfinance_results = job.run_for_yfinance(symbols=symbols, window=window, auto_adjust=options.auto_adjust)
+        results.extend(yfinance_results)
+        _sync_collection_status(repository, yfinance_results)
+
+    if options.provider in ("pykrx", "all"):
+        symbols = repository.list_symbols(provider="pykrx", only_default=options.only_default)
+        pykrx_results = job.run_for_pykrx(symbols=symbols, window=window, adjusted=options.adjusted)
+        results.extend(pykrx_results)
+        _sync_collection_status(repository, pykrx_results)
 
     return {
         "provider": options.provider,

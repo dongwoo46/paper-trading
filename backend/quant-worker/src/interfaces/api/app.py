@@ -37,11 +37,12 @@ class CollectDailyResponse(BaseModel):
 
 
 class CollectWeeklyRequest(BaseModel):
-    provider: Literal["yfinance", "all"] = "yfinance"
+    provider: Literal["yfinance", "pykrx", "all"] = "all"
     start: str = "2010-01-01"
     end: str = Field(default_factory=lambda: datetime.now().date().isoformat())
     only_default: bool = False
     auto_adjust: bool = False
+    adjusted: bool = False
 
 
 class CollectWeeklyResponse(BaseModel):
@@ -116,6 +117,7 @@ def collect_weekly(request: CollectWeeklyRequest) -> CollectWeeklyResponse:
                 end=request.end,
                 only_default=request.only_default,
                 auto_adjust=request.auto_adjust,
+                adjusted=request.adjusted,
             )
         )
     except ValueError as exc:

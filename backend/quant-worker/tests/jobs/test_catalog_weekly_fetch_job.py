@@ -41,8 +41,13 @@ def _frame() -> pd.DataFrame:
 
 def test_run_for_yfinance_skips_when_window_already_collected():
     collector = MagicMock()
+    pykrx_collector = MagicMock()
     repository = MagicMock()
-    job = CatalogWeeklyFetchJob(yfinance_collector=collector, ohlcv_repository=repository)
+    job = CatalogWeeklyFetchJob(
+        yfinance_collector=collector,
+        pykrx_collector=pykrx_collector,
+        ohlcv_repository=repository,
+    )
     window = FetchWindow(start_date=date(2024, 1, 1), end_date=date(2024, 1, 31))
 
     results = job.run_for_yfinance([_symbol(fetched_until_date=date(2024, 1, 31))], window, auto_adjust=False)
@@ -54,10 +59,15 @@ def test_run_for_yfinance_skips_when_window_already_collected():
 
 def test_run_for_yfinance_collects_and_upserts():
     collector = MagicMock()
+    pykrx_collector = MagicMock()
     collector.fetch.return_value = _frame()
     repository = MagicMock()
     repository.upsert_weekly_rows.return_value = 1
-    job = CatalogWeeklyFetchJob(yfinance_collector=collector, ohlcv_repository=repository)
+    job = CatalogWeeklyFetchJob(
+        yfinance_collector=collector,
+        pykrx_collector=pykrx_collector,
+        ohlcv_repository=repository,
+    )
     window = FetchWindow(start_date=date(2024, 1, 1), end_date=date(2024, 1, 31))
 
     results = job.run_for_yfinance([_symbol()], window, auto_adjust=True)
@@ -66,3 +76,32 @@ def test_run_for_yfinance_collects_and_upserts():
     assert results[0].rows_inserted == 1
     repository.upsert_weekly_rows.assert_called_once()
 
+
+def test_run_for_pykrx_collects_and_upserts():
+    yfinance_collector = MagicMock()
+    pykrx_collector = MagicMock()
+    pykrx_collector.fetch.return_value = _frame().assign(source="pykrx", symbol="005930")
+    repository = MagicMock()
+    repository.upsert_weekly_rows.return_value = 1
+    job = CatalogWeeklyFetchJob(
+        yfinance_collector=yfinance_collector,
+        pykrx_collector=pykrx_collector,
+        ohlcv_repository=repository,
+    )
+    window = FetchWindow(start_date=date(2024, 1, 1), end_date=date(2024, 1, 31))
+    symbol = CatalogSymbol(
+        symbol="005930",
+        name="삼성전자",
+        market="KOSPI",
+        enabled=True,
+        is_default=True,
+        fetched_until_date=None,
+        last_collected_at=None,
+    )
+
+    results = job.run_for_pykrx([symbol], window, adjusted=True)
+
+    assert results[0].success is True
+    assert results[0].rows_inserted == 1
+    assert results[0].provider == "pykrx"
+    repository.upsert_weekly_rows.assert_called_once()

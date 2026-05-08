@@ -6,6 +6,10 @@ from datetime import date, timedelta
 import pandas as pd
 
 from src.catalog.models import CatalogSymbol
+from src.collectors.pykrx_weekly_collector import (
+    PykrxWeeklyCollector,
+    WeeklyCollectRequest as PykrxCollectRequest,
+)
 from src.collectors.yfinance_weekly_collector import (
     WeeklyCollectRequest as YFinanceCollectRequest,
     YFinanceWeeklyCollector,
@@ -39,9 +43,11 @@ class CatalogWeeklyFetchJob:
     def __init__(
         self,
         yfinance_collector: YFinanceWeeklyCollector,
+        pykrx_collector: PykrxWeeklyCollector,
         ohlcv_repository: MarketWeeklyOhlcvRepository,
     ) -> None:
         self._yfinance_collector = yfinance_collector
+        self._pykrx_collector = pykrx_collector
         self._ohlcv_repository = ohlcv_repository
 
     def run_for_yfinance(
@@ -104,6 +110,78 @@ class CatalogWeeklyFetchJob:
                 results.append(
                     FetchResult(
                         provider="yfinance",
+                        symbol=request.symbol,
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=None,
+                        rows_inserted=0,
+                        skipped=False,
+                        success=False,
+                        error=str(exc),
+                    )
+                )
+        return results
+
+    def run_for_pykrx(
+        self,
+        symbols: list[CatalogSymbol],
+        window: FetchWindow,
+        adjusted: bool,
+    ) -> list[FetchResult]:
+        results: list[FetchResult] = []
+        for item in symbols:
+            effective_start = self._effective_start(item, window)
+            if effective_start > window.end_date:
+                results.append(
+                    FetchResult(
+                        provider="pykrx",
+                        symbol=item.symbol.upper(),
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=None,
+                        rows_inserted=0,
+                        skipped=True,
+                        success=True,
+                        error=None,
+                    )
+                )
+                continue
+            request = PykrxCollectRequest(
+                symbol=item.symbol.upper(),
+                start_date=effective_start,
+                end_date=window.end_date,
+                adjusted=adjusted,
+            )
+            try:
+                frame = self._pykrx_collector.fetch(request)
+                inserted = self._ohlcv_repository.upsert_weekly_rows(
+                    frame,
+                    OhlcvUpsertContext(
+                        source="pykrx",
+                        symbol=request.symbol,
+                        market=item.market,
+                        provider="pykrx",
+                        interval="1wk",
+                        is_adjusted=adjusted,
+                    ),
+                )
+                results.append(
+                    FetchResult(
+                        provider="pykrx",
+                        symbol=request.symbol,
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=_max_trade_date(frame),
+                        rows_inserted=inserted,
+                        skipped=False,
+                        success=True,
+                        error=None,
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001
+                results.append(
+                    FetchResult(
+                        provider="pykrx",
                         symbol=request.symbol,
                         requested_start=effective_start,
                         requested_end=window.end_date,

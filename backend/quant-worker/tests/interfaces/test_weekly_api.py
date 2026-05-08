@@ -11,7 +11,7 @@ def test_collect_weekly_route_exists():
     client = TestClient(app)
     with patch("src.interfaces.api.app.execute_weekly") as mock_execute:
         mock_execute.return_value = {
-            "provider": "yfinance",
+            "provider": "all",
             "symbols": 0,
             "success_symbols": 0,
             "failed_symbols": 0,
@@ -19,9 +19,9 @@ def test_collect_weekly_route_exists():
             "start": "2024-01-01",
             "end": "2024-01-31",
         }
-        response = client.post("/collect/weekly", json={"provider": "yfinance", "start": "2024-01-01", "end": "2024-01-31"})
+        response = client.post("/collect/weekly", json={"provider": "all", "start": "2024-01-01", "end": "2024-01-31"})
     assert response.status_code == 200
-    assert response.json()["provider"] == "yfinance"
+    assert response.json()["provider"] == "all"
 
 
 def test_market_weekly_symbol_route_exists():
@@ -35,7 +35,7 @@ def test_market_weekly_symbol_route_exists():
 
 def test_collect_weekly_rejects_invalid_date_window():
     client = TestClient(app)
-    response = client.post("/collect/weekly", json={"provider": "yfinance", "start": "2024-02-01", "end": "2024-01-01"})
+    response = client.post("/collect/weekly", json={"provider": "pykrx", "start": "2024-02-01", "end": "2024-01-01"})
     assert response.status_code == 400
 
 
