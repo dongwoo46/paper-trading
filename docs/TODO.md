@@ -146,7 +146,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - raw tick은 Redis에 장기 보관하지 않으며, 필요 시 최근 30~60초 디버깅/장애 복구용 ring buffer만 둠
   - 원본 tick 장기 저장이 필요해지면 Redis가 아닌 별도 append-friendly 저장소(Kafka/ClickHouse/TimescaleDB 등)로 분리 검토
 
-- [ ] 차트용 1m/5m/10m 바 히스토리 조회 API | project: collector-api | phase: market-bars-history-api | priority: P1
+- [x] 차트용 1m/5m/10m 바 히스토리 조회 API | project: collector-api | phase: market-bars-history-api | priority: P1 | done: 2026-05-08 | pr: #TBD
   - 목적: frontend가 Redis 직접 접근 없이 시계열 바(1분/5분/10분)를 API로 조회
   - endpoint 예시: `GET /api/market/bars/{symbol}?interval=1m|5m|10m&limit={n}`
   - 응답: startedAt/open/high/low/close/volume/tradeValue/vwap/tickCount

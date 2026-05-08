@@ -4,16 +4,13 @@
 auto
 
 ## 상태
-active
+idle
 
 ## 활성 Phase
-- project: collector-api
-- phase: market-bars-history-api
-- step: 3
-- status: in-progress
+없음 — market-bars-history-api 완료
 
 ## 마지막 액션
-2026-05-08: market-bars-history-api phase 시작 — 차트용 1m/5m/10m 바 히스토리 조회 API
+2026-05-08: market-bars-history-api 완료 — GET /api/market/bars/{symbol}?interval=1m|5m|10m&limit={n} 구현, 13/13 테스트 통과
 
 ## 다음 액션
-/plan collector-api/market-bars-history-api 설계 완료 후 /build 위임
+/orchestrate 실행 시 docs/TODO.md에서 다음 미완료 항목 선택
