@@ -9,15 +9,26 @@ import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.position.PositionExitTrigger
-import com.papertrading.api.domain.position.PositionExitTriggerRepository
+import com.querydsl.jpa.impl.JPAQueryFactory
+import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.test.context.ActiveProfiles
+import org.hibernate.exception.ConstraintViolationException
 import java.math.BigDecimal
 
 @DataJpaTest
+@ActiveProfiles("test")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(ExitTriggerPersistenceConstraintTest.QuerydslTestConfig::class)
 class ExitTriggerPersistenceConstraintTest {
     @Autowired
     lateinit var accountRepository: AccountRepository
@@ -26,16 +37,16 @@ class ExitTriggerPersistenceConstraintTest {
     lateinit var orderRepository: OrderRepository
 
     @Autowired
-    lateinit var positionExitTriggerRepository: PositionExitTriggerRepository
+    lateinit var entityManager: TestEntityManager
 
     @Test
     fun `position_id unique 제약을 위반하면 예외`() {
         val first = PositionExitTrigger.create(9001L, 1001L, "005930", true, BigDecimal("3"), BigDecimal("7"))
         val second = PositionExitTrigger.create(9001L, 1002L, "005930", true, BigDecimal("4"), BigDecimal("8"))
-        positionExitTriggerRepository.saveAndFlush(first)
+        entityManager.persistAndFlush(first)
 
-        assertThrows(DataIntegrityViolationException::class.java) {
-            positionExitTriggerRepository.saveAndFlush(second)
+        assertThrows(ConstraintViolationException::class.java) {
+            entityManager.persistAndFlush(second)
         }
     }
 
@@ -72,5 +83,11 @@ class ExitTriggerPersistenceConstraintTest {
         assertThrows(DataIntegrityViolationException::class.java) {
             orderRepository.saveAndFlush(second)
         }
+    }
+
+    @TestConfiguration
+    class QuerydslTestConfig {
+        @Bean
+        fun jpaQueryFactory(entityManager: EntityManager): JPAQueryFactory = JPAQueryFactory(entityManager)
     }
 }

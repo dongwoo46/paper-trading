@@ -1,6 +1,8 @@
 package com.papertrading.api.application.order
 
 import com.papertrading.api.application.order.command.PlaceOrderCommand
+import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.common.exception.QuoteUnavailableException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
@@ -96,7 +98,7 @@ class OrderCommandServiceTest {
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-2") } returns null
         every { marketQuotePort.getQuote("005930") } returns null
 
-        assertThrows<IllegalStateException> {
+        assertThrows<QuoteUnavailableException> {
             service.placeOrder(1L, PlaceOrderCommand(
                 ticker = "005930", marketType = MarketType.KOSPI,
                 orderType = OrderType.MARKET, orderSide = OrderSide.BUY,
@@ -113,7 +115,7 @@ class OrderCommandServiceTest {
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-3") } returns null
         every { positionRepository.findByAccountIdAndTickerWithLock(1L, "005930") } returns Optional.empty()
 
-        assertThrows<IllegalStateException> {
+        assertThrows<PositionNotFoundException> {
             service.placeOrder(1L, PlaceOrderCommand(
                 ticker = "005930", marketType = MarketType.KOSPI,
                 orderType = OrderType.LIMIT, orderSide = OrderSide.SELL,

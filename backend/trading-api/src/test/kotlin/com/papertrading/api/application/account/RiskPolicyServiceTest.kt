@@ -1,6 +1,7 @@
 package com.papertrading.api.application.account
 
 import com.papertrading.api.application.account.command.UpsertRiskPolicyCommand
+import com.papertrading.api.common.exception.NotFoundException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.Account
@@ -82,7 +83,7 @@ class RiskPolicyServiceTest {
         every { riskPolicyRepository.findByAccountIdAndIsActiveTrue(99L) } returns Optional.empty()
 
         assertThatThrownBy { service.getActiveRiskPolicy(99L) }
-            .isInstanceOf(NoSuchElementException::class.java)
+            .isInstanceOf(NotFoundException::class.java)
     }
 
     @Test

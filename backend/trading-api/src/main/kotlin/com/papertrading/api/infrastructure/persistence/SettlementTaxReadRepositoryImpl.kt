@@ -3,6 +3,7 @@
 import com.papertrading.api.application.portfolio.tax.SettlementTaxAggregate
 import com.papertrading.api.application.portfolio.tax.SettlementTaxReadRepository
 import com.papertrading.api.common.exception.UnsupportedSettlementCurrencyException
+import com.papertrading.api.domain.enums.TradingMode
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
@@ -19,12 +20,14 @@ class SettlementTaxReadRepositoryImpl(
             SELECT COUNT(DISTINCT s.currency)
             FROM Settlement s
             WHERE s.account.id = :accountId
+              AND s.account.tradingMode = :tradingMode
               AND s.settledAt >= :yearStart
               AND s.settledAt < :yearEnd
             """.trimIndent(),
             java.lang.Long::class.java
         )
             .setParameter("accountId", accountId)
+            .setParameter("tradingMode", TradingMode.LOCAL)
             .setParameter("yearStart", yearStart)
             .setParameter("yearEnd", yearEnd)
             .singleResult
@@ -42,12 +45,14 @@ class SettlementTaxReadRepositoryImpl(
                    COALESCE(MIN(s.currency), 'KRW')
             FROM Settlement s
             WHERE s.account.id = :accountId
+              AND s.account.tradingMode = :tradingMode
               AND s.settledAt >= :yearStart
               AND s.settledAt < :yearEnd
             """.trimIndent(),
             Array<Any>::class.java
         )
             .setParameter("accountId", accountId)
+            .setParameter("tradingMode", TradingMode.LOCAL)
             .setParameter("yearStart", yearStart)
             .setParameter("yearEnd", yearEnd)
             .singleResult

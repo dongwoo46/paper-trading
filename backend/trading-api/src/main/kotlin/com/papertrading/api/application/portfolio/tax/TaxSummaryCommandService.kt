@@ -3,6 +3,7 @@
 import com.papertrading.api.domain.entity.portfolio.TaxSummary
 import com.papertrading.api.domain.entity.portfolio.TaxSummaryRun
 import com.papertrading.api.domain.enums.TaxSummaryRunType
+import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.TaxSummaryRepository
@@ -42,6 +43,11 @@ class TaxSummaryCommandService(
 
         val account = accountRepository.findByIdWithLock(accountId)
             .orElseThrow { AccountNotFoundException(accountId) }
+        if (account.tradingMode != TradingMode.LOCAL) {
+            throw InvalidAccountModeForTaxSummaryException(
+                "TaxSummary는 LOCAL 계좌만 지원합니다. accountId=$accountId tradingMode=${account.tradingMode}"
+            )
+        }
 
         val run = try {
             taxSummaryRunRepository.save(TaxSummaryRun.start(account, taxYear.value, runType))

@@ -9,6 +9,7 @@ import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.account.AccountLedger
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import io.mockk.every
@@ -122,7 +123,7 @@ class AccountCommandServiceTest {
         every { accountRepository.findByIdWithLock(99L) } returns Optional.empty()
 
         assertThatThrownBy { service.deposit(99L, command) }
-            .isInstanceOf(NoSuchElementException::class.java)
+            .isInstanceOf(AccountNotFoundException::class.java)
     }
 
     @Test

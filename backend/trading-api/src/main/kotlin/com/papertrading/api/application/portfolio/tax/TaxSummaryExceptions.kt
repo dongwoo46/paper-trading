@@ -22,3 +22,5 @@ class UnsupportedCurrencyException(message: String) :
     TaxSummaryDomainException("UNSUPPORTED_CURRENCY", HttpStatus.UNPROCESSABLE_ENTITY, message)
 class TaxSummaryComputeFailedException(message: String, cause: Throwable? = null) :
     TaxSummaryDomainException("TAX_SUMMARY_COMPUTE_FAILED", HttpStatus.INTERNAL_SERVER_ERROR, message, cause)
+class InvalidAccountModeForTaxSummaryException(message: String) :
+    TaxSummaryDomainException("INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY", HttpStatus.BAD_REQUEST, message)

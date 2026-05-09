@@ -44,7 +44,7 @@ class TaxSummaryCalculatorTest {
 
     @Test
     fun `non KRW currency throws`() {
-        assertThrows<IllegalArgumentException> {
+        assertThrows<UnsupportedCurrencyException> {
             calculator.compute(
                 SettlementTaxAggregate(
                     totalRealizedPnl = BigDecimal.ZERO,

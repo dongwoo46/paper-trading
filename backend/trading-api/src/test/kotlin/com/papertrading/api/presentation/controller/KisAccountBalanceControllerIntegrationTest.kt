@@ -94,19 +94,19 @@ class KisAccountBalanceControllerIntegrationTest {
         mockMvc.get("/api/kis/account/balance?accountId=0&mode=LIVE").andExpect { status { isBadRequest() } }
         mockMvc.get("/api/kis/account/balance?accountId=1&mode=PAPER").andExpect {
             status { isUnauthorized() }
-            jsonPath("$.message") { value("KIS 인증에 실패했습니다.") }
+            jsonPath("$.message") { value("unauthorized") }
         }
         mockMvc.get("/api/kis/account/balance?accountId=2&mode=PAPER").andExpect {
             status { isForbidden() }
-            jsonPath("$.message") { value("KIS 호출 권한이 없습니다.") }
+            jsonPath("$.message") { value("forbidden") }
         }
         mockMvc.get("/api/kis/account/balance?accountId=3&mode=PAPER").andExpect {
             status { isBadGateway() }
-            jsonPath("$.message") { value("KIS 연동 중 오류가 발생했습니다.") }
+            jsonPath("$.message") { value("remote") }
         }
         mockMvc.get("/api/kis/account/balance?accountId=4&mode=PAPER").andExpect {
             status { isGatewayTimeout() }
-            jsonPath("$.message") { value("KIS 응답 시간이 초과되었습니다.") }
+            jsonPath("$.message") { value("timeout") }
         }
     }
 }

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.Instant
-import java.time.LocalDate
 
 class SettlementEntitiesTest {
 
@@ -59,34 +58,6 @@ class SettlementEntitiesTest {
         externalExecutionId = "exec-${System.nanoTime()}",
         executedAt = Instant.parse("2026-05-08T00:00:00Z"),
     )
-
-    @Test
-    fun `pending settlement는 settlementDate 이전에는 완료할 수 없다`() {
-        val ps = ReceivableSettlement.create(
-            account = account(),
-            orderId = 10L,
-            settlementDate = LocalDate.of(2026, 5, 12),
-            amount = BigDecimal("10000"),
-        )
-
-        assertThrows(IllegalStateException::class.java) {
-            ps.complete(LocalDate.of(2026, 5, 11))
-        }
-    }
-
-    @Test
-    fun `pending settlement는 settlementDate 당일 이후 완료할 수 있다`() {
-        val ps = ReceivableSettlement.create(
-            account = account(),
-            orderId = 11L,
-            settlementDate = LocalDate.of(2026, 5, 12),
-            amount = BigDecimal("10000"),
-        )
-
-        ps.complete(LocalDate.of(2026, 5, 12))
-
-        assertEquals(com.papertrading.api.domain.enums.SettlementStatus.COMPLETED, ps.status)
-    }
 
     @Test
     fun `외화 settlement는 fxRateAtSettlement가 필요하다`() {

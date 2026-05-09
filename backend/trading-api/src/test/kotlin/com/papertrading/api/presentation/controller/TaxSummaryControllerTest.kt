@@ -2,6 +2,7 @@ package com.papertrading.api.presentation.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.papertrading.api.application.portfolio.tax.InvalidTaxYearRangeException
+import com.papertrading.api.application.portfolio.tax.InvalidAccountModeForTaxSummaryException
 import com.papertrading.api.application.portfolio.tax.TaxSummaryAlreadyRunningException
 import com.papertrading.api.application.portfolio.tax.TaxSummaryBatchService
 import com.papertrading.api.application.portfolio.tax.TaxSummaryCommandService
@@ -153,6 +154,32 @@ class TaxSummaryControllerTest {
         }.andExpect {
             status { isUnprocessableEntity() }
             jsonPath("$.code") { value("UNSUPPORTED_CURRENCY") }
+        }
+    }
+
+    @Test
+    fun `KIS 계좌 조회면 400 INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY`() {
+        given(taxSummaryQueryService.get(10L, TaxYear(2024)))
+            .willThrow(InvalidAccountModeForTaxSummaryException("LOCAL only"))
+
+        mockMvc.get("/api/accounts/10/tax-summaries/2024")
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.code") { value("INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY") }
+            }
+    }
+
+    @Test
+    fun `KIS 계좌 재계산이면 400 INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY`() {
+        given(taxSummaryCommandService.recalculate(10L, TaxYear(2024), false))
+            .willThrow(InvalidAccountModeForTaxSummaryException("LOCAL only"))
+
+        mockMvc.post("/api/accounts/10/tax-summaries/2024/recalculate") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(mapOf("force" to false))
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY") }
         }
     }
 

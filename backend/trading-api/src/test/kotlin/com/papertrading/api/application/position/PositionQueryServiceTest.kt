@@ -8,6 +8,7 @@ import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.port.MarketQuotePort
 import com.papertrading.api.domain.port.QuoteSnapshot
+import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -154,7 +155,7 @@ class PositionQueryServiceTest {
     fun `getPositionWithCurrentPrice_throws_when_ticker_not_found`() {
         assertThatThrownBy {
             positionQueryService.getPositionWithCurrentPrice(account.id!!, "NOTEXIST")
-        }.isInstanceOf(NoSuchElementException::class.java)
+        }.isInstanceOf(PositionNotFoundException::class.java)
             .hasMessageContaining("NOTEXIST")
     }
 }

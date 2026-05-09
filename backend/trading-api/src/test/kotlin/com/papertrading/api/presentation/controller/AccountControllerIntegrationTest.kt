@@ -162,7 +162,7 @@ class AccountControllerIntegrationTest {
     fun `존재하지_않는_계좌_조회시_404를_반환한다`() {
         mockMvc.get("/api/v1/accounts/99999").andExpect {
             status { isNotFound() }
-            jsonPath("$.code") { value("NOT_FOUND") }
+            jsonPath("$.code") { value("ACCOUNT_NOT_FOUND") }
         }
     }
 

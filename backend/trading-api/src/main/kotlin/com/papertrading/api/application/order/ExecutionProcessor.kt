@@ -10,17 +10,14 @@ import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.position.Position
-import com.papertrading.api.domain.entity.settlement.ReceivableSettlement
 import com.papertrading.api.domain.entity.settlement.Settlement
 import com.papertrading.api.domain.entity.settlement.SettlementExecution
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
-import com.papertrading.api.domain.entity.settlement.BusinessDayCalculator
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
 import com.papertrading.api.infrastructure.persistence.FeePolicyRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
-import com.papertrading.api.infrastructure.persistence.ReceivableSettlementRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementExecutionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementRepository
@@ -31,8 +28,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 import java.util.UUID
 
 /**
@@ -49,7 +44,6 @@ class ExecutionProcessor(
     private val accountLedgerRepository: AccountLedgerRepository,
     private val feePolicyRepository: FeePolicyRepository,
     private val collectorSubscriptionPort: CollectorSubscriptionPort,
-    private val ReceivableSettlementRepository: ReceivableSettlementRepository,
     private val settlementRepository: SettlementRepository,
     private val settlementExecutionRepository: SettlementExecutionRepository,
     private val eventPublisher: ApplicationEventPublisher,
@@ -141,21 +135,9 @@ class ExecutionProcessor(
                     account.receiveSellProceeds(netProceeds)
                 }
                 TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> {
-                    // KIS 모드: T+2 결제 — 즉시 입금 없이 ReceivableSettlement 생성
-                    val settlementDate = BusinessDayCalculator.addBusinessDays(
-                        LocalDate.now(ZoneId.of("Asia/Seoul")), 2
-                    )
-                    ReceivableSettlementRepository.save(
-                        ReceivableSettlement.create(
-                            account = account,
-                            orderId = orderId,
-                            settlementDate = settlementDate,
-                            amount = netProceeds,
-                        )
-                    )
+                    // KIS 모드: 체결 상태 동기화만 수행한다.
                 }
                 else -> {
-                    // 다른 모드는 즉시 입금 처리 (향후 확장 대비)
                     account.receiveSellProceeds(netProceeds)
                 }
             }
@@ -170,7 +152,7 @@ class ExecutionProcessor(
                         order = order,
                         account = account,
                         execution = execution,
-                        tax = BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP),
+                        tax = grossProceeds.multiply(BigDecimal("0.0020")).setScale(4, RoundingMode.HALF_UP),
                         settledAt = Instant.now(),
                     )
                 )

@@ -3,6 +3,7 @@ package com.papertrading.api.application.portfolio
 import com.papertrading.api.application.portfolio.command.CreateTradingJournalCommand
 import com.papertrading.api.application.portfolio.command.UpdateTradingJournalCommand
 import com.papertrading.api.application.portfolio.query.TradingJournalFilter
+import com.papertrading.api.common.exception.TradingJournalOwnershipMismatchException
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.portfolio.TradingJournal
 import com.papertrading.api.domain.enums.AccountType
@@ -93,7 +94,7 @@ class TradingJournalCommandQueryServiceTest {
 
         assertThatThrownBy {
             commandService.update(9L, UpdateTradingJournalCommand(2L, "new", "new", null))
-        }.isInstanceOf(NoSuchElementException::class.java)
+        }.isInstanceOf(TradingJournalOwnershipMismatchException::class.java)
     }
 
     @Test
