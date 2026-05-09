@@ -164,7 +164,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 국내/해외 공통 조회 계약: session 구분(regular/pre/after), timezone 정규화, 결측 정책
   - 프론트 통합 차트가 바로 소비 가능한 단일 schema 제공
 
-- [x] 마이크로구조 API 호가 WebSocket 적재/매핑 완성 | project: collector-api | phase: market-microstructure-orderbook-ws | priority: P1 | done: 2026-05-09 | pr: #TBD
+- [x] 마이크로구조 API 호가 WebSocket 적재/매핑 완성 | project: collector-api | phase: market-microstructure-orderbook-ws | priority: P1 | done: 2026-05-09 | pr: #28
   - KIS WebSocket 호가/호가잔량 이벤트 수집 채널 연결 및 파서/검증 추가
   - Redis 적재 키 표준화 (`quote:{symbol}`, `orderbook:{symbol}`) 및 TTL/결측 정책 확정
   - market microstructure API에서 bestBid/bestAsk/spread/depth 필드 실데이터 매핑
