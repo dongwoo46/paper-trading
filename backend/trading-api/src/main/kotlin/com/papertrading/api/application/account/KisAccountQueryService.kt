@@ -1,15 +1,16 @@
 package com.papertrading.api.application.account
 
-import com.papertrading.api.application.account.kis.KisAccountBalancePort
-import com.papertrading.api.application.account.kis.KisAccountBalanceResult
-import com.papertrading.api.application.account.kis.KisAccountMode
-import com.papertrading.api.application.account.kis.KisBalancePositionResult
-import com.papertrading.api.application.account.kis.KisReconciliationResult
+import com.papertrading.api.application.account.port.KisAccountBalancePort
+import com.papertrading.api.application.account.result.KisAccountBalanceResult
+import com.papertrading.api.application.account.result.KisBalancePositionResult
+import com.papertrading.api.application.account.result.KisReconciliationResult
 import com.papertrading.api.common.exception.InvalidAccountIdException
+import com.papertrading.api.domain.enums.KisAccountMode
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
+// KIS 계좌 잔고 조회
 @Service
 class KisAccountQueryService(
     private val kisAccountBalancePort: KisAccountBalancePort,

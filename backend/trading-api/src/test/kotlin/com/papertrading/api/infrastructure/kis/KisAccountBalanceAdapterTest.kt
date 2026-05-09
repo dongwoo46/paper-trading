@@ -1,9 +1,9 @@
 package com.papertrading.api.infrastructure.kis
 
 import com.papertrading.api.support.withId
-import com.papertrading.api.application.account.kis.KisAuthorizationException
-import com.papertrading.api.application.account.kis.KisForbiddenException
-import com.papertrading.api.application.account.kis.KisRemoteCallException
+import com.papertrading.api.common.exception.KisAuthorizationException
+import com.papertrading.api.common.exception.KisForbiddenException
+import com.papertrading.api.common.exception.KisRemoteCallException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.Account

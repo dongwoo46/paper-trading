@@ -59,7 +59,12 @@ class AccountCommandServiceTest {
         val command = DepositCommand(amount = BigDecimal("100000"), idempotencyKey = "key-001")
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
-        every { accountLedgerRepository.findByIdempotencyKey("key-001") } returns null
+        every {
+            accountLedgerRepository.findByAccountIdAndIdempotencyKey(
+                accountId = 1L,
+                idempotencyKey = "key-001",
+            )
+        } returns null
         val ledgerSlot = slot<AccountLedger>()
         every { accountLedgerRepository.save(capture(ledgerSlot)) } answers { ledgerSlot.captured }
 
@@ -77,8 +82,12 @@ class AccountCommandServiceTest {
         val command = DepositCommand(amount = BigDecimal("100000"), idempotencyKey = "key-001")
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
-        every { accountLedgerRepository.findByIdempotencyKey("key-001") } returns existingLedger
-
+        every {
+            accountLedgerRepository.findByAccountIdAndIdempotencyKey(
+                accountId = 1L,
+                idempotencyKey = "key-001",
+            )
+        } returns existingLedger
         val result = service.deposit(1L, command)
 
         assertThat(result).isEqualTo(existingLedger)
@@ -91,7 +100,12 @@ class AccountCommandServiceTest {
         val command = WithdrawCommand(amount = BigDecimal("100000"), idempotencyKey = "key-002")
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
-        every { accountLedgerRepository.findByIdempotencyKey("key-002") } returns null
+        every {
+            accountLedgerRepository.findByAccountIdAndIdempotencyKey(
+                accountId = 1L,
+                idempotencyKey = "key-002",
+            )
+        } returns null
         val ledgerSlot = slot<AccountLedger>()
         every { accountLedgerRepository.save(capture(ledgerSlot)) } answers { ledgerSlot.captured }
 
@@ -108,7 +122,12 @@ class AccountCommandServiceTest {
         val command = WithdrawCommand(amount = BigDecimal("100000"), idempotencyKey = "key-002")
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
-        every { accountLedgerRepository.findByIdempotencyKey("key-002") } returns existingLedger
+        every {
+            accountLedgerRepository.findByAccountIdAndIdempotencyKey(
+                accountId = 1L,
+                idempotencyKey = "key-002",
+            )
+        } returns existingLedger
 
         val result = service.withdraw(1L, command)
 

@@ -38,17 +38,27 @@ Each phase lives at `docs/phase/{project}/{feature}/`.
 5. Invoke the assigned agent with the full current step file as context.
 6. Evaluate the returned `Completion Report` before doing anything else.
 7. Update `index.json` and `docs/state.md` immediately after PASS, FAIL, RETRY/REWORK, or BLOCKED.
-8. After Step 1 PASS, never start Step 2 automatically. Set `state.md` to `needs_input`, keep Step 2 pending, and ask for user approval.
-9. On phase completion, reset context and continue to the next active phase or return to `idle`.
+8. After Step 1 PASS, never start Step 2 automatically. Set `state.md` to `needs_input`, keep Step 2 pending, and ask for user approval of planner outputs (`spec.md`, `step-2.md` to `step-N.md`).
+9. After user approval of planner outputs, switch mode to `auto` and continue development from Step 2.
+10. On phase completion, reset context and continue to the next active phase or return to `idle`.
 
 ---
 
 ## Step Gates and Planning
 
-- Planner steps must ask questions first, align design with the user, then write docs.
+- Planner steps must ask all relevant questions first, align design and flow with the user, then write docs.
 - Every generated step file should begin with the step's open questions and confirmed design choices before directives.
 - `spec.md` must reflect confirmed decisions only.
 - Step files contain directives, not implementation bodies.
+- Interactive Q&A loop policy:
+  - The question/answer loop for planner steps is owned by the main orchestrator thread.
+  - Use a two-pass planner pattern:
+    1) Planner pass A: read context and produce a structured question list plus recommended options only.
+    2) Orchestrator: run multi-turn Q&A with the user until decisions are confirmed.
+    3) Planner pass B: generate `spec.md` and `step-2..N.md` from confirmed decisions only.
+  - Do not rely on one spawned planner run to both ask/resolve Q&A and finalize docs.
+- Planner approval gate is mandatory: do not execute Step 2 until the user approves planner outputs (`spec.md` and `step-2..N.md`).
+- After planner approval, development steps should run in `auto` mode unless the user explicitly switches back to `manual`.
 - Before executing any Step N, the user must approve the Step N document when the phase is in `manual` or `needs_input`.
 - Cleanup always runs in `manual` mode.
 

@@ -2,8 +2,8 @@ package com.papertrading.api.application.position
 
 import com.papertrading.api.common.exception.InvalidPercentScaleException
 import com.papertrading.api.common.exception.PositionNotFoundException
-import com.papertrading.api.domain.position.PositionExitTrigger
-import com.papertrading.api.domain.position.PositionExitTriggerRepository
+import com.papertrading.api.domain.entity.position.PositionExitTrigger
+import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

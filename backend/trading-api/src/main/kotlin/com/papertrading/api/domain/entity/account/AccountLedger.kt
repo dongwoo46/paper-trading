@@ -24,7 +24,12 @@ import java.math.BigDecimal
 @Entity
 @Table(
     name = "account_ledger",
-    uniqueConstraints = [UniqueConstraint(name = "uk_account_ledger_idempotency", columnNames = ["idempotency_key"])]
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_account_ledger_account_id_idempotency",
+            columnNames = ["account_id", "idempotency_key"]
+        )
+    ]
 )
 class AccountLedger protected constructor() : BaseTimeEntity() {
 

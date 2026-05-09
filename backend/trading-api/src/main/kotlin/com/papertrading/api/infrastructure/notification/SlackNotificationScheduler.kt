@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.notification
 
-import com.papertrading.api.application.notification.SlackNotificationPolicy
+import com.papertrading.api.application.notification.port.SlackNotificationConfig
 import com.papertrading.api.domain.port.NotificationSender
 import mu.KotlinLogging
 import org.springframework.scheduling.annotation.Scheduled
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 @Component
 class SlackNotificationScheduler(
     private val sender: NotificationSender,
-    private val policyStore: SlackNotificationPolicy,
+    private val policyStore: SlackNotificationConfig,
     private val txService: NotificationPersistenceTxService,
 ) {
     private val log = KotlinLogging.logger {}

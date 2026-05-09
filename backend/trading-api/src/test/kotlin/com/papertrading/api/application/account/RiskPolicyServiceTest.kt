@@ -42,7 +42,7 @@ class RiskPolicyServiceTest {
         every { riskPolicyRepository.findByAccountIdAndIsActiveTrue(1L) } returns Optional.empty()
         every { riskPolicyRepository.save(any()) } answers { firstArg() }
 
-        val result = service.upsertRiskPolicy(1L, command)
+        val result = service.replaceRiskPolicy(1L, command)
 
         assertThat(result.maxPositionRatio).isEqualByComparingTo("0.2")
         assertThat(result.isActive).isTrue()
@@ -62,7 +62,7 @@ class RiskPolicyServiceTest {
         every { riskPolicyRepository.findByAccountIdAndIsActiveTrue(1L) } returns Optional.of(existingPolicy)
         every { riskPolicyRepository.save(any()) } answers { firstArg() }
 
-        service.upsertRiskPolicy(1L, command)
+        service.replaceRiskPolicy(1L, command)
 
         assertThat(existingPolicy.isActive).isFalse()
         verify(exactly = 1) { riskPolicyRepository.save(any()) }
@@ -96,7 +96,7 @@ class RiskPolicyServiceTest {
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { riskPolicyRepository.findByAccountIdAndIsActiveTrue(1L) } returns Optional.empty()
 
-        assertThatThrownBy { service.upsertRiskPolicy(1L, command) }
+        assertThatThrownBy { service.replaceRiskPolicy(1L, command) }
             .isInstanceOf(IllegalArgumentException::class.java)
     }
 }

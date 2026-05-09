@@ -1,7 +1,7 @@
 package com.papertrading.api.presentation.dto.account
 
-import com.papertrading.api.application.account.AccountExitTriggerDefaultResult
-import com.papertrading.api.application.account.UpsertAccountExitTriggerDefaultCommand
+import com.papertrading.api.application.account.command.UpsertAccountExitTriggerDefaultCommand
+import com.papertrading.api.application.account.result.AccountExitTriggerDefaultResult
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Digits

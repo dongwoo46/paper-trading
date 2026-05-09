@@ -1,14 +1,14 @@
 package com.papertrading.api.presentation.controller
 
 import com.papertrading.api.application.account.KisAccountQueryService
-import com.papertrading.api.application.account.kis.KisAuthorizationException
 import com.papertrading.api.application.account.kis.KisAccountBalanceResult
 import com.papertrading.api.application.account.kis.KisAccountMode
 import com.papertrading.api.application.account.kis.KisBalancePositionResult
 import com.papertrading.api.application.account.kis.KisReconciliationResult
-import com.papertrading.api.application.account.kis.KisForbiddenException
-import com.papertrading.api.application.account.kis.KisRemoteCallException
-import com.papertrading.api.application.account.kis.KisTimeoutException
+import com.papertrading.api.common.exception.KisAuthorizationException
+import com.papertrading.api.common.exception.KisForbiddenException
+import com.papertrading.api.common.exception.KisRemoteCallException
+import com.papertrading.api.common.exception.KisTimeoutException
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired

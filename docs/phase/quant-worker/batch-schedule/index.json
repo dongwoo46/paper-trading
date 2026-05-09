@@ -21,7 +21,7 @@
     {
       "id": 2,
       "agent": "quant-dev",
-      "name": "Implementation (TDD)",
+      "name": "Market and interval batch scheduler implementation (TDD)",
       "file": "step-2.md",
       "status": "pending",
       "retry_count": 0,
@@ -29,22 +29,22 @@
       "substeps": [
         {
           "id": 1,
-          "name": "collector and service red tests",
+          "name": "scheduler red tests",
           "status": "pending"
         },
         {
           "id": 2,
-          "name": "weekly pipeline implementation",
+          "name": "batch definitions and provider routing",
           "status": "pending"
         },
         {
           "id": 3,
-          "name": "repository and API wiring",
+          "name": "retry and outcome classification",
           "status": "pending"
         },
         {
           "id": 4,
-          "name": "scheduler and retry flow",
+          "name": "Slack notification and structured logs",
           "status": "pending"
         },
         {
@@ -57,7 +57,7 @@
     {
       "id": 3,
       "agent": "test-engineer",
-      "name": "Testing and QA verification",
+      "name": "Testing and QA verification for batch scheduler",
       "file": "step-3.md",
       "status": "pending",
       "retry_count": 0,
@@ -65,17 +65,17 @@
       "substeps": [
         {
           "id": 1,
-          "name": "feature-scoped tests",
+          "name": "scheduler feature-scoped tests",
           "status": "pending"
         },
         {
           "id": 2,
-          "name": "integration tests",
+          "name": "API and collector regression tests",
           "status": "pending"
         },
         {
           "id": 3,
-          "name": "coverage check",
+          "name": "full quant-worker verification",
           "status": "pending"
         }
       ]

@@ -27,7 +27,7 @@ class RiskPolicyController(
         @PathVariable accountId: Long,
         @Valid @RequestBody request: UpsertRiskPolicyRequest
     ): RiskPolicyResponse {
-        val policy = riskPolicyService.upsertRiskPolicy(
+        val policy = riskPolicyService.replaceRiskPolicy(
             accountId,
             UpsertRiskPolicyCommand(
                 maxPositionRatio = request.maxPositionRatio,

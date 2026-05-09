@@ -66,6 +66,42 @@ class InvalidPaginationException(message: String) :
 class KisResponseParseException(message: String) :
     BadRequestException("KIS_RESPONSE_PARSE_ERROR", message)
 
+open class UnauthorizedException(
+    errorCode: String,
+    message: String,
+    cause: Throwable? = null,
+) : ApiDomainException(errorCode, HttpStatus.UNAUTHORIZED, message, cause)
+
+open class ForbiddenException(
+    errorCode: String,
+    message: String,
+    cause: Throwable? = null,
+) : ApiDomainException(errorCode, HttpStatus.FORBIDDEN, message, cause)
+
+open class BadGatewayException(
+    errorCode: String,
+    message: String,
+    cause: Throwable? = null,
+) : ApiDomainException(errorCode, HttpStatus.BAD_GATEWAY, message, cause)
+
+open class GatewayTimeoutException(
+    errorCode: String,
+    message: String,
+    cause: Throwable? = null,
+) : ApiDomainException(errorCode, HttpStatus.GATEWAY_TIMEOUT, message, cause)
+
+class KisAuthorizationException(message: String, cause: Throwable? = null) :
+    UnauthorizedException("KIS_UNAUTHORIZED", message, cause)
+
+class KisForbiddenException(message: String, cause: Throwable? = null) :
+    ForbiddenException("KIS_FORBIDDEN", message, cause)
+
+class KisRemoteCallException(message: String, cause: Throwable? = null) :
+    BadGatewayException("KIS_BAD_GATEWAY", message, cause)
+
+class KisTimeoutException(message: String, cause: Throwable? = null) :
+    GatewayTimeoutException("KIS_GATEWAY_TIMEOUT", message, cause)
+
 class ExternalServiceResponseException(message: String) :
     ConflictException("EXTERNAL_SERVICE_RESPONSE_ERROR", message)
 
@@ -80,3 +116,6 @@ class InvalidTaxYearException(value: Int) :
 
 class TaxComputationScaleException(field: String) :
     ConflictException("TAX_COMPUTATION_SCALE_INVALID", "$field scale must be 4")
+
+class SlackWebhookFailedException(message: String) :
+    ApiDomainException("BAD_GATEWAY", HttpStatus.BAD_GATEWAY, message)

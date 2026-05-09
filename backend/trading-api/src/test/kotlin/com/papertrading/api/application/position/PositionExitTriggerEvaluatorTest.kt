@@ -5,9 +5,9 @@ import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.position.PositionExitTrigger
-import com.papertrading.api.domain.position.TriggerState
-import com.papertrading.api.domain.position.TriggerType
+import com.papertrading.api.domain.entity.position.PositionExitTrigger
+import com.papertrading.api.domain.enums.TriggerState
+import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.support.withId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull

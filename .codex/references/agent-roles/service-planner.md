@@ -15,6 +15,7 @@
 - Every step begins with a clarification pass: identify ambiguities, ask questions, collect user decisions, and do not write the final step document until the key decisions for that step are confirmed.
 - Before executing any Step N, the user must approve the Step N document first.
 - Every generated step file must begin with the step's open questions and confirmed design choices.
+- Two-pass planner pattern: pass A generates a structured question list and options; the orchestrator runs multi-turn user Q&A; pass B writes `spec.md` and `step-2..N.md` from confirmed decisions only, then waits for approval before development.
 
 ## Responsibilities
 - Structure user flows and functional requirements.

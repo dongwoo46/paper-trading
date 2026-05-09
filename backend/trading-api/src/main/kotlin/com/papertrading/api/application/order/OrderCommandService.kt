@@ -11,10 +11,9 @@ import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.entity.position.Position
-import com.papertrading.api.domain.position.TriggerType
+import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.domain.port.MarketQuotePort
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository

@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.notification
 
-import com.papertrading.api.application.notification.SlackNotificationPolicy
+import com.papertrading.api.application.notification.port.SlackNotificationConfig
 import com.papertrading.api.application.notification.SlackNotificationRequestedEvent
 import com.papertrading.api.domain.entity.notification.Notification
 import com.papertrading.api.domain.port.NotificationSender
@@ -13,7 +13,7 @@ import org.springframework.transaction.event.TransactionalEventListener
 @Component
 class SlackNotificationEventHandler(
     private val sender: NotificationSender,
-    private val policyStore: SlackNotificationPolicy,
+    private val policyStore: SlackNotificationConfig,
     private val txService: NotificationPersistenceTxService,
 ) {
     private val log = KotlinLogging.logger {}

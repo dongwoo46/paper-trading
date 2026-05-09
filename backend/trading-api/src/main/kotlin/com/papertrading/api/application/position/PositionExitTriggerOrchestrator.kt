@@ -2,9 +2,9 @@ package com.papertrading.api.application.position
 
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.application.order.OrderCommandService
-import com.papertrading.api.domain.position.PositionExitTriggerRepository
-import com.papertrading.api.domain.position.TriggerType
+import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.infrastructure.persistence.OrderRepository
+import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service

@@ -2,11 +2,11 @@ package com.papertrading.api.application.position
 
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.position.Position
-import com.papertrading.api.domain.position.PositionExitTrigger
+import com.papertrading.api.domain.entity.position.PositionExitTrigger
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.position.PositionExitTriggerRepository
+import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.support.withId
 import io.mockk.every

@@ -1,8 +1,8 @@
 package com.papertrading.api.presentation.controller
 
 import com.papertrading.api.application.account.KisAccountQueryService
-import com.papertrading.api.application.account.kis.KisAccountBalanceResult
-import com.papertrading.api.application.account.kis.KisAccountMode
+import com.papertrading.api.application.account.result.KisAccountBalanceResult
+import com.papertrading.api.domain.enums.KisAccountMode
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam

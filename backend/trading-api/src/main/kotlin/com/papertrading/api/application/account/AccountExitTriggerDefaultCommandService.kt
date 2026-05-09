@@ -1,5 +1,7 @@
 package com.papertrading.api.application.account
 
+import com.papertrading.api.application.account.command.UpsertAccountExitTriggerDefaultCommand
+import com.papertrading.api.application.account.result.AccountExitTriggerDefaultResult
 import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.AccountExitTriggerDefaultRepository
@@ -8,20 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.Instant
 
-data class UpsertAccountExitTriggerDefaultCommand(
-    val accountId: Long,
-    val enabled: Boolean,
-    val stopLossPercent: BigDecimal?,
-    val takeProfitPercent: BigDecimal?,
-)
 
-data class AccountExitTriggerDefaultResult(
-    val accountId: Long,
-    val enabled: Boolean,
-    val stopLossPercent: BigDecimal?,
-    val takeProfitPercent: BigDecimal?,
-    val updatedAt: Instant?,
-)
 
 @Service
 class AccountExitTriggerDefaultCommandService(

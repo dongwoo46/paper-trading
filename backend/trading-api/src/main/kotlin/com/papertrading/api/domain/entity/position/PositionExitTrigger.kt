@@ -1,14 +1,25 @@
-package com.papertrading.api.domain.position
+package com.papertrading.api.domain.entity.position
 
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
-import jakarta.persistence.*
+import com.papertrading.api.domain.enums.TriggerState
+import com.papertrading.api.domain.enums.TriggerType
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.math.BigDecimal
 import java.time.Instant
 
 @Entity
 @Table(name = "position_exit_triggers")
 class PositionExitTrigger protected constructor() : BaseAuditEntity() {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null
     @Column(name = "position_id", nullable = false, unique = true)
     var positionId: Long = 0

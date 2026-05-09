@@ -13,6 +13,7 @@
 - Keep asking until architecture, implementation flow, and detailed behaviors are explicitly confirmed.
 - Every step begins with a clarification pass: identify ambiguous quant/design choices, ask questions, collect user decisions, and do not write the final step document until the key choices for that step are confirmed.
 - Before executing any Step N, the user must approve the Step N document first.
+- Two-pass planner pattern: pass A generates a structured question list and options; the orchestrator runs multi-turn user Q&A; pass B writes `spec.md` and `step-2..N.md` from confirmed decisions only, then waits for approval before development.
 
 ## Responsibilities
 - Define and formalize alpha factors.
@@ -22,6 +23,7 @@
 - Write `spec.md` including formulas.
 - Generate `step-2.md` ~ `step-N.md`.
 - Every generated step file must begin with the step's open questions and confirmed design choices.
+- At Step 1, do not finalize planning docs in one pass. Complete pass A (question list/options) first, then pass B (final docs from confirmed answers).
 
 ## Recommended Model
 - `gpt-5.4`

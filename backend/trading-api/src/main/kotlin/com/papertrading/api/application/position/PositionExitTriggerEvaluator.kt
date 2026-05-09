@@ -1,9 +1,9 @@
 package com.papertrading.api.application.position
 
 import com.papertrading.api.domain.entity.position.Position
-import com.papertrading.api.domain.position.PositionExitTrigger
-import com.papertrading.api.domain.position.TriggerState
-import com.papertrading.api.domain.position.TriggerType
+import com.papertrading.api.domain.entity.position.PositionExitTrigger
+import com.papertrading.api.domain.enums.TriggerState
+import com.papertrading.api.domain.enums.TriggerType
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.Instant

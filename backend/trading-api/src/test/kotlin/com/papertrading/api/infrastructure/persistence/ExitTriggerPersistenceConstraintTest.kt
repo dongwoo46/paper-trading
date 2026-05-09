@@ -8,7 +8,7 @@ import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.position.PositionExitTrigger
+import com.papertrading.api.domain.entity.position.PositionExitTrigger
 import com.querydsl.jpa.impl.JPAQueryFactory
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.assertThrows
