@@ -99,6 +99,15 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [x] 세금 정산 자동화 | project: trading-api | phase: tax-summary | priority: P2 | done: 2026-05-03 | pr: #TBD
 - [x] 거래 일지 자동 생성 | project: trading-api | phase: trading-journal | priority: P2 | done: 2026-05-03 | pr: #TBD
 
+- [ ] T+2 정산 구조 정리 (ReceivableSettlement 제거) | project: trading-api | phase: settlement-cleanup | priority: P2
+  - KIS 모드(KIS_PAPER/KIS_LIVE): ReceivableSettlement 생성 로직 제거 — 잔고/정산은 KIS가 처리
+  - KIS 모드에서 우리 DB 예수금 변경 불필요 → ExecutionProcessor KIS 분기 단순화
+  - ReceivableSettlement 엔티티·테이블·레포지토리 삭제
+  - SettlementCommandService, SettlementProcessor, BusinessDayCalculator 삭제
+  - Settlement 엔티티는 LOCAL 모드 P&L 기록용으로 유지
+  - LOCAL 모드 매도 시 증권거래세(0.2%) 차감 누락 수정 (현재 tax=BigDecimal.ZERO 하드코딩)
+  - TaxSummaryService: LOCAL 모드 집계용으로만 범위 한정 (KIS 모드 집계 제거)
+
 ### 완료
 - [x] 계좌 관리 (AccountCommandService, AccountQueryService, 입출금 원장)
 - [x] 주문 생성·체결·취소 (OrderCommandService, LocalMatchingEngine, KIS 실행기)

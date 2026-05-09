@@ -1,16 +1,16 @@
-# Orchestrator State
+﻿# Orchestrator State
 
 ## 모드
 auto
 
 ## 상태
-idle
+blocked
 
 ## 활성 Phase
-- 없음
+- trading-api/settlement-cleanup | step 5/5 | branch: feature/trading-api-settlement-cleanup | worktree: .worktrees/trading-api-settlement-cleanup
 
 ## 마지막 액션
-2026-05-09: collector-api/market-microstructure-orderbook-ws 완료 PASS (142 tests, 0 failures)
+2026-05-09: Step 5 (orchestrator) failed — full test gate DB connection refused/timeouts
 
 ## 다음 액션
-docs/TODO.md 미완료 항목 중 다음 phase 선택
+사용자 개입 필요: 통합 테스트 DB 환경 복구 후 Step 5 재시도 또는 완료 기준 조정
