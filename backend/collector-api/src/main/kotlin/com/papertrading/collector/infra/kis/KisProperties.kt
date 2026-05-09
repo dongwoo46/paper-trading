@@ -29,7 +29,7 @@ class KisProperties {
 	var reconnectMaxDelay: Duration = Duration.ofSeconds(30)
 	var heartbeatTimeout: Duration = Duration.ofSeconds(60)
 	var liveRestRequestsPerSecond: Int = 20
-	var paperRestRequestsPerSecond: Int = 2
+	var paperRestRequestsPerSecond: Int = 1
 	var approvalRequestsPerSecond: Int = 1
 	var restPollingEnabled: Boolean = true
 	var restPollingIntervalMillis: Long = 60000

@@ -55,7 +55,6 @@ collector:
       live-approval-url: ${KIS_LIVE_APPROVAL_URL:https://openapi.koreainvestment.com:9443/oauth2/Approval}
       live-websocket-url: ${KIS_LIVE_WEBSOCKET_URL:ws://ops.koreainvestment.com:21000}
       live-rest-base-url: ${KIS_LIVE_REST_BASE_URL:https://openapi.koreainvestment.com:9443}
-      access-token-cache-file: ${KIS_ACCESS_TOKEN_CACHE_FILE:./data/kis-access-tokens.json}
       live-app-key: ${KIS_APP_KEY:}
       live-app-secret: ${KIS_APP_SECRET:}
       paper-app-key: ${KIS_PAPER_APP_KEY:}
@@ -69,7 +68,7 @@ collector:
       reconnect-min-delay: 1s
       reconnect-max-delay: 30s
       live-rest-requests-per-second: 20
-      paper-rest-requests-per-second: 2
+      paper-rest-requests-per-second: 1
       approval-requests-per-second: 1
       rest-polling-enabled: true
       rest-polling-interval-millis: 60000

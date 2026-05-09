@@ -8,45 +8,68 @@ import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import java.time.Clock
 import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 
 @Component
 class KisAccessTokenClient(
 	private val properties: KisProperties,
 	private val rateLimiter: KisRateLimiter,
 	private val tokenRedisStore: KisTokenRedisStore,
+	private val tokenDbStore: KisTokenDbStore,
 	private val webClientBuilder: WebClient.Builder,
 ) {
 	private val webClient: WebClient = webClientBuilder.build()
 	private val clock: Clock = Clock.systemDefaultZone()
+	private val inFlightByMode: MutableMap<String, Mono<String>> = ConcurrentHashMap()
+	private val localTokenByMode: MutableMap<String, LocalToken> = ConcurrentHashMap()
 
 	fun issueAccessToken(mode: String): Mono<String> {
 		val normalizedMode = mode.lowercase()
-		val cachedToken = tokenRedisStore.findValidToken(normalizedMode)
-		if (cachedToken != null) {
-			return Mono.just(cachedToken)
+		val local = localTokenByMode[normalizedMode]
+		if (local != null && local.expiresAt.isAfter(Instant.now(clock))) {
+			return Mono.just(local.token)
 		}
 
-		val request = TokenRequest(
-			grantType = "client_credentials",
-			appkey = properties.appKeyFor(normalizedMode),
-			appsecret = properties.appSecretFor(normalizedMode),
-		)
+		val redisToken = tokenRedisStore.findValidToken(normalizedMode)
+		if (!redisToken.isNullOrBlank()) {
+			return Mono.just(redisToken)
+		}
 
-		return rateLimiter.acquireApproval(normalizedMode)
-			.then(
-				webClient.post()
-					.uri(properties.tokenUrlFor(normalizedMode))
-					.contentType(MediaType.APPLICATION_JSON)
-					.bodyValue(request)
-					.retrieve()
-					.bodyToMono(TokenResponse::class.java)
-					.flatMap { response ->
-						val token = response.accessToken ?: return@flatMap Mono.empty<String>()
-						val expiresAt = resolveExpiresAt(response)
-						tokenRedisStore.save(normalizedMode, token, expiresAt)
-						Mono.just(token)
-					},
+		val dbToken = tokenDbStore.findValid(normalizedMode)
+		if (dbToken != null) {
+			tokenRedisStore.save(normalizedMode, dbToken.token, dbToken.expiresAt)
+			return Mono.just(dbToken.token)
+		}
+
+		val inFlight = inFlightByMode.computeIfAbsent(normalizedMode) {
+			val request = TokenRequest(
+				grantType = "client_credentials",
+				appkey = properties.appKeyFor(normalizedMode),
+				appsecret = properties.appSecretFor(normalizedMode),
 			)
+
+			rateLimiter.acquireApproval(normalizedMode)
+				.then(
+					webClient.post()
+						.uri(properties.tokenUrlFor(normalizedMode))
+						.contentType(MediaType.APPLICATION_JSON)
+						.bodyValue(request)
+						.retrieve()
+						.bodyToMono(TokenResponse::class.java)
+						.flatMap { response ->
+							val token = response.accessToken ?: return@flatMap Mono.empty<String>()
+							val expiresAt = resolveExpiresAt(response)
+							localTokenByMode[normalizedMode] = LocalToken(token, expiresAt)
+							tokenRedisStore.save(normalizedMode, token, expiresAt)
+							tokenDbStore.save(normalizedMode, token, expiresAt)
+							Mono.just(token)
+						},
+				)
+				.doFinally { inFlightByMode.remove(normalizedMode) }
+				.cache()
+		}
+
+		return inFlight
 	}
 
 	private fun resolveExpiresAt(response: TokenResponse): Instant {
@@ -66,6 +89,11 @@ class KisAccessTokenClient(
 		return Instant.now(clock).plusSeconds(86_400) // KIS 토큰 기본 24h
 	}
 }
+
+private data class LocalToken(
+	val token: String,
+	val expiresAt: Instant,
+)
 
 private data class TokenRequest(
 	@JsonProperty("grant_type") val grantType: String,
