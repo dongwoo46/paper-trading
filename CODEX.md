@@ -14,13 +14,11 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
 
 ## Session Boot Rules
 
-- Read `docs/state.md` first (determine active feature)
-- Read `docs/TODO.md` only if task selection or backlog prioritization is needed
-- Read `docs/phase/{project}/{feature}/index.json` only for the active feature
-- Do not re-read unchanged state files in the same session
-- Single source of truth for orchestrator state is `docs/` at repo root only
-- Never read/write orchestrator state under `.claude/**/docs` or `.codex/**/docs`
-- Create/remove git worktrees only under root `.worktrees/` (never under `.claude/worktrees` or `.codex/worktrees`)
+- Read `docs/state.md` first; read `docs/TODO.md` only when selecting a new phase.
+- Use only root `docs/` as orchestration state. Ignore `.claude/**/docs` and `.codex/**/docs`.
+- Read only the active phase `docs/phase/{project}/{feature}/index.json`.
+- Create/remove git worktrees only under root `.worktrees/`.
+- Do not re-read unchanged state files in the same session.
 
 ---
 
@@ -34,23 +32,19 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
 
 **Collaboration**
 
-- Critique before execution (risks, gaps, better alternatives)
-- Act as an active partner, not a passive executor. Follow the user if they insist.
-- Design/planning changes require user approval
+- Critique before execution; surface risks, gaps, and better alternatives.
+- Act as an active partner, not a passive executor.
+- Design/planning changes require user approval.
 
 **Development Process**
 
-- CRITICAL: Write tests first for all business logic changes (TDD: Red → Green → Refactor)
-- CRITICAL: Infrastructure/configuration-only changes may skip test-first, but must include validation after implementation
-- CRITICAL: Work in small increments: implement → test → lint → commit
-- CRITICAL: Write all commit messages in Korean.
-- CRITICAL: Only read explicitly specified files. Expand only when necessary. No broad exploration
-- CRITICAL: Slash command workflows MUST delegate execution to Codex subagents via `spawn_agent`/`wait_agent` — never via inline Skill execution
-  - Correct: `spawn_agent(...)` then collect with `wait_agent(...)`
-  - Forbidden: inline Skill-based implementation execution
-- Only modify code relevant to the task. Do not touch unrelated files. If unavoidable, state the reason
-- Write the minimum code that solves the problem. Do not implement for imagined future requirements.
-- If refactoring, large-scale changes, or improvements beyond the task scope are needed, propose them to the user and wait for approval before proceeding.
+- Write tests first for business logic changes; infrastructure/config-only changes may skip test-first but still require validation afterward.
+- Work in small increments: implement → test → lint → commit.
+- Write all commit messages in Korean.
+- Read only explicitly specified files; expand only when necessary.
+- Slash command workflows must delegate execution to Codex subagents via `spawn_agent`/`wait_agent`.
+- User-defined approval gates in project docs/planner instructions override `auto` mode.
+- Modify only task-relevant files; do not implement beyond scope without approval.
 
 ### Goal-Driven Execution
 
@@ -84,8 +78,7 @@ A task is complete only if:
 
 ## CRITICAL — Subagent Cost Control
 
-- Keep trivial work (small docs/read-only checks) in the main agent.
-- Delegate implementation, test execution, refactor, and multi-file changes to subagents.
+- Keep trivial work in the main agent; delegate implementation, test execution, refactor, and multi-file changes to subagents.
 - Prefer one focused subagent per independent work item.
 - Parallelize only when write scopes do not overlap and tasks are truly independent.
 - Do not spawn extra planners/reviewers if plan/design has not changed.
@@ -95,14 +88,9 @@ A task is complete only if:
 
 ## Codex Orchestration
 
-- `$orchestrate`: project-local Codex skill entrypoint for phase routing and step execution.
-- Actual skill: `.codex/skills/orchestrate/SKILL.md`.
-- Role references: `.codex/references/agent-roles/**`.
-- Legacy command prompt references: `.codex/references/command-prompts/**`; these are not Codex runtime slash commands.
-
-Mode: `auto` (automatic) / `manual` (approve each step) — switchable anytime, record in docs/state.md
-
-Workflow: `$orchestrate` → state.md → index.json → step-{n}.md → Codex subagent (`spawn_agent`) → record results
+- `$orchestrate` uses `.codex/skills/orchestrate/SKILL.md` and role refs under `.codex/references/agent-roles/**`.
+- Mode is recorded in `docs/state.md` and can switch between `auto` and `manual`.
+- Workflow: `state.md` → active phase `index.json` → current `step-{n}.md` → subagent → doc updates.
 
 ---
 
@@ -119,11 +107,10 @@ trading-web:      cd frontend/trading-web && npm run build
 
 ## Docs Rules
 
-- In progress: update step status in `docs/phase/{project}/{feature}/index.json`
-- Done: write `docs/done/{project}/{feature}/{feature}-summary.md` → move phase folder → mark `[x]` in `docs/TODO.md`
-- Keep only root `docs/` state files up to date (`docs/state.md`, `docs/TODO.md`, `docs/phase/**`); ignore duplicate state files outside root `docs/`
-- When adding a new feature, add an entry to `docs/TODO.md` first
-- Never treat `.claude/**/docs` or `.codex/**/docs` as orchestration state.
-- If duplicate state files are found outside root `docs/`, leave them untouched.
+- Keep root `docs/` as the only orchestration state source.
+- In progress: update `docs/phase/{project}/{feature}/index.json`.
+- Done: write `docs/done/{project}/{feature}/{feature}-summary.md`, move the phase folder, and mark `[x]` in `docs/TODO.md`.
+- Add new features to `docs/TODO.md` first.
+- Leave duplicate state files outside root `docs/` untouched.
 
 ⚠️ If session context is overloaded, switch to a new session

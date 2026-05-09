@@ -2,6 +2,7 @@
 
 ## Execution Order
 
+0. Ensure `docs/state.md` mode is `manual` before starting cleanup. Cleanup always runs with manual approval gating; do not switch it to `auto` during this step.
 1. Read `worktree_path` and `branch` from `index.json`.
 2. Navigate to that worktree path and inspect: `git status`, `git log --oneline -10`, `git diff main...HEAD`.
 3. Stage any unstaged changes explicitly by file (never `git add -A`).
