@@ -194,7 +194,7 @@ class PositionControllerIntegrationTest {
     fun `존재하지_않는_ticker_조회시_404를_반환한다`() {
         mockMvc.get("/api/v1/accounts/${account.id}/positions/NOTEXIST").andExpect {
             status { isNotFound() }
-            jsonPath("$.code") { value("NOT_FOUND") }
+            jsonPath("$.code") { value("POSITION_NOT_FOUND") }
         }
     }
 

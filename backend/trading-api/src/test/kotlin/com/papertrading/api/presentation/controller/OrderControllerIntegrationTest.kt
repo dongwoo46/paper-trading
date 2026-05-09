@@ -146,7 +146,7 @@ class OrderControllerIntegrationTest {
                 "quantity" to 1,
                 "idempotencyKey" to UUID.randomUUID().toString(),
             ))
-        }.andExpect { status { isBadRequest() } }
+        }.andExpect { status { isConflict() } }
     }
 
     @Test
@@ -165,7 +165,7 @@ class OrderControllerIntegrationTest {
                 "limitPrice" to 75000,
                 "idempotencyKey" to UUID.randomUUID().toString(),
             ))
-        }.andExpect { status { isBadRequest() } }
+        }.andExpect { status { isNotFound() } }
     }
 
     @Test

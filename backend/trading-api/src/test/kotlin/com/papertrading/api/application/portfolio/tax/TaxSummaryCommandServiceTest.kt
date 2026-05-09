@@ -42,6 +42,12 @@ class TaxSummaryCommandServiceTest {
         tradingMode = TradingMode.LOCAL,
         initialDeposit = BigDecimal("1000000")
     ).withId(1L)
+    private fun kisAccount(): Account = Account.create(
+        accountName = "kis",
+        accountType = AccountType.STOCK,
+        tradingMode = TradingMode.KIS_PAPER,
+        initialDeposit = BigDecimal("1000000")
+    ).withId(1L)
 
     @Test
     fun `recalculate success creates summary and marks run success`() {
@@ -139,5 +145,19 @@ class TaxSummaryCommandServiceTest {
         service.recalculate(1L, TaxYear(2024), force = true, runType = TaxSummaryRunType.YEAR_END_BATCH)
 
         verify { taxSummaryRunRepository.save(match<TaxSummaryRun> { it.runType == TaxSummaryRunType.YEAR_END_BATCH }) }
+    }
+
+    @Test
+    fun `recalculate when account is KIS then throws invalid account mode`() {
+        val account = kisAccount()
+        every { taxSummaryRunRepository.existsRunning(1L, 2024) } returns false
+        every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
+
+        val ex = assertThrows<InvalidAccountModeForTaxSummaryException> {
+            service.recalculate(1L, TaxYear(2024), force = true)
+        }
+
+        assertEquals("INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY", ex.errorCode)
+        verify(exactly = 0) { taxSummaryRunRepository.save(any<TaxSummaryRun>()) }
     }
 }

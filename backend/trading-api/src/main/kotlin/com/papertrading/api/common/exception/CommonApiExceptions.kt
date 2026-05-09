@@ -45,9 +45,6 @@ class InvalidRetryPolicyException :
 class WebhookNotConfiguredException :
     ConflictException("WEBHOOK_NOT_CONFIGURED", "Webhook이 설정되지 않았습니다.")
 
-class ReceivableSettlementNotFoundException(receivableSettlementId: Long) :
-    NotFoundException("RECEIVABLE_SETTLEMENT_NOT_FOUND", "미수정산 데이터를 찾을 수 없습니다. id=$receivableSettlementId")
-
 class InvalidPercentScaleException :
     BadRequestException("INVALID_PERCENT_SCALE", "percent scale must be <= 4")
 

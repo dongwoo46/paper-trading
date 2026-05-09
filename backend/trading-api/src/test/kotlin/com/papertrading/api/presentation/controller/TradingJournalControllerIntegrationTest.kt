@@ -160,7 +160,7 @@ class TradingJournalControllerIntegrationTest {
         mockMvc.get("/api/trading-journals/$journalId") {
             param("accountId", accountB.toString())
         }.andExpect {
-            status { isNotFound() }
+            status { isConflict() }
         }
     }
 

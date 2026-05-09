@@ -7,14 +7,12 @@ import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
-import com.papertrading.api.domain.enums.SettlementStatus
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.support.withId
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.feepolicy.FeePolicy
 import com.papertrading.api.domain.entity.order.Order
-import com.papertrading.api.domain.entity.settlement.ReceivableSettlement
 import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
@@ -22,10 +20,10 @@ import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
 import com.papertrading.api.infrastructure.persistence.FeePolicyRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
-import com.papertrading.api.infrastructure.persistence.ReceivableSettlementRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementExecutionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementRepository
+import com.papertrading.api.domain.entity.settlement.Settlement
 import com.papertrading.api.domain.event.ExecutionFilledEvent
 import io.mockk.every
 import io.mockk.just
@@ -49,7 +47,6 @@ class ExecutionProcessorTest {
     private val accountLedgerRepository = mockk<AccountLedgerRepository>()
     private val feePolicyRepository = mockk<FeePolicyRepository>()
     private val collectorSubscriptionPort = mockk<CollectorSubscriptionPort>()
-    private val ReceivableSettlementRepository = mockk<ReceivableSettlementRepository>()
     private val settlementRepository = mockk<SettlementRepository>()
     private val settlementExecutionRepository = mockk<SettlementExecutionRepository>()
     private val eventPublisher = mockk<ApplicationEventPublisher>().also {
@@ -67,7 +64,6 @@ class ExecutionProcessorTest {
         accountLedgerRepository = accountLedgerRepository,
         feePolicyRepository = feePolicyRepository,
         collectorSubscriptionPort = collectorSubscriptionPort,
-        ReceivableSettlementRepository = ReceivableSettlementRepository,
         settlementRepository = settlementRepository,
         settlementExecutionRepository = settlementExecutionRepository,
         eventPublisher = eventPublisher,
@@ -116,16 +112,18 @@ class ExecutionProcessorTest {
     }
 
     @Test
-    fun `LOCAL SELL — availableDeposit 증가, ReceivableSettlementRepository save 호출 안됨`() {
+    fun `LOCAL SELL — availableDeposit 증가 and settlement tax is 0_2pct`() {
         val account = account(TradingMode.LOCAL)
         val order = sellOrder(account, qty = BigDecimal("5"))
         val fillPrice = BigDecimal("70000")
         val fillQty = BigDecimal("5")
 
+        val settlementSlot = slot<Settlement>()
         setupCommonMocks(account, order)
         every { executionRepository.save(any()) } answers {
             firstArg<Execution>().withId(100L)
         }
+        every { settlementRepository.save(capture(settlementSlot)) } answers { firstArg() }
 
         val initialDeposit = account.availableDeposit
 
@@ -142,12 +140,11 @@ class ExecutionProcessorTest {
             "availableDeposit should be ${initialDeposit.add(expectedNetProceeds)} but was ${account.availableDeposit}"
         )
 
-        // ReceivableSettlementRepository.save() 호출 안 됨
-        verify(exactly = 0) { ReceivableSettlementRepository.save(any()) }
+        assertEquals(0, BigDecimal("700.0000").compareTo(settlementSlot.captured.tax))
     }
 
     @Test
-    fun `KIS_LIVE SELL — availableDeposit 불변, ReceivableSettlement 생성 (status=PENDING)`() {
+    fun `KIS_LIVE SELL — availableDeposit 불변, no receivable settlement creation`() {
         val account = account(TradingMode.KIS_LIVE)
         val order = sellOrder(account, qty = BigDecimal("5"))
         val fillPrice = BigDecimal("70000")
@@ -157,8 +154,6 @@ class ExecutionProcessorTest {
         every { executionRepository.save(any()) } answers {
             firstArg<Execution>().withId(200L)
         }
-        val pendingSlot = slot<ReceivableSettlement>()
-        every { ReceivableSettlementRepository.save(capture(pendingSlot)) } answers { firstArg() }
         every { settlementRepository.save(any()) } answers { firstArg() }
         every { settlementExecutionRepository.save(any()) } answers { firstArg() }
 
@@ -169,12 +164,29 @@ class ExecutionProcessorTest {
         // KIS: 즉시 입금 없음 — availableDeposit 변화 없어야 함
         assertEquals(initialDeposit, account.availableDeposit)
 
-        // ReceivableSettlement 생성 확인
-        verify(exactly = 1) { ReceivableSettlementRepository.save(any()) }
-        assertEquals(SettlementStatus.PENDING, pendingSlot.captured.status)
-        // amount = netProceeds = 350000
-        val expectedAmount = fillPrice.multiply(fillQty) // fee=0
-        assertEquals(0, expectedAmount.compareTo(pendingSlot.captured.amount))
+        verify(exactly = 1) { settlementRepository.save(any()) }
+    }
+
+    @Test
+    fun `KIS_PAPER SELL — availableDeposit 불변, no receivable settlement creation`() {
+        val account = account(TradingMode.KIS_PAPER)
+        val order = sellOrder(account, qty = BigDecimal("5"))
+        val fillPrice = BigDecimal("70000")
+        val fillQty = BigDecimal("5")
+
+        setupCommonMocks(account, order)
+        every { executionRepository.save(any()) } answers {
+            firstArg<Execution>().withId(201L)
+        }
+        every { settlementRepository.save(any()) } answers { firstArg() }
+        every { settlementExecutionRepository.save(any()) } answers { firstArg() }
+
+        val initialDeposit = account.availableDeposit
+
+        processor.fill(10L, fillPrice, fillQty)
+
+        assertEquals(initialDeposit, account.availableDeposit)
+        verify(exactly = 1) { settlementRepository.save(any()) }
     }
 
     /** Spec Test 1C: verify publishEvent(ExecutionFilledEvent) called after fill() with correct ticker, side, executionId */
