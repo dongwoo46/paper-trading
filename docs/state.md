@@ -10,7 +10,7 @@ idle
 - 없음
 
 ## 마지막 액션
-2026-05-09: trading-api/settlement-cleanup phase completed
+2026-05-09: quant-worker/trading-indicator-source-pipeline Phase 완료 (Step 2~5 최종 PASS)
 
 ## 다음 액션
-idle 상태: docs/TODO.md 미완료 항목 중 다음 phase 선택 대기
+`$orchestrate` 실행 시 docs/TODO.md의 다음 미완료 항목 선택

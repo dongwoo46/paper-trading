@@ -44,6 +44,9 @@ WRONG:    .worktrees/{project}-{feature}/docs/...
 6. Check mode:
    - `manual`: summarize step content → output "Shall we proceed?" and wait for approval.
    - `auto`: immediately invoke subagent.
+   - **Exception (absolute): if Step 1 just completed, DO NOT start Step 2 automatically.**
+     - Orchestrator must ask user approval first with concrete options.
+     - Until approval, set state to `needs_input` and keep current step as 2 `pending`.
 7. Call Agent tool with the full content of `step-{n}.md` as context.
    - **Each subagent starts with an independent context** (no memory of previous phases/steps).
    - All information the subagent needs must be in the step file and role definition.
@@ -52,6 +55,7 @@ WRONG:    .worktrees/{project}-{feature}/docs/...
    - Read the "## Completion Report" block from the agent's response.
    - Apply **Error Handling Matrix** (see §Error Handling below) to decide: PASS / RETRY / REWORK / BLOCKED.
    - **If PASS**: immediately update docs (see §Mandatory Doc Update below), then invoke next step.
+     - **Exception for Step 1 PASS**: update docs, then pause for user approval gate before Step 2.
    - **If RETRY/REWORK**: immediately update docs with failure details, create rework step, route accordingly.
    - **If BLOCKED**: immediately update docs with blocker reason, halt and notify user.
 9. On phase completion → **reset context** and proceed to next phase.

@@ -1,0 +1,99 @@
+{
+    "phase":  "trading-indicator-source-pipeline",
+    "project":  "quant-worker",
+    "status":  "completed",
+    "current_step":  5,
+    "total_steps":  5,
+    "branch":  "feature/quant-worker-trading-indicator-source-pipeline",
+    "worktree_path":  ".worktrees/quant-worker-trading-indicator-source-pipeline",
+    "parallel_groups":  [
+
+                        ],
+    "steps":  [
+                  {
+                      "id":  1,
+                      "agent":  "quant-planner",
+                      "name":  "Feature spec, API spec, step file generation",
+                      "file":  "step-1.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "Spec and step files (step-2~5) generated"
+                  },
+                  {
+                      "id":  2,
+                      "agent":  "quant-dev",
+                      "name":  "Implementation (TDD)",
+                      "file":  "step-2.md",
+                      "status":  "completed",
+                      "retry_count":  3,
+                      "result":  "PASS(RETRY3): RS null-policy end-to-end 정합화(collector/repository/migration/tests)",
+                      "substeps":  [
+                                       {
+                                           "id":  1,
+                                           "name":  "tests (red)",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  2,
+                                           "name":  "collectors \u0026 normalization",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  3,
+                                           "name":  "repositories upsert",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  4,
+                                           "name":  "job/service orchestration",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  5,
+                                           "name":  "flyway migration",
+                                           "status":  "completed"
+                                       },
+                                       {
+                                           "id":  6,
+                                           "name":  "verification",
+                                           "status":  "completed"
+                                       }
+                                   ]
+                  },
+                  {
+                      "id":  3,
+                      "agent":  "test-engineer",
+                      "name":  "Testing and QA verification",
+                      "file":  "step-3.md",
+                      "status":  "completed",
+                      "retry_count":  3,
+                      "result":  "PASS(RETRY3): pytest targeted 18 passed, collector-api ./gradlew test --tests \"*Market*\" BUILD SUCCESSFUL",
+                      "substeps":  [
+
+                                   ]
+                  },
+                  {
+                      "id":  4,
+                      "agent":  "code-reviewer",
+                      "name":  "Code review",
+                      "file":  "step-4.md",
+                      "status":  "completed",
+                      "retry_count":  1,
+                      "result":  "PASS(RETRY2): unresolved critical/high finding 없음"
+                  },
+                  {
+                      "id":  5,
+                      "agent":  "orchestrator",
+                      "name":  "Write summary + create PR",
+                      "file":  "step-5.md",
+                      "status":  "completed",
+                      "retry_count":  0,
+                      "result":  "PASS: summary.md 작성, TODO 항목 완료 처리, PR draft 포함"
+                  }
+              ],
+    "blockers":  [
+
+                 ],
+    "created":  "2026-05-09",
+    "updated":  "2026-05-09"
+}

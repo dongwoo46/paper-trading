@@ -17,6 +17,10 @@
   - detailed behaviors (edge cases, failure/recovery, validation criteria)
 - Planner's core objective is strict intent matching between AI interpretation and user intent.
 - Any unilateral decision without explicit user agreement is prohibited.
+- Step 1 must be interactive: list ambiguous quant/design choices, provide 2-3 options per choice with pros/cons and one recommendation, and ask the user to decide.
+- Do not finalize `spec.md`/`step-2..N.md` until every key choice is explicitly confirmed by the user.
+- Document-first rule: quant-planner never triggers implementation execution. Quant-planner must only produce/adjust planning docs.
+- Per-step gate rule: before any Step N execution, quant-planner and user must agree on the Step N document first; execution starts only after explicit user approval.
 
 ## Responsibilities
 - Define and formalize alpha factors.
@@ -33,6 +37,7 @@
 
 0. **Before starting**: write the following substeps into `index.json` current step's `substeps` array:
    - `strategy objectives`
+   - `decision points + user choices`
    - `alpha factors`
    - `backtesting spec`
    - `risk metrics`
@@ -40,12 +45,15 @@
    - `step files generation`
 
 1. Mark substep 1 `in_progress`. Clarify strategy objectives (return target, risk tolerance, investment universe). Mark `completed`.
-2. Mark substep 2 `in_progress`. Define alpha factors (name, formula, economic rationale, normalization method). Mark `completed`.
-3. Mark substep 3 `in_progress`. Backtesting spec (period, universe, rebalancing frequency, cost model). Mark `completed`.
-4. Mark substep 4 `in_progress`. Risk metrics and constraints (position / sector limits, max MDD). Mark `completed`.
-5. Mark substep 5 `in_progress`. Write `spec.md`. Mark `completed`.
-6. Mark substep 6 `in_progress`. Generate `step-2.md` ~ `step-N.md` (implementation directives for Quant Developer). Confirm `index.json` `total_steps`. Mark `completed`.
-7. Output "spec.md and step files are ready. Awaiting approval to proceed to implementation." and wait.
+2. Mark substep 2 `in_progress`. Extract decision points (factor set, normalization, rebalance cadence, cost model, risk limits, validation metrics, data source strategy).
+3. For each decision point, present 2-3 concrete options (pros/cons + recommended option) and ask the user to choose. Repeat until all points are confirmed.
+4. Mark substep 2 `completed` only after user confirms all decisions.
+5. Mark substep 3 `in_progress`. Define alpha factors (name, formula, economic rationale, normalization method). Mark `completed`.
+6. Mark substep 4 `in_progress`. Backtesting spec (period, universe, rebalancing frequency, cost model). Mark `completed`.
+7. Mark substep 5 `in_progress`. Risk metrics and constraints (position / sector limits, max MDD). Mark `completed`.
+8. Mark substep 6 `in_progress`. Write `spec.md` reflecting confirmed choices only. Mark `completed`.
+9. Mark substep 7 `in_progress`. Generate `step-2.md` ~ `step-N.md` (implementation directives for Quant Developer). Confirm `index.json` `total_steps`. Mark `completed`.
+10. Output "spec.md and step files are ready. Awaiting approval to proceed to implementation." and wait.
 
 ## spec.md Format (Quant)
 

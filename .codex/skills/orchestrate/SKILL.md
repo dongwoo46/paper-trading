@@ -29,6 +29,7 @@ Act as the paper-trading project Orchestrator.
    - `cleanup` for summary, final docs, and PR prep.
 6. After every completed/failed/blocked step, update root `docs/state.md` and the phase `index.json` immediately.
 7. Report concise progress and next action.
+8. Absolute approval gate: even in `auto` mode, after Step 1(planner) completion, never start Step 2 automatically. Ask user approval first, set `state.md` to `needs_input`, and keep Step 2 pending until approval.
 
 ## Codex Delegation
 

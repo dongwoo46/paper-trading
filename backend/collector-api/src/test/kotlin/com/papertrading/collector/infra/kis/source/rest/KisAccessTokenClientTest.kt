@@ -13,9 +13,10 @@ class KisAccessTokenClientTest {
     private val properties = mockk<KisProperties>()
     private val rateLimiter = mockk<KisRateLimiter>()
     private val tokenRedisStore = mockk<KisTokenRedisStore>()
+    private val tokenDbStore = mockk<KisTokenDbStore>()
     private val webClientBuilder = mockk<WebClient.Builder>(relaxed = true)
 
-    private val client = KisAccessTokenClient(properties, rateLimiter, tokenRedisStore, webClientBuilder)
+    private val client = KisAccessTokenClient(properties, rateLimiter, tokenRedisStore, tokenDbStore, webClientBuilder)
 
     @Test
     fun `Redis에 유효한 토큰이 있으면 캐시 히트 — KIS API 호출 없음`() {

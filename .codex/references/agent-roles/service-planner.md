@@ -18,6 +18,10 @@
   - detailed behaviors (edge cases, failure/recovery, validation criteria)
 - Planner's core objective is strict intent matching between AI interpretation and user intent.
 - Any unilateral decision without explicit user agreement is prohibited.
+- Step 1 must be interactive: identify ambiguous decisions, present 2-3 options per decision with pros/cons and one recommendation, then ask the user.
+- Do not write final `spec.md`/`step-2..N.md` until all decision points are explicitly confirmed by the user.
+- Document-first rule: planner never triggers implementation execution. Planner must only produce/adjust planning docs.
+- Per-step gate rule: before any Step N execution, planner and user must agree on the Step N document first; execution starts only after explicit user approval.
 
 ## Responsibilities
 - Structure user flows and functional requirements.
@@ -43,17 +47,21 @@ Read the graphify graph first to understand existing structure before designing.
 
 0. **Before starting**: write the following substeps into `index.json` current step's `substeps` array (status: `pending`):
    - `graphify + requirements`
+   - `decision points + user choices`
    - `DDD model`
    - `API + DB design`
    - `spec.md`
    - `step files generation`
 
 1. Mark substep 1 `in_progress`. Read graphify graph → map existing classes, dependencies, and entry points. Structure requirements (separate functional / non-functional, ask about ambiguities). Mark `completed`.
-2. Mark substep 2 `in_progress`. Confirm DDD model (Bounded Context, Entity, VO, Aggregate, Domain Event). Determine change scope per architecture layer. Mark `completed`.
-3. Mark substep 3 `in_progress`. Design API spec. Design DB schema. Identify external dependencies. Mark `completed`.
-4. Mark substep 4 `in_progress`. Write `spec.md`. Mark `completed`.
-5. Mark substep 5 `in_progress`. Generate `step-2.md` ~ `step-N.md` (each step with concrete directives). Confirm `index.json` `total_steps` (3–7 based on complexity). Mark `completed`.
-6. Output "spec.md and step files are ready. Awaiting approval to proceed to implementation." and wait.
+2. Mark substep 2 `in_progress`. Extract decision points (architecture, model boundary, API/DB alternatives, failure handling, rollout order).
+3. For each decision point, present 2-3 concrete options (pros/cons + recommended option) and ask the user to choose. Repeat until all points are confirmed.
+4. Mark substep 2 `completed` only after user confirms all decisions.
+5. Mark substep 3 `in_progress`. Confirm DDD model (Bounded Context, Entity, VO, Aggregate, Domain Event). Determine change scope per architecture layer. Mark `completed`.
+6. Mark substep 4 `in_progress`. Design API spec. Design DB schema. Identify external dependencies. Mark `completed`.
+7. Mark substep 5 `in_progress`. Write `spec.md` reflecting confirmed choices only. Mark `completed`.
+8. Mark substep 6 `in_progress`. Generate `step-2.md` ~ `step-N.md` (each step with concrete directives). Confirm `index.json` `total_steps` (3–7 based on complexity). Mark `completed`.
+9. Output "spec.md and step files are ready. Awaiting approval to proceed to implementation." and wait.
 
 ## spec.md Format
 

@@ -219,7 +219,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 수급 데이터 저장 모델/리포지토리 및 배치 적재 구현
   - collector-api 조회 API에서 사용할 수 있도록 적재 계약 정리
 
-- [ ] 트레이딩 지표 원천 데이터 수집 확장 (뉴스/공시 제외) | project: quant-worker | phase: trading-indicator-source-pipeline | priority: P1
+- [x] 트레이딩 지표 원천 데이터 수집 확장 (뉴스/공시 제외) | project: quant-worker | phase: trading-indicator-source-pipeline | priority: P1 | done: 2026-05-09 | pr: #TBD
   - 국내: 호가 잔량/스프레드/체결강도/누적 거래대금(VWAP 원천)/벤치마크-섹터 RS 원천 적재
   - 해외: regular + pre/after OHLCV, bid/ask + spread + depth(가능 범위), VWAP/RVOL 원천 적재
   - 해외 수급 대체 지표: short interest, days-to-cover, shares outstanding/float 수집 파이프라인
