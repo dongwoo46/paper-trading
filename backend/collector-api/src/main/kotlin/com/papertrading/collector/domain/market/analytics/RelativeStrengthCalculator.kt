@@ -15,6 +15,7 @@ class RelativeStrengthCalculator {
 		if (symbolCloses.size != baselineCloses.size || symbolCloses.size != timestamps.size) {
 			throw IllegalArgumentException("INVALID_PERIOD_QUERY")
 		}
+		timestamps.zipWithNext().forEach { (a, b) -> if (a > b) throw IllegalArgumentException("INVALID_PERIOD_QUERY") }
 		if (symbolCloses.isEmpty()) return emptyList()
 		val symbolFirst = symbolCloses.first()
 		val baselineFirst = baselineCloses.first()

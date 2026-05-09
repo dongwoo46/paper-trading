@@ -1,6 +1,5 @@
 package com.papertrading.collector.application.market.service
 
-import com.papertrading.collector.application.marketbar.port.MarketBarRepository
 import com.papertrading.collector.application.marketfeature.port.MarketFeatureStore
 import com.papertrading.collector.domain.market.analytics.MarketAnalyticsQuery
 import com.papertrading.collector.domain.market.analytics.MarketMicrostructureSnapshot
@@ -9,7 +8,9 @@ import com.papertrading.collector.domain.market.analytics.QueryInterval
 import com.papertrading.collector.domain.market.analytics.RangePolicy
 import com.papertrading.collector.domain.market.analytics.RelativeStrengthCalculator
 import com.papertrading.collector.domain.market.analytics.RelativeStrengthPoint
+import com.papertrading.collector.domain.market.indicator.Interval
 import com.papertrading.collector.domain.marketfeature.FeatureWindow
+import com.papertrading.collector.infra.redis.OrderbookRedisStore
 import org.springframework.stereotype.Service
 import java.time.Instant
 
@@ -50,8 +51,9 @@ data class MarketMicrostructureResult(
 
 @Service
 class MarketMicrostructureQueryService(
-	private val marketBarRepository: MarketBarRepository,
+	private val marketBarSourceResolver: MarketBarSourceResolver,
 	private val marketFeatureStore: MarketFeatureStore,
+	private val orderbookRedisStore: OrderbookRedisStore,
 	private val relativeStrengthCalculator: RelativeStrengthCalculator = RelativeStrengthCalculator(),
 ) {
 	fun query(request: MarketMicrostructureQuery): MarketMicrostructureResult {
@@ -69,17 +71,20 @@ class MarketMicrostructureQueryService(
 			sector = normalized.sector?.trim()?.uppercase(),
 		)
 
-		val limit = query.range.limit ?: 200
-		val bars = marketBarRepository.findBars(query.symbol, query.interval.value, limit)
+		val indicatorInterval = interval.toIndicatorInterval()
+		val source = marketBarSourceResolver.resolve(indicatorInterval)
+		val barRequest = toBarRequest(query, normalized)
+
+		val bars = source.load(query.symbol, indicatorInterval, barRequest)
 		if (bars.isEmpty()) throw SymbolNotFoundOrNoDataException()
 		val baseSymbol = query.benchmark ?: defaultBenchmark(query.symbol)
-		val baselineBars = marketBarRepository.findBars(baseSymbol, query.interval.value, limit)
+		val baselineBars = source.load(baseSymbol, indicatorInterval, barRequest)
 		if (baselineBars.size < bars.size) throw InsufficientDataForRsException()
 
 		val rsSeries = relativeStrengthCalculator.calculate(
 			symbolCloses = bars.map { it.close },
 			baselineCloses = baselineBars.take(bars.size).map { it.close },
-			timestamps = bars.map { it.startedAt },
+			timestamps = bars.map { it.timestamp },
 		)
 
 		return MarketMicrostructureResult(
@@ -88,8 +93,8 @@ class MarketMicrostructureQueryService(
 			session = query.session.value,
 			timezone = if (isKrSymbol(query.symbol)) "Asia/Seoul" else "America/New_York",
 			range = MarketMicrostructureRange(
-				from = bars.first().startedAt,
-				to = bars.last().startedAt,
+				from = bars.first().timestamp,
+				to = bars.last().timestamp,
 				requestedLimit = query.range.limit,
 				actualCount = bars.size,
 			),
@@ -124,38 +129,40 @@ class MarketMicrostructureQueryService(
 				timestamp = null,
 			)
 		}
-		val snapshot = marketFeatureStore.loadSnapshot(symbol, window)
-		if (snapshot == null) {
+		val featureSnapshot = marketFeatureStore.loadSnapshot(symbol, window)
+		val orderbookSnapshot = orderbookRedisStore.load(symbol)
+
+		if (featureSnapshot == null) {
 			return MarketMicrostructureSnapshot(
-				bestBid = null,
-				bestAsk = null,
-				spread = null,
+				bestBid = orderbookSnapshot?.bestBid,
+				bestAsk = orderbookSnapshot?.bestAsk,
+				spread = orderbookSnapshot?.spread,
 				bidAskImbalance = null,
-				bidDepthTopN = null,
-				askDepthTopN = null,
-				depthImbalance = null,
+				bidDepthTopN = orderbookSnapshot?.bidDepthTopN,
+				askDepthTopN = orderbookSnapshot?.askDepthTopN,
+				depthImbalance = orderbookSnapshot?.depthImbalance,
 				buyVolume = null,
 				sellVolume = null,
 				tradeIntensity = null,
 				vwap = null,
 				rvol = null,
-				timestamp = null,
+				timestamp = orderbookSnapshot?.timestamp,
 			)
 		}
 		return MarketMicrostructureSnapshot(
-			bestBid = null,
-			bestAsk = null,
-			spread = null,
-			bidAskImbalance = snapshot.tradeImbalance,
-			bidDepthTopN = null,
-			askDepthTopN = null,
-			depthImbalance = null,
-			buyVolume = snapshot.buyVolume,
-			sellVolume = snapshot.sellVolume,
-			tradeIntensity = snapshot.tradeImbalance,
-			vwap = snapshot.vwap,
-			rvol = snapshot.volume,
-			timestamp = snapshot.updatedAt,
+			bestBid = orderbookSnapshot?.bestBid,
+			bestAsk = orderbookSnapshot?.bestAsk,
+			spread = orderbookSnapshot?.spread,
+			bidAskImbalance = featureSnapshot.tradeImbalance,
+			bidDepthTopN = orderbookSnapshot?.bidDepthTopN,
+			askDepthTopN = orderbookSnapshot?.askDepthTopN,
+			depthImbalance = orderbookSnapshot?.depthImbalance,
+			buyVolume = featureSnapshot.buyVolume,
+			sellVolume = featureSnapshot.sellVolume,
+			tradeIntensity = featureSnapshot.tradeImbalance,
+			vwap = featureSnapshot.vwap,
+			rvol = featureSnapshot.volume,
+			timestamp = featureSnapshot.updatedAt,
 		)
 	}
 
@@ -165,7 +172,31 @@ class MarketMicrostructureQueryService(
 		return if (!hasLimit && !hasRange) request.copy(limit = 200) else request
 	}
 
+	private fun toBarRequest(query: MarketAnalyticsQuery, normalized: MarketMicrostructureQuery): MarketIndicatorsQuery =
+		MarketIndicatorsQuery(
+			symbol = query.symbol,
+			interval = query.interval.value,
+			limit = query.range.limit,
+			from = query.range.from,
+			to = query.range.to,
+			indicators = "rsi",
+			bbPeriod = null,
+			bbStdDev = null,
+			rsiPeriod = null,
+			macdFast = null,
+			macdSlow = null,
+			macdSignal = null,
+		)
+
 	private fun defaultBenchmark(symbol: String): String = if (isKrSymbol(symbol)) "KOSPI200" else "SPY"
 
 	private fun isKrSymbol(symbol: String): Boolean = symbol.all { it.isDigit() }
+}
+
+private fun QueryInterval.toIndicatorInterval(): Interval = when (this) {
+	QueryInterval.ONE_MINUTE -> Interval.ONE_MINUTE
+	QueryInterval.FIVE_MINUTES -> Interval.FIVE_MINUTES
+	QueryInterval.TEN_MINUTES -> Interval.TEN_MINUTES
+	QueryInterval.ONE_DAY -> Interval.ONE_DAY
+	QueryInterval.ONE_WEEK -> Interval.ONE_WEEK
 }

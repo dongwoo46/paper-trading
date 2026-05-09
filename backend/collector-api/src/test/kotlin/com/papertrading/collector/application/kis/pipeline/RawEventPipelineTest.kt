@@ -1,8 +1,10 @@
 package com.papertrading.collector.application.kis.pipeline
 
+import com.papertrading.collector.application.kis.service.OrderbookIngestMetrics
 import com.papertrading.collector.application.marketfeature.service.MarketFeatureAggregationService
 import com.papertrading.collector.domain.entity.kis.KisOrderbookEvent
 import com.papertrading.collector.domain.entity.kis.KisQuoteEvent
+import com.papertrading.collector.infra.redis.OrderbookRedisStore
 import com.papertrading.collector.infra.redis.QuoteRedisPublisher
 import io.mockk.every
 import io.mockk.just
@@ -18,8 +20,13 @@ class RawEventPipelineTest {
     private val orderbookParser = mockk<KisOrderbookEventParser>()
     private val publisher = mockk<QuoteRedisPublisher>()
     private val aggregationService = mockk<MarketFeatureAggregationService>()
+    private val orderbookRedisStore = mockk<OrderbookRedisStore>(relaxed = true)
+    private val orderbookIngestMetrics = mockk<OrderbookIngestMetrics>(relaxed = true)
 
-    private fun buildPipeline() = RawEventPipeline(parser, orderbookParser, publisher, aggregationService)
+    private fun buildPipeline() = RawEventPipeline(
+        parser, orderbookParser, publisher, aggregationService,
+        orderbookRedisStore, orderbookIngestMetrics,
+    )
 
     private fun sampleQuoteEvent() = KisQuoteEvent(
         ticker = "005930",
@@ -102,5 +109,45 @@ class RawEventPipelineTest {
 
         verify(exactly = 0) { parser.parse(any()) }
         verify(exactly = 0) { orderbookParser.parse(any()) }
+    }
+
+    @Test
+    fun `H0STASP0 성공 — recordReceived 호출, store save 호출`() {
+        val obEvent = sampleOrderbookEvent()
+        val payload = "0|H0STASP0|001|payload-data"
+        every { orderbookParser.parse(payload) } returns obEvent
+        every { orderbookRedisStore.save(obEvent) } just runs
+
+        buildPipeline().publish("kis", payload)
+
+        verify(exactly = 1) { orderbookIngestMetrics.recordReceived() }
+        verify(exactly = 1) { orderbookRedisStore.save(obEvent) }
+        verify(exactly = 0) { orderbookIngestMetrics.recordParseFail() }
+    }
+
+    @Test
+    fun `H0STASP0 파싱 실패 — recordReceived 호출, recordParseFail 호출, store save 미호출`() {
+        val payload = "0|H0STASP0|001|bad-data"
+        every { orderbookParser.parse(payload) } returns null
+
+        buildPipeline().publish("kis", payload)
+
+        verify(exactly = 1) { orderbookIngestMetrics.recordReceived() }
+        verify(exactly = 1) { orderbookIngestMetrics.recordParseFail() }
+        verify(exactly = 0) { orderbookRedisStore.save(any()) }
+    }
+
+    @Test
+    fun `H0STASP0 store save 예외 — 파이프라인 계속 진행(warn 로그만)`() {
+        val obEvent = sampleOrderbookEvent()
+        val payload = "0|H0STASP0|001|payload-data"
+        every { orderbookParser.parse(payload) } returns obEvent
+        every { orderbookRedisStore.save(obEvent) } throws RuntimeException("redis down")
+
+        // should not throw — runCatching absorbs the exception
+        buildPipeline().publish("kis", payload)
+
+        verify(exactly = 1) { orderbookIngestMetrics.recordReceived() }
+        verify(exactly = 1) { orderbookRedisStore.save(obEvent) }
     }
 }

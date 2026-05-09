@@ -1,0 +1,100 @@
+{
+  "project": "collector-api",
+  "feature": "market-microstructure-orderbook-ws",
+  "total_steps": 7,
+  "steps": [
+    {
+      "step": 1,
+      "name": "Planning",
+      "agent": "service-planner",
+      "status": "completed",
+      "substeps": [
+        { "name": "graphify + requirements", "status": "completed" },
+        { "name": "DDD model", "status": "completed" },
+        { "name": "API + DB design", "status": "completed" },
+        { "name": "spec.md", "status": "completed" },
+        { "name": "step files generation", "status": "completed" }
+      ]
+    },
+    {
+      "step": 2,
+      "name": "H0STASP0 Parser + KisOrderbookEvent",
+      "agent": "fullstack-dev",
+      "status": "completed",
+      "file": "step-2.md",
+      "substeps": [
+        { "name": "KisOrderbookEvent value object", "status": "completed" },
+        { "name": "KisOrderbookEventParser @Component", "status": "completed" },
+        { "name": "RawEventPipeline TR_ID routing 업데이트", "status": "completed" },
+        { "name": "KisOrderbookEventParserTest (TDD)", "status": "completed" },
+        { "name": "RawEventPipelineTest 확장", "status": "completed" }
+      ]
+    },
+    {
+      "step": 3,
+      "name": "OrderbookRedisStore + Ingest Metrics + Pipeline Wiring",
+      "agent": "fullstack-dev",
+      "status": "completed",
+      "file": "step-3.md",
+      "substeps": [
+        { "name": "RedisKeyPolicy ORDERBOOK_TTL + orderbookKey 추가", "status": "completed" },
+        { "name": "OrderbookSnapshot 데이터 클래스 생성", "status": "completed" },
+        { "name": "OrderbookRedisStore @Component 구현 (save/load)", "status": "completed" },
+        { "name": "OrderbookIngestMetrics @Component 구현 (AtomicLong 카운터)", "status": "completed" },
+        { "name": "RawEventPipeline H0STASP0 브랜치 wiring (store + metrics)", "status": "completed" },
+        { "name": "OrderbookRedisStoreTest (TDD)", "status": "completed" },
+        { "name": "OrderbookIngestMetricsTest (TDD)", "status": "completed" },
+        { "name": "RawEventPipelineTest 확장 (store/metrics 상호작용)", "status": "completed" }
+      ]
+    },
+    {
+      "step": 4,
+      "name": "API Mapping + 1d/1w DB Branch Fix + RS Timestamp Sort",
+      "agent": "fullstack-dev",
+      "status": "completed",
+      "file": "step-4.md",
+      "substeps": [
+        { "name": "RelativeStrengthCalculatorTest — timestamp 역순 입력 시 예외 (TDD RED)", "status": "completed" },
+        { "name": "MarketMicrostructureQueryServiceTest — DB소스 분기 + orderbook 매핑 (TDD RED)", "status": "completed" },
+        { "name": "RelativeStrengthCalculator — timestamp 정렬 검증 추가 (GREEN)", "status": "completed" },
+        { "name": "MarketMicrostructureQueryService — MarketBarSourceResolver 주입 + 1d/1w 분기 수정 (GREEN)", "status": "completed" },
+        { "name": "MarketMicrostructureQueryService — OrderbookRedisStore 주입 + orderbook 필드 매핑 (GREEN)", "status": "completed" },
+        { "name": "QueryInterval.toIndicatorInterval() extension 추가", "status": "completed" },
+        { "name": "전체 테스트 통과 + compileKotlin 성공", "status": "completed" }
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Ingest Health Controller + KisProperties Config + Compile Gate",
+      "agent": "fullstack-dev",
+      "status": "completed",
+      "file": "step-5.md",
+      "substeps": [
+        { "name": "OrderbookIngestHealthControllerTest (TDD RED)", "status": "completed" },
+        { "name": "OrderbookIngestHealthResponse DTO 생성", "status": "completed" },
+        { "name": "OrderbookIngestHealthController @RestController 구현 (GREEN)", "status": "completed" },
+        { "name": "KisProperties.trIds 기본값 H0STCNT0+H0STASP0 업데이트", "status": "completed" },
+        { "name": "컨트롤러 테스트 통과 + compileKotlin 성공", "status": "completed" }
+      ]
+    },
+    {
+      "step": 6,
+      "name": "QA Verification — Full Test Suite + Regression Gate",
+      "agent": "test-engineer",
+      "status": "completed",
+      "file": "step-6.md",
+      "substeps": [
+        { "name": "feature-scoped tests", "status": "completed" },
+        { "name": "regression check", "status": "completed" },
+        { "name": "final gate", "status": "completed" }
+      ]
+    },
+    {
+      "step": 7,
+      "name": "Cleanup + Summary + PR",
+      "agent": "orchestrator",
+      "status": "pending",
+      "file": "step-7.md"
+    }
+  ]
+}
