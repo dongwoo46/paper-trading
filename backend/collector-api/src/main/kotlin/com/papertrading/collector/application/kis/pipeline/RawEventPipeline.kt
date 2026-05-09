@@ -1,6 +1,8 @@
 package com.papertrading.collector.application.kis.pipeline
 
+import com.papertrading.collector.application.kis.service.OrderbookIngestMetrics
 import com.papertrading.collector.application.marketfeature.service.MarketFeatureAggregationService
+import com.papertrading.collector.infra.redis.OrderbookRedisStore
 import com.papertrading.collector.infra.redis.QuoteRedisPublisher
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
@@ -12,6 +14,8 @@ class RawEventPipeline(
     private val orderbookParser: KisOrderbookEventParser,
     private val publisher: QuoteRedisPublisher,
     private val marketFeatureAggregationService: MarketFeatureAggregationService,
+    private val orderbookRedisStore: OrderbookRedisStore,
+    private val orderbookIngestMetrics: OrderbookIngestMetrics,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -42,8 +46,16 @@ class RawEventPipeline(
     }
 
     private fun publishOrderbook(source: String, payload: String) {
-        val event = orderbookParser.parse(payload) ?: return
-        // step-3에서 OrderbookRedisStore.save() + OrderbookIngestMetrics.record() 연결 예정
-        log.debug { "orderbook received: source=$source, ticker=${event.ticker}" }
+        orderbookIngestMetrics.recordReceived()
+        val event = orderbookParser.parse(payload)
+        if (event == null) {
+            orderbookIngestMetrics.recordParseFail()
+            return
+        }
+        runCatching { orderbookRedisStore.save(event) }
+            .onFailure { ex ->
+                log.warn(ex) { "orderbook redis store failed: source=$source, ticker=${event.ticker}" }
+            }
+        log.debug { "orderbook stored: source=$source, ticker=${event.ticker}" }
     }
 }

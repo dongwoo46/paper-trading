@@ -9,10 +9,12 @@ object RedisKeyPolicy {
     val FEATURE_TTL: Duration = Duration.ofMinutes(30)
     val DEBUG_TTL: Duration = Duration.ofSeconds(120)
     const val DEBUG_MAX_LEN: Long = 1200L
+    val ORDERBOOK_TTL: Duration = Duration.ofSeconds(30)
 
     fun currentKey(symbol: String): String = "agg:1m:$symbol:current"
     fun barsKey(symbol: String): String = "bars:1m:$symbol"
     fun featureKey(symbol: String, window: String): String = "feature:$symbol:$window"
     fun debugKey(symbol: String): String = "debug:tick:$symbol"
+    fun orderbookKey(symbol: String): String = "orderbook:$symbol"
 }
 
