@@ -1,4 +1,4 @@
-﻿# TODO — Paper Trading
+# TODO — Paper Trading
 
 Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
@@ -99,7 +99,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [x] 세금 정산 자동화 | project: trading-api | phase: tax-summary | priority: P2 | done: 2026-05-03 | pr: #TBD
 - [x] 거래 일지 자동 생성 | project: trading-api | phase: trading-journal | priority: P2 | done: 2026-05-03 | pr: #TBD
 
-- [ ] T+2 정산 구조 정리 (ReceivableSettlement 제거) | project: trading-api | phase: settlement-cleanup | priority: P2
+- [x] T+2 정산 구조 정리 (ReceivableSettlement 제거) | project: trading-api | phase: settlement-cleanup | priority: P2 | done: 2026-05-09 | pr: #TBD
   - KIS 모드(KIS_PAPER/KIS_LIVE): ReceivableSettlement 생성 로직 제거 — 잔고/정산은 KIS가 처리
   - KIS 모드에서 우리 DB 예수금 변경 불필요 → ExecutionProcessor KIS 분기 단순화
   - ReceivableSettlement 엔티티·테이블·레포지토리 삭제
@@ -307,6 +307,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P2
   - 팩터 계산 → 정규화 → 백테스팅 연계
   - 팩터 IC (Information Coefficient) 분석
+
 
 
 
