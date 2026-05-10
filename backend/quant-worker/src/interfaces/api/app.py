@@ -4,6 +4,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
@@ -14,6 +15,7 @@ from src.application.daily_fetch_service import load_db_config_from_env
 from src.application.weekly_fetch_service import WeeklyFetchOptions, execute as execute_weekly
 from src.catalog.postgres_symbol_catalog import connect
 from src.jobs.batch_schedule import start_batch_scheduler, stop_batch_scheduler
+from src.jobs.investor_flow_schedule import start_investor_flow_scheduler, stop_investor_flow_scheduler
 
 
 class CollectDailyRequest(BaseModel):
@@ -56,16 +58,20 @@ class CollectWeeklyResponse(BaseModel):
 
 logger = logging.getLogger(__name__)
 _batch_scheduler = None
+_investor_flow_scheduler = None
 
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     _configure_logging()
-    global _batch_scheduler
+    global _batch_scheduler, _investor_flow_scheduler
     _batch_scheduler = start_batch_scheduler()
+    _investor_flow_scheduler = start_investor_flow_scheduler()
     yield
     stop_batch_scheduler(_batch_scheduler)
     _batch_scheduler = None
+    stop_investor_flow_scheduler(_investor_flow_scheduler)
+    _investor_flow_scheduler = None
     logger.info("batch_scheduler:stopped via lifespan")
 
 
@@ -228,3 +234,345 @@ def fetch_market_weekly_bars(
         }
         for row in rows
     ]
+
+
+# ---------------------------------------------------------------------------
+# Investor flow — Pydantic response models
+# ---------------------------------------------------------------------------
+
+
+class InvestorFlowRecord(BaseModel):
+    trade_date: str
+    symbol: str
+    market: str
+    foreign_buy_volume: int
+    foreign_sell_volume: int
+    foreign_net_volume: int
+    foreign_buy_amount: str
+    foreign_sell_amount: str
+    foreign_net_amount: str
+    institution_buy_volume: int
+    institution_sell_volume: int
+    institution_net_volume: int
+    institution_buy_amount: str
+    institution_sell_amount: str
+    institution_net_amount: str
+    finance_invest_buy_volume: int
+    finance_invest_sell_volume: int
+    finance_invest_net_volume: int
+    finance_invest_buy_amount: str
+    finance_invest_sell_amount: str
+    finance_invest_net_amount: str
+    insurance_buy_volume: int
+    insurance_sell_volume: int
+    insurance_net_volume: int
+    insurance_buy_amount: str
+    insurance_sell_amount: str
+    insurance_net_amount: str
+    trust_buy_volume: int
+    trust_sell_volume: int
+    trust_net_volume: int
+    trust_buy_amount: str
+    trust_sell_amount: str
+    trust_net_amount: str
+    private_equity_buy_volume: int
+    private_equity_sell_volume: int
+    private_equity_net_volume: int
+    private_equity_buy_amount: str
+    private_equity_sell_amount: str
+    private_equity_net_amount: str
+    bank_buy_volume: int
+    bank_sell_volume: int
+    bank_net_volume: int
+    bank_buy_amount: str
+    bank_sell_amount: str
+    bank_net_amount: str
+    other_finance_buy_volume: int
+    other_finance_sell_volume: int
+    other_finance_net_volume: int
+    other_finance_buy_amount: str
+    other_finance_sell_amount: str
+    other_finance_net_amount: str
+    pension_buy_volume: int
+    pension_sell_volume: int
+    pension_net_volume: int
+    pension_buy_amount: str
+    pension_sell_amount: str
+    pension_net_amount: str
+    individual_buy_volume: int
+    individual_sell_volume: int
+    individual_net_volume: int
+    individual_buy_amount: str
+    individual_sell_amount: str
+    individual_net_amount: str
+
+
+class ShortSellingRecord(BaseModel):
+    trade_date: str
+    symbol: str
+    market: str
+    short_sell_volume: int
+    short_sell_amount: str
+    short_sell_ratio: str
+    short_balance_volume: int
+    short_balance_amount: str
+
+
+class ProgramTradingRecord(BaseModel):
+    trade_date: str
+    symbol: str
+    market: str
+    arb_buy_volume: int
+    arb_sell_volume: int
+    arb_net_volume: int
+    arb_buy_amount: str
+    arb_sell_amount: str
+    arb_net_amount: str
+    non_arb_buy_volume: int
+    non_arb_sell_volume: int
+    non_arb_net_volume: int
+    non_arb_buy_amount: str
+    non_arb_sell_amount: str
+    non_arb_net_amount: str
+
+
+class ForeignHoldingRecord(BaseModel):
+    trade_date: str
+    symbol: str
+    market: str
+    holding_limit: int
+    holding_volume: int
+    exhaustion_ratio: str
+
+
+# ---------------------------------------------------------------------------
+# Investor flow — helper to validate / normalize common query parameters
+# ---------------------------------------------------------------------------
+
+
+def _validate_symbol_and_dates(
+    symbol: str,
+    from_date: date | None,
+    to_date: date | None,
+    limit: int,
+) -> tuple[str, date, date, int]:
+    trimmed = symbol.strip().upper()
+    if not trimmed:
+        raise HTTPException(status_code=400, detail="symbol must not be blank")
+
+    safe_to = to_date or datetime.now().date()
+    safe_from = from_date or (safe_to - timedelta(days=365))
+    if safe_from > safe_to:
+        raise HTTPException(status_code=400, detail="from must be <= to")
+
+    safe_limit = max(1, min(1000, limit))
+    return trimmed, safe_from, safe_to, safe_limit
+
+
+def _decimal_to_str(value: object) -> str:
+    """Serialize Decimal (or any numeric) to string without float conversion."""
+    if isinstance(value, Decimal):
+        return str(value)
+    return str(value)
+
+
+def _serialize_investor_flow(row: dict) -> InvestorFlowRecord:
+    amount_keys = {k for k in row if k.endswith("_amount")}
+    data = {
+        k: (_decimal_to_str(v) if k in amount_keys else v)
+        for k, v in row.items()
+    }
+    if isinstance(data.get("trade_date"), date):
+        data["trade_date"] = data["trade_date"].isoformat()
+    return InvestorFlowRecord(**data)
+
+
+def _serialize_short_selling(row: dict) -> ShortSellingRecord:
+    decimal_keys = {"short_sell_amount", "short_balance_amount", "short_sell_ratio"}
+    data = {
+        k: (_decimal_to_str(v) if k in decimal_keys else v)
+        for k, v in row.items()
+    }
+    if isinstance(data.get("trade_date"), date):
+        data["trade_date"] = data["trade_date"].isoformat()
+    return ShortSellingRecord(**data)
+
+
+def _serialize_program_trading(row: dict) -> ProgramTradingRecord:
+    amount_keys = {k for k in row if k.endswith("_amount")}
+    data = {
+        k: (_decimal_to_str(v) if k in amount_keys else v)
+        for k, v in row.items()
+    }
+    if isinstance(data.get("trade_date"), date):
+        data["trade_date"] = data["trade_date"].isoformat()
+    return ProgramTradingRecord(**data)
+
+
+def _serialize_foreign_holding(row: dict) -> ForeignHoldingRecord:
+    decimal_keys = {"exhaustion_ratio"}
+    data = {
+        k: (_decimal_to_str(v) if k in decimal_keys else v)
+        for k, v in row.items()
+    }
+    if isinstance(data.get("trade_date"), date):
+        data["trade_date"] = data["trade_date"].isoformat()
+    return ForeignHoldingRecord(**data)
+
+
+# ---------------------------------------------------------------------------
+# Investor flow — DB fetch helpers (patchable in tests)
+# ---------------------------------------------------------------------------
+
+
+def fetch_investor_flow_records(
+    *,
+    symbol: str,
+    from_date: date,
+    to_date: date,
+    market: str | None,
+    limit: int,
+) -> list[dict]:
+    from src.repositories.investor_flow_repository import InvestorFlowRepository
+    db = load_db_config_from_env()
+    repo = InvestorFlowRepository()
+    with connect(db) as conn:
+        return repo.find_investor_flow(symbol, from_date, to_date, limit, conn, market=market)
+
+
+def fetch_short_selling_records(
+    *,
+    symbol: str,
+    from_date: date,
+    to_date: date,
+    market: str | None,
+    limit: int,
+) -> list[dict]:
+    from src.repositories.investor_flow_repository import InvestorFlowRepository
+    db = load_db_config_from_env()
+    repo = InvestorFlowRepository()
+    with connect(db) as conn:
+        return repo.find_short_selling(symbol, from_date, to_date, limit, conn, market=market)
+
+
+def fetch_program_trading_records(
+    *,
+    symbol: str,
+    from_date: date,
+    to_date: date,
+    market: str | None,
+    limit: int,
+) -> list[dict]:
+    from src.repositories.investor_flow_repository import InvestorFlowRepository
+    db = load_db_config_from_env()
+    repo = InvestorFlowRepository()
+    with connect(db) as conn:
+        return repo.find_program_trading(symbol, from_date, to_date, limit, conn, market=market)
+
+
+def fetch_foreign_holding_records(
+    *,
+    symbol: str,
+    from_date: date,
+    to_date: date,
+    market: str | None,
+    limit: int,
+) -> list[dict]:
+    from src.repositories.investor_flow_repository import InvestorFlowRepository
+    db = load_db_config_from_env()
+    repo = InvestorFlowRepository()
+    with connect(db) as conn:
+        return repo.find_foreign_holding(symbol, from_date, to_date, limit, conn, market=market)
+
+
+# ---------------------------------------------------------------------------
+# Investor flow — REST endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.get("/investor-flow/{symbol}", response_model=list[InvestorFlowRecord])
+def get_investor_flow(
+    symbol: str,
+    from_date: date | None = Query(default=None, alias="from"),
+    to: date | None = None,
+    market: str | None = None,
+    limit: int = 250,
+) -> list[InvestorFlowRecord]:
+    trimmed, safe_from, safe_to, safe_limit = _validate_symbol_and_dates(symbol, from_date, to, limit)
+    try:
+        rows = fetch_investor_flow_records(
+            symbol=trimmed,
+            from_date=safe_from,
+            to_date=safe_to,
+            market=market,
+            limit=safe_limit,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return [_serialize_investor_flow(row) for row in rows]
+
+
+@app.get("/short-selling/{symbol}", response_model=list[ShortSellingRecord])
+def get_short_selling(
+    symbol: str,
+    from_date: date | None = Query(default=None, alias="from"),
+    to: date | None = None,
+    market: str | None = None,
+    limit: int = 250,
+) -> list[ShortSellingRecord]:
+    trimmed, safe_from, safe_to, safe_limit = _validate_symbol_and_dates(symbol, from_date, to, limit)
+    try:
+        rows = fetch_short_selling_records(
+            symbol=trimmed,
+            from_date=safe_from,
+            to_date=safe_to,
+            market=market,
+            limit=safe_limit,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return [_serialize_short_selling(row) for row in rows]
+
+
+@app.get("/program-trading/{symbol}", response_model=list[ProgramTradingRecord])
+def get_program_trading(
+    symbol: str,
+    from_date: date | None = Query(default=None, alias="from"),
+    to: date | None = None,
+    market: str | None = None,
+    limit: int = 250,
+) -> list[ProgramTradingRecord]:
+    trimmed, safe_from, safe_to, safe_limit = _validate_symbol_and_dates(symbol, from_date, to, limit)
+    try:
+        rows = fetch_program_trading_records(
+            symbol=trimmed,
+            from_date=safe_from,
+            to_date=safe_to,
+            market=market,
+            limit=safe_limit,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return [_serialize_program_trading(row) for row in rows]
+
+
+@app.get("/foreign-holding/{symbol}", response_model=list[ForeignHoldingRecord])
+def get_foreign_holding(
+    symbol: str,
+    from_date: date | None = Query(default=None, alias="from"),
+    to: date | None = None,
+    market: str | None = None,
+    limit: int = 250,
+) -> list[ForeignHoldingRecord]:
+    trimmed, safe_from, safe_to, safe_limit = _validate_symbol_and_dates(symbol, from_date, to, limit)
+    try:
+        rows = fetch_foreign_holding_records(
+            symbol=trimmed,
+            from_date=safe_from,
+            to_date=safe_to,
+            market=market,
+            limit=safe_limit,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return [_serialize_foreign_holding(row) for row in rows]
