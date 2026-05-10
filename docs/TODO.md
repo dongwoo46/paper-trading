@@ -131,6 +131,18 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 3개 모델 예측 앙상블 → 신뢰도 가중 합산
   - 예측 결과 → 전략 신호 입력값으로 활용
 
+### P2 — LangGraph 에이전트 워크플로우
+
+- [ ] LangGraph + LangChain 에이전트 워크플로우 구축 | project: quant-worker | phase: langgraph-agent-workflow | priority: P2
+  - LangGraph로 전체 퀀트 에이전트 파이프라인 오케스트레이션
+  - 노드 구성: 데이터수집 → 분석(차트·뉴스·펀더멘탈·거시) → 전략생성 → 백테스팅 → 반박 → 수정 → 승인
+  - Reflexion 패턴: 전략생성 → 검증 → 반박 → 수정 루프 (조건 달성 시 탈출)
+  - conditional edge: Sharpe > 1.5 && 반박 에이전트 승인 → 실행 판단 / 미달 → 재생성
+  - 분석 에이전트들은 병렬 실행 (LangGraph 병렬 노드)
+  - GPT-4o / Claude / Gemini 병렬 전략 생성 → 앙상블 노드 합산
+  - 장투 워크플로우 / 단투 워크플로우 분리 그래프
+  - 선행 필요: 백테스팅 엔진, 알파 팩터 파이프라인, 뉴스·공시 파이프라인
+
 ### P3 — AI 에이전트 전략
 
 - [ ] 차트 분석 AI 에이전트 (차트매매용) | project: quant-worker | phase: chart-analysis-agent | priority: P3
