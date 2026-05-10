@@ -248,6 +248,11 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - [ ] Railway PostgreSQL → quant-worker DB 마이그레이션 (Alembic)
   - [ ] OHLCV 초기 데이터 적재 (pykrx 수집 스크립트 1회 실행)
 
+  **PostHog 연동 (사용자 행동 분석)**
+  - [ ] PostHog SDK 설치 (trading-web)
+  - [ ] 주요 이벤트 트래킹: 백테스트 실행, 차트 분석 요청, 종목 검색
+  - [ ] 환경변수: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`
+
 ---
 
 ## trading-web (front)
