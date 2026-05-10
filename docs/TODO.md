@@ -253,6 +253,12 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - [ ] 주요 이벤트 트래킹: 백테스트 실행, 차트 분석 요청, 종목 검색
   - [ ] 환경변수: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`
 
+  **Sentry 연동 (에러 모니터링)**
+  - [ ] Sentry SDK 설치 (trading-web + quant-worker)
+  - [ ] 프론트 에러 자동 수집 + 소스맵 업로드
+  - [ ] FastAPI 에러 자동 수집 (sentry-sdk[fastapi])
+  - [ ] 환경변수: `VITE_SENTRY_DSN`, `SENTRY_DSN`
+
 ---
 
 ## trading-web (front)
