@@ -65,12 +65,23 @@ WRONG:    .worktrees/{project}-{feature}/docs/...
 - Before any Step N, user must approve Step N document when phase is `manual` or `needs_input`.
 - Cleanup always runs in `manual` mode.
 
+### Orchestrator → Planner Prompt Rule (CRITICAL)
+
+When delegating to a Planner agent, the prompt MUST NOT include design decisions, schema details, implementation choices, or file lists.
+
+**Allowed in prompt**: feature name, feature goal (1–2 sentences), paths of context files to read.
+
+**Forbidden in prompt**: data source choice, DB schema, class names, file creation list, API design, any implementation detail.
+
+If the orchestrator pre-fills answers, the planner skips pass A (Q&A) and violates the two-pass pattern. The planner must derive questions from reading the codebase itself.
+
 ---
 
 ## Test Scope Policy
 
-- Run only targeted tests until the final phase gate.
-- Full-suite gate belongs to `test-engineer` or cleanup/final step, for services touched by the phase only.
+- **test-engineer**: Run ONLY test files that correspond to source files changed in this phase (`git diff --name-only origin/main...HEAD`). Never run the full test suite.
+- **code-reviewer**: Review ONLY files changed in this phase. Never review the full codebase.
+- **Full-suite**: Runs only at cleanup/PR step (Step 5), for services touched by the phase only.
 - If full-suite is blocked by scope/environment, fall back to targeted tests or report a blocker.
 
 ---
@@ -354,13 +365,16 @@ cd .worktrees/{worktree}/frontend/trading-web && npm test -- --run
 
 If any fail → route back to fullstack-dev. Skip unrelated services.
 
-1. Run cleanup agent (summary.md + PR).
-2. Move `docs/phase/{project}/{feature}/` → `docs/done/{project}/{feature}/`.
-3. Remove phase from active list in `state.md`.
-4. Mark `docs/TODO.md` item `[x]`.
-5. Report: "✅ {feature} complete. PR #{n} created."
-6. Next phase starts with new context.
-7. Continue other active phases, or set `state.md` to `idle`.
+1. **Orchestrator handles cleanup directly** — do NOT delegate to a subagent. Run the following in the main thread:
+   - Run full test suite (services touched by this phase only)
+   - Write `docs/done/{project}/{feature}/{feature}-summary.md`
+   - Move `docs/phase/{project}/{feature}/` → `docs/done/{project}/{feature}/`
+   - Mark `docs/TODO.md` item `[x]`
+   - Commit and push with `gh pr create`
+2. Remove phase from active list in `state.md`.
+3. Report: "✅ {feature} complete. PR #{n} created."
+4. Next phase starts with new context.
+5. Continue other active phases, or set `state.md` to `idle`.
 
 ---
 

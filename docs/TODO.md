@@ -71,6 +71,21 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ---
 
+## quant-worker (미국 시장)
+
+### P2 — 미장 데이터 수집
+
+- [ ] 미국 주식 수급 데이터 수집 파이프라인 | project: quant-worker | phase: us-market-flow-pipeline | priority: P2
+  - 국내와 달리 외국인/기관/개인 구분 데이터 없음 — 아래 대체 수급 지표 수집
+  - 공매도 잔고 (Short Interest): FINRA 데이터, 종목별 잔고수량·비율·전일대비
+  - 기관 보유 변화 (Institutional Ownership): SEC 13F 분기 기관 보유량 변화
+  - 다크풀 거래량 (Dark Pool Volume): FINRA off-exchange 거래 비율
+  - ETF 자금 유출입: yfinance 등 기반 주요 ETF 일별 자금 흐름
+  - 데이터 소스: FINRA API (공매도/다크풀 무료), SEC EDGAR (13F), yfinance (ETF)
+  - ⚠️ 설계 전 논의 필요: 수집 대상 종목 범위 (S&P500 / NASDAQ100 / 전체)
+
+---
+
 ## quant-worker (퀀트 리서치)
 
 ### P2 — MVP 이후

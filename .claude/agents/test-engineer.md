@@ -26,23 +26,25 @@ Role: Test Engineer — QA Specialist + Test Automation Engineer
 
 1. Read `step-{n}.md` and every file in `Files to Read`.
 2. Confirm `index.json` substeps are set: `feature-scoped tests`, `integration tests`, `coverage check`. On resume, skip `completed`.
-3. Detect changed files: `git diff --name-only` in the worktree.
-4. Run **feature-scoped tests only** — tests directly related to the changed classes/packages. Do NOT run the full test suite (full suite runs only at Phase Completion, Orchestrator's responsibility).
+3. Detect changed files: `git diff --name-only origin/main...HEAD` in the worktree.
+4. **SCOPE RULE (ABSOLUTE)**: Run ONLY tests that correspond to files changed in this phase. Never run the full test suite. Full suite runs only at cleanup/PR step (Orchestrator's responsibility).
+   - Map each changed source file → its test file(s)
+   - Run only those specific test files
 
 ### Feature-Scoped Test Commands
 
 ```bash
-# trading-api — specific package or class
+# trading-api — specific package or class only
 cd .worktrees/{worktree} && ./gradlew test --tests "com.papertrading.api.{feature_package}.*"
 # example: ./gradlew test --tests "com.papertrading.api.application.position.*"
 
 # collector-api
 cd .worktrees/{worktree} && ./gradlew test --tests "com.papertrading.collector.{feature_package}.*"
 
-# quant-worker
-cd .worktrees/{worktree} && python -m pytest tests/test_{feature}.py -v --tb=short
+# quant-worker — specific test files only (NOT pytest tests/)
+cd .worktrees/{worktree}/backend/quant-worker && python -m pytest tests/collectors/test_{feature}.py tests/repositories/test_{feature}.py tests/application/test_{feature}.py tests/jobs/test_{feature}.py -v --tb=short
 
-# trading-web
+# trading-web — specific test file only
 cd .worktrees/{worktree} && npm test -- --run --reporter=verbose {feature}.test.ts
 ```
 

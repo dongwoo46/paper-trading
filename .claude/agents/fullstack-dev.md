@@ -46,19 +46,21 @@ Check `state.md` mode before starting.
 [Refactor] Remove duplication, improve readability → rerun to confirm still green
 ```
 
-Test commands — specific class only, never full suite:
+Test commands — specific class/file only. Full suite (`./gradlew test`, `pytest tests/`) is FORBIDDEN in implementation steps:
 
 ```bash
-# trading-api / collector-api
-./gradlew test --tests "com.papertrading.*.{ClassName}"
+# trading-api / collector-api — specific class only
+./gradlew test --tests "com.papertrading.api.{package}.{ClassName}"
+./gradlew test --tests "com.papertrading.collector.{package}.{ClassName}"
 
-# quant-worker
-python -m pytest tests/test_{unit}.py::test_{function} -v
+# quant-worker — specific test file or function only
+python -m pytest tests/{layer}/test_{unit}.py -v --tb=short
+python -m pytest tests/{layer}/test_{unit}.py::test_{function} -v
 
-# trading-web
+# trading-web — specific test file only
 npm test -- --run {ComponentName}.test.ts
 ```
 
-5. Verify Acceptance Criteria with targeted tests + compile checks for changed code only. **Do NOT run the full test suite in intermediate implementation/rework steps** — full suite runs only at the final phase completion gate.
+5. Verify Acceptance Criteria with targeted tests + compile checks for changed code only. **Never run the full test suite in implementation steps** — full suite runs only at cleanup/PR step.
 6. Update `index.json`: current step `status: "completed"`, record result summary.
 7. Report completion to Orchestrator.
