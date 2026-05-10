@@ -219,6 +219,37 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ---
 
+## 인프라 — Railway MVP 배포
+
+### P1
+
+- [ ] Railway MVP 배포 | project: infra | phase: railway-mvp-deploy | priority: P1
+
+  **배포 대상 (3개 서비스)**
+  - quant-worker (FastAPI) — 백테스트 + 차트분석 API 서버
+  - trading-web (React/Vite) — 사용자 UI
+  - PostgreSQL (Railway 애드온) — OHLCV + 수급 데이터
+
+  **MVP에서 사용자가 할 수 있는 것**
+  - 종목 검색 + 차트 조회 (캔들/보조지표/수급 패인)
+  - 전략 조건 입력 → 백테스트 실행 → 성과 확인 (수익률/MDD/샤프/승률)
+  - 차트 AI 분석 버튼 → 지지선·저항선·진입가·손절가 자연어 리포트
+
+  **배포 전 완성 필요 항목**
+  - [ ] 백테스팅 엔진 FastAPI 엔드포인트 (`POST /backtest`)
+  - [ ] 차트 분석 AI FastAPI 엔드포인트 (`POST /chart-analysis`)
+  - [ ] 백테스트 결과 UI (전략 입력 폼 + 수익률 곡선 + 매매 내역 테이블)
+  - [ ] 차트 분석 결과 UI (AI 리포트 패널 — 차트 옆에 표시)
+
+  **Railway 설정**
+  - [ ] quant-worker Dockerfile 작성
+  - [ ] trading-web Dockerfile 작성 (Nginx static)
+  - [ ] 환경변수: `DATABASE_URL`, `OPENAI_API_KEY`, `VITE_API_BASE_URL`
+  - [ ] Railway PostgreSQL → quant-worker DB 마이그레이션 (Alembic)
+  - [ ] OHLCV 초기 데이터 적재 (pykrx 수집 스크립트 1회 실행)
+
+---
+
 ## trading-web (front)
 
 ### P1 — 완료
