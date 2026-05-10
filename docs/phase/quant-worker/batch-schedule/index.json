@@ -2,7 +2,7 @@
   "phase": "batch-schedule",
   "project": "quant-worker",
   "status": "in_progress",
-  "current_step": 1,
+  "current_step": 4,
   "total_steps": 5,
   "branch": "feature/quant-worker-batch-schedule",
   "worktree_path": ".worktrees/batch-schedule",
@@ -13,7 +13,7 @@
       "agent": "quant-planner",
       "name": "Feature spec, API spec, step file generation",
       "file": "step-1.md",
-      "status": "pending",
+      "status": "completed",
       "retry_count": 0,
       "result": null,
       "substeps": []
@@ -23,34 +23,34 @@
       "agent": "quant-dev",
       "name": "Market and interval batch scheduler implementation (TDD)",
       "file": "step-2.md",
-      "status": "pending",
+      "status": "completed",
       "retry_count": 0,
       "result": null,
       "substeps": [
         {
           "id": 1,
           "name": "scheduler red tests",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": 2,
           "name": "batch definitions and provider routing",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": 3,
           "name": "retry and outcome classification",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": 4,
           "name": "Slack notification and structured logs",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": 5,
           "name": "targeted verification",
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
@@ -59,24 +59,31 @@
       "agent": "test-engineer",
       "name": "Testing and QA verification for batch scheduler",
       "file": "step-3.md",
-      "status": "pending",
+      "status": "completed",
       "retry_count": 0,
-      "result": null,
+      "result": {
+        "total_tests": 120,
+        "passed": 120,
+        "failed": 0,
+        "feature_scoped": 50,
+        "regression": 70,
+        "summary": "All 120 tests pass. 50 feature-scoped batch_schedule tests (definitions, provider routing, outcome classification, retry policy, Slack, lifecycle). 70 regression tests (application services, catalog jobs, API, repositories, collectors). Both compile checks pass. No real Slack/pykrx/yfinance network calls in tests."
+      },
       "substeps": [
         {
           "id": 1,
           "name": "scheduler feature-scoped tests",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": 2,
           "name": "API and collector regression tests",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": 3,
           "name": "full quant-worker verification",
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
@@ -103,5 +110,5 @@
   ],
   "blockers": [],
   "created": "2026-05-09",
-  "updated": "2026-05-09"
+  "updated": "2026-05-10"
 }
