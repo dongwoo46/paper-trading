@@ -233,6 +233,51 @@ class FeePolicyTest {
         }
     }
 
+    // --- calculateTax ---
+
+    @Test
+    fun calculateTax_KOSPI_세율_0_0018이면_올바른_세금을_계산한다() {
+        // grossProceeds=1000000, taxRate=0.0018 → 1800.0000
+        val policy = createPolicy(transactionTaxRate = BigDecimal("0.0018"))
+
+        val tax = policy.calculateTax(BigDecimal("1000000"))
+
+        assertEquals(0, tax.compareTo(BigDecimal("1800.0000")))
+        assertEquals(4, tax.scale())
+    }
+
+    @Test
+    fun calculateTax_NASDAQ_세율_0이면_세금이_0이다() {
+        val policy = createPolicy(transactionTaxRate = BigDecimal("0.0000"))
+
+        val tax = policy.calculateTax(BigDecimal("1000000"))
+
+        assertEquals(0, tax.compareTo(BigDecimal.ZERO))
+    }
+
+    @Test
+    fun calculateTax_grossProceeds가_음수이면_예외를_던진다() {
+        val policy = createPolicy(transactionTaxRate = BigDecimal("0.0018"))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            policy.calculateTax(BigDecimal("-1"))
+        }
+    }
+
+    @Test
+    fun create_transactionTaxRate가_음수이면_예외를_던진다() {
+        assertThrows(IllegalArgumentException::class.java) {
+            createPolicy(transactionTaxRate = BigDecimal("-0.001"))
+        }
+    }
+
+    @Test
+    fun create_transactionTaxRate가_1_초과이면_예외를_던진다() {
+        assertThrows(IllegalArgumentException::class.java) {
+            createPolicy(transactionTaxRate = BigDecimal("1.0001"))
+        }
+    }
+
     // --- helper ---
 
     private fun createPolicy(
@@ -240,6 +285,7 @@ class FeePolicyTest {
         marketType: MarketType = MarketType.KOSPI,
         feeRate: BigDecimal = BigDecimal("0.001500"),
         minFee: BigDecimal = BigDecimal("0.0000"),
+        transactionTaxRate: BigDecimal = BigDecimal("0.0018"),
         effectiveFrom: Instant = Instant.parse("2024-01-01T00:00:00Z"),
         effectiveUntil: Instant? = null
     ): FeePolicy = FeePolicy.create(
@@ -247,6 +293,7 @@ class FeePolicyTest {
         marketType = marketType,
         feeRate = feeRate,
         minFee = minFee,
+        transactionTaxRate = transactionTaxRate,
         effectiveFrom = effectiveFrom,
         effectiveUntil = effectiveUntil
     )
