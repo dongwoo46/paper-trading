@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import asyncio
-import contextlib
 import logging
 import os
-import time
+from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta
 from typing import Literal
 
@@ -15,6 +13,7 @@ from src.application.daily_fetch_service import DailyFetchOptions, execute
 from src.application.daily_fetch_service import load_db_config_from_env
 from src.application.weekly_fetch_service import WeeklyFetchOptions, execute as execute_weekly
 from src.catalog.postgres_symbol_catalog import connect
+from src.jobs.batch_schedule import start_batch_scheduler, stop_batch_scheduler
 
 
 class CollectDailyRequest(BaseModel):
@@ -55,10 +54,22 @@ class CollectWeeklyResponse(BaseModel):
     end: str
 
 
-app = FastAPI(title="Collector Worker API", version="1.0.0")
-_periodic_task: asyncio.Task[None] | None = None
-_periodic_lock = asyncio.Lock()
 logger = logging.getLogger(__name__)
+_batch_scheduler = None
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    _configure_logging()
+    global _batch_scheduler
+    _batch_scheduler = start_batch_scheduler()
+    yield
+    stop_batch_scheduler(_batch_scheduler)
+    _batch_scheduler = None
+    logger.info("batch_scheduler:stopped via lifespan")
+
+
+app = FastAPI(title="Collector Worker API", version="1.0.0", lifespan=lifespan)
 
 
 class _ColorFormatter(logging.Formatter):
@@ -155,76 +166,6 @@ def market_weekly(
         )
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    _configure_logging()
-    global _periodic_task
-    if _is_periodic_enabled():
-        logger.info(
-            "auto_collect:start enabled=true interval_seconds=%d provider=%s only_default=%s",
-            _periodic_interval_seconds(),
-            _periodic_provider(),
-            _periodic_only_default(),
-        )
-        _periodic_task = asyncio.create_task(_run_periodic_collect_loop())
-    else:
-        logger.info("auto_collect:start enabled=false")
-
-
-@app.on_event("shutdown")
-async def shutdown_event() -> None:
-    global _periodic_task
-    if _periodic_task is not None:
-        _periodic_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await _periodic_task
-        _periodic_task = None
-        logger.info("auto_collect:stopped")
-
-
-def _is_periodic_enabled() -> bool:
-    return os.getenv("AUTO_COLLECT_ENABLED", "false").lower() in ("1", "true", "yes", "on")
-
-
-def _periodic_interval_seconds() -> int:
-    return int(os.getenv("AUTO_COLLECT_INTERVAL_SECONDS", "900"))
-
-
-def _periodic_provider() -> str:
-    return os.getenv("AUTO_COLLECT_PROVIDER", "all")
-
-
-def _periodic_only_default() -> bool:
-    return os.getenv("AUTO_COLLECT_ONLY_DEFAULT", "true").lower() in ("1", "true", "yes", "on")
-
-
-async def _run_periodic_collect_loop() -> None:
-    interval = _periodic_interval_seconds()
-    while True:
-        started_at = time.perf_counter()
-        try:
-            async with _periodic_lock:
-                result = execute(
-                    DailyFetchOptions(
-                        provider=_periodic_provider(),
-                        only_default=_periodic_only_default(),
-                    )
-                )
-                elapsed_ms = int((time.perf_counter() - started_at) * 1000)
-                logger.info(
-                    "auto_collect:tick done provider=%s symbols=%s success=%s failed=%s elapsed_ms=%d",
-                    result["provider"],
-                    result["symbols"],
-                    result["success_symbols"],
-                    result["failed_symbols"],
-                    elapsed_ms,
-                )
-        except Exception as exc:  # noqa: BLE001
-            elapsed_ms = int((time.perf_counter() - started_at) * 1000)
-            logger.exception("auto_collect:tick error elapsed_ms=%d error=%s", elapsed_ms, exc)
-        await asyncio.sleep(interval)
 
 
 def _configure_logging() -> None:
