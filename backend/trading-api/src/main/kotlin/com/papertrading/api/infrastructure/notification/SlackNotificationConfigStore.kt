@@ -1,7 +1,7 @@
 package com.papertrading.api.infrastructure.notification
 
 import com.papertrading.api.application.notification.port.SlackNotificationConfig
-import com.papertrading.api.application.notification.SlackNotificationRuntimeConfig
+import com.papertrading.api.application.notification.port.SlackNotificationRuntimeConfig
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference

@@ -152,7 +152,7 @@ class ExecutionProcessor(
                         order = order,
                         account = account,
                         execution = execution,
-                        tax = grossProceeds.multiply(BigDecimal("0.0020")).setScale(4, RoundingMode.HALF_UP),
+                        tax = feePolicy.map { it.calculateTax(grossProceeds) }.orElse(BigDecimal.ZERO),
                         settledAt = Instant.now(),
                     )
                 )

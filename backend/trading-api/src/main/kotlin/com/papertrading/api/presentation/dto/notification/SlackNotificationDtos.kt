@@ -1,7 +1,7 @@
 package com.papertrading.api.presentation.dto.notification
 
-import com.papertrading.api.application.notification.SlackNotificationConfigResult
-import com.papertrading.api.application.notification.UpdateSlackNotificationConfigCommand
+import com.papertrading.api.application.notification.result.SlackNotificationConfigResult
+import com.papertrading.api.application.notification.command.UpdateSlackNotificationConfigCommand
 import com.papertrading.api.domain.enums.NotificationEventType
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank

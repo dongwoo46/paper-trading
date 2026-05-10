@@ -1,7 +1,6 @@
 package com.papertrading.api.presentation.controller
 
-import com.papertrading.api.application.notification.SlackNotificationCommandService
-import com.papertrading.api.application.notification.SlackNotificationQueryService
+import com.papertrading.api.application.notification.SlackNotificationService
 import com.papertrading.api.presentation.dto.notification.SlackNotificationConfigResponse
 import com.papertrading.api.presentation.dto.notification.SlackNotificationTestRequest
 import com.papertrading.api.presentation.dto.notification.SlackNotificationTestResponse
@@ -19,18 +18,17 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/operations/notifications/slack")
 class SlackNotificationController(
-    private val queryService: SlackNotificationQueryService,
-    private val commandService: SlackNotificationCommandService,
+    private val slackNotificationService: SlackNotificationService,
 ) {
     @GetMapping
     fun getConfig(): SlackNotificationConfigResponse =
-        SlackNotificationConfigResponse.from(queryService.getConfig())
+        SlackNotificationConfigResponse.from(slackNotificationService.getConfig())
 
     @PutMapping
     fun updateConfig(
         @Valid @RequestBody request: UpdateSlackNotificationConfigRequest,
     ): SlackNotificationConfigResponse =
-        SlackNotificationConfigResponse.from(commandService.updateConfig(request.toCommand()))
+        SlackNotificationConfigResponse.from(slackNotificationService.updateConfig(request.toCommand()))
 
     @PostMapping("/test")
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -39,6 +37,6 @@ class SlackNotificationController(
     ): SlackNotificationTestResponse =
         SlackNotificationTestResponse(
             accepted = true,
-            requestId = commandService.sendTestMessage(request.message),
+            requestId = slackNotificationService.sendTestMessage(request.message),
         )
 }

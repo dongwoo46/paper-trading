@@ -52,8 +52,29 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - GET /api/kis/account/balance — 실계좌 잔고·평가손익 응답
   - trading-web 대시보드에 KIS 실계좌 잔고 반영 (KIS/LOCAL 계좌 구분 표시)
 
+- [ ] 전략 실행 모드 설계 결정 | project: trading-api | phase: strategy-execution-mode-design | priority: P1
+  - ⚠️ strategy-execution 선행 설계 — 결정 전까지 자동 주문 구현 금지
+
+  **설계 결정 완료 (2026-05-10 논의)**
+
+  - ✅ 실행 모드 3개 전부 지원: `KIS_LIVE` / `KIS_PAPER` / `LOCAL`
+  - ✅ 모드는 전략 생성 시 지정 (전략 내장 방식) — 전략 단위 독립 제어
+  - ✅ 글로벌 킬스위치 필요 — 전체 KIS_LIVE 주문 긴급 차단용
+
+  **데이터 저장 전략 결정 (2026-05-10 논의)**
+
+  - ✅ 잔고 / 포지션: KIS API 실시간 호출, 우리 DB에 저장하지 않음 (drift 방지)
+  - ✅ 주문 (Order): 주문 생성 시점에 우리 DB에 저장 (KIS_LIVE/KIS_PAPER/LOCAL 공통)
+  - ✅ 체결 (Execution): KIS WebSocket 체결 통보 수신 → 우리 DB에 저장 (kis-execution-ws 기존 흐름 활용)
+  - ✅ 전략 ID를 Order / Execution에 연결 — 전략별 성과 추적, 세금 집계, 거래 일지 귀속용
+
+  **⚠️ 논의 필요 (구현 전 결정 필수)**
+  - [ ] 논의: 전략 활성화/비활성화 제어를 UI에서 할지, API로만 할지
+  - [ ] 논의: 글로벌 킬스위치 저장 위치 (DB + Redis 캐시 vs DB만)
+  - 위 논의 완료 후 strategy-execution phase 설계 시작
+
 - [ ] 전략 실행 서비스 | project: trading-api | phase: strategy-execution | priority: P1
-  - ⚠️ 보류: 전략 도메인 리빌딩 이후 진행 (자동 주문 로직 선개발 금지)
+  - ⚠️ 보류: 전략 실행 모드 설계 결정 + 전략 도메인 리빌딩 이후 진행 (자동 주문 로직 선개발 금지)
   - 리빌딩 범위: 전략 저장/버전 관리, 전략별 손익 기록, 실주문 성과 vs 백테스트 성과 분리 기록
   - StrategyCommandService: 전략 활성화/비활성화
   - 시그널(OrderSignal) 수신 → 자동 주문 생성

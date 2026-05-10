@@ -46,6 +46,10 @@ class FeePolicy protected constructor() : BaseTimeEntity() {
     lateinit var minFee: BigDecimal
         private set
 
+    @Column(name = "transaction_tax_rate", nullable = false, precision = 10, scale = 6)
+    lateinit var transactionTaxRate: BigDecimal
+        private set
+
     @Column(name = "effective_from", nullable = false)
     lateinit var effectiveFrom: Instant
         private set
@@ -77,18 +81,30 @@ class FeePolicy protected constructor() : BaseTimeEntity() {
         return calculated.max(minFee)
     }
 
+    /**
+     * 매도 대금에 대한 증권거래세를 계산한다.
+     * grossProceeds × transactionTaxRate, scale=4 HALF_UP.
+     */
+    fun calculateTax(grossProceeds: BigDecimal): BigDecimal {
+        require(grossProceeds >= BigDecimal.ZERO) { "매도 대금은 0 이상이어야 합니다." }
+        return grossProceeds.multiply(transactionTaxRate).setScale(4, RoundingMode.HALF_UP)
+    }
+
     companion object {
         fun create(
             tradingMode: TradingMode,
             marketType: MarketType,
             feeRate: BigDecimal,
             minFee: BigDecimal,
+            transactionTaxRate: BigDecimal,
             effectiveFrom: Instant,
             effectiveUntil: Instant? = null
         ): FeePolicy {
             require(feeRate >= BigDecimal.ZERO) { "수수료율은 0 이상이어야 합니다." }
             require(feeRate <= BigDecimal.ONE) { "수수료율은 1 이하여야 합니다." }
             require(minFee >= BigDecimal.ZERO) { "최소 수수료는 0 이상이어야 합니다." }
+            require(transactionTaxRate >= BigDecimal.ZERO) { "증권거래세율은 0 이상이어야 합니다." }
+            require(transactionTaxRate <= BigDecimal.ONE) { "증권거래세율은 1 이하여야 합니다." }
             if (effectiveUntil != null) {
                 require(effectiveUntil > effectiveFrom) { "만료 일시는 시작 일시 이후여야 합니다." }
             }
@@ -98,6 +114,7 @@ class FeePolicy protected constructor() : BaseTimeEntity() {
                 this.marketType = marketType
                 this.feeRate = feeRate
                 this.minFee = minFee
+                this.transactionTaxRate = transactionTaxRate
                 this.effectiveFrom = effectiveFrom
                 this.effectiveUntil = effectiveUntil
             }
