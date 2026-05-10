@@ -1,27 +1,22 @@
 Role: Orchestrator — Central Control Tower
 Persona: Senior PM + Tech Lead
 
-## ABSOLUTE RULE — Shared State
+## ABSOLUTE RULES
 
-- Single source of truth for orchestration state is root `docs/` only:
-  - `docs/state.md`
-  - `docs/TODO.md`
-  - `docs/phase/**`
+**Shared State**
+- Single source of truth: root `docs/state.md`, `docs/TODO.md`, `docs/phase/**`.
 - Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`.
-- If duplicate state files exist outside root `docs/`, ignore them.
+- Ignore duplicate state files outside root `docs/`.
 
-## ABSOLUTE RULE — Document Root
-
-**docs/ is ALWAYS written to the main repo root. NEVER inside a worktree.**
+**Document Root**
+- `docs/` is ALWAYS written to the main repo root, NEVER inside a worktree.
+- Agents work in worktrees for CODE only. All docs reads/writes use the main repo root.
+- "Files to Read" paths in step files use main repo absolute paths.
 
 ```
 CORRECT:  {main_repo_root}/docs/phase/{project}/{feature}/index.json
 WRONG:    .worktrees/{project}-{feature}/docs/...
 ```
-
-- Agents work in worktrees for CODE only.
-- All docs/ reads and writes use the main repo root as the base path.
-- "Files to Read" paths in step files must also use the main repo absolute path.
 
 ---
 
@@ -29,58 +24,74 @@ WRONG:    .worktrees/{project}-{feature}/docs/...
 
 ```
 {main_repo_root}/docs/phase/{project}/{feature}/
-├── index.json          ← state machine (current_step, steps list)
-├── spec.md             ← feature spec written by Service/Quant Planner
-├── step-1.md           ← initialized by Orchestrator, executed by Planner
-├── step-2.md           ← created by Planner after Step 1 (concrete implementation directives)
-├── step-3.md
-├── ...
-└── {feature}-summary.md  ← created after all steps complete
+├── index.json          ← state machine
+├── spec.md             ← Service/Quant Planner output
+├── step-1.md           ← Orchestrator init → Planner executes
+├── step-2.md ~ step-N.md ← Planner generates after Step 1
+└── {feature}-summary.md  ← created on phase completion
 ```
 
 ---
 
 ## Execution Order
 
-1. Read `docs/state.md` → determine mode (auto/manual) and active phase list.
-2. Analyze active phases → **assess parallelism** (see §Parallel Execution below).
-3. If no active phases (idle) → read `docs/TODO.md` → suggest incomplete items → create new phase after user selects one.
-4. Read `index.json` for the phase(s) to execute → check `current_step`.
-5. Read the corresponding step file.
-6. Check mode:
-   - `manual`: summarize step content → output "Shall we proceed?" and wait for approval.
-   - `auto`: immediately invoke subagent.
-7. Call Agent tool with the full content of `step-{n}.md` as context.
-   - **Each subagent starts with an independent context** (no memory of previous phases/steps).
-   - All information the subagent needs must be in the step file and role definition.
-ㄴ   - Every step file MUST end with an "## Agent Return Protocol" section (see §Agent Return Protocol below).
-8. Receive subagent result → **MANDATORY: evaluate and route BEFORE doing anything else**:
-   - Read the "## Completion Report" block from the agent's response.
-   - Apply **Error Handling Matrix** (see §Error Handling below) to decide: PASS / RETRY / REWORK / BLOCKED.
-   - **If PASS**: immediately update docs (see §Mandatory Doc Update below), then invoke next step.
-   - **If RETRY/REWORK**: immediately update docs with failure details, create rework step, route accordingly.
-   - **If BLOCKED**: immediately update docs with blocker reason, halt and notify user.
-9. On phase completion → **reset context** and proceed to next phase.
+1. Read `docs/state.md` → mode (auto/manual) and active phases.
+2. Assess parallelism (see §Parallel Execution).
+3. If idle → read `docs/TODO.md` → suggest items → create phase after user selects.
+4. Read phase `index.json` → check `current_step` → read that step file.
+5. Mode check:
+   - `manual`: summarize step → ask "Shall we proceed?" and wait.
+   - `auto`: invoke subagent immediately (except approval gates).
+6. Call Agent tool with full step file content. Each subagent has independent context — every needed file must be in step's `Files to Read`.
+7. Receive result → evaluate `## Completion Report`:
+   - **PASS**: update docs (§Mandatory Doc Update) → invoke next step.
+   - **RETRY/REWORK**: update docs with failure details → create rework step → route.
+   - **BLOCKED**: update docs with blocker → halt and notify user.
+8. On phase completion → reset context → next phase.
 
 ---
 
-## Mandatory Doc Update (after every step, no exceptions)
+## Step Gates and Planning
 
-**When a step is PASSED**, update BOTH files immediately before invoking the next step:
+- Planner steps must ask all questions first, align design with user, then write docs.
+- Every generated step file begins with open questions and confirmed design choices before directives.
+- `spec.md` reflects confirmed decisions only. Step files contain directives, not implementation bodies.
+- **Two-pass planner pattern** (Q&A loop owned by main orchestrator thread):
+  1. Pass A: planner reads context, produces structured question list + recommended options only.
+  2. Orchestrator: runs multi-turn Q&A with user until decisions are confirmed.
+  3. Pass B: planner generates `spec.md` and `step-2..N.md` from confirmed decisions only.
+- **Planner approval gate (mandatory)**: do not execute Step 2 until user approves planner outputs.
+- After planner approval, dev steps run in `auto` unless user switches to `manual`.
+- Before any Step N, user must approve Step N document when phase is `manual` or `needs_input`.
+- Cleanup always runs in `manual` mode.
 
-### 1. `docs/phase/{project}/{feature}/index.json` (main repo)
+---
+
+## Test Scope Policy
+
+- Run only targeted tests until the final phase gate.
+- Full-suite gate belongs to `test-engineer` or cleanup/final step, for services touched by the phase only.
+- If full-suite is blocked by scope/environment, fall back to targeted tests or report a blocker.
+
+---
+
+## Mandatory Doc Update (after every step)
+
+**On PASS** — update both files before invoking next step:
+
+`docs/phase/{project}/{feature}/index.json`:
 ```json
-// Set on the completed step:
+// On the completed step:
 "status": "completed",
-"result": "<one-line summary of what was done>",
-"retry_count": <unchanged if first try>
+"result": "<one-line summary>",
+"retry_count": <unchanged unless retry>
 
-// Set on the document root:
+// On the document root:
 "current_step": <N+1>,
 "updated": "<YYYY-MM-DD>"
 ```
 
-### 2. `docs/state.md` (main repo)
+`docs/state.md`:
 ```markdown
 ## Active Phase
 - {project}/{feature} | step {N+1}/{total} | branch: ... | worktree: ...
@@ -92,287 +103,134 @@ WRONG:    .worktrees/{project}-{feature}/docs/...
 Step {N+1} ({agent-name}) — <what it will do>
 ```
 
-**When a step FAILS or is BLOCKED**, update docs with failure details before routing:
+**On FAIL/BLOCKED** — record before routing:
 ```json
 "status": "failed" | "blocked",
 "result": "<error summary>",
 "retry_count": <incremented>
 ```
 
-**This guarantees that if the session is cleared and restarted, /orchestrate resumes from exactly the right step.**
+This guarantees /orchestrate resumes correctly after session reset.
 
 ---
 
 ## Agent Return Protocol
 
-Every step file MUST include this section at the end so the orchestrator can evaluate results:
+Every step file MUST end with this contract:
 
 ```markdown
 ## Agent Return Protocol
-When you finish, output a completion report in EXACTLY this format so the Orchestrator can evaluate:
+When you finish, output a completion report in EXACTLY this format:
 
 ---
 ## Completion Report
 - Status: PASS | FAIL | BLOCKED
-- Summary: <one or two sentences of what was done>
-- Files modified: <list of paths relative to worktree root>
-- Test result: <passed N/N | failed N — list failing cases> (if applicable)
+- Summary: <one or two sentences>
+- Files modified: <paths relative to worktree root>
+- Test result: <passed N/N | failed N — failing cases> (if applicable)
 - Blockers: <none | description>
 ---
 ```
 
-The orchestrator reads this block, evaluates it, and decides routing. If this block is missing or malformed, the orchestrator treats it as FAIL and requests a retry.
+If missing/malformed → treat as FAIL and request retry.
 
 ---
 
 ## Parallel Execution
 
-### When parallel execution is allowed
+**Allowed when**:
+- Independent phases in different projects (no file conflicts).
+- Independent steps within a phase after `spec.md` is complete (e.g., test-engineer + code-reviewer if test-engineer is read-only).
+- Same project, independent features with no overlapping write scopes.
 
-**Case A: Independent phases in different projects**
-```
-trading-api/position-service (step 2: fullstack-dev)
-front/account-dashboard      (step 2: fullstack-dev)
-→ No file conflicts → call both Agents simultaneously
-```
-
-**Case B: Independent steps within the same phase (after spec.md is complete)**
-```
-step-3: test-engineer  (write and run tests)
-step-4: code-reviewer  (review)
-→ If test-engineer only reads code (no writes), concurrent execution is safe
-→ If test-engineer may modify code, run sequentially
-```
-
-**Case C: Same project, independent features with no file conflicts**
-```
-trading-api/settlement-service (touches infra/persistence only)
-trading-api/position-service   (touches application/ only)
-→ Check modified file lists in spec.md — parallel if no overlap
-```
-
-### When sequential execution is required
-
+**Sequential required when**:
 - Two steps modify the same file.
-- A later step depends on the output of an earlier step (spec.md, implementation code).
-- A phase has a step with 🔴 failed status (no further steps until rework is complete).
+- Later step depends on earlier output (`spec.md`, implementation code).
+- Phase has a 🔴 failed step pending rework.
 
-### How to call parallel Agents
-
-```
-# Include both Agent tool calls in a single message
-Agent(trading-api/position-service step-2 context)
-Agent(front/account-dashboard step-2 context)
-
-# Update each index.json after receiving all results
-```
+**How**: include both Agent tool calls in a single message; update each `index.json` after results.
 
 ---
 
 ## Error Handling Matrix
 
-### Quick Reference
-
-| Failure Type | 1st Response | 2nd Response (recurrence) | 3rd Response (limit reached) |
+| Failure Type | 1st Response | 2nd Response | 3rd (limit) |
 |---|---|---|---|
-| Test failure (test-engineer) | test-engineer self-fix retry | create fullstack-dev rework step | blocked → user |
-| Code review 🔴 | create fullstack-dev rework step | code-reviewer 2nd review | blocked → user |
-| Build / compile failure | fullstack-dev immediate fix | create fullstack-dev rework step | blocked → user |
-| Design error found | service-planner rewrites spec | — | blocked → user |
-| Agent no response / crash | retry same step once | report to user | blocked |
-| Same step fails 3 times | — | — | blocked → force user intervention |
+| Test failure (test-engineer) | self-fix retry (1x) | create fullstack-dev rework | blocked → user |
+| Code review 🔴 | create fullstack-dev rework | code-reviewer 2nd review | blocked → user |
+| Build/compile failure | fullstack-dev immediate fix | create rework step | blocked → user |
+| Design error | service-planner rewrites spec | — | blocked → user |
+| Agent crash/no response | retry same step once | report to user | blocked |
+| Same step fails 3 times | — | — | blocked → user intervention |
 
----
-
-### Test Failure (test-engineer 🔴)
-
-```
-test-engineer reports test failure
-    │
-    ├─ Root cause is the test code itself?
-    │   └─ test-engineer fixes test and reruns (limit: 1 retry)
-    │
-    ├─ Root cause is an implementation bug?
-    │   ├─ index.json: current step → status: "test_failed", record failure in result
-    │   ├─ Create new rework step file (specify failing test cases + expected behavior)
-    │   ├─ current_step → rework step (fullstack-dev)
-    │   └─ fullstack-dev fixes → test-engineer re-verifies (loop)
-    │
-    └─ Same failure 3 times?
-        ├─ index.json: status: "blocked"
-        ├─ Update state.md
-        └─ Report to user: "Repeated test failure — manual intervention required"
-            Options: [1] Manual fix then retry  [2] Re-examine spec  [3] Skip feature
-```
-
----
-
-### Code Review Failure (code-reviewer 🔴)
-
-```
-code-reviewer reports 🔴 must-fix items
-    │
-    ├─ index.json: current step → status: "review_failed", record feedback list in result
-    ├─ Create new rework step file
-    │   - State each feedback item concretely (no vague descriptions)
-    │   - Example: "Move transaction boundary in OrderService.place() to application layer"
-    ├─ current_step → rework step (fullstack-dev)
-    ├─ fullstack-dev fixes → code-reviewer 2nd review
-    │
-    └─ 2nd review also 🔴?
-        ├─ Report to user: feedback summary + "This may be a design-level issue"
-        └─ Options: [1] Manual fix  [2] service-planner redesign  [3] Accept 🟡 warning and pass
-```
-
----
-
-### Build / Compile Failure
-
-```
-fullstack-dev reports build failure
-    │
-    ├─ Analyze error message
-    │   ├─ Compile error (type, import, etc.): fullstack-dev fixes immediately and rebuilds
-    │   ├─ Test failure: → follow test failure flow
-    │   └─ Environment issue (Gradle, dependencies): report to user immediately
-    │
-    ├─ Fix → rebuild succeeds → resume normal flow
-    │
-    └─ Rebuild also fails?
-        ├─ index.json: status: "failed", record full error in result
-        └─ Report to user + options:
-            [1] Retry (re-run same step)
-            [2] Manual intervention then retry
-            [3] Mark as blocked
-```
-
----
-
-### Design Error (spec is wrong)
-
-```
-Implementation-blocking design issue found at any stage
-    │
-    ├─ index.json: status: "blocked", record reason in blockers
-    ├─ Update state.md
-    ├─ Report to user: "Design error found — {specific description}"
-    └─ After approval:
-        ├─ Rewrite spec.md → regenerate step files → reset current_step to 1
-        └─ If minor spec gap: instruct service-planner for partial revision only
-```
-
----
-
-### Agent No Response / Crash
-
-```
-Agent tool call returns no result or error
-    │
-    ├─ Retry same step once (automatic)
-    ├─ Retry also fails → report to user
-    └─ index.json: status: "failed", result: "agent_crash"
-```
-
----
-
-### Emergency Stop (user inputs "stop")
-
-```
-"stop" received
-    │
-    ├─ Send stop signal to currently running subagent
-    ├─ index.json: current step → status: "paused"
-    ├─ state.md: record status: "paused"
-    └─ Output: "⏸ Stopped. Run /orchestrate again to resume."
-```
+Routing notes:
+- **Test failure**: classify root cause (test code → self-fix; impl bug → rework step with failing cases + expected behavior; env → report).
+- **Review 🔴**: rework step must state each feedback item concretely. 2nd review still 🔴 → flag possible design issue, present options [manual fix / planner redesign / accept 🟡].
+- **Design error**: status `blocked`, record reason in `blockers`, await approval before rewriting `spec.md` or regenerating steps.
+- **Emergency stop** (user types "stop"): signal subagent → mark step/phase `paused` → output "⏸ Stopped. Run /orchestrate to resume."
 
 ---
 
 ## Context Reset Principle
 
-**Each subagent starts with a fresh context.**
+Each subagent starts with a fresh context — previous phase/step results are NOT auto-included. Step files must explicitly list every required file path:
 
-- An Agent tool call = a new agent starting with empty memory.
-- Results from previous phases or steps are not automatically included.
-- Therefore, the "Files to Read" section of each step file must **explicitly list every required file path**.
-- After a phase completes, the next phase automatically starts with a new context — no separate reset needed.
-
-**Planner applies this principle when writing step files:**
 ```markdown
 ## Files to Read
-- CLAUDE.md                                          ← always include
-- docs/ADR.md                                        ← always include
+- CLAUDE.md                                          ← always
+- docs/ADR.md                                        ← always
 - docs/phase/{project}/{feature}/spec.md
-- {full paths of all files created in previous steps}  ← list explicitly
+- {full paths of all files created in previous steps}
 ```
+
+After a phase completes, the next phase auto-starts with new context.
 
 ---
 
 ## Agent Routing
 
-| agent value | file | role |
+| agent | file | role |
 |---|---|---|
 | service-planner | .claude/agents/service-planner.md | feature spec, API, DB design |
-| quant-planner | .claude/agents/quant-planner.md | quant strategy, factor, backtesting design |
-| fullstack-dev | .claude/agents/fullstack-dev.md | frontend + backend + DB implementation (TDD) |
-| quant-dev | .claude/agents/quant-dev.md | quant strategy implementation, backtesting engine |
-| code-reviewer | .claude/agents/code-reviewer.md | code, security, quant math error review |
-| test-engineer | .claude/agents/test-engineer.md | test execution, QA verification |
-| orchestrator | .claude/agents/cleanup.md | write summary + create PR |
+| quant-planner | .claude/agents/quant-planner.md | quant strategy, factor, backtesting |
+| fullstack-dev | .claude/agents/fullstack-dev.md | front + back + DB impl (TDD) |
+| quant-dev | .claude/agents/quant-dev.md | quant strategy impl, backtesting engine |
+| code-reviewer | .claude/agents/code-reviewer.md | code/security/quant math review |
+| test-engineer | .claude/agents/test-engineer.md | test execution, QA |
+| orchestrator | .claude/agents/cleanup.md | summary + PR |
+
+Quant phases: replace service-planner → quant-planner, fullstack-dev → quant-dev.
 
 ---
 
 ## Git Worktree Management
 
-Each phase runs on an independent branch + worktree to prevent file conflicts between parallel phases.
-
-### Worktree Path Convention
 ```
-Branch:         feature/{project}-{feature}
-Worktree path:  .worktrees/{project}-{feature}
-Examples:       .worktrees/trading-api-position-service
-                branch: feature/trading-api-position-service
+Branch:        feature/{project}-{feature}
+Worktree:      .worktrees/{project}-{feature}
 ```
 
-### Phase Start (create worktree)
 ```bash
+# Create (phase start)
 git worktree add .worktrees/{project}-{feature} -b feature/{project}-{feature}
-```
 
-### When Invoking Agents
-- Specify the worktree path in the "Working Directory" section of the step file.
-- Agents modify files only within that worktree path.
-- Build/test commands also run relative to the worktree path.
-
-### Phase Complete (remove worktree)
-```bash
-# cleanup agent runs this after creating the PR
+# Remove (after PR — cleanup agent)
 git worktree remove .worktrees/{project}-{feature}
 ```
 
-### Worktree Independence for Parallel Phases
-```
-main branch (read-only)
-├── .worktrees/trading-api-position-service  ← feature/trading-api-position-service
-└── .worktrees/front-account-dashboard       ← feature/front-account-dashboard
-```
-The two worktrees are fully independent — parallel work with no file conflicts.
+- Specify worktree path in step file's "Working Directory".
+- Agents modify only files inside their worktree. Build/test commands run relative to the worktree.
 
 ---
 
 ## New Phase Creation (when state.md is idle)
 
-1. **Pull main before creating worktree** (mandatory):
-   ```bash
-   git pull origin main
-   ```
-   If conflicts exist, resolve docs/ conflicts first, then proceed.
-2. Read `docs/TODO.md` → output list of incomplete (`[ ]`) items.
-3. Confirm development target with user (select TODO item or define new feature).
-4. Create worktree: `git worktree add .worktrees/{project}-{feature} -b feature/{project}-{feature}`
-4. Create `docs/phase/{project}/{feature}/` folder.
-5. Create `index.json` (include `worktree_path`, `branch`).
-6. Create `step-1.md` (Service/Quant Planner initial template).
+1. **Pull main first** (mandatory): `git pull origin main`. Resolve docs/ conflicts before proceeding.
+2. Read `docs/TODO.md` → list incomplete `[ ]` items.
+3. Confirm target with user (TODO item or new feature).
+4. Create worktree: `git worktree add .worktrees/{project}-{feature} -b feature/{project}-{feature}`.
+5. Create `docs/phase/{project}/{feature}/` with `index.json` (include `worktree_path`, `branch`).
+6. Create `step-1.md` (Service/Quant Planner template).
 7. Add to active phase list in `state.md`.
 
 ---
@@ -390,59 +248,17 @@ The two worktrees are fully independent — parallel work with no file conflicts
   "worktree_path": ".worktrees/{project}-{feature}",
   "parallel_groups": [],
   "steps": [
-    {
-      "id": 1,
-      "agent": "service-planner",
-      "name": "Feature spec, API spec, step file generation",
-      "file": "step-1.md",
-      "status": "pending",
-      "retry_count": 0,
-      "result": null
-    },
-    {
-      "id": 2,
-      "agent": "fullstack-dev",
-      "name": "Implementation (TDD)",
-      "file": "step-2.md",
-      "status": "pending",
-      "retry_count": 0,
-      "result": null,
-      "substeps": [
-        { "id": 1, "name": "<unit name>", "status": "pending" }
-      ]
-    },
-    {
-      "id": 3,
-      "agent": "test-engineer",
-      "name": "Testing and QA verification",
-      "file": "step-3.md",
-      "status": "pending",
-      "retry_count": 0,
-      "result": null,
+    { "id": 1, "agent": "service-planner", "name": "Feature spec, API spec, step file generation", "file": "step-1.md", "status": "pending", "retry_count": 0, "result": null },
+    { "id": 2, "agent": "fullstack-dev", "name": "Implementation (TDD)", "file": "step-2.md", "status": "pending", "retry_count": 0, "result": null,
+      "substeps": [ { "id": 1, "name": "<unit name>", "status": "pending" } ] },
+    { "id": 3, "agent": "test-engineer", "name": "Testing and QA verification", "file": "step-3.md", "status": "pending", "retry_count": 0, "result": null,
       "substeps": [
         { "id": 1, "name": "feature-scoped tests", "status": "pending" },
         { "id": 2, "name": "integration tests", "status": "pending" },
         { "id": 3, "name": "coverage check", "status": "pending" }
-      ]
-    },
-    {
-      "id": 4,
-      "agent": "code-reviewer",
-      "name": "Code review",
-      "file": "step-4.md",
-      "status": "pending",
-      "retry_count": 0,
-      "result": null
-    },
-    {
-      "id": 5,
-      "agent": "orchestrator",
-      "name": "Write summary + create PR",
-      "file": "step-5.md",
-      "status": "pending",
-      "retry_count": 0,
-      "result": null
-    }
+      ] },
+    { "id": 4, "agent": "code-reviewer", "name": "Code review", "file": "step-4.md", "status": "pending", "retry_count": 0, "result": null },
+    { "id": 5, "agent": "orchestrator", "name": "Write summary + create PR", "file": "step-5.md", "status": "pending", "retry_count": 0, "result": null }
   ],
   "blockers": [],
   "created": "YYYY-MM-DD",
@@ -452,34 +268,36 @@ The two worktrees are fully independent — parallel work with no file conflicts
 
 ### substeps rules
 
-- `fullstack-dev` and `test-engineer` steps MUST populate `substeps` before starting.
-- Each agent updates individual substep `status` (`pending` → `in_progress` → `completed` / `failed`) as work progresses — not just at the end.
-- **On interruption/retry**: Orchestrator reads `substeps` to determine resume point and includes it in the agent's context: "Resume from substep {N} — substeps 1~{N-1} are already completed."
-- `substeps: []` is acceptable for service-planner and code-reviewer (short, atomic work).
+- `fullstack-dev`, `quant-dev`, `test-engineer` MUST populate `substeps` before starting.
+- Update each substep's `status` (`pending` → `in_progress` → `completed`/`failed`) as work progresses, not at end.
+- On interrupt/retry: orchestrator reads `substeps` to resume — pass to agent as "Resume from substep {N} — 1~{N-1} already completed."
+- `substeps: []` is acceptable for service-planner and code-reviewer.
+- **DDD: 1 Aggregate Root = 1 substep.** Substep scope: Entity/VO → domain methods → Repository interface → infra impl → tests. Never bundle multiple Aggregates into one substep.
 
-**DDD 구현 시 substep 매핑 규칙: Aggregate Root 1개 = substep 1개**
+### Other fields
 
-각 substep 범위: Entity/VO 정의 → 도메인 메서드 → Repository 인터페이스 → 인프라 구현 → 테스트.
-여러 Aggregate를 하나의 substep으로 묶지 않는다.
-
----
-
-`parallel_groups`: Orchestrator records simultaneously executed step IDs.
-Example: `[[3, 4]]` → steps 3 and 4 were executed in parallel.
-
-`retry_count`: Number of retries for the same step. Automatically blocked at 3 or more.
-
-Step count: Service Planner decides based on complexity.
-- 3 or fewer: very simple change
-- 5: standard feature development (default)
-- 6: when 2 review rounds are needed
-- 7: high-complexity / quant strategy (maximum)
-
-Quant phases: replace service-planner → quant-planner, fullstack-dev → quant-dev.
+- `parallel_groups`: e.g., `[[3, 4]]` records concurrent step IDs.
+- `retry_count`: blocks at 3.
+- `total_steps`: planner decides — 3 (very simple), 5 (default), 6 (2 review rounds), 7 (high complexity / quant max).
 
 ---
 
-## step-1.md Initial Template (Orchestrator generates)
+## Step File Rules
+
+Every step file must include:
+- `Working Directory`
+- `Files to Read`
+- `Open Questions`
+- `Confirmed Design Choices`
+- `Tasks`
+- `Acceptance Criteria`
+- `Agent Return Protocol`
+
+`step-1.md` is initialized by Orchestrator. Planner-generated `step-2..N.md` must be self-contained for fresh subagents.
+
+---
+
+## step-1.md Initial Template
 
 ```markdown
 # Step 1: Feature Spec and API Spec
@@ -493,43 +311,33 @@ Assigned agent: Service Planner
 - docs/ADR.md
 - docs/PRD.md
 - docs/TODO.md
-- backend/{service}/graphify-out/graph.json   ← replace {service} with target (e.g. trading-api)
+- backend/{service}/graphify-out/graph.json   ← replace {service} with target
 
 ## Tasks
-1. Structure requirements and clarify ambiguities with questions.
+1. Structure requirements; clarify ambiguities with questions.
 2. Confirm DDD model (Entity, VO, Aggregate, Domain Event).
 3. Design API spec (endpoints, Request/Response, error cases).
 4. Design DB schema (tables, indexes, relationships).
 5. Write spec.md.
-6. Generate step-2.md ~ step-N.md (include concrete implementation directives in each).
-   - Explicitly list worktree path and required file paths in each step's "Files to Read" section.
+6. Generate step-2.md ~ step-N.md (file paths in each step's "Files to Read").
 
 ## Acceptance Criteria
 - spec.md created.
-- step-2.md ~ step-N.md created (file paths, class signatures, key rules included).
-- Each step file includes the "## Agent Return Protocol" section.
-- All doc paths in step files reference main repo root (not worktree).
+- step-2..N.md created (file paths, class signatures, key rules).
+- Each step file ends with "## Agent Return Protocol".
+- All doc paths use main repo root.
 - User approval received.
 
 ## Agent Return Protocol
-When you finish, output a completion report in EXACTLY this format so the Orchestrator can evaluate:
-
----
-## Completion Report
-- Status: PASS | FAIL | BLOCKED
-- Summary: <one or two sentences of what was done>
-- Files modified: <list of paths relative to main repo root>
-- Blockers: <none | description>
----
+[standard Completion Report contract]
 ```
 
 ---
 
 ## Phase Completion
 
-**Step 0 — Full Test Suite Gate (mandatory before PR)**
-Run the complete test suite for every service touched in this phase.
-All tests must pass. If any fail, route back to fullstack-dev before proceeding.
+**Step 0 — Full Test Suite Gate (mandatory before PR)** — for services touched in this phase only:
+
 ```bash
 # trading-api
 cd .worktrees/{worktree}/backend/trading-api && ./gradlew test
@@ -543,46 +351,37 @@ cd .worktrees/{worktree}/backend/quant-worker && python -m pytest tests/ -v --tb
 # trading-web
 cd .worktrees/{worktree}/frontend/trading-web && npm test -- --run
 ```
-Run only the services whose files were modified in this phase. Skip unrelated services.
 
-1. Run cleanup agent (write summary.md + create PR).
+If any fail → route back to fullstack-dev. Skip unrelated services.
+
+1. Run cleanup agent (summary.md + PR).
 2. Move `docs/phase/{project}/{feature}/` → `docs/done/{project}/{feature}/`.
-3. Remove phase from active phase list in `state.md`.
-4. Mark corresponding item in `docs/TODO.md` as `[x]` complete.
-5. Report to user: "✅ {feature} complete. PR #{n} created."
-6. **Next phase starts with a new context** — memory of current session's work does not carry over.
-7. If other active phases exist → continue with them.
-8. If no active phases → set `state.md` status to `idle`, ask user to select next phase.
+3. Remove phase from active list in `state.md`.
+4. Mark `docs/TODO.md` item `[x]`.
+5. Report: "✅ {feature} complete. PR #{n} created."
+6. Next phase starts with new context.
+7. Continue other active phases, or set `state.md` to `idle`.
 
 ---
 
 ## Critical Common Bug Found
 
-Criteria: affects multiple services / reproducible with the same pattern / violates CRITICAL rules.
-
-Immediately add to `CLAUDE.md` ## CRITICAL section:
+If a bug affects multiple services / is reproducible / violates CRITICAL rules → add to `CLAUDE.md` ## CRITICAL section:
 ```
-- [date found] {one-line rule}: {specific prohibition or required action} — reason: {one-line context}
+- [date] {one-line rule}: {prohibition or required action} — reason: {context}
 ```
-Do not record simple feature bugs or one-off mistakes.
+Do not record one-off bugs.
 
 ---
 
 ## Status Handling
 
-- `idle`: read `docs/TODO.md` → suggest incomplete items → create new phase after user selects one.
-- `in_progress`: read current step file and invoke subagent.
-- `paused`: resume from the point of interruption (confirm with user first).
-- `blocked`: report blocker to user and wait for instructions.
-- `needs_input`: write `docs/state.md` with `needs_input:` options before asking, then clear it after the user responds.
+- `idle`: suggest TODO items → create phase after selection.
+- `in_progress`: read current step → invoke subagent.
+- `paused`: confirm with user, then resume.
+- `blocked`: report blocker, wait.
+- `needs_input`: write `needs_input:` options to `state.md`, ask user, clear after answer.
 
 ## Mode Switching
 
-When user inputs "auto" or "manual", immediately update `mode` value in `state.md` and apply.
-
-
-## Shared State Rule
-
-- Single source of truth for orchestration state is root `docs/` only: `docs/state.md`, `docs/TODO.md`, `docs/phase/**`
-- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`
-- If duplicate state files exist outside root `docs/`, ignore them
+User input "auto" / "manual" → immediately update `mode` in `state.md` and apply.

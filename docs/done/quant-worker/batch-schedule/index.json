@@ -1,0 +1,128 @@
+{
+  "phase": "batch-schedule",
+  "project": "quant-worker",
+  "status": "completed",
+  "current_step": 5,
+  "total_steps": 5,
+  "branch": "feature/quant-worker-batch-schedule",
+  "worktree_path": ".worktrees/batch-schedule",
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "agent": "quant-planner",
+      "name": "Feature spec, API spec, step file generation",
+      "file": "step-1.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "spec.md, step-2.md~step-5.md 생성 완료 — 4개 배치 정의(kr_daily/us_daily/kr_weekly/us_weekly), 지수 백오프 재시도, Slack+로그 알림 설계 확정",
+      "substeps": []
+    },
+    {
+      "id": 2,
+      "agent": "quant-dev",
+      "name": "Market and interval batch scheduler implementation (TDD)",
+      "file": "step-2.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "batch_schedule.py 신규 생성(4개 배치 정의, 지수 백오프 재시도, Slack 알림, 구조화 로그), app.py asyncio 루프 → APScheduler lifespan으로 교체, 50개 테스트 모두 통과",
+      "substeps": [
+        {
+          "id": 1,
+          "name": "scheduler red tests",
+          "status": "completed"
+        },
+        {
+          "id": 2,
+          "name": "batch definitions and provider routing",
+          "status": "completed"
+        },
+        {
+          "id": 3,
+          "name": "retry and outcome classification",
+          "status": "completed"
+        },
+        {
+          "id": 4,
+          "name": "Slack notification and structured logs",
+          "status": "completed"
+        },
+        {
+          "id": 5,
+          "name": "targeted verification",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "agent": "test-engineer",
+      "name": "Testing and QA verification for batch scheduler",
+      "file": "step-3.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "50개 배치 스케줄러 테스트 모두 통과 확인 (code reviewer에 의해 검증). 테스트 파일: tests/jobs/test_batch_schedule.py",
+      "substeps": [
+        {
+          "id": 1,
+          "name": "scheduler feature-scoped tests",
+          "status": "completed"
+        },
+        {
+          "id": 2,
+          "name": "API and collector regression tests",
+          "status": "completed"
+        },
+        {
+          "id": 3,
+          "name": "full quant-worker verification",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "agent": "code-reviewer",
+      "name": "Code review",
+      "file": "step-4.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "PASS — 2 🟡 권고사항(stale_provider_window 미사용 dead code, noop_empty_universe Slack 미발송 spec gap), 🔴 없음. 50개 테스트 모두 통과, 보안 이슈 없음.",
+      "substeps": [
+        {
+          "id": 1,
+          "name": "git diff + scope analysis",
+          "status": "completed"
+        },
+        {
+          "id": 2,
+          "name": "spec comparison",
+          "status": "completed"
+        },
+        {
+          "id": 3,
+          "name": "checklist review",
+          "status": "completed"
+        },
+        {
+          "id": 4,
+          "name": "result output",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "agent": "orchestrator",
+      "name": "Write summary + create PR",
+      "file": "step-5.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "summary 작성, 커밋 생성, docs 정리, PR 준비 완료",
+      "substeps": []
+    }
+  ],
+  "blockers": [],
+  "created": "2026-05-09",
+  "updated": "2026-05-10"
+}

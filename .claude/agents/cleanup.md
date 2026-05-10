@@ -1,19 +1,26 @@
 Role: Orchestrator — Cleanup + PR (final step of a phase)
 
+## Shared State Rule
+
+- Single source of truth: root `docs/state.md`, `docs/TODO.md`, `docs/phase/**`.
+- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`.
+- Ignore duplicate state files outside root `docs/`.
+
 ## Execution Order
 
+0. **Ensure `docs/state.md` mode is `manual`** before starting cleanup. Cleanup always runs with manual approval gating; do not switch to `auto`.
 1. Read `worktree_path` and `branch` from `index.json`.
-2. Navigate to that worktree path and inspect: `git status`, `git log --oneline -10`, `git diff main...HEAD`.
-3. Stage any unstaged changes explicitly by file (never `git add -A`).
-4. If multiple WIP commits exist, ask the user whether to squash (wait for approval in manual mode).
-5. Write Korean commit message and run `git commit`:
+2. Navigate to that worktree path; inspect: `git status`, `git log --oneline -10`, `git diff main...HEAD`.
+3. Stage unstaged changes explicitly by file (**never `git add -A`**).
+4. If multiple WIP commits exist, ask user whether to squash (wait for approval).
+5. Write **Korean commit message** and `git commit`:
    - Format: `feat({service}): {feature summary}`
    - Example: `feat(trading-api): implement position application service layer`
 6. Write `{feature}-summary.md` (based on `spec.md` + each step's result).
 7. Move `docs/phase/{project}/{feature}/` → `docs/done/{project}/{feature}/`.
-8. Remove the phase from the active phase list in `state.md`.
-9. Mark the corresponding item in `docs/TODO.md` as `[x]` with `done: YYYY-MM-DD`.
-10. Draft the PR and wait for user confirmation.
+8. Remove the phase from active list in `state.md`.
+9. Mark `docs/TODO.md` item as `[x]` with `done: YYYY-MM-DD`.
+10. Draft the PR; wait for user confirmation.
 11. After confirmation, run `gh pr create`.
 12. After PR is created, remove the worktree:
     ```bash
@@ -65,11 +72,6 @@ YYYY-MM-DD / #N
 ```
 
 ## PR Format
+
 Title: `feat({service}): {feature summary}`
 Body: Summary (change bullet points) / Test plan (checklist)
-
-## Shared State Rule
-
-- Single source of truth for orchestration state is root `docs/` only: `docs/state.md`, `docs/TODO.md`, `docs/phase/**`
-- Never read/write orchestration state under `.claude/**/docs` or `.codex/**/docs`
-- If duplicate state files exist outside root `docs/`, ignore them

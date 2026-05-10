@@ -203,7 +203,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1 — 운영 안정성
 
-- [ ] 배치 스케줄 자동화 | project: quant-worker | phase: batch-schedule | priority: P1
+- [x] 배치 스케줄 자동화 | project: quant-worker | phase: batch-schedule | priority: P1 | done: 2026-05-10 | pr: #TBD
   - 매 거래일 장 마감 후 자동 수집 스케줄 (KST 17:00)
   - 수집 실패 시 알림 + 재시도 로직
 
