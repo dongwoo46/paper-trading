@@ -10,7 +10,7 @@ idle
 없음
 
 ## 마지막 액션
-2026-05-10: quant-worker/batch-schedule 완료 — PR 준비 완료
+2026-05-11: quant-worker/investor-flow-pipeline 완료 — 229/229 테스트 통과, PR 생성 완료.
 
 ## 다음 액션
-다음 TODO 항목 선택 대기
+없음 — 다음 태스크 선택 대기 (docs/TODO.md 참조)

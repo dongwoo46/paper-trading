@@ -1,0 +1,127 @@
+{
+  "phase": "investor-flow-pipeline",
+  "project": "quant-worker",
+  "status": "completed",
+  "current_step": 5,
+  "total_steps": 5,
+  "branch": "feature/quant-worker-investor-flow-pipeline",
+  "worktree_path": ".worktrees/quant-worker-investor-flow-pipeline",
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "agent": "quant-planner",
+      "name": "Feature spec and step file generation",
+      "file": "step-1.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "spec.md 및 step-2~5.md 작성 완료. 4개 테이블 스키마, 수집기/리포지토리/배치 책임 정의, REST API 4개 엔드포인트 계약 확정.",
+      "substeps": []
+    },
+    {
+      "id": 2,
+      "agent": "quant-dev",
+      "name": "TDD Implementation",
+      "file": "step-2.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "6개 substep 모두 완료. 219/219 테스트 통과. Decimal 금융 안전 규칙 준수, upsert 멱등성, REST API 4개 엔드포인트 구현.",
+      "substeps": [
+        {
+          "id": "2-1",
+          "name": "DB 마이그레이션 (4개 테이블 생성 SQL)",
+          "status": "completed"
+        },
+        {
+          "id": "2-2",
+          "name": "InvestorFlowCollector 구현 + 단위 테스트",
+          "status": "completed"
+        },
+        {
+          "id": "2-3",
+          "name": "InvestorFlowRepository 구현 + 단위 테스트",
+          "status": "completed"
+        },
+        {
+          "id": "2-4",
+          "name": "InvestorFlowFetchService 구현 + 단위 테스트",
+          "status": "completed"
+        },
+        {
+          "id": "2-5",
+          "name": "investor_flow_schedule.py 구현 + 단위 테스트",
+          "status": "completed"
+        },
+        {
+          "id": "2-6",
+          "name": "REST API 엔드포인트 4개 추가 + 단위 테스트",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "agent": "test-engineer",
+      "name": "QA Verification",
+      "file": "step-3.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "98/98 테스트 통과. AC-1~AC-6 전부 확인. 린트 3건(E402, E731, F401) 수정 후 All checks passed. 컴파일 오류 없음.",
+      "substeps": [
+        {
+          "id": "3-1",
+          "name": "AC-1 Decimal 안전성 검증",
+          "status": "completed"
+        },
+        {
+          "id": "3-2",
+          "name": "AC-2 upsert 멱등성 검증",
+          "status": "completed"
+        },
+        {
+          "id": "3-3",
+          "name": "AC-3 빈 데이터 안전성 검증",
+          "status": "completed"
+        },
+        {
+          "id": "3-4",
+          "name": "AC-4 API 입력 검증",
+          "status": "completed"
+        },
+        {
+          "id": "3-5",
+          "name": "AC-5 배치 정의 정확성 검증",
+          "status": "completed"
+        },
+        {
+          "id": "3-6",
+          "name": "AC-6 컬럼명 매핑 검증",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "agent": "code-reviewer",
+      "name": "Code Review",
+      "file": "step-4.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "PASS. Must-Fix 없음. 8개 체크리스트 전부 통과. 권장 수정 2건: (1) market 쿼리 파라미터가 fetch helper에서 repository로 전달되지 않아 필터 무효화, (2) _resolve_business_date가 당일 영업일을 허용하지 않음(spec: 당일이 영업일이면 당일 허용). Decimal 안전성, ON CONFLICT 멱등성, 400 검증, 스택 트레이스 미노출, batch_schedule.py 미수정 모두 확인.",
+      "substeps": []
+    },
+    {
+      "id": 5,
+      "agent": "orchestrator",
+      "name": "Write summary + create PR",
+      "file": "step-5.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "229/229 테스트 통과. 린트 all passed. summary.md 작성 완료. PR 생성 완료.",
+      "substeps": []
+    }
+  ],
+  "blockers": [],
+  "created": "2026-05-10",
+  "updated": "2026-05-11"
+}
