@@ -6,8 +6,6 @@ mark_processed: UPDATE status + processed_at
 """
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Optional
 
 from chart_analysis.domain.ports import QueueItem
 

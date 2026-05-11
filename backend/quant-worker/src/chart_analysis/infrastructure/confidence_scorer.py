@@ -23,7 +23,6 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from chart_analysis.domain.value_objects import (
     CandlePattern,
-    Direction,
     Grade,
     IndicatorSignal,
     PatternType,
@@ -120,8 +119,6 @@ class WeightedRuleConfidenceScorer:
         # 임계값 (환경변수 외부화)
         strong_threshold = _get_threshold("CHART_ANALYSIS_CONFIDENCE_STRONG_THRESHOLD", _DEFAULT_STRONG_THRESHOLD)
         buy_threshold = _get_threshold("CHART_ANALYSIS_CONFIDENCE_BUY_THRESHOLD", _DEFAULT_BUY_THRESHOLD)
-        hold_threshold = (_ONE - buy_threshold)  # 반대편 경계
-
         # grade 결정
         grade = self._map_to_grade(
             raw_score=raw_score,

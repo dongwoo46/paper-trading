@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Sequence
 
 import numpy as np
 from scipy.signal import find_peaks

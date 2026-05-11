@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +56,6 @@ def process_queue(
         window = item.window
         interval = item.interval
         item_id = item.id
-        now = datetime.now(timezone.utc)
-
         # 선점: 다른 프로세스가 같은 row를 중복 처리하지 않도록 즉시 processing으로 갱신
         queue_repo.mark_processed(item_id, "processing")
 

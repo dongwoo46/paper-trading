@@ -10,7 +10,6 @@ APScheduler EVENT_JOB_EXECUTED 리스너에 의해 수집 잡 완료 후 체인�
 from __future__ import annotations
 
 import logging
-import os
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -76,7 +75,6 @@ def _get_krx_symbols() -> list[str]:
     """pykrx 카탈로그에서 enabled 국장 종목 목록 반환."""
     from src.catalog.postgres_symbol_catalog import PostgresSymbolCatalogRepository
     from src.application.daily_fetch_service import load_db_config_from_env
-    from src.catalog.postgres_symbol_catalog import connect
 
     db = load_db_config_from_env()
     repo = PostgresSymbolCatalogRepository(db)

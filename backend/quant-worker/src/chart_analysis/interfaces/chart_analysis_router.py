@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from typing import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -89,8 +88,6 @@ def get_generate_report_service() -> GenerateReportService:
     redis_store = RedisJobStore()
     llm = LangChainOllamaReportGenerator()
     slack = SlackWebhookNotifier()
-
-    top_n = int(os.getenv("CHART_ANALYSIS_POPULAR_TOP_N", "300"))
 
     def _is_popular(symbol: str) -> bool:
         # 실제 구현에서는 popular_symbols 테이블 조회

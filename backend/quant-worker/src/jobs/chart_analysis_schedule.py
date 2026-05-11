@@ -32,7 +32,6 @@ def _run_async(coro) -> None:
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            import concurrent.futures
             future = asyncio.run_coroutine_threadsafe(coro, loop)
             future.result(timeout=3600)
         else:

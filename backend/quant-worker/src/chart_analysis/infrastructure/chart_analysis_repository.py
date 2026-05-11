@@ -7,7 +7,6 @@ JSONB 직렬화: DecimalJSONEncoder (Decimal → str)
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from decimal import Decimal
 from typing import Any, Optional
 

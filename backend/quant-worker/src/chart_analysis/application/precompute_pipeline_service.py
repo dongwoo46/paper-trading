@@ -15,20 +15,17 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Optional
 
 from src.chart_analysis.domain.chart_analysis_result import ChartAnalysisResult
 from src.chart_analysis.domain.chart_snapshot import ChartSnapshot
 from src.chart_analysis.domain.value_objects import (
     CandlePattern,
-    Grade,
     IndicatorSignal,
     LevelSet,
     NarrativeReport,
     Recommendation,
     ReportSource,
     TradePlan,
-    TrendAnalysis,
     VolumeAnalysis,
 )
 

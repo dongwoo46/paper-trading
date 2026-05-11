@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from chart_analysis.domain.value_objects import (
     Direction,
-    Grade,
     NarrativeReport,
     ReportSource,
     Strength,

@@ -6,7 +6,7 @@ from typing import AsyncIterator, Callable, Optional
 
 from chart_analysis.domain.chart_analysis_result import ChartAnalysisResult
 from chart_analysis.domain.ports import LlmReportGenerator
-from chart_analysis.domain.value_objects import NarrativeReport, ReportSource
+from chart_analysis.domain.value_objects import NarrativeReport
 
 logger = logging.getLogger(__name__)
 
