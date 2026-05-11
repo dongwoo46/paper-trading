@@ -8,3 +8,5 @@ psycopg[binary]==3.3.3
 python-dotenv==1.2.2
 requests==2.33.1
 websockets==16.0
+pandas-ta==0.4.71b0
+scipy==1.13.1

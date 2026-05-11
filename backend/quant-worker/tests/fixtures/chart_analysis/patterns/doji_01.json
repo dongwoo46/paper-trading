@@ -1,0 +1,14 @@
+{
+  "description": "도지 패턴 — 시가와 종가가 거의 같고 위아래 꼬리가 긴 캔들",
+  "pattern": "DOJI",
+  "input_candles": [
+    {"date": "2024-01-02", "open": "50000", "high": "52000", "low": "48000", "close": "50100", "volume": "100000"},
+    {"date": "2024-01-03", "open": "50100", "high": "52500", "low": "47500", "close": "50050", "volume": "120000"},
+    {"date": "2024-01-04", "open": "50050", "high": "53000", "low": "47000", "close": "50000", "volume": "110000"}
+  ],
+  "expected": {
+    "pattern": "DOJI",
+    "detected_at_index": 2,
+    "note": "|close-open| / (high-low) = 50 / 6000 < 0.1"
+  }
+}

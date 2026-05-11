@@ -1,0 +1,15 @@
+{
+  "description": "역망치 패턴 — 긴 위 꼬리, 짧은 몸통, 아래 꼬리 없음",
+  "pattern": "INVERTED_HAMMER",
+  "input_candles": [
+    {"date": "2024-01-02", "open": "55000", "high": "55500", "low": "53000", "close": "54000", "volume": "100000"},
+    {"date": "2024-01-03", "open": "54000", "high": "54500", "low": "52000", "close": "53000", "volume": "95000"},
+    {"date": "2024-01-04", "open": "53000", "high": "53500", "low": "51000", "close": "52000", "volume": "90000"},
+    {"date": "2024-01-05", "open": "50200", "high": "53000", "low": "50000", "close": "50400", "volume": "120000"}
+  ],
+  "expected": {
+    "pattern": "INVERTED_HAMMER",
+    "detected_at_index": 3,
+    "note": "body=200, upper_shadow=2600 (13×body), lower_shadow=200 (1×body < 3×body OK)"
+  }
+}
