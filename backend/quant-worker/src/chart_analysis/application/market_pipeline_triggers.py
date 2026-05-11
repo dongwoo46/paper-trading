@@ -29,16 +29,16 @@ def _get_pipeline_service() -> Any:
         PandasTaIndicatorCalculator,
     )
     from src.chart_analysis.infrastructure.support_resistance_finder import (
-        ScipyPeaksSupportResistanceFinder,
+        ScipyPeakSupportResistanceFinder,
     )
     from src.chart_analysis.infrastructure.pattern_detector import (
         RuleBasedPatternDetector,
     )
     from src.chart_analysis.infrastructure.trend_classifier import (
-        MaTrendClassifier,
+        MaAdxTrendClassifier,
     )
     from src.chart_analysis.infrastructure.confidence_scorer import (
-        RuleWeightedConfidenceScorer,
+        WeightedRuleConfidenceScorer,
     )
     from src.chart_analysis.infrastructure.langchain_ollama_report_generator import (
         LangChainOllamaReportGenerator,
@@ -58,10 +58,10 @@ def _get_pipeline_service() -> Any:
         ohlcv_repo=PostgresOhlcvRepository(connect_fn),
         chart_analysis_repo=PostgresChartAnalysisRepository(connect_fn),
         indicator_calculator=PandasTaIndicatorCalculator(),
-        sr_finder=ScipyPeaksSupportResistanceFinder(),
+        sr_finder=ScipyPeakSupportResistanceFinder(),
         pattern_detector=RuleBasedPatternDetector(),
-        trend_classifier=MaTrendClassifier(),
-        confidence_scorer=RuleWeightedConfidenceScorer(),
+        trend_classifier=MaAdxTrendClassifier(),
+        confidence_scorer=WeightedRuleConfidenceScorer(),
         llm_generator=LangChainOllamaReportGenerator(),
         slack_notifier=SlackWebhookNotifier(),
     )

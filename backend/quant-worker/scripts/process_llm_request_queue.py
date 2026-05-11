@@ -59,6 +59,9 @@ def process_queue(
         item_id = item.id
         now = datetime.now(timezone.utc)
 
+        # 선점: 다른 프로세스가 같은 row를 중복 처리하지 않도록 즉시 processing으로 갱신
+        queue_repo.mark_processed(item_id, "processing")
+
         # 분석 결과 조회
         result = chart_repo.find_one(symbol, window, interval)
         if result is None:

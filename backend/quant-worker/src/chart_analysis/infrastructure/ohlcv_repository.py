@@ -88,7 +88,7 @@ class PostgresOhlcvRepository:
                 f"WHERE symbol = %s "
                 f"ORDER BY trade_date ASC"
             )
-            return query, (symbol, None)
+            return query, (symbol,)
 
     @staticmethod
     def _row_to_candle(row: tuple) -> Candle:

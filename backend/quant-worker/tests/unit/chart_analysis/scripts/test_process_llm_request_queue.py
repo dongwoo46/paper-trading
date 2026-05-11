@@ -141,7 +141,7 @@ def test_parse_args_custom_limit():
 # ---------------------------------------------------------------------------
 
 def test_pending_to_completed_on_success():
-    """LLM 성공 시 status → completed, llm_report 업데이트."""
+    """LLM 성공 시 processing → completed 순서로 갱신, llm_report 업데이트."""
     from scripts.process_llm_request_queue import process_queue
 
     item = FakeQueueItem(id=1, symbol="005930", window="3M", interval="D")
@@ -158,10 +158,10 @@ def test_pending_to_completed_on_success():
     )
 
     assert llm.call_count == 1
-    assert len(queue_repo.mark_calls) == 1
-    item_id, status = queue_repo.mark_calls[0]
-    assert item_id == 1
-    assert status == "completed"
+    # processing 선점 후 completed 순서로 2회 호출
+    assert len(queue_repo.mark_calls) == 2
+    assert queue_repo.mark_calls[0] == (1, "processing")
+    assert queue_repo.mark_calls[1] == (1, "completed")
     # chart_analysis_result.llm_report 업데이트 확인
     assert len(chart_repo.upserted) == 1
     upserted = chart_repo.upserted[0]
@@ -169,7 +169,7 @@ def test_pending_to_completed_on_success():
 
 
 def test_pending_to_failed_on_llm_error():
-    """LLM 실패 시 status → failed, processed_at 기록."""
+    """LLM 실패 시 processing → failed 순서로 갱신."""
     from scripts.process_llm_request_queue import process_queue
 
     item = FakeQueueItem(id=2, symbol="000660", window="1M", interval="D")
@@ -186,9 +186,10 @@ def test_pending_to_failed_on_llm_error():
     )
 
     assert llm.call_count == 1
-    item_id, status = queue_repo.mark_calls[0]
-    assert item_id == 2
-    assert status == "failed"
+    # processing 선점 후 failed 순서로 2회 호출
+    assert len(queue_repo.mark_calls) == 2
+    assert queue_repo.mark_calls[0] == (2, "processing")
+    assert queue_repo.mark_calls[1] == (2, "failed")
     # llm 실패 시 upsert 되지 않음
     assert len(chart_repo.upserted) == 0
 
@@ -213,7 +214,7 @@ def test_limit_controls_batch_size():
 
 
 def test_chart_analysis_not_found_marks_failed():
-    """chart_analysis_result row가 없으면 failed로 표시한다."""
+    """chart_analysis_result row가 없으면 processing 선점 후 failed로 표시한다."""
     from scripts.process_llm_request_queue import process_queue
 
     item = FakeQueueItem(id=9, symbol="MISSING", window="1M", interval="D")
@@ -224,4 +225,7 @@ def test_chart_analysis_not_found_marks_failed():
     process_queue(limit=10, queue_repo=queue_repo, chart_repo=chart_repo, llm_generator=llm)
 
     assert llm.call_count == 0
-    assert queue_repo.mark_calls[0][1] == "failed"
+    # processing 선점 후 failed 순서로 2회 호출
+    assert len(queue_repo.mark_calls) == 2
+    assert queue_repo.mark_calls[0] == (9, "processing")
+    assert queue_repo.mark_calls[1] == (9, "failed")

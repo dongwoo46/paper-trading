@@ -5,10 +5,8 @@ import logging
 from typing import AsyncIterator, Callable, Optional
 
 from chart_analysis.domain.chart_analysis_result import ChartAnalysisResult
+from chart_analysis.domain.ports import LlmReportGenerator
 from chart_analysis.domain.value_objects import NarrativeReport, ReportSource
-from chart_analysis.infrastructure.rule_template_report_generator import (
-    RuleTemplateReportGenerator,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +25,23 @@ class GenerateReportService:
     def __init__(
         self,
         chart_analysis_repository,
-        llm_report_generator,
+        llm_report_generator: LlmReportGenerator,
         redis_job_store,
         popular_symbols_fn: Callable[[str], bool],
         slack_notifier,
+        rule_template_generator: Optional[LlmReportGenerator] = None,
     ) -> None:
         self._repo = chart_analysis_repository
         self._llm = llm_report_generator
         self._redis = redis_job_store
         self._is_popular = popular_symbols_fn
         self._slack = slack_notifier
-        self._rule_template = RuleTemplateReportGenerator()
+        if rule_template_generator is None:
+            from chart_analysis.infrastructure.rule_template_report_generator import (
+                RuleTemplateReportGenerator,
+            )
+            rule_template_generator = RuleTemplateReportGenerator()
+        self._rule_template = rule_template_generator
 
     async def stream(
         self, symbol: str, window: str, interval: str

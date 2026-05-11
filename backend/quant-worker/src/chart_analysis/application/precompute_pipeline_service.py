@@ -165,10 +165,9 @@ class PrecomputePipelineService:
         levels: LevelSet = self._sr_finder.find(candles, indicators.atr14)
         indicator_signals: list[IndicatorSignal] = _build_indicator_signals(indicators)
         volume_analysis: VolumeAnalysis = _compute_volume_analysis(candles, indicators)
-        confidence: Decimal = self._confidence_scorer.score(
+        recommendation: Recommendation = self._confidence_scorer.score(
             trend, patterns, indicator_signals, volume_analysis
         )
-        recommendation = _build_recommendation(confidence, trend)
         trade_plan = _build_trade_plan(levels, candles[-1].close)
 
         result = ChartAnalysisResult(
@@ -248,30 +247,6 @@ def _compute_volume_analysis(candles, indicators) -> VolumeAnalysis:
     trend = "increasing" if ratio > Decimal("1.1") else ("decreasing" if ratio < Decimal("0.9") else "flat")
 
     return VolumeAnalysis(trend=trend, spike_detected=spike, avg_ratio=ratio)
-
-
-def _build_recommendation(confidence: Decimal, trend: TrendAnalysis) -> Recommendation:
-    """confidence + trend direction으로 Grade 결정."""
-    import os
-    strong_threshold = Decimal(os.getenv("CHART_ANALYSIS_CONFIDENCE_STRONG_THRESHOLD", "0.7"))
-    buy_threshold = Decimal(os.getenv("CHART_ANALYSIS_CONFIDENCE_BUY_THRESHOLD", "0.4"))
-
-    from src.chart_analysis.domain.value_objects import Direction
-
-    is_bullish = trend.direction == Direction.UPTREND
-
-    if is_bullish and confidence >= strong_threshold:
-        grade = Grade.STRONG_BUY
-    elif is_bullish and confidence >= buy_threshold:
-        grade = Grade.BUY
-    elif not is_bullish and confidence >= strong_threshold:
-        grade = Grade.STRONG_SELL
-    elif not is_bullish and confidence >= buy_threshold:
-        grade = Grade.SELL
-    else:
-        grade = Grade.HOLD
-
-    return Recommendation(grade=grade, confidence=confidence)
 
 
 def _build_trade_plan(levels: LevelSet, last_close: Decimal) -> TradePlan:

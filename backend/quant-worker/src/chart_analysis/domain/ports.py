@@ -15,6 +15,7 @@ from .value_objects import (
     IndicatorSignal,
     LevelSet,
     NarrativeReport,
+    Recommendation,
     TrendAnalysis,
     VolumeAnalysis,
 )
@@ -179,7 +180,7 @@ class TrendClassifier(Protocol):
 class ConfidenceScorer(Protocol):
     """Confidence 산정 포트.
 
-    인프라 어댑터: RuleWeightedConfidenceScorer (룰 기반 가중치 합산 → 정규화)
+    인프라 어댑터: WeightedRuleConfidenceScorer (룰 기반 가중치 합산 → 정규화)
     """
 
     def score(
@@ -188,6 +189,6 @@ class ConfidenceScorer(Protocol):
         patterns: list[CandlePattern],
         indicator_signals: list[IndicatorSignal],
         volume_analysis: VolumeAnalysis,
-    ) -> Decimal:
-        """분석 결과를 받아 0.0~1.0 Confidence를 반환한다."""
+    ) -> Recommendation:
+        """분석 결과를 받아 Recommendation (grade + confidence)을 반환한다."""
         ...

@@ -89,16 +89,15 @@ class TestWindowToFromDate:
         delta = abs((from_date - expected_from).days)
         assert delta <= 1, f"window={window} from_date 오차: {delta}일"
 
-    def test_max_window_uses_null_from_date(self):
+    def test_max_window_uses_no_date_param(self):
         repo, mock_cursor = _make_repo([])
         repo.find_window("005930", "MAX", "W")
 
         call_args = mock_cursor.execute.call_args
         params: tuple = call_args[0][1]
-        # MAX 윈도우는 from_date 제한 없음 → 파라미터에 None 또는 쿼리에 from_date 조건 없어야 함
-        # 파라미터 2번째 요소가 None이거나 파라미터가 1개여야 함
-        if len(params) >= 2:
-            assert params[1] is None, f"MAX 윈도우는 from_date=None이어야 합니다, 실제: {params[1]}"
+        # MAX 윈도우는 from_date 조건 없음 → symbol 1개만
+        assert len(params) == 1, f"MAX 윈도우 params는 (symbol,) 1개이어야 합니다, 실제: {params}"
+        assert params[0] == "005930"
 
 
 # ---------------------------------------------------------------------------

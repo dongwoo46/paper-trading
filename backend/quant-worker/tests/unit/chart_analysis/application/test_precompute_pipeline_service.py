@@ -184,10 +184,10 @@ class FakeTrendClassifier:
 
 class FakeConfidenceScorer:
     def __init__(self, score: str = "0.65") -> None:
-        self._score = Decimal(score)
+        self._recommendation = Recommendation(grade=Grade.BUY, confidence=Decimal(score))
 
-    def score(self, trend, patterns, indicator_signals, volume_analysis) -> Decimal:
-        return self._score
+    def score(self, trend, patterns, indicator_signals, volume_analysis) -> Recommendation:
+        return self._recommendation
 
 
 class FakeLlmReportGenerator:
