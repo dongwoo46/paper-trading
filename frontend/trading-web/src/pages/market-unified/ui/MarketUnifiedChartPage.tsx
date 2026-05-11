@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   CandlestickSeries,
   ColorType,
   CrosshairMode,
   createChart,
+  HistogramSeries,
+  LineSeries,
+  LineStyle,
   type IChartApi,
   type ISeriesApi,
   type Logical,
@@ -15,16 +18,31 @@ import {
   fetchDailyBars,
   fetchMarketSymbols,
   fetchMinuteBars,
+    
   fetchWeeklyBars,
   type MarketSource,
   type OhlcvPoint,
   type UnifiedInterval,
 } from "../../../shared/api/marketUnifiedApi";
+import {
+  fetchInvestorFlow,
+  type InvestorFlowPoint,
+} from "../../../shared/api/investorFlowApi";
 import { useChartDrawStore } from "../../../features/chart-drawing/model/useChartDrawStore";
 import type {
   TrendLine,
   HorizontalLine,
+  CrossLine,
 } from "../../../features/chart-drawing/model/useChartDrawStore";
+import { useIndicatorStore } from "../../../features/unified-chart-indicators/model/useIndicatorStore";
+import {
+  calcBollingerBands,
+  calcRsi,
+  calcMacd,
+  calcMA,
+  type OhlcvInput,
+} from "../../../features/unified-chart-indicators/model/indicators";
+import { IndicatorToggleBar } from "../../../features/unified-chart-indicators/ui/IndicatorToggleBar";
 
 const INTERVAL_LABEL: Record<UnifiedInterval, string> = {
   "1m": "1분봉",
@@ -40,6 +58,20 @@ function formatNumber(value: number): string {
   );
 }
 
+type IndicatorSnapshot = {
+  ma5?: number;
+  ma20?: number;
+  ma60?: number;
+  ma120?: number;
+  bbUpper?: number;
+  bbMiddle?: number;
+  bbLower?: number;
+  rsi?: number;
+  macd?: number;
+  macdSignal?: number;
+  macdHist?: number;
+};
+
 type CrosshairInfo = {
   startedAt: string;
   open: number;
@@ -47,9 +79,10 @@ type CrosshairInfo = {
   low: number;
   close: number;
   volume: number;
+  indicators: IndicatorSnapshot;
 };
 
-type DrawTool = "none" | "trend" | "hline";
+type DrawTool = "none" | "trend" | "hline" | "cross";
 
 type DrawPoint = {
   logical: number;
@@ -66,31 +99,81 @@ function UnifiedCandlestickChart({
   bars,
   drawTool,
   chartKey,
+  interval,
+  source,
+  symbol,
   onCrosshairChange,
 }: {
   bars: OhlcvPoint[];
   drawTool: DrawTool;
   chartKey: string;
+  interval: UnifiedInterval;
+  source: MarketSource;
+  symbol: string;
   onCrosshairChange: (value: CrosshairInfo | null) => void;
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
-  // Zustand persistent state
+  const rsiSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const macdLineRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const macdSignalRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const macdHistRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const bbUpperRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const bbMiddleRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const bbLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const ma5Ref = useRef<ISeriesApi<"Line"> | null>(null);
+  const ma20Ref = useRef<ISeriesApi<"Line"> | null>(null);
+  const ma60Ref = useRef<ISeriesApi<"Line"> | null>(null);
+  const ma120Ref = useRef<ISeriesApi<"Line"> | null>(null);
+
+  const flowForeignRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const flowInstRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const flowIndivRef = useRef<ISeriesApi<"Line"> | null>(null);
+
   const trendLines = useChartDrawStore((s) => s.trendLines[chartKey] ?? []);
   const hLines = useChartDrawStore((s) => s.hLines[chartKey] ?? []);
+  const crossLines = useChartDrawStore((s) => s.crossLines[chartKey] ?? []);
   const addTrendLine = useChartDrawStore((s) => s.addTrendLine);
   const addHLine = useChartDrawStore((s) => s.addHLine);
+  const addCrossLine = useChartDrawStore((s) => s.addCrossLine);
   const clearLines = useChartDrawStore((s) => s.clearLines);
 
-  // pendingTrendStart is ephemeral - reset on navigation
   const [pendingTrendStart, setPendingTrendStart] = useState<DrawPoint | null>(
     null,
   );
 
-  // Force re-render for overlay recalculation on range change
   const [, forceUpdate] = useState(0);
+
+  const active = useIndicatorStore((s) => s.active);
+
+  const investorFlowActive = active.investorFlow && source === "pykrx" && interval === "1d";
+
+  const dateFrom = bars.length > 0 ? bars[0].startedAt.slice(0, 10) : undefined;
+  const dateTo = bars.length > 0 ? bars[bars.length - 1].startedAt.slice(0, 10) : undefined;
+
+  const flowQuery = useQuery({
+    queryKey: ["investor-flow", bars[0]?.startedAt, bars[bars.length - 1]?.startedAt, chartKey],
+    enabled: investorFlowActive && bars.length > 0,
+    queryFn: () => fetchInvestorFlow(symbol, dateFrom, dateTo),
+  });
+
+  const [chartHeight, setChartHeight] = useState(480);
+
+  const ohlcvInputs: OhlcvInput[] = useMemo(
+    () =>
+      bars.map((b) => ({
+        time: b.startedAt.slice(0, 10),
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        close: b.close,
+        volume: b.volume,
+      })),
+    [bars],
+  );
 
   const overlay = useMemo(() => {
     const chart = chartRef.current;
@@ -99,6 +182,7 @@ function UnifiedCandlestickChart({
       return {
         trendSegments: [],
         hSegments: [] as Array<{ id: string; y: number }>,
+        crossSegments: [] as Array<{ id: string; x: number; y: number }>,
       };
 
     const trendSegments = trendLines
@@ -130,16 +214,39 @@ function UnifiedCandlestickChart({
       })
       .filter((v) => v !== null);
 
-    return { trendSegments, hSegments };
+    const crossSegments = crossLines
+      .map((line: CrossLine) => {
+        const x = chart.timeScale().logicalToCoordinate(line.logical as unknown as Logical);
+        const y = series.priceToCoordinate(line.price);
+        if (x == null || y == null) return null;
+        return { id: line.id, x: Number(x), y: Number(y) };
+      })
+      .filter((v) => v !== null);
+
+    return { trendSegments, hSegments, crossSegments };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trendLines, hLines, bars]);
+  }, [trendLines, hLines, crossLines, bars]);
 
   useEffect(() => {
     if (!rootRef.current) return;
     const root = rootRef.current;
+
+    const rsiActive = active.rsi && interval === "1d";
+    const macdActive = active.macd && interval === "1d";
+    const bbActive = active.bb && interval === "1d";
+    const investorFlowActive =
+      active.investorFlow && source === "pykrx" && interval === "1d";
+    const computedHeight =
+      480 +
+      (rsiActive ? 120 : 0) +
+      (macdActive ? 120 : 0) +
+      (investorFlowActive ? 120 : 0);
+
+    setChartHeight(computedHeight);
+
     const chart = createChart(root, {
       width: root.clientWidth,
-      height: 360,
+      height: computedHeight,
       layout: {
         background: { type: ColorType.Solid, color: "#0b1220" },
         textColor: "#d1d5db",
@@ -178,8 +285,161 @@ function UnifiedCandlestickChart({
       wickDownColor: "#ef4444",
     });
 
+    const volSeries = chart.addSeries(
+      HistogramSeries,
+      {
+        priceScaleId: "vol",
+        priceFormat: { type: "volume" },
+        visible: active.volume,
+      },
+      1,
+    );
+
+    chart.panes()[0].setStretchFactor(3);
+    chart.panes()[1].setStretchFactor(1);
+
+    chart.priceScale("vol").applyOptions({
+      scaleMargins: { top: 0.1, bottom: 0 },
+    });
+
+    if (active.ma5) {
+      const ma5 = chart.addSeries(
+        LineSeries,
+        { color: "#facc15", lineWidth: 1, priceLineVisible: false },
+        0,
+      );
+      ma5Ref.current = ma5;
+    }
+    if (active.ma20) {
+      const ma20 = chart.addSeries(
+        LineSeries,
+        { color: "#60a5fa", lineWidth: 1, priceLineVisible: false },
+        0,
+      );
+      ma20Ref.current = ma20;
+    }
+    if (active.ma60) {
+      const ma60 = chart.addSeries(
+        LineSeries,
+        { color: "#f97316", lineWidth: 1, priceLineVisible: false },
+        0,
+      );
+      ma60Ref.current = ma60;
+    }
+    if (active.ma120) {
+      const ma120 = chart.addSeries(
+        LineSeries,
+        { color: "#c084fc", lineWidth: 1, priceLineVisible: false },
+        0,
+      );
+      ma120Ref.current = ma120;
+    }
+
+    if (bbActive) {
+      const bbUpper = chart.addSeries(
+        LineSeries,
+        { color: "#6366f1", lineWidth: 1, priceLineVisible: false },
+        0,
+      );
+      const bbMiddle = chart.addSeries(
+        LineSeries,
+        {
+          color: "#818cf8",
+          lineWidth: 1,
+          lineStyle: LineStyle.Dashed,
+          priceLineVisible: false,
+        },
+        0,
+      );
+      const bbLower = chart.addSeries(
+        LineSeries,
+        { color: "#6366f1", lineWidth: 1, priceLineVisible: false },
+        0,
+      );
+      bbUpperRef.current = bbUpper;
+      bbMiddleRef.current = bbMiddle;
+      bbLowerRef.current = bbLower;
+    }
+
+    let rsiPaneIndex = 2;
+    if (rsiActive) {
+      const rsiSeries = chart.addSeries(
+        LineSeries,
+        { color: "#f59e0b", lineWidth: 1 },
+        rsiPaneIndex,
+      );
+      rsiSeries.createPriceLine({
+        price: 70,
+        color: "#ef4444",
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: "",
+      });
+      rsiSeries.createPriceLine({
+        price: 30,
+        color: "#22c55e",
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: "",
+      });
+      chart.panes()[rsiPaneIndex].setStretchFactor(1);
+      rsiSeriesRef.current = rsiSeries;
+    }
+
+    if (macdActive) {
+      const macdPaneIndex = rsiActive ? 3 : 2;
+      const macdLine = chart.addSeries(
+        LineSeries,
+        { color: "#60a5fa", lineWidth: 1 },
+        macdPaneIndex,
+      );
+      const macdSignal = chart.addSeries(
+        LineSeries,
+        { color: "#f97316", lineWidth: 1 },
+        macdPaneIndex,
+      );
+      const macdHist = chart.addSeries(
+        HistogramSeries,
+        {},
+        macdPaneIndex,
+      );
+      chart.panes()[macdPaneIndex].setStretchFactor(1);
+      macdLineRef.current = macdLine;
+      macdSignalRef.current = macdSignal;
+      macdHistRef.current = macdHist;
+    }
+
+    if (investorFlowActive) {
+      const flowPaneIndex = 2 + (rsiActive ? 1 : 0) + (macdActive ? 1 : 0);
+      const flowForeign = chart.addSeries(LineSeries, {
+        color: "#60a5fa",
+        lineWidth: 1,
+        priceLineVisible: false,
+        title: "외국인",
+      }, flowPaneIndex);
+      const flowInst = chart.addSeries(LineSeries, {
+        color: "#22c55e",
+        lineWidth: 1,
+        priceLineVisible: false,
+        title: "기관",
+      }, flowPaneIndex);
+      const flowIndiv = chart.addSeries(LineSeries, {
+        color: "#ef4444",
+        lineWidth: 1,
+        priceLineVisible: false,
+        title: "개인",
+      }, flowPaneIndex);
+      chart.panes()[flowPaneIndex].setStretchFactor(1);
+      flowForeignRef.current = flowForeign;
+      flowInstRef.current = flowInst;
+      flowIndivRef.current = flowIndiv;
+    }
+
     chartRef.current = chart;
     seriesRef.current = series;
+    volSeriesRef.current = volSeries;
 
     const onResize = () => {
       chart.applyOptions({ width: root.clientWidth });
@@ -192,8 +452,24 @@ function UnifiedCandlestickChart({
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
+      volSeriesRef.current = null;
+      rsiSeriesRef.current = null;
+      macdLineRef.current = null;
+      macdSignalRef.current = null;
+      macdHistRef.current = null;
+      bbUpperRef.current = null;
+      bbMiddleRef.current = null;
+      bbLowerRef.current = null;
+      ma5Ref.current = null;
+      ma20Ref.current = null;
+      ma60Ref.current = null;
+      ma120Ref.current = null;
+      flowForeignRef.current = null;
+      flowInstRef.current = null;
+      flowIndivRef.current = null;
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, source]);
 
   useEffect(() => {
     const chart = chartRef.current;
@@ -208,8 +484,105 @@ function UnifiedCandlestickChart({
       close: bar.close,
     }));
     series.setData(data);
+
+    const volData = bars.map((bar) => ({
+      time: toChartTime(bar.startedAt),
+      value: bar.volume,
+      color: bar.close >= bar.open ? "#22c55e" : "#ef4444",
+    }));
+    volSeriesRef.current?.setData(volData);
+
+    if (ma5Ref.current)
+      ma5Ref.current.setData(
+        calcMA(ohlcvInputs, 5).map((p) => ({
+          time: p.time as Time,
+          value: p.value,
+        })),
+      );
+    if (ma20Ref.current)
+      ma20Ref.current.setData(
+        calcMA(ohlcvInputs, 20).map((p) => ({
+          time: p.time as Time,
+          value: p.value,
+        })),
+      );
+    if (ma60Ref.current)
+      ma60Ref.current.setData(
+        calcMA(ohlcvInputs, 60).map((p) => ({
+          time: p.time as Time,
+          value: p.value,
+        })),
+      );
+    if (ma120Ref.current)
+      ma120Ref.current.setData(
+        calcMA(ohlcvInputs, 120).map((p) => ({
+          time: p.time as Time,
+          value: p.value,
+        })),
+      );
+
+    if (
+      bbUpperRef.current &&
+      bbMiddleRef.current &&
+      bbLowerRef.current
+    ) {
+      const bb = calcBollingerBands(ohlcvInputs);
+      bbUpperRef.current.setData(
+        bb.map((p) => ({ time: p.time as Time, value: p.upper })),
+      );
+      bbMiddleRef.current.setData(
+        bb.map((p) => ({ time: p.time as Time, value: p.middle })),
+      );
+      bbLowerRef.current.setData(
+        bb.map((p) => ({ time: p.time as Time, value: p.lower })),
+      );
+    }
+
+    if (rsiSeriesRef.current) {
+      const rsi = calcRsi(ohlcvInputs);
+      rsiSeriesRef.current.setData(
+        rsi.map((p) => ({ time: p.time as Time, value: p.value })),
+      );
+    }
+
+    if (
+      macdLineRef.current &&
+      macdSignalRef.current &&
+      macdHistRef.current
+    ) {
+      const macd = calcMacd(ohlcvInputs);
+      macdLineRef.current.setData(
+        macd.map((p) => ({ time: p.time as Time, value: p.macd })),
+      );
+      macdSignalRef.current.setData(
+        macd.map((p) => ({ time: p.time as Time, value: p.signal })),
+      );
+      macdHistRef.current.setData(
+        macd.map((p) => ({
+          time: p.time as Time,
+          value: p.histogram,
+          color: p.histogram >= 0 ? "#22c55e" : "#ef4444",
+        })),
+      );
+    }
+
     chart.timeScale().fitContent();
-  }, [bars]);
+  }, [bars, ohlcvInputs, active, interval]);
+
+  useEffect(() => {
+    const data = flowQuery.data;
+    if (!data || !flowForeignRef.current || !flowInstRef.current || !flowIndivRef.current) return;
+
+    flowForeignRef.current.setData(
+      data.map((p: InvestorFlowPoint) => ({ time: p.time as Time, value: p.foreign }))
+    );
+    flowInstRef.current.setData(
+      data.map((p: InvestorFlowPoint) => ({ time: p.time as Time, value: p.institution }))
+    );
+    flowIndivRef.current.setData(
+      data.map((p: InvestorFlowPoint) => ({ time: p.time as Time, value: p.individual }))
+    );
+  }, [flowQuery.data]);
 
   useEffect(() => {
     const chart = chartRef.current;
@@ -233,6 +606,31 @@ function UnifiedCandlestickChart({
       );
       const volume = index >= 0 ? bars[index].volume : 0;
 
+      function getLineValue(ref: RefObject<ISeriesApi<"Line"> | null>): number | undefined {
+        if (!ref.current) return undefined;
+        const d = param.seriesData.get(ref.current);
+        return d && "value" in d ? (d.value as number) : undefined;
+      }
+      function getHistValue(ref: RefObject<ISeriesApi<"Histogram"> | null>): number | undefined {
+        if (!ref.current) return undefined;
+        const d = param.seriesData.get(ref.current);
+        return d && "value" in d ? (d.value as number) : undefined;
+      }
+
+      const indicators: IndicatorSnapshot = {
+        ma5: getLineValue(ma5Ref),
+        ma20: getLineValue(ma20Ref),
+        ma60: getLineValue(ma60Ref),
+        ma120: getLineValue(ma120Ref),
+        bbUpper: getLineValue(bbUpperRef),
+        bbMiddle: getLineValue(bbMiddleRef),
+        bbLower: getLineValue(bbLowerRef),
+        rsi: getLineValue(rsiSeriesRef),
+        macd: getLineValue(macdLineRef),
+        macdSignal: getLineValue(macdSignalRef),
+        macdHist: getHistValue(macdHistRef),
+      };
+
       onCrosshairChange({
         startedAt,
         open: point.open,
@@ -240,6 +638,7 @@ function UnifiedCandlestickChart({
         low: point.low,
         close: point.close,
         volume,
+        indicators,
       });
     };
 
@@ -251,6 +650,15 @@ function UnifiedCandlestickChart({
 
       if (drawTool === "hline") {
         addHLine(chartKey, { id: crypto.randomUUID(), price });
+        return;
+      }
+
+      if (drawTool === "cross") {
+        addCrossLine(chartKey, {
+          id: crypto.randomUUID(),
+          logical: Number(logical),
+          price,
+        });
         return;
       }
 
@@ -288,6 +696,7 @@ function UnifiedCandlestickChart({
     chartKey,
     addTrendLine,
     addHLine,
+    addCrossLine,
   ]);
 
   useEffect(() => {
@@ -297,10 +706,11 @@ function UnifiedCandlestickChart({
   }, [drawTool]);
 
   return (
-    <div className="relative w-full h-[360px]">
-      <div className="w-full h-[360px]" ref={rootRef} />
+    <div className="relative w-full" style={{ height: chartHeight }}>
+      <div className="w-full" style={{ height: chartHeight }} ref={rootRef} />
       <svg
-        className="absolute inset-0 w-full h-[360px] pointer-events-none"
+        className="absolute inset-0 w-full pointer-events-none"
+        style={{ height: chartHeight }}
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden="true"
@@ -309,9 +719,9 @@ function UnifiedCandlestickChart({
           <line
             key={line.id}
             x1="0"
-            y1={(line.y / 360) * 100}
+            y1={(line.y / chartHeight) * 100}
             x2="100"
-            y2={(line.y / 360) * 100}
+            y2={(line.y / chartHeight) * 100}
             className="[vector-effect:non-scaling-stroke] stroke-cyan-400 [stroke-dasharray:6_4] [stroke-width:1.4]"
           />
         ))}
@@ -321,16 +731,41 @@ function UnifiedCandlestickChart({
             x1={
               (line.x1 / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100
             }
-            y1={(line.y1 / 360) * 100}
+            y1={(line.y1 / chartHeight) * 100}
             x2={
               (line.x2 / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100
             }
-            y2={(line.y2 / 360) * 100}
+            y2={(line.y2 / chartHeight) * 100}
             className="[vector-effect:non-scaling-stroke] stroke-amber-500 [stroke-width:1.8]"
           />
         ))}
+        {overlay.crossSegments.map((line) => (
+          <g key={line.id}>
+            <line
+              x1="0"
+              y1={(line.y / chartHeight) * 100}
+              x2="100"
+              y2={(line.y / chartHeight) * 100}
+              className="[vector-effect:non-scaling-stroke] stroke-emerald-400 [stroke-dasharray:4_3] [stroke-width:1.2]"
+            />
+            <line
+              x1={(line.x / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100}
+              y1="0"
+              x2={(line.x / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100}
+              y2="100"
+              className="[vector-effect:non-scaling-stroke] stroke-emerald-400 [stroke-dasharray:4_3] [stroke-width:1.2]"
+            />
+            <circle
+              cx={(line.x / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100}
+              cy={(line.y / chartHeight) * 100}
+              r="0.6"
+              className="fill-emerald-400"
+              style={{ vectorEffect: "non-scaling-stroke" }}
+            />
+          </g>
+        ))}
       </svg>
-      {(trendLines.length > 0 || hLines.length > 0) && (
+      {(trendLines.length > 0 || hLines.length > 0 || crossLines.length > 0) && (
         <button
           type="button"
           className="absolute right-2 top-2 inline-flex items-center justify-center gap-2.5 px-4 py-2 rounded-xl font-semibold text-sm cursor-pointer transition-all border border-white/12 text-text-primary bg-transparent hover:bg-white/5 hover:border-text-muted"
@@ -541,6 +976,18 @@ export function MarketUnifiedChartPage() {
               >
                 수평선
               </button>
+              <button
+                type="button"
+                className={`${BTN_BASE} ${drawTool === "cross" ? ACTIVE_TOOL_CLS : BTN_OUTLINE}`}
+                onClick={() => setDrawTool("cross")}
+              >
+                크로스
+              </button>
+            </div>
+
+            {/* Indicator toggles */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              <IndicatorToggleBar interval={interval} source={source} />
             </div>
 
             {/* Meta info */}
@@ -579,6 +1026,61 @@ export function MarketUnifiedChartPage() {
                   <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
                     V: {formatNumber(crosshairInfo.volume)}
                   </span>
+                  {crosshairInfo.indicators.ma5 !== undefined && (
+                    <span className="text-xs text-yellow-300 border border-white/12 rounded-full px-2.5 py-1">
+                      MA5: {formatNumber(crosshairInfo.indicators.ma5)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.ma20 !== undefined && (
+                    <span className="text-xs text-blue-300 border border-white/12 rounded-full px-2.5 py-1">
+                      MA20: {formatNumber(crosshairInfo.indicators.ma20)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.ma60 !== undefined && (
+                    <span className="text-xs text-orange-400 border border-white/12 rounded-full px-2.5 py-1">
+                      MA60: {formatNumber(crosshairInfo.indicators.ma60)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.ma120 !== undefined && (
+                    <span className="text-xs text-purple-400 border border-white/12 rounded-full px-2.5 py-1">
+                      MA120: {formatNumber(crosshairInfo.indicators.ma120)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.bbUpper !== undefined && (
+                    <span className="text-xs text-indigo-300 border border-white/12 rounded-full px-2.5 py-1">
+                      BB상단: {formatNumber(crosshairInfo.indicators.bbUpper)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.bbMiddle !== undefined && (
+                    <span className="text-xs text-indigo-300 border border-white/12 rounded-full px-2.5 py-1">
+                      BB중단: {formatNumber(crosshairInfo.indicators.bbMiddle)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.bbLower !== undefined && (
+                    <span className="text-xs text-indigo-300 border border-white/12 rounded-full px-2.5 py-1">
+                      BB하단: {formatNumber(crosshairInfo.indicators.bbLower)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.rsi !== undefined && (
+                    <span className="text-xs text-amber-400 border border-white/12 rounded-full px-2.5 py-1">
+                      RSI: {formatNumber(crosshairInfo.indicators.rsi)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.macd !== undefined && (
+                    <span className="text-xs text-sky-300 border border-white/12 rounded-full px-2.5 py-1">
+                      MACD: {formatNumber(crosshairInfo.indicators.macd)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.macdSignal !== undefined && (
+                    <span className="text-xs text-orange-300 border border-white/12 rounded-full px-2.5 py-1">
+                      Signal: {formatNumber(crosshairInfo.indicators.macdSignal)}
+                    </span>
+                  )}
+                  {crosshairInfo.indicators.macdHist !== undefined && (
+                    <span className={`text-xs border border-white/12 rounded-full px-2.5 py-1 ${crosshairInfo.indicators.macdHist >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      HIST: {formatNumber(crosshairInfo.indicators.macdHist)}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -596,6 +1098,9 @@ export function MarketUnifiedChartPage() {
                 bars={bars}
                 drawTool={drawTool}
                 chartKey={chartKey}
+                interval={interval}
+                source={source}
+                symbol={selectedSymbol}
                 onCrosshairChange={setCrosshairInfo}
               />
             )}

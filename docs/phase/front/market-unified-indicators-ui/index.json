@@ -1,0 +1,62 @@
+{
+  "phase": "market-unified-indicators-ui",
+  "project": "front",
+  "description": "통합 차트 고도화 — 거래량 패널, 보조지표(BB/RSI/MACD) 토글, 크로스헤어 정보 패널, 수급 시계열 패널",
+  "status": "in_progress",
+  "steps": [
+    {
+      "id": "step-1",
+      "title": "수급 API 클라이언트 추가 (investorFlowApi.ts)",
+      "status": "done",
+      "verify": "tsc -b 통과"
+    },
+    {
+      "id": "step-2",
+      "title": "보조지표 계산 순수 함수 + 단위 테스트 (BB/RSI/MACD)",
+      "status": "done",
+      "verify": "vitest all green"
+    },
+    {
+      "id": "step-3",
+      "title": "보조지표 토글 Zustand store (useIndicatorStore)",
+      "status": "done",
+      "verify": "tsc -b 통과"
+    },
+    {
+      "id": "step-4",
+      "title": "멀티 패인 구조 리팩터 — 캔들 + 거래량 패인 고정",
+      "status": "done",
+      "verify": "브라우저 2-패인 렌더링 확인"
+    },
+    {
+      "id": "step-5",
+      "title": "보조지표 오버레이/패인 렌더링 + IndicatorToggleBar UI",
+      "status": "done",
+      "verify": "각 토글 on/off 동작 확인"
+    },
+    {
+      "id": "step-6",
+      "title": "크로스헤어 정보 패널 고도화 (OHLCV + 지표 값 동시 표시)",
+      "status": "done",
+      "verify": "마우스 이동 시 모든 지표 값 출력 확인"
+    },
+    {
+      "id": "step-7",
+      "title": "투자자 수급 패인 — 외국인/기관/개인 순매수 히스토그램",
+      "status": "done",
+      "verify": "일봉 + pykrx 종목에서 수급 패인 렌더링 확인"
+    },
+    {
+      "id": "step-8",
+      "title": "npm run build 최종 검증",
+      "status": "done",
+      "verify": "빌드 에러 0건"
+    },
+    {
+      "id": "step-9",
+      "title": "크로스(전체 교차선) 드로잉 도구 추가 — 저장 가능",
+      "status": "done",
+      "verify": "클릭 시 수직+수평 교차선 생성, 새로고침 후 유지 확인"
+    }
+  ]
+}

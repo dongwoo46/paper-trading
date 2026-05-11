@@ -1,0 +1,14 @@
+{
+  "description": "모닝 스타 패턴 — 큰 음봉 + 작은 몸통 도지 + 큰 양봉 (첫 봉 중간 이상 마감)",
+  "pattern": "MORNING_STAR",
+  "input_candles": [
+    {"date": "2024-01-02", "open": "55000", "high": "55500", "low": "51500", "close": "52000", "volume": "150000"},
+    {"date": "2024-01-03", "open": "51800", "high": "52200", "low": "51600", "close": "51900", "volume": "80000"},
+    {"date": "2024-01-04", "open": "52000", "high": "55500", "low": "51800", "close": "54500", "volume": "160000"}
+  ],
+  "expected": {
+    "pattern": "MORNING_STAR",
+    "detected_at_index": 2,
+    "note": "첫봉: 큰 음봉 open=55000 close=52000 (body=3000). 중간봉: 작은 body=100. 셋째봉: 양봉 close=54500 > 첫봉 중점=53500"
+  }
+}

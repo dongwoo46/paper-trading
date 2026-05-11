@@ -1,0 +1,13 @@
+{
+  "description": "강세 엔걸핑 — 이전 음봉을 양봉이 완전히 감싸는 패턴",
+  "pattern": "BULLISH_ENGULFING",
+  "input_candles": [
+    {"date": "2024-01-02", "open": "52000", "high": "52500", "low": "50500", "close": "51000", "volume": "100000"},
+    {"date": "2024-01-03", "open": "50800", "high": "53500", "low": "50600", "close": "53000", "volume": "150000"}
+  ],
+  "expected": {
+    "pattern": "BULLISH_ENGULFING",
+    "detected_at_index": 1,
+    "note": "prev: open=52000 close=51000 (음봉). curr: open=50800 < prev_close=51000, close=53000 > prev_open=52000"
+  }
+}

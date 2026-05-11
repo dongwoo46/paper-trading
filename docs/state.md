@@ -4,13 +4,13 @@
 manual
 
 ## 상태
-idle
+in_progress
 
 ## 활성 Phase
-없음
+front/market-unified-indicators-ui
 
 ## 마지막 액션
-2026-05-11: quant-worker/investor-flow-pipeline 완료 — 229/229 테스트 통과, PR 생성 완료.
+2026-05-11: market-unified-indicators-ui 시작 — step-1(수급 API 클라이언트) 진행 중.
 
 ## 다음 액션
-없음 — 다음 태스크 선택 대기 (docs/TODO.md 참조)
+step-1 완료 → step-2 (보조지표 계산 함수 + 단위 테스트)
