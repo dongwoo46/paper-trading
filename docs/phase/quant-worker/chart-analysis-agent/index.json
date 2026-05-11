@@ -2,7 +2,7 @@
   "phase": "chart-analysis-agent",
   "project": "quant-worker",
   "status": "in_progress",
-  "current_step": 2,
+  "current_step": 3,
   "total_steps": 9,
   "branch": "feature/quant-worker-chart-analysis-agent",
   "worktree_path": ".worktrees/quant-worker-chart-analysis-agent",
@@ -28,7 +28,7 @@
       "file": "step-2.md",
       "status": "completed",
       "retry_count": 0,
-      "result": null,
+      "result": "VO 10개 + Enum 5개 + Aggregate 2개 + Port 9개 구현. TDD 4커밋. 102/102 통과.",
       "substeps": [
         { "id": 1, "name": "Value Objects (Candle/IndicatorSet/TrendAnalysis/LevelSet/TradePlan/CandlePattern/IndicatorSignal/VolumeAnalysis/Recommendation/NarrativeReport)", "status": "completed" },
         { "id": 2, "name": "Aggregate Root — ChartSnapshot", "status": "completed" },
@@ -42,17 +42,17 @@
       "agent": "quant-dev",
       "name": "인프라 계산 모듈 구현 (5 계산기 + 골든 fixture)",
       "file": "step-3.md",
-      "status": "pending",
+      "status": "completed",
       "retry_count": 0,
-      "result": null,
+      "result": "5개 인프라 클래스 + 골든 fixture 11개 완성. 53/53 인프라 테스트 통과 (전체 155/155). TDD 5커밋.",
       "substeps": [
-        { "id": 0, "name": "의존성 + 골든 fixture 디렉토리 셋업", "status": "pending" },
-        { "id": 1, "name": "IndicatorCalculator (pandas-ta 래퍼)", "status": "pending" },
-        { "id": 2, "name": "SupportResistanceFinder (scipy.find_peaks)", "status": "pending" },
-        { "id": 3, "name": "PatternDetector (6종 캔들 패턴)", "status": "pending" },
-        { "id": 4, "name": "TrendClassifier (MA + ADX + HH/LL)", "status": "pending" },
-        { "id": 5, "name": "ConfidenceScorer (룰 가중치 합산)", "status": "pending" },
-        { "id": 6, "name": "모듈 초기화 + 검증", "status": "pending" }
+        { "id": 0, "name": "의존성 + 골든 fixture 디렉토리 셋업", "status": "completed" },
+        { "id": 1, "name": "IndicatorCalculator (pandas-ta 래퍼)", "status": "completed" },
+        { "id": 2, "name": "SupportResistanceFinder (scipy.find_peaks)", "status": "completed" },
+        { "id": 3, "name": "PatternDetector (6종 캔들 패턴)", "status": "completed" },
+        { "id": 4, "name": "TrendClassifier (MA + ADX + HH/LL)", "status": "completed" },
+        { "id": 5, "name": "ConfidenceScorer (룰 가중치 합산)", "status": "completed" },
+        { "id": 6, "name": "모듈 초기화 + 검증", "status": "completed" }
       ]
     },
     {
