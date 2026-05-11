@@ -13,6 +13,9 @@ from .analysis_request_queue_repository import PostgresAnalysisRequestQueueRepos
 from .rule_template_report_generator import RuleTemplateReportGenerator
 from .redis_job_store import RedisJobStore
 
+# Step 5 — Slack 알림
+from .slack_notifier import SlackWebhookNotifier
+
 __all__ = [
     # Step 3
     "PandasTaIndicatorCalculator",
@@ -27,4 +30,6 @@ __all__ = [
     "PostgresAnalysisRequestQueueRepository",
     "RuleTemplateReportGenerator",
     "RedisJobStore",
+    # Step 5
+    "SlackWebhookNotifier",
 ]
