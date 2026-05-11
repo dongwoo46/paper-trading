@@ -16,6 +16,7 @@ from src.application.weekly_fetch_service import WeeklyFetchOptions, execute as 
 from src.catalog.postgres_symbol_catalog import connect
 from src.jobs.batch_schedule import start_batch_scheduler, stop_batch_scheduler
 from src.jobs.investor_flow_schedule import start_investor_flow_scheduler, stop_investor_flow_scheduler
+from src.jobs.chart_analysis_schedule import start_chart_analysis_scheduler, stop_chart_analysis_scheduler
 
 
 class CollectDailyRequest(BaseModel):
@@ -59,23 +60,31 @@ class CollectWeeklyResponse(BaseModel):
 logger = logging.getLogger(__name__)
 _batch_scheduler = None
 _investor_flow_scheduler = None
+_chart_analysis_scheduler = None
 
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     _configure_logging()
-    global _batch_scheduler, _investor_flow_scheduler
+    global _batch_scheduler, _investor_flow_scheduler, _chart_analysis_scheduler
     _batch_scheduler = start_batch_scheduler()
     _investor_flow_scheduler = start_investor_flow_scheduler()
+    _chart_analysis_scheduler = start_chart_analysis_scheduler()
     yield
     stop_batch_scheduler(_batch_scheduler)
     _batch_scheduler = None
     stop_investor_flow_scheduler(_investor_flow_scheduler)
     _investor_flow_scheduler = None
+    stop_chart_analysis_scheduler(_chart_analysis_scheduler)
+    _chart_analysis_scheduler = None
     logger.info("batch_scheduler:stopped via lifespan")
 
 
 app = FastAPI(title="Collector Worker API", version="1.0.0", lifespan=lifespan)
+
+# Chart Analysis 라우터 등록
+from src.chart_analysis.interfaces.chart_analysis_router import chart_analysis_router  # noqa: E402
+app.include_router(chart_analysis_router)
 
 
 class _ColorFormatter(logging.Formatter):
