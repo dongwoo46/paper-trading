@@ -77,6 +77,10 @@ async def lifespan(application: FastAPI):
 
 app = FastAPI(title="Collector Worker API", version="1.0.0", lifespan=lifespan)
 
+# Chart Analysis 라우터 등록
+from src.chart_analysis.interfaces.chart_analysis_router import chart_analysis_router  # noqa: E402
+app.include_router(chart_analysis_router)
+
 
 class _ColorFormatter(logging.Formatter):
     RESET = "\x1b[0m"
