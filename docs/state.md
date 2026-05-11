@@ -7,10 +7,10 @@ manual
 in_progress
 
 ## 활성 Phase
-front/market-unified-indicators-ui
+없음 (idle)
 
 ## 마지막 액션
-2026-05-11: market-unified-indicators-ui 시작 — step-1(수급 API 클라이언트) 진행 중.
+2026-05-12: chart-analysis-agent phase 완료. 283/283 통과, lint 클린, summary.md 작성, phase 폴더 이동, TODO 체크.
 
 ## 다음 액션
-step-1 완료 → step-2 (보조지표 계산 함수 + 단위 테스트)
+PR 생성 후 → 다음 feature 선택 (docs/TODO.md 참고)

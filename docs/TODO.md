@@ -124,12 +124,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1 — 사용자에게 빠르게 보여주는 에이전트
 
-- [ ] 차트 분석 AI 에이전트 (차트매매용) | project: quant-worker | phase: chart-analysis-agent | priority: P1
-  - 현재 차트 기반 매수·매도 진입점·청산점·손절 판단
-  - 지지선·저항선 자동 탐지 (스윙 고점·저점)
-  - 캔들 패턴 인식 → 반전/지속 신호
-  - 추세 판단 (상승/하락/횡보) + ADX 강도
-  - 출력: "지지선 X, 진입 권고가 Y, 손절 Z" 자연어 리포트
+- [x] 차트 분석 AI 에이전트 (차트매매용) | project: quant-worker | phase: chart-analysis-agent | priority: P1 | done: 2026-05-12
 
 - [ ] 수급·펀더멘탈 기반 종목 추천 엔진 | project: quant-worker | phase: stock-recommendation | priority: P1
   - 외국인·기관 순매수 상위 종목 스크리닝 (데이터 이미 있음)
