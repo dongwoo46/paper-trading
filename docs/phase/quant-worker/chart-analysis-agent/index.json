@@ -2,7 +2,7 @@
   "phase": "chart-analysis-agent",
   "project": "quant-worker",
   "status": "in_progress",
-  "current_step": 3,
+  "current_step": 5,
   "total_steps": 9,
   "branch": "feature/quant-worker-chart-analysis-agent",
   "worktree_path": ".worktrees/quant-worker-chart-analysis-agent",
@@ -60,18 +60,18 @@
       "agent": "quant-dev",
       "name": "영속화 + LLM 어댑터 + Redis",
       "file": "step-4.md",
-      "status": "pending",
+      "status": "completed",
       "retry_count": 0,
-      "result": null,
+      "result": "V2 마이그레이션(3 테이블) + 4개 Repository 어댑터 + RuleTemplateReportGenerator + LangChainOllamaReportGenerator + RedisJobStore 구현. TDD 116/116 통과. 4커밋.",
       "substeps": [
-        { "id": 1, "name": "DB 마이그레이션 V2 (3 테이블)", "status": "pending" },
-        { "id": 2, "name": "OhlcvRepository 어댑터", "status": "pending" },
-        { "id": 3, "name": "ChartAnalysisRepository 어댑터", "status": "pending" },
-        { "id": 4, "name": "AnalysisRequestQueueRepository 어댑터", "status": "pending" },
-        { "id": 5, "name": "RuleTemplateReportGenerator (폴백)", "status": "pending" },
-        { "id": 6, "name": "LangChainOllamaReportGenerator (메인)", "status": "pending" },
-        { "id": 7, "name": "RedisJobStore", "status": "pending" },
-        { "id": 8, "name": "모듈 초기화 + 검증", "status": "pending" }
+        { "id": 1, "name": "DB 마이그레이션 V2 (3 테이블)", "status": "completed" },
+        { "id": 2, "name": "OhlcvRepository 어댑터", "status": "completed" },
+        { "id": 3, "name": "ChartAnalysisRepository 어댑터", "status": "completed" },
+        { "id": 4, "name": "AnalysisRequestQueueRepository 어댑터", "status": "completed" },
+        { "id": 5, "name": "RuleTemplateReportGenerator (폴백)", "status": "completed" },
+        { "id": 6, "name": "LangChainOllamaReportGenerator (메인)", "status": "completed" },
+        { "id": 7, "name": "RedisJobStore", "status": "completed" },
+        { "id": 8, "name": "모듈 초기화 + 검증", "status": "completed" }
       ]
     },
     {
@@ -161,5 +161,6 @@
   ],
   "blockers": [],
   "created": "2026-05-11",
-  "updated": "2026-05-11"
+  "updated": "2026-05-11",
+  "step4_test_count": 116
 }
