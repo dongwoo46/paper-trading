@@ -2,7 +2,7 @@
   "phase": "chart-analysis-agent",
   "project": "quant-worker",
   "status": "in_progress",
-  "current_step": 6,
+  "current_step": 7,
   "total_steps": 9,
   "branch": "feature/quant-worker-chart-analysis-agent",
   "worktree_path": ".worktrees/quant-worker-chart-analysis-agent",
@@ -98,16 +98,16 @@
       "agent": "quant-dev",
       "name": "사전계산 파이프라인 + 큐 처리 + APScheduler",
       "file": "step-6.md",
-      "status": "pending",
+      "status": "completed",
       "retry_count": 0,
-      "result": null,
+      "result": "6개 서브스텝 TDD 완료. PrecomputePipelineService(6), 시장별 트리거(3), PopularSymbolsRefreshService(7), APScheduler 4-잡(9), 큐 처리 스크립트(6) — 신규 31개 테스트 + 전체 273/273 통과. apscheduler==3.10.4 requirements.txt 추가. 6커밋.",
       "substeps": [
-        { "id": 1, "name": "PrecomputePipelineService", "status": "pending" },
-        { "id": 2, "name": "시장별 트리거 함수 (KRX/US/주봉)", "status": "pending" },
-        { "id": 3, "name": "PopularSymbolsRefreshService (주 1회)", "status": "pending" },
-        { "id": 4, "name": "APScheduler 통합 (4 잡)", "status": "pending" },
-        { "id": 5, "name": "큐 처리 스크립트 (운영자 수동)", "status": "pending" },
-        { "id": 6, "name": "환경변수 + requirements 최종 점검", "status": "pending" }
+        { "id": 1, "name": "PrecomputePipelineService", "status": "completed" },
+        { "id": 2, "name": "시장별 트리거 함수 (KRX/US/주봉)", "status": "completed" },
+        { "id": 3, "name": "PopularSymbolsRefreshService (주 1회)", "status": "completed" },
+        { "id": 4, "name": "APScheduler 통합 (4 잡)", "status": "completed" },
+        { "id": 5, "name": "큐 처리 스크립트 (운영자 수동)", "status": "completed" },
+        { "id": 6, "name": "환경변수 + requirements 최종 점검", "status": "completed" }
       ]
     },
     {
@@ -164,5 +164,6 @@
   "created": "2026-05-11",
   "updated": "2026-05-12",
   "step4_test_count": 116,
-  "step5_test_count": 252
+  "step5_test_count": 252,
+  "step6_test_count": 273
 }
