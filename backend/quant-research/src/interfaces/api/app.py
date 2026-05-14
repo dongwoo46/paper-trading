@@ -7,7 +7,6 @@ from fastapi import FastAPI
 
 from src.infrastructure.db import connect, load_db_config_from_env
 from src.infrastructure.migration_runner import run_migrations
-from src.interfaces.api.research_router import research_router
 from src.interfaces.api.results_router import results_router
 from src.jobs.chart_analysis_schedule import (
     start_chart_analysis_scheduler,
@@ -26,7 +25,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Quant Research Service", version="1.0.0", lifespan=lifespan)
-app.include_router(research_router)
 app.include_router(results_router)
 
 
