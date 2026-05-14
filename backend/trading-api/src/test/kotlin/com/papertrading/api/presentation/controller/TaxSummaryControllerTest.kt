@@ -1,15 +1,15 @@
 package com.papertrading.api.presentation.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.papertrading.api.application.portfolio.tax.InvalidTaxYearRangeException
-import com.papertrading.api.application.portfolio.tax.InvalidAccountModeForTaxSummaryException
-import com.papertrading.api.application.portfolio.tax.TaxSummaryAlreadyRunningException
-import com.papertrading.api.application.portfolio.tax.TaxSummaryBatchService
-import com.papertrading.api.application.portfolio.tax.TaxSummaryCommandService
-import com.papertrading.api.application.portfolio.tax.TaxSummaryNotFoundException
-import com.papertrading.api.application.portfolio.tax.TaxSummaryQueryService
+import com.papertrading.api.application.portfolio.TaxSummaryBatchService
+import com.papertrading.api.application.portfolio.TaxSummaryCommandService
+import com.papertrading.api.application.portfolio.TaxSummaryQueryService
 import com.papertrading.api.application.portfolio.tax.TaxYear
-import com.papertrading.api.application.portfolio.tax.UnsupportedCurrencyException
+import com.papertrading.api.common.exception.InvalidAccountModeForTaxSummaryException
+import com.papertrading.api.common.exception.InvalidTaxYearRangeException
+import com.papertrading.api.common.exception.TaxSummaryAlreadyRunningException
+import com.papertrading.api.common.exception.TaxSummaryNotFoundException
+import com.papertrading.api.common.exception.UnsupportedCurrencyException
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.portfolio.TaxSummary
 import com.papertrading.api.domain.enums.AccountType

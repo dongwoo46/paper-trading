@@ -1,11 +1,17 @@
-﻿package com.papertrading.api.application.portfolio.tax
+package com.papertrading.api.application.portfolio.tax
 
-import com.papertrading.api.domain.enums.AccountType
-import com.papertrading.api.domain.enums.TaxSummaryRunType
-import com.papertrading.api.domain.enums.TradingMode
+import com.papertrading.api.application.portfolio.TaxSummaryCommandService
+import com.papertrading.api.common.exception.InvalidAccountModeForTaxSummaryException
+import com.papertrading.api.common.exception.TaxSummaryAlreadyRunningException
+import com.papertrading.api.common.exception.TaxSummaryComputeFailedException
+import com.papertrading.api.common.exception.TaxYearNotClosedException
+import com.papertrading.api.common.exception.UnsupportedCurrencyException
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.portfolio.TaxSummary
 import com.papertrading.api.domain.entity.portfolio.TaxSummaryRun
+import com.papertrading.api.domain.enums.AccountType
+import com.papertrading.api.domain.enums.TaxSummaryRunType
+import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.TaxSummaryRepository
 import com.papertrading.api.infrastructure.persistence.TaxSummaryRunRepository
@@ -18,6 +24,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.dao.DataIntegrityViolationException
 import java.math.BigDecimal
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.Optional
 
 class TaxSummaryCommandServiceTest {
@@ -26,14 +35,14 @@ class TaxSummaryCommandServiceTest {
     private val taxSummaryRepository = mockk<TaxSummaryRepository>()
     private val taxSummaryRunRepository = mockk<TaxSummaryRunRepository>()
     private val settlementTaxReadRepository = mockk<SettlementTaxReadRepository>()
-    private val taxSummaryCalculator = TaxSummaryCalculator()
+    private val clock = Clock.fixed(Instant.parse("2026-01-10T00:00:00Z"), ZoneOffset.UTC)
 
     private val service = TaxSummaryCommandService(
         accountRepository,
         taxSummaryRepository,
         taxSummaryRunRepository,
         settlementTaxReadRepository,
-        taxSummaryCalculator,
+        clock,
     )
 
     private fun account(): Account = Account.create(
@@ -42,6 +51,7 @@ class TaxSummaryCommandServiceTest {
         tradingMode = TradingMode.LOCAL,
         initialDeposit = BigDecimal("1000000")
     ).withId(1L)
+
     private fun kisAccount(): Account = Account.create(
         accountName = "kis",
         accountType = AccountType.STOCK,
@@ -56,7 +66,7 @@ class TaxSummaryCommandServiceTest {
         every { taxSummaryRunRepository.existsRunning(1L, 2024) } returns false
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { settlementTaxReadRepository.summarizeForTax(eq(1L), any(), any()) } returns
-            SettlementTaxAggregate(BigDecimal("1000"), BigDecimal("100"), BigDecimal("50"), "KRW")
+            TaxSettlementAggregate(BigDecimal("1000"), BigDecimal("100"), BigDecimal("50"), "KRW")
         every { taxSummaryRepository.findByAccountIdAndTaxYear(1L, 2024) } returns Optional.empty()
         every { taxSummaryRunRepository.save(any<TaxSummaryRun>()) } answers { firstArg() }
         every { taxSummaryRepository.save(any<TaxSummary>()) } answers { firstArg() }
@@ -65,7 +75,7 @@ class TaxSummaryCommandServiceTest {
 
         assertEquals(BigDecimal("1000.0000"), summary.totalRealizedPnl)
         assertEquals(BigDecimal("850.0000"), summary.taxablePnl)
-        assertEquals(BigDecimal("187.0000"), summary.estimatedTax)
+        assertEquals(BigDecimal("50.0000"), summary.estimatedTax)
         verify(exactly = 2) { taxSummaryRunRepository.save(any<TaxSummaryRun>()) }
         verify { taxSummaryRunRepository.save(match<TaxSummaryRun> { it.runType == TaxSummaryRunType.MANUAL }) }
     }
@@ -118,8 +128,8 @@ class TaxSummaryCommandServiceTest {
 
         every { taxSummaryRunRepository.existsRunning(1L, 2024) } returns false
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
-        every { settlementTaxReadRepository.summarizeForTax(eq(1L), any(), any()) } throws
-            IllegalArgumentException("다중 통화 정산은 지원하지 않습니다.")
+        every { settlementTaxReadRepository.summarizeForTax(eq(1L), any(), any()) } returns
+            TaxSettlementAggregate(BigDecimal("1000"), BigDecimal("100"), BigDecimal("50"), "USD")
         every { taxSummaryRunRepository.save(any<TaxSummaryRun>()) } answers { firstArg() }
 
         assertThrows<UnsupportedCurrencyException> {
@@ -137,7 +147,7 @@ class TaxSummaryCommandServiceTest {
         every { taxSummaryRunRepository.existsRunning(1L, 2024) } returns false
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { settlementTaxReadRepository.summarizeForTax(eq(1L), any(), any()) } returns
-            SettlementTaxAggregate(BigDecimal("1000"), BigDecimal("100"), BigDecimal("50"), "KRW")
+            TaxSettlementAggregate(BigDecimal("1000"), BigDecimal("100"), BigDecimal("50"), "KRW")
         every { taxSummaryRepository.findByAccountIdAndTaxYear(1L, 2024) } returns Optional.empty()
         every { taxSummaryRunRepository.save(any<TaxSummaryRun>()) } answers { firstArg() }
         every { taxSummaryRepository.save(any<TaxSummary>()) } answers { firstArg() }
@@ -159,5 +169,12 @@ class TaxSummaryCommandServiceTest {
 
         assertEquals("INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY", ex.errorCode)
         verify(exactly = 0) { taxSummaryRunRepository.save(any<TaxSummaryRun>()) }
+    }
+
+    @Test
+    fun `recalculate when not force and current year then throws not closed`() {
+        assertThrows<TaxYearNotClosedException> {
+            service.recalculate(1L, TaxYear(2026), force = false)
+        }
     }
 }

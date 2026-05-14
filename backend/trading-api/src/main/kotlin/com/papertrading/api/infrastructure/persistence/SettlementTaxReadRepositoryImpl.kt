@@ -1,7 +1,7 @@
 ﻿package com.papertrading.api.infrastructure.persistence
 
-import com.papertrading.api.application.portfolio.tax.SettlementTaxAggregate
 import com.papertrading.api.application.portfolio.tax.SettlementTaxReadRepository
+import com.papertrading.api.application.portfolio.tax.TaxSettlementAggregate
 import com.papertrading.api.common.exception.UnsupportedSettlementCurrencyException
 import com.papertrading.api.domain.enums.TradingMode
 import jakarta.persistence.EntityManager
@@ -14,7 +14,7 @@ class SettlementTaxReadRepositoryImpl(
     private val entityManager: EntityManager,
 ) : SettlementTaxReadRepository {
 
-    override fun summarizeForTax(accountId: Long, yearStart: Instant, yearEnd: Instant): SettlementTaxAggregate {
+    override fun summarizeForTax(accountId: Long, yearStartInclusive: Instant, yearEndExclusive: Instant): TaxSettlementAggregate {
         val currencyCount = entityManager.createQuery(
             """
             SELECT COUNT(DISTINCT s.currency)
@@ -28,8 +28,8 @@ class SettlementTaxReadRepositoryImpl(
         )
             .setParameter("accountId", accountId)
             .setParameter("tradingMode", TradingMode.LOCAL)
-            .setParameter("yearStart", yearStart)
-            .setParameter("yearEnd", yearEnd)
+            .setParameter("yearStart", yearStartInclusive)
+            .setParameter("yearEnd", yearEndExclusive)
             .singleResult
             .toLong()
 
@@ -53,11 +53,11 @@ class SettlementTaxReadRepositoryImpl(
         )
             .setParameter("accountId", accountId)
             .setParameter("tradingMode", TradingMode.LOCAL)
-            .setParameter("yearStart", yearStart)
-            .setParameter("yearEnd", yearEnd)
+            .setParameter("yearStart", yearStartInclusive)
+            .setParameter("yearEnd", yearEndExclusive)
             .singleResult
 
-        return SettlementTaxAggregate(
+        return TaxSettlementAggregate(
             totalRealizedPnl = row[0] as BigDecimal,
             totalFee = row[1] as BigDecimal,
             totalTax = row[2] as BigDecimal,

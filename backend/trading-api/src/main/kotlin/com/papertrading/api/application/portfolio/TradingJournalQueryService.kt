@@ -18,19 +18,11 @@ class TradingJournalQueryService(
     private val accountRepository: AccountRepository,
     private val tradingJournalRepository: TradingJournalRepository
 ) {
+    // 특정 계좌의 매매일지 목록 조회 (QueryDSL search)
     fun list(filter: TradingJournalFilter, pageable: Pageable): Page<TradingJournalResult> {
-        if (!accountRepository.existsById(filter.accountId)) {
-            throw AccountNotFoundException(filter.accountId)
-        }
-        val page = if (filter.ticker.isNullOrBlank()) {
-            tradingJournalRepository.findByAccountId(filter.accountId, pageable)
-        } else {
-            tradingJournalRepository.findByAccountIdAndTicker(
-                filter.accountId,
-                filter.ticker.trim().uppercase(),
-                pageable
-            )
-        }
+        accountRepository.findById(filter.accountId)
+            .orElseThrow { AccountNotFoundException(filter.accountId) }
+        val page = tradingJournalRepository.search(filter, pageable)
         return page.map { TradingJournalResult.from(it) }
     }
 
@@ -40,6 +32,7 @@ class TradingJournalQueryService(
         if (!journal.belongsTo(accountId)) {
             throw TradingJournalOwnershipMismatchException(journalId, accountId)
         }
+
         return TradingJournalResult.from(journal)
     }
 }

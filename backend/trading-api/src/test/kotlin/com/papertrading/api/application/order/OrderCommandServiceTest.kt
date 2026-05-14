@@ -56,6 +56,16 @@ class OrderCommandServiceTest {
         tradingMode = TradingMode.LOCAL, initialDeposit = deposit
     ).withId(1L)
 
+    private fun paperAccount(deposit: BigDecimal = BigDecimal("1000000")): Account = Account.create(
+        accountName = "paper", accountType = AccountType.STOCK,
+        tradingMode = TradingMode.KIS_PAPER, initialDeposit = deposit
+    ).withId(2L)
+
+    private fun liveAccount(deposit: BigDecimal = BigDecimal("1000000")): Account = Account.create(
+        accountName = "live", accountType = AccountType.STOCK,
+        tradingMode = TradingMode.KIS_LIVE, initialDeposit = deposit
+    ).withId(3L)
+
     private fun savedOrder(account: Account): Order = Order.create(
         account = account,
         ticker = "005930",
@@ -76,7 +86,7 @@ class OrderCommandServiceTest {
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-1") } returns null
         every { orderRepository.save(any()) } answers { firstArg<Order>().withId(10L) }
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
-        every { collectorSubscriptionPort.subscribe("live", "005930") } just runs
+        every { collectorSubscriptionPort.subscribe("LOCAL", "005930") } just runs
         every { localMatchingEngine.determineFillPrice(any(), any()) } returns null
 
         val order = service.placeOrder(1L, PlaceOrderCommand(
@@ -88,7 +98,7 @@ class OrderCommandServiceTest {
 
         assertEquals(OrderStatus.PENDING, order.orderStatus)
         assertEquals(BigDecimal("650000"), account.availableDeposit) // 1000000 - 350000
-        verify { collectorSubscriptionPort.subscribe("live", "005930") }
+        verify { collectorSubscriptionPort.subscribe("LOCAL", "005930") }
     }
 
     @Test
@@ -133,7 +143,7 @@ class OrderCommandServiceTest {
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-4") } returns null
         every { orderRepository.save(any()) } returns savedOrderObj
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
-        every { collectorSubscriptionPort.subscribe("live", "005930") } just runs
+        every { collectorSubscriptionPort.subscribe("LOCAL", "005930") } just runs
         every { marketQuotePort.getQuote("005930") } returns null
         // cancelOrder 호출
         every { orderRepository.findByIdWithOptimisticLock(10L) } returns Optional.of(savedOrderObj)
@@ -157,7 +167,7 @@ class OrderCommandServiceTest {
         every { marketQuotePort.getQuote("005930") } returns quote
         every { orderRepository.save(any()) } answers { firstArg<Order>().withId(11L) }
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
-        every { collectorSubscriptionPort.subscribe("live", "005930") } just runs
+        every { collectorSubscriptionPort.subscribe("LOCAL", "005930") } just runs
 
         val order = service.placeOrder(1L, PlaceOrderCommand(
             ticker = "005930", marketType = MarketType.KOSPI,
@@ -169,5 +179,47 @@ class OrderCommandServiceTest {
         assertEquals(OrderStatus.PENDING, order.orderStatus)
         // 72000 * 2 = 144000 잠금
         assertEquals(BigDecimal("856000"), account.availableDeposit)
+    }
+
+    @Test
+    fun `KIS_PAPER 주문은 paper executor를 호출한다`() {
+        val account = paperAccount()
+        every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
+        every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-paper") } returns null
+        every { orderRepository.save(any()) } answers { firstArg<Order>().withId(21L) }
+        every { accountLedgerRepository.save(any()) } answers { firstArg() }
+        every { collectorSubscriptionPort.subscribe("KIS_PAPER", "005930") } just runs
+        every { kisPaperOrderExecutor.submit(any()) } just runs
+
+        service.placeOrder(1L, PlaceOrderCommand(
+            ticker = "005930", marketType = MarketType.KOSPI,
+            orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
+            orderCondition = OrderCondition.DAY, quantity = BigDecimal("1"),
+            limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-paper",
+        ))
+
+        verify(exactly = 1) { kisPaperOrderExecutor.submit(any()) }
+        verify(exactly = 0) { kisLiveOrderExecutor.submit(any()) }
+    }
+
+    @Test
+    fun `KIS_LIVE 주문은 live executor를 호출한다`() {
+        val account = liveAccount()
+        every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
+        every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-live") } returns null
+        every { orderRepository.save(any()) } answers { firstArg<Order>().withId(31L) }
+        every { accountLedgerRepository.save(any()) } answers { firstArg() }
+        every { collectorSubscriptionPort.subscribe("KIS_LIVE", "005930") } just runs
+        every { kisLiveOrderExecutor.submit(any()) } just runs
+
+        service.placeOrder(1L, PlaceOrderCommand(
+            ticker = "005930", marketType = MarketType.KOSPI,
+            orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
+            orderCondition = OrderCondition.DAY, quantity = BigDecimal("1"),
+            limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-live",
+        ))
+
+        verify(exactly = 1) { kisLiveOrderExecutor.submit(any()) }
+        verify(exactly = 0) { kisPaperOrderExecutor.submit(any()) }
     }
 }

@@ -75,7 +75,7 @@ class TradingJournalController(
         if (size !in 1..100) throw InvalidPaginationException("size must be between 1 and 100")
 
         val result = tradingJournalQueryService.list(
-            TradingJournalFilter(accountId, ticker),
+            TradingJournalFilter(accountId = accountId, ticker = ticker),
             PageRequest.of(
                 page,
                 size,

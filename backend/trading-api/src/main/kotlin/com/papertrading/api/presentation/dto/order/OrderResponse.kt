@@ -1,5 +1,7 @@
 package com.papertrading.api.presentation.dto.order
 
+import com.papertrading.api.application.order.result.ExecutionResult
+import com.papertrading.api.application.order.result.OrderResult
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
@@ -41,6 +43,22 @@ data class OrderResponse(
             fee = order.fee,
             createdAt = requireNotNull(order.createdAt) { "order.createdAt is null" },
         )
+
+        fun from(order: OrderResult) = OrderResponse(
+            orderId = order.orderId,
+            ticker = order.ticker,
+            marketType = order.marketType,
+            orderType = order.orderType,
+            orderSide = order.orderSide,
+            orderCondition = order.orderCondition,
+            orderStatus = order.orderStatus,
+            quantity = order.quantity,
+            filledQuantity = order.filledQuantity,
+            limitPrice = order.limitPrice,
+            avgFilledPrice = order.avgFilledPrice,
+            fee = order.fee,
+            createdAt = order.createdAt,
+        )
     }
 }
 
@@ -58,6 +76,14 @@ data class ExecutionResponse(
             executedPrice = e.executedPrice,
             fee = e.fee,
             executedAt = requireNotNull(e.executedAt) { "execution.executedAt is null" },
+        )
+
+        fun from(e: ExecutionResult) = ExecutionResponse(
+            executionId = e.executionId,
+            executedQuantity = e.executedQuantity,
+            executedPrice = e.executedPrice,
+            fee = e.fee,
+            executedAt = e.executedAt,
         )
     }
 }

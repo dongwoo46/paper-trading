@@ -1,9 +1,8 @@
 package com.papertrading.api.presentation.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.papertrading.api.application.notification.SlackNotificationCommandService
-import com.papertrading.api.application.notification.SlackNotificationConfigResult
-import com.papertrading.api.application.notification.SlackNotificationQueryService
+import com.papertrading.api.application.notification.SlackNotificationService
+import com.papertrading.api.application.notification.result.SlackNotificationConfigResult
 import com.papertrading.api.domain.enums.NotificationEventType
 import com.papertrading.api.presentation.exception.GlobalExceptionHandler
 import io.mockk.every
@@ -34,14 +33,11 @@ class SlackNotificationControllerTest {
     private lateinit var objectMapper: ObjectMapper
 
     @Autowired
-    private lateinit var queryService: SlackNotificationQueryService
-
-    @Autowired
-    private lateinit var commandService: SlackNotificationCommandService
+    private lateinit var slackNotificationService: SlackNotificationService
 
     @Test
     fun `GET config returns current slack notification settings`() {
-        every { queryService.getConfig() } returns sampleConfig(enabled = true)
+        every { slackNotificationService.getConfig() } returns sampleConfig(enabled = true)
 
         mockMvc.perform(get("/api/operations/notifications/slack"))
             .andExpect(status().isOk)
@@ -53,7 +49,7 @@ class SlackNotificationControllerTest {
     @Test
     fun `PUT config updates policy and returns updated payload`() {
         every {
-            commandService.updateConfig(any())
+            slackNotificationService.updateConfig(any())
         } returns sampleConfig(enabled = true)
 
         val body = mapOf(
@@ -76,7 +72,7 @@ class SlackNotificationControllerTest {
 
     @Test
     fun `POST test returns accepted response with requestId`() {
-        every { commandService.sendTestMessage("ping") } returns "req-123"
+        every { slackNotificationService.sendTestMessage("ping") } returns "req-123"
 
         val body = mapOf("message" to "ping")
 
@@ -92,7 +88,7 @@ class SlackNotificationControllerTest {
 
     @Test
     fun `POST test returns 400 when webhook is not configured`() {
-        every { commandService.sendTestMessage(any()) } throws IllegalStateException("WEBHOOK_NOT_CONFIGURED")
+        every { slackNotificationService.sendTestMessage(any()) } throws IllegalStateException("WEBHOOK_NOT_CONFIGURED")
 
         val body = mapOf("message" to "ping")
 
@@ -119,9 +115,6 @@ class SlackNotificationControllerTest {
     @TestConfiguration
     class TestConfig {
         @Bean
-        fun slackNotificationQueryService(): SlackNotificationQueryService = mockk(relaxed = true)
-
-        @Bean
-        fun slackNotificationCommandService(): SlackNotificationCommandService = mockk(relaxed = true)
+        fun slackNotificationService(): SlackNotificationService = mockk(relaxed = true)
     }
 }

@@ -39,7 +39,7 @@ class KisExecutionNoticeServiceTest {
         service.handle(notice)
 
         verify(exactly = 0) { orderRepository.findActiveKisOrderByExternalOrderId(any(), any(), any()) }
-        verify(exactly = 0) { executionProcessor.fill(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { executionProcessor.fillExternal(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -51,7 +51,7 @@ class KisExecutionNoticeServiceTest {
             orderRepository.findActiveKisOrderByExternalOrderId("10000001", TradingMode.KIS_PAPER, "12345678-01")
         } returns Optional.of(order)
         every {
-            executionProcessor.fill(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
         } just runs
 
         service.handle(notice)
@@ -60,7 +60,7 @@ class KisExecutionNoticeServiceTest {
             orderRepository.findActiveKisOrderByExternalOrderId("10000001", TradingMode.KIS_PAPER, "12345678-01")
         }
         verify(exactly = 1) {
-            executionProcessor.fill(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
         }
     }
 
@@ -73,7 +73,7 @@ class KisExecutionNoticeServiceTest {
             orderRepository.findActiveKisOrderByExternalOrderId("10000001", TradingMode.KIS_PAPER, "12345678-01")
         } returns Optional.of(order)
         every {
-            executionProcessor.fill(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
         } just runs
 
         service.handle(notice)
@@ -82,7 +82,7 @@ class KisExecutionNoticeServiceTest {
             executionRepository.findByExternalExecutionId("KIS_PAPER:12345678-01:10000001:00003")
         }
         verify(exactly = 1) {
-            executionProcessor.fill(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
         }
     }
 

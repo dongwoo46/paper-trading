@@ -4,7 +4,7 @@ import com.papertrading.api.domain.entity.order.Execution
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.Optional
 
-interface ExecutionRepository : JpaRepository<Execution, Long> {
+interface ExecutionRepository : JpaRepository<Execution, Long>, ExecutionRepositoryCustom {
     fun findByExternalExecutionId(externalExecutionId: String): Optional<Execution>
     fun findByOrderId(orderId: Long): List<Execution>
     fun findByAccountIdOrderByExecutedAtDesc(accountId: Long): List<Execution>

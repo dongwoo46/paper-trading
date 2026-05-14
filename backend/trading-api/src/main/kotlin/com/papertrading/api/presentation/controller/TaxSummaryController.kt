@@ -1,8 +1,8 @@
 package com.papertrading.api.presentation.controller
 
-import com.papertrading.api.application.portfolio.tax.TaxSummaryBatchService
-import com.papertrading.api.application.portfolio.tax.TaxSummaryCommandService
-import com.papertrading.api.application.portfolio.tax.TaxSummaryQueryService
+import com.papertrading.api.application.portfolio.TaxSummaryBatchService
+import com.papertrading.api.application.portfolio.TaxSummaryCommandService
+import com.papertrading.api.application.portfolio.TaxSummaryQueryService
 import com.papertrading.api.application.portfolio.tax.TaxYear
 import com.papertrading.api.presentation.dto.portfolio.RecalculateTaxSummaryRequest
 import com.papertrading.api.presentation.dto.portfolio.TaxSummaryResponse

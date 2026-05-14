@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
-interface TradingJournalRepository : JpaRepository<TradingJournal, Long> {
+interface TradingJournalRepository : JpaRepository<TradingJournal, Long>, TradingJournalRepositoryCustom {
     fun findByAccountIdOrderByCreatedAtDesc(accountId: Long): List<TradingJournal>
     fun findByAccountIdAndTickerOrderByCreatedAtDesc(accountId: Long, ticker: String): List<TradingJournal>
     fun findByAccountId(accountId: Long, pageable: Pageable): Page<TradingJournal>

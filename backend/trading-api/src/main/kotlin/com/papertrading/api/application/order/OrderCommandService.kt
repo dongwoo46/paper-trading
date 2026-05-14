@@ -43,102 +43,125 @@ class OrderCommandService(
 
     @Transactional
     fun placeOrder(accountId: Long, command: PlaceOrderCommand): Order {
-        val account = accountRepository.findByIdWithLock(accountId)
-            .orElseThrow { AccountNotFoundException(accountId) }
-        check(account.isActive) { "비활성화된 계좌입니다." }
-
-        val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null" }
-
-        // 멱등성: 동일 idempotencyKey는 저장된 주문 반환
         orderRepository.findByAccountIdAndIdempotencyKey(accountId, command.idempotencyKey)
             ?.let { return it }
 
-        // 지정가 필드 검증
+        validatePlaceOrderCommand(command)
+        val account = accountRepository.findByIdWithLock(accountId)
+            .orElseThrow { AccountNotFoundException(accountId) }
+            .also { check(it.isActive) { "비활성화된 계좌입니다." } }
+        val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null" }
+
+        lockSellQuantityIfNeeded(accountId, command)
+        val lockedAmount = calculateLockedAmount(command)
+        val order = saveOrder(account, command, lockedAmount)
+        val orderId = requireNotNull(order.id) { "saved order.id is null" }
+
+        recordBuyLockIfNeeded(command, account, orderId, lockedAmount)
+        collectorSubscriptionPort.subscribe(tradingMode.name, command.ticker)
+
+        if (cancelIfUnfillableIocFok(accountId, orderId, command, order)) return order
+
+        submitExternalOrderIfNeeded(tradingMode, order)
+        log.info { "order placed: orderId=$orderId, mode=$tradingMode, ticker=${command.ticker}" }
+        return order
+    }
+
+    private fun validatePlaceOrderCommand(command: PlaceOrderCommand) {
         if (command.orderType == OrderType.LIMIT) {
             requireNotNull(command.limitPrice) { "지정가 주문은 limitPrice가 필요합니다." }
         }
         if (command.orderCondition == OrderCondition.GTD) {
             requireNotNull(command.expireAt) { "GTD 주문은 expireAt이 필요합니다." }
         }
+    }
 
-        // 공매도 guard: 미보유 또는 수량 부족 시 거부
-        if (command.orderSide == OrderSide.SELL) {
-            val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, command.ticker)
-                .orElseThrow { PositionNotFoundException(ticker = command.ticker) }
-            check(position.orderableQuantity >= command.quantity) {
-                "주문 가능 수량 부족. available=${position.orderableQuantity}, requested=${command.quantity}"
-            }
-            position.lockQuantity(command.quantity)
+    private fun lockSellQuantityIfNeeded(accountId: Long, command: PlaceOrderCommand) {
+        if (command.orderSide != OrderSide.SELL) return
+
+        val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, command.ticker)
+            .orElseThrow { PositionNotFoundException(ticker = command.ticker) }
+        check(position.orderableQuantity >= command.quantity) {
+            "주문 가능 수량 부족. available=${position.orderableQuantity}, requested=${command.quantity}"
         }
+        position.lockQuantity(command.quantity)
+    }
 
-        // 매수: 예수금 잠금 (시장가는 현재 시세 기준, 지정가는 limitPrice 기준)
-        val lockedAmount = if (command.orderSide == OrderSide.BUY) {
-            val unitPrice = when (command.orderType) {
-                OrderType.LIMIT -> requireNotNull(command.limitPrice) { "limitPrice is null" }
-                OrderType.MARKET -> {
-                    val quote = marketQuotePort.getQuote(command.ticker)
-                        ?: throw QuoteUnavailableException(command.ticker)
-                    check(Duration.between(quote.updatedAt, Instant.now()).seconds <= 60) {
-                        "시세가 오래되었습니다. (stale) ticker=${command.ticker}"
-                    }
-                    quote.price
+    private fun calculateLockedAmount(command: PlaceOrderCommand): BigDecimal {
+        if (command.orderSide != OrderSide.BUY) return BigDecimal.ZERO
+
+        val unitPrice = when (command.orderType) {
+            OrderType.LIMIT -> requireNotNull(command.limitPrice) { "limitPrice is null" }
+            OrderType.MARKET -> {
+                val quote = marketQuotePort.getQuote(command.ticker)
+                    ?: throw QuoteUnavailableException(command.ticker)
+                check(Duration.between(quote.updatedAt, Instant.now()).seconds <= 60) {
+                    "시세가 오래되었습니다. (stale) ticker=${command.ticker}"
                 }
+                quote.price
             }
-            unitPrice.multiply(command.quantity)
-        } else {
-            BigDecimal.ZERO
         }
+        return unitPrice.multiply(command.quantity)
+    }
 
-        val order = orderRepository.save(
-            Order.create(
-                account = account,
-                ticker = command.ticker,
-                marketType = command.marketType,
-                orderType = command.orderType,
-                orderSide = command.orderSide,
-                orderCondition = command.orderCondition,
-                quantity = command.quantity,
-                limitPrice = command.limitPrice,
-                lockedAmount = lockedAmount,
-                idempotencyKey = command.idempotencyKey,
-                expireAt = command.expireAt,
-                strategyId = command.strategyId,
-                signalId = command.signalId,
-            )
+    private fun saveOrder(
+        account: com.papertrading.api.domain.entity.account.Account,
+        command: PlaceOrderCommand,
+        lockedAmount: BigDecimal,
+    ): Order = orderRepository.save(
+        Order.create(
+            account = account,
+            ticker = command.ticker,
+            marketType = command.marketType,
+            orderType = command.orderType,
+            orderSide = command.orderSide,
+            orderCondition = command.orderCondition,
+            quantity = command.quantity,
+            limitPrice = command.limitPrice,
+            lockedAmount = lockedAmount,
+            idempotencyKey = command.idempotencyKey,
+            expireAt = command.expireAt,
+            strategyId = command.strategyId,
+            signalId = command.signalId,
         )
-        val orderId = requireNotNull(order.id) { "saved order.id is null" }
+    )
 
+    private fun recordBuyLockIfNeeded(
+        command: PlaceOrderCommand,
+        account: com.papertrading.api.domain.entity.account.Account,
+        orderId: Long,
+        lockedAmount: BigDecimal,
+    ) {
         if (command.orderSide == OrderSide.BUY && lockedAmount > BigDecimal.ZERO) {
             accountLedgerRepository.save(
                 account.recordBuyLock(lockedAmount, orderId, "buy-lock-$orderId")
             )
         }
+    }
 
-        val mode = collectorMode(tradingMode.name)
-        collectorSubscriptionPort.subscribe(mode, command.ticker)
+    private fun cancelIfUnfillableIocFok(accountId: Long, orderId: Long, command: PlaceOrderCommand, order: Order): Boolean {
+        if (command.orderCondition !in setOf(OrderCondition.IOC, OrderCondition.FOK)) return false
 
-        // IOC/FOK: 즉시 체결 불가 시 취소
-        if (command.orderCondition in setOf(OrderCondition.IOC, OrderCondition.FOK)) {
-            val quote = marketQuotePort.getQuote(command.ticker)
-            if (quote == null) {
-                cancelOrder(accountId, orderId, CancelOrderCommand("시세 없음 — IOC/FOK 즉시 취소"))
-                return order
-            }
-            val fillPrice = localMatchingEngine.determineFillPrice(order, quote)
-            if (fillPrice == null) {
-                cancelOrder(accountId, orderId, CancelOrderCommand("체결 조건 미충족 — IOC/FOK 즉시 취소"))
-                return order
-            }
+        val quote = marketQuotePort.getQuote(command.ticker)
+        if (quote == null) {
+            cancelOrder(accountId, orderId, CancelOrderCommand("시세 없음 — IOC/FOK 즉시 취소"))
+            return true
         }
 
+        val fillPrice = localMatchingEngine.determineFillPrice(order, quote)
+        if (fillPrice == null) {
+            cancelOrder(accountId, orderId, CancelOrderCommand("체결 조건 미충족 — IOC/FOK 즉시 취소"))
+            return true
+        }
+        return false
+    }
+
+    private fun submitExternalOrderIfNeeded(tradingMode: TradingMode, order: Order) {
         when (tradingMode) {
             TradingMode.KIS_PAPER -> kisPaperOrderExecutor.submit(order)
             TradingMode.KIS_LIVE -> kisLiveOrderExecutor.submit(order)
-            else -> {} // LOCAL: QuoteEventListener가 다음 틱에 매칭
+            else -> {}
         }
-
-        log.info { "order placed: orderId=$orderId, mode=$tradingMode, ticker=${command.ticker}" }
-        return order
     }
 
     @Transactional

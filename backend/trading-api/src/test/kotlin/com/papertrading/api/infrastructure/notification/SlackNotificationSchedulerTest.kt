@@ -43,7 +43,7 @@ class SlackNotificationSchedulerTest {
     @Test
     fun `PENDING 레코드가 없으면 sender send를 호출하지 않는다`() {
         val props = makeProperties()
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val scheduler = SlackNotificationScheduler(sender, policyStore, txService)
 
         every { txService.findPendingForRetry(props.maxRetries) } returns emptyList()
@@ -55,7 +55,7 @@ class SlackNotificationSchedulerTest {
 
     @Test
     fun `policy enabled가 false이면 조회 및 전송을 수행하지 않는다`() {
-        val policyStore = SlackNotificationPolicyStore(makeDisabledProperties())
+        val policyStore = SlackNotificationConfigStore(makeDisabledProperties())
         val scheduler = SlackNotificationScheduler(sender, policyStore, txService)
 
         scheduler.retryPending()
@@ -67,7 +67,7 @@ class SlackNotificationSchedulerTest {
     @Test
     fun `PENDING 레코드가 있고 전송 성공 시 markDelivering 후 markDelivered가 호출된다`() {
         val props = makeProperties()
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val scheduler = SlackNotificationScheduler(sender, policyStore, txService)
 
         val notification = makeNotification()
@@ -90,7 +90,7 @@ class SlackNotificationSchedulerTest {
     fun `PENDING 레코드가 있고 전송 실패 시 markDelivering 후 markFailed가 호출된다`() {
         val maxRetries = 3
         val props = makeProperties(maxRetries = maxRetries)
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val scheduler = SlackNotificationScheduler(sender, policyStore, txService)
 
         val notification = makeNotification()
@@ -112,7 +112,7 @@ class SlackNotificationSchedulerTest {
     @Test
     fun `claimForDelivery가 0을 반환하면 (다른 인스턴스가 선점) 해당 레코드를 건너뛴다`() {
         val props = makeProperties()
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val scheduler = SlackNotificationScheduler(sender, policyStore, txService)
 
         val notification = makeNotification()
@@ -129,7 +129,7 @@ class SlackNotificationSchedulerTest {
     @Test
     fun `하나의 레코드에서 예외 발생 시 나머지 레코드는 계속 처리된다 (격리)`() {
         val props = makeProperties()
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val scheduler = SlackNotificationScheduler(sender, policyStore, txService)
 
         val failingNotification = makeNotification(id = 1L)
@@ -158,7 +158,7 @@ class SlackNotificationSchedulerTest {
     fun `markFailed에 올바른 maxRetries가 전달된다`() {
         val maxRetries = 3
         val props = makeProperties(maxRetries = maxRetries)
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val scheduler = SlackNotificationScheduler(sender, policyStore, txService)
 
         val notification = makeNotification()

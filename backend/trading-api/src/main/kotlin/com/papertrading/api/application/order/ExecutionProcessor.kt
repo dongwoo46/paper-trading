@@ -51,13 +51,41 @@ class ExecutionProcessor(
 ) {
     private val log = KotlinLogging.logger {}
 
+    // local 전용, Execution에 체결 출처 등록필요할듯
     @Transactional
-    fun fill(orderId: Long, fillPrice: BigDecimal, fillQty: BigDecimal) {
-        fill(orderId, fillPrice, fillQty, "LOCAL-${UUID.randomUUID()}", Instant.now())
+    fun fillLocal(
+        orderId: Long,
+        fillPrice: BigDecimal,
+        fillQty: BigDecimal,
+    ) {
+        processFill(
+            orderId = orderId,
+            fillPrice = fillPrice,
+            fillQty = fillQty,
+            externalExecutionId = "LOCAL-${UUID.randomUUID()}",
+            executedAt = Instant.now(),
+        )
     }
 
     @Transactional
-    fun fill(
+    fun fillExternal(
+        orderId: Long,
+        fillPrice: BigDecimal,
+        fillQty: BigDecimal,
+        externalExecutionId: String,
+        executedAt: Instant,
+    ) {
+        processFill(
+            orderId = orderId,
+            fillPrice = fillPrice,
+            fillQty = fillQty,
+            externalExecutionId  = externalExecutionId,
+            executedAt = executedAt,
+        )
+    }
+
+    // 메인 체결 함수
+    fun processFill(
         orderId: Long,
         fillPrice: BigDecimal,
         fillQty: BigDecimal,
@@ -173,7 +201,7 @@ class ExecutionProcessor(
 
         if (order.orderStatus == OrderStatus.FILLED) {
             releaseLockedExcess(orderId, order.lockedAmount, fillPrice, fillQty, account)
-            tryUnsubscribe(accountId, ticker, collectorMode(tradingMode.name))
+            tryUnsubscribe(accountId, ticker, tradingMode.name)
         }
 
         log.info { "filled: orderId=$orderId, qty=$fillQty, price=$fillPrice, status=${order.orderStatus}" }
@@ -223,7 +251,4 @@ class ExecutionProcessor(
     }
 }
 
-/** TradingMode.name → collector-api mode 문자열 변환 */
-internal fun collectorMode(tradingModeName: String): String =
-    if (tradingModeName == "KIS_PAPER") "paper" else "live"
 

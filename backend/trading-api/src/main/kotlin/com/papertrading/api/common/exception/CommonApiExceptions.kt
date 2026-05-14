@@ -115,7 +115,46 @@ class InvalidTaxYearException(value: Int) :
     BadRequestException("INVALID_TAX_YEAR", "유효하지 않은 taxYear 입니다. value=$value")
 
 class TaxComputationScaleException(field: String) :
-    ConflictException("TAX_COMPUTATION_SCALE_INVALID", "$field scale must be 4")
+    ConflictException("TAX_COMPUTATION_SCALE_INVALID", "$field scale must be 2")
 
 class SlackWebhookFailedException(message: String) :
     ApiDomainException("BAD_GATEWAY", HttpStatus.BAD_GATEWAY, message)
+
+class StaleTriggerVersionException(message: String) :
+    ApiDomainException("STALE_TRIGGER_VERSION", HttpStatus.CONFLICT, message)
+
+class PositionNotEligibleException(message: String) :
+    ApiDomainException("POSITION_NOT_ELIGIBLE", HttpStatus.UNPROCESSABLE_ENTITY, message)
+
+class InvalidDateRangeException(message: String) :
+    BadRequestException("INVALID_DATE_RANGE", message)
+
+class InvalidBusinessDateException(message: String) :
+    BadRequestException("INVALID_BUSINESS_DATE", message)
+
+class SnapshotAlreadyRunningException(message: String) :
+    ConflictException("SNAPSHOT_ALREADY_RUNNING", message)
+
+class SnapshotComputeFailedException(message: String, cause: Throwable? = null) :
+    ApiDomainException("SNAPSHOT_COMPUTE_FAILED", HttpStatus.INTERNAL_SERVER_ERROR, message, cause)
+
+class InvalidTaxYearRangeException(message: String) :
+    BadRequestException("INVALID_TAX_YEAR_RANGE", message)
+
+class TaxYearNotClosedException(message: String) :
+    BadRequestException("TAX_YEAR_NOT_CLOSED", message)
+
+class TaxSummaryNotFoundException(message: String) :
+    NotFoundException("TAX_SUMMARY_NOT_FOUND", message)
+
+class TaxSummaryAlreadyRunningException(message: String) :
+    ConflictException("TAX_SUMMARY_ALREADY_RUNNING", message)
+
+class UnsupportedCurrencyException(message: String) :
+    ApiDomainException("UNSUPPORTED_CURRENCY", HttpStatus.UNPROCESSABLE_ENTITY, message)
+
+class TaxSummaryComputeFailedException(message: String, cause: Throwable? = null) :
+    ApiDomainException("TAX_SUMMARY_COMPUTE_FAILED", HttpStatus.INTERNAL_SERVER_ERROR, message, cause)
+
+class InvalidAccountModeForTaxSummaryException(message: String) :
+    BadRequestException("INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY", message)

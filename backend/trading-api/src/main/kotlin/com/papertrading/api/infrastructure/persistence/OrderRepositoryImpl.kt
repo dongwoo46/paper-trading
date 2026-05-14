@@ -1,5 +1,6 @@
 package com.papertrading.api.infrastructure.persistence
 
+import com.papertrading.api.application.order.query.OrderListQuery
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.order.Order
@@ -14,6 +15,32 @@ class OrderRepositoryImpl(
 ) : OrderRepositoryCustom {
 
     private val o = QOrder.order
+
+    override fun searchOrders(query: OrderListQuery): List<Order> =
+        queryFactory
+            .select(o)
+            .from(o)
+            .where(
+                o.account.id.eq(query.accountId),
+                query.ticker?.trim()?.takeIf { it.isNotEmpty() }?.let { o.ticker.eq(it.uppercase()) },
+                query.status?.let { o.orderStatus.eq(it) },
+                query.createdFrom?.let { o.createdAt.goe(it) },
+                query.createdTo?.let { o.createdAt.loe(it) },
+            )
+            .orderBy(o.createdAt.desc(), o.id.desc())
+            .fetch()
+
+    override fun findByIdAndAccountId(orderId: Long, accountId: Long): Optional<Order> =
+        Optional.ofNullable(
+            queryFactory
+                .select(o)
+                .from(o)
+                .where(
+                    o.id.eq(orderId),
+                    o.account.id.eq(accountId),
+                )
+                .fetchOne()
+        )
 
     override fun findActiveLocalOrdersByTicker(ticker: String): List<Order> =
         queryFactory

@@ -5,6 +5,7 @@ import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
+import com.papertrading.api.common.exception.SnapshotComputeFailedException
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.DailyBalanceRepository
 import com.papertrading.api.infrastructure.persistence.PortfolioSnapshotRepository
@@ -107,6 +108,9 @@ class SnapshotJobServiceAtomicRollbackIntegrationTest {
         org.assertj.core.api.Assertions.assertThat(dailyBalanceAfter).isEmpty
         org.assertj.core.api.Assertions.assertThat(snapshotsAfter).isEmpty()
         org.assertj.core.api.Assertions.assertThat(runningAfter).isFalse()
-        org.assertj.core.api.Assertions.assertThat(snapshotJobRunRepository.findAll()).isEmpty()
+        val runs = snapshotJobRunRepository.findAll()
+        org.assertj.core.api.Assertions.assertThat(runs).hasSize(1)
+        org.assertj.core.api.Assertions.assertThat(runs.first().status)
+            .isEqualTo(com.papertrading.api.domain.enums.SnapshotJobRunStatus.FAILED)
     }
 }

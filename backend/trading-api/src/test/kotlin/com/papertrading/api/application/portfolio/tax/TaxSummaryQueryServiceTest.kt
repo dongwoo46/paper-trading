@@ -1,5 +1,7 @@
 package com.papertrading.api.application.portfolio.tax
 
+import com.papertrading.api.application.portfolio.TaxSummaryQueryService
+import com.papertrading.api.common.exception.InvalidAccountModeForTaxSummaryException
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
@@ -23,7 +25,7 @@ class TaxSummaryQueryServiceTest {
     @Test
     fun `get when account is LOCAL then returns summary`() {
         every { accountRepository.findById(1L) } returns Optional.of(localAccount())
-        every { taxSummaryRepository.findByAccountIdAndTaxYear(1L, 2024) } returns
+        every { taxSummaryRepository.findOneByAccountIdAndTaxYear(1L, 2024) } returns
             Optional.of(sampleSummary(1L, 2024))
 
         val summary = service.get(1L, TaxYear(2024))
@@ -35,7 +37,7 @@ class TaxSummaryQueryServiceTest {
     fun `list when account is LOCAL then returns summaries`() {
         every { accountRepository.findById(1L) } returns Optional.of(localAccount())
         every {
-            taxSummaryRepository.findByAccountIdAndTaxYearBetweenOrderByTaxYearDesc(1L, 2023, 2024)
+            taxSummaryRepository.searchByAccountIdAndTaxYearRange(1L, 2023, 2024)
         } returns listOf(sampleSummary(1L, 2024), sampleSummary(1L, 2023))
 
         val summaries = service.list(1L, TaxYear(2023), TaxYear(2024))
@@ -52,7 +54,7 @@ class TaxSummaryQueryServiceTest {
             service.get(1L, TaxYear(2024))
         }
 
-        verify(exactly = 0) { taxSummaryRepository.findByAccountIdAndTaxYear(any(), any()) }
+        verify(exactly = 0) { taxSummaryRepository.findOneByAccountIdAndTaxYear(any(), any()) }
     }
 
     @Test
@@ -63,7 +65,7 @@ class TaxSummaryQueryServiceTest {
             service.list(1L, TaxYear(2023), TaxYear(2024))
         }
 
-        verify(exactly = 0) { taxSummaryRepository.findByAccountIdAndTaxYearBetweenOrderByTaxYearDesc(any(), any(), any()) }
+        verify(exactly = 0) { taxSummaryRepository.searchByAccountIdAndTaxYearRange(any(), any(), any()) }
     }
 
     private fun kisAccount(): Account = Account.create(

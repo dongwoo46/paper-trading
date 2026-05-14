@@ -85,16 +85,15 @@ class TradingJournalCommandQueryServiceTest {
     }
 
     @Test
-    fun `update에서 account mismatch면 예외를 던진다`() {
+    fun `update는 accountId와 무관하게 journal을 수정한다`() {
         val account = Account.create("acc", AccountType.STOCK, TradingMode.LOCAL, BigDecimal.ZERO)
         setId(account, 1L)
         val journal = TradingJournal.create(account = account, journalType = "MANUAL", title = "old", content = "old")
         setJournalId(journal, 9L)
         every { tradingJournalRepository.findById(9L) } returns Optional.of(journal)
 
-        assertThatThrownBy {
-            commandService.update(9L, UpdateTradingJournalCommand(2L, "new", "new", null))
-        }.isInstanceOf(TradingJournalOwnershipMismatchException::class.java)
+        val result = commandService.update(9L, UpdateTradingJournalCommand(2L, "new", "new", null))
+        assertThat(result.title).isEqualTo("new")
     }
 
     @Test
@@ -109,14 +108,26 @@ class TradingJournalCommandQueryServiceTest {
             ticker = "005930"
         )
         setJournalId(journal, 1L)
-        every { accountRepository.existsById(1L) } returns true
+        every { accountRepository.findById(1L) } returns Optional.of(account)
         every {
-            tradingJournalRepository.findByAccountIdAndTicker(1L, "005930", any())
+            tradingJournalRepository.search(any(), any())
         } returns PageImpl(listOf(journal), PageRequest.of(0, 20), 1)
 
-        val result = queryService.list(TradingJournalFilter(1L, "005930"), PageRequest.of(0, 20))
+        val result = queryService.list(TradingJournalFilter(accountId = 1L, ticker = "005930"), PageRequest.of(0, 20))
 
         assertThat(result.totalElements).isEqualTo(1)
+    }
+
+    @Test
+    fun `get은 account mismatch면 예외를 던진다`() {
+        val account = Account.create("acc", AccountType.STOCK, TradingMode.LOCAL, BigDecimal.ZERO)
+        setId(account, 1L)
+        val journal = TradingJournal.create(account = account, journalType = "MANUAL", title = "old", content = "old")
+        setJournalId(journal, 9L)
+        every { tradingJournalRepository.findById(9L) } returns Optional.of(journal)
+
+        assertThatThrownBy { queryService.get(9L, 2L) }
+            .isInstanceOf(TradingJournalOwnershipMismatchException::class.java)
     }
 
     private fun setId(account: Account, id: Long) {

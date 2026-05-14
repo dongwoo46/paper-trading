@@ -1,5 +1,6 @@
-﻿package com.papertrading.api.application.portfolio.tax
+package com.papertrading.api.application.portfolio.tax
 
+import com.papertrading.api.common.exception.UnsupportedCurrencyException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -12,7 +13,7 @@ class TaxSummaryCalculatorTest {
     @Test
     fun `compute scale 4 and expected tax`() {
         val result = calculator.compute(
-            SettlementTaxAggregate(
+            TaxSettlementAggregate(
                 totalRealizedPnl = BigDecimal("1000.1"),
                 totalFee = BigDecimal("10"),
                 totalTax = BigDecimal("5.55"),
@@ -24,13 +25,13 @@ class TaxSummaryCalculatorTest {
         assertEquals(4, result.taxablePnl.scale())
         assertEquals(4, result.estimatedTax.scale())
         assertEquals(BigDecimal("984.5500"), result.taxablePnl)
-        assertEquals(BigDecimal("216.6010"), result.estimatedTax)
+        assertEquals(BigDecimal("5.5500"), result.estimatedTax)
     }
 
     @Test
     fun `compute taxable less than zero then clamp to zero`() {
         val result = calculator.compute(
-            SettlementTaxAggregate(
+            TaxSettlementAggregate(
                 totalRealizedPnl = BigDecimal("10"),
                 totalFee = BigDecimal("20"),
                 totalTax = BigDecimal("5"),
@@ -39,14 +40,14 @@ class TaxSummaryCalculatorTest {
         )
 
         assertEquals(BigDecimal("0.0000"), result.taxablePnl)
-        assertEquals(BigDecimal("0.0000"), result.estimatedTax)
+        assertEquals(BigDecimal("5.0000"), result.estimatedTax)
     }
 
     @Test
     fun `non KRW currency throws`() {
         assertThrows<UnsupportedCurrencyException> {
             calculator.compute(
-                SettlementTaxAggregate(
+                TaxSettlementAggregate(
                     totalRealizedPnl = BigDecimal.ZERO,
                     totalFee = BigDecimal.ZERO,
                     totalTax = BigDecimal.ZERO,

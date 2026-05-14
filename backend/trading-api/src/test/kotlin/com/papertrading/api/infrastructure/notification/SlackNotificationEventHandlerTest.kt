@@ -54,7 +54,7 @@ class SlackNotificationEventHandlerTest {
     @Test
     fun `policy enabled가 false이면 txService save와 sender send를 호출하지 않는다`() {
         val props = makeProperties(enabled = false)
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val handler = SlackNotificationEventHandler(sender, policyStore, txService)
 
         handler.handle(makeEvent())
@@ -69,7 +69,7 @@ class SlackNotificationEventHandlerTest {
             enabled = true,
             enabledTypes = listOf(NotificationEventType.ORDER_ERROR),
         )
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val handler = SlackNotificationEventHandler(sender, policyStore, txService)
 
         handler.handle(makeEvent(eventType = NotificationEventType.EXECUTION_FILLED))
@@ -81,7 +81,7 @@ class SlackNotificationEventHandlerTest {
     @Test
     fun `즉시 전송 성공 시 txService save 1회 + markDelivered 1회 및 sender 1회 호출`() {
         val props = makeProperties()
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val handler = SlackNotificationEventHandler(sender, policyStore, txService)
 
         val savedNotification = makeSavedNotification()
@@ -99,7 +99,7 @@ class SlackNotificationEventHandlerTest {
     @Test
     fun `즉시 전송 실패 시 txService save 1회만 호출 (PENDING 저장만), markDelivered 없음, status는 PENDING 유지`() {
         val props = makeProperties()
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val handler = SlackNotificationEventHandler(sender, policyStore, txService)
 
         val savedNotification = makeSavedNotification()
@@ -119,7 +119,7 @@ class SlackNotificationEventHandlerTest {
     @Test
     fun `즉시 전송 중 예외 발생 시 markDelivered를 호출하지 않고 예외를 전파한다`() {
         val props = makeProperties()
-        val policyStore = SlackNotificationPolicyStore(props)
+        val policyStore = SlackNotificationConfigStore(props)
         val handler = SlackNotificationEventHandler(sender, policyStore, txService)
 
         val savedNotification = makeSavedNotification()

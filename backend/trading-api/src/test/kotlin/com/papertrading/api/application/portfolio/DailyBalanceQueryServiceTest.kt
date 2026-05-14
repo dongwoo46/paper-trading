@@ -9,6 +9,7 @@ import com.papertrading.api.infrastructure.persistence.DailyBalanceRepository
 import com.papertrading.api.support.withId
 import io.mockk.every
 import io.mockk.mockk
+import com.papertrading.api.common.exception.InvalidDateRangeException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -33,7 +34,7 @@ class DailyBalanceQueryServiceTest {
         )
 
         every { accountRepository.findById(1L) } returns Optional.of(account)
-        every { dailyBalanceRepository.findByAccountIdAndBusinessDateBetweenOrderByBusinessDateAsc(1L, from, to) } returns balances
+        every { dailyBalanceRepository.searchDailyBalances(1L, from, to) } returns balances
 
         val result = service.getDailyBalances(1L, from, to)
 

@@ -1,11 +1,15 @@
 package com.papertrading.api.infrastructure.persistence
 
+import com.papertrading.api.application.order.query.OrderListQuery
 import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.enums.TradingMode
 import java.time.Instant
 import java.util.Optional
 
 interface OrderRepositoryCustom {
+    fun searchOrders(query: OrderListQuery): List<Order>
+    fun findByIdAndAccountId(orderId: Long, accountId: Long): Optional<Order>
+
     /** LOCAL 모드 계좌의 ticker별 미체결(PENDING/PARTIAL) 주문 */
     fun findActiveLocalOrdersByTicker(ticker: String): List<Order>
 

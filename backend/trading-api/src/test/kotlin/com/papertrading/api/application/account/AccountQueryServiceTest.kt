@@ -2,6 +2,7 @@ package com.papertrading.api.application.account
 
 import com.papertrading.api.application.account.query.LedgerFilter
 import com.papertrading.api.application.account.result.LedgerResult
+import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.enums.TradingMode
@@ -47,7 +48,7 @@ class AccountQueryServiceTest {
         every { accountRepository.findById(99L) } returns Optional.empty()
 
         assertThatThrownBy { service.getAccount(99L) }
-            .isInstanceOf(NoSuchElementException::class.java)
+            .isInstanceOf(AccountNotFoundException::class.java)
     }
 
     @Test

@@ -32,10 +32,9 @@ class LocalMatchingEngine(
 
     /** 단일 주문 매칭 시도 */
     fun tryMatchOne(order: Order, quote: QuoteSnapshot) {
-        val orderId = order.id ?: return
         val fillPrice = determineFillPrice(order, quote) ?: return
         val remainQty = order.quantity.subtract(order.filledQuantity)
-        executionProcessor.fill(orderId, fillPrice, remainQty)
+        executionProcessor.fillLocal(order.id!!, fillPrice, remainQty)
     }
 
     /**

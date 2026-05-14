@@ -112,7 +112,7 @@ class ExecutionProcessorTest {
     }
 
     @Test
-    fun `LOCAL SELL — availableDeposit 증가 and settlement tax is 0_2pct`() {
+    fun `LOCAL SELL — availableDeposit 증가 and settlement tax is feePolicy 기반`() {
         val account = account(TradingMode.LOCAL)
         val order = sellOrder(account, qty = BigDecimal("5"))
         val fillPrice = BigDecimal("70000")
@@ -127,7 +127,7 @@ class ExecutionProcessorTest {
 
         val initialDeposit = account.availableDeposit
 
-        processor.fill(10L, fillPrice, fillQty)
+        processor.fillLocal(10L, fillPrice, fillQty)
 
         // LOCAL: 즉시 입금 — netProceeds = 70000 * 5 - 0(fee) = 350000
         val expectedNetProceeds = fillPrice.multiply(fillQty) // fee=0
@@ -140,7 +140,7 @@ class ExecutionProcessorTest {
             "availableDeposit should be ${initialDeposit.add(expectedNetProceeds)} but was ${account.availableDeposit}"
         )
 
-        assertEquals(0, BigDecimal("700.0000").compareTo(settlementSlot.captured.tax))
+        assertEquals(0, BigDecimal.ZERO.compareTo(settlementSlot.captured.tax))
     }
 
     @Test
@@ -159,7 +159,7 @@ class ExecutionProcessorTest {
 
         val initialDeposit = account.availableDeposit
 
-        processor.fill(10L, fillPrice, fillQty)
+        processor.fillLocal(10L, fillPrice, fillQty)
 
         // KIS: 즉시 입금 없음 — availableDeposit 변화 없어야 함
         assertEquals(initialDeposit, account.availableDeposit)
@@ -183,7 +183,7 @@ class ExecutionProcessorTest {
 
         val initialDeposit = account.availableDeposit
 
-        processor.fill(10L, fillPrice, fillQty)
+        processor.fillLocal(10L, fillPrice, fillQty)
 
         assertEquals(initialDeposit, account.availableDeposit)
         verify(exactly = 1) { settlementRepository.save(any()) }
@@ -205,7 +205,7 @@ class ExecutionProcessorTest {
         val eventSlot = slot<ExecutionFilledEvent>()
         justRun { eventPublisher.publishEvent(capture(eventSlot)) }
 
-        processor.fill(10L, fillPrice, fillQty)
+        processor.fillLocal(10L, fillPrice, fillQty)
 
         verify(exactly = 1) { eventPublisher.publishEvent(any<ExecutionFilledEvent>()) }
 

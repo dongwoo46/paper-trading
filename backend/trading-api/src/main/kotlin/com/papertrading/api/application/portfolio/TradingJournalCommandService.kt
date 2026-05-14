@@ -21,6 +21,7 @@ class TradingJournalCommandService(
     fun create(command: CreateTradingJournalCommand): TradingJournalResult {
         val account = accountRepository.findById(command.accountId)
             .orElseThrow { AccountNotFoundException(command.accountId) }
+
         val journal = TradingJournal.create(
             account = account,
             journalType = command.journalType,
@@ -36,9 +37,7 @@ class TradingJournalCommandService(
     fun update(journalId: Long, command: UpdateTradingJournalCommand): TradingJournalResult {
         val journal = tradingJournalRepository.findById(journalId)
             .orElseThrow { TradingJournalNotFoundException(journalId) }
-        if (!journal.belongsTo(command.accountId)) {
-            throw TradingJournalOwnershipMismatchException(journalId, command.accountId)
-        }
+
         journal.update(command.title, command.content, command.sentiment)
         return TradingJournalResult.from(journal)
     }

@@ -31,7 +31,7 @@ class PortfolioSnapshotQueryServiceTest {
         )
 
         every { accountRepository.findById(1L) } returns Optional.of(account)
-        every { portfolioSnapshotRepository.findByAccountIdAndBusinessDateOrderByTickerAsc(1L, date) } returns snapshots
+        every { portfolioSnapshotRepository.searchByAccountIdAndBusinessDate(1L, date) } returns snapshots
 
         val result = service.getPortfolioSnapshots(1L, date)
 

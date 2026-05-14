@@ -20,4 +20,9 @@ interface SnapshotJobRunRepository : JpaRepository<SnapshotJobRun, Long> {
         @Param("businessDate") businessDate: LocalDate,
         @Param("status") status: SnapshotJobRunStatus,
     ): Boolean
+
+    fun findTopByAccountIdAndBusinessDateOrderByStartedAtDesc(
+        accountId: Long,
+        businessDate: LocalDate,
+    ): SnapshotJobRun?
 }

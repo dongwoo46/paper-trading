@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDate
 import java.util.Optional
 
-interface DailyBalanceRepository : JpaRepository<DailyBalance, Long> {
+interface DailyBalanceRepository : JpaRepository<DailyBalance, Long>, DailyBalanceRepositoryCustom {
     fun findByAccountIdAndBusinessDate(accountId: Long, date: LocalDate): Optional<DailyBalance>
     fun findByAccountIdAndBusinessDateBetweenOrderByBusinessDateAsc(
         accountId: Long,
