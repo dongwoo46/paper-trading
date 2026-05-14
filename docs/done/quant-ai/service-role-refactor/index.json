@@ -1,0 +1,60 @@
+{
+  "phase": "service-role-refactor",
+  "project": "quant-ai",
+  "status": "in_progress",
+  "current_step": 5,
+  "total_steps": 5,
+  "branch": "feature/quant-ai-service-role-refactor",
+  "worktree_path": ".worktrees/quant-ai-service-role-refactor",
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "agent": "service-planner",
+      "name": "Feature spec, API spec, step file generation",
+      "file": "step-1.md",
+      "status": "done",
+      "retry_count": 0,
+      "result": "spec.md + step-2~5.md 생성 완료"
+    },
+    {
+      "id": 2,
+      "agent": "fullstack-dev",
+      "name": "DB 스키마 자동 생성 — quant-research migrations + lifespan runner",
+      "file": "step-2.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "migrations 3개(001~003 SQL) + db.py + migration_runner.py + lifespan 연결 app.py 생성, py_compile 3파일 전부 통과"
+    },
+    {
+      "id": 3,
+      "agent": "fullstack-dev",
+      "name": "서비스 역할 이전 구현 — quant-research 추가 + quant-ai 정리",
+      "file": "step-3.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "quant-research에 인프라 레포·애플리케이션 서비스·스케줄러·results_router 추가; quant-ai에서 분석 파이프라인 파일 8개 삭제, ports.py·router·app.py 정리 완료; py_compile 13개 파일 전부 통과"
+    },
+    {
+      "id": 4,
+      "agent": "test-engineer",
+      "name": "변경 파일 범위 단위 테스트 작성 및 실행",
+      "file": "step-4.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "quant-research 18개 + quant-ai 3개 = 총 21개 테스트 전부 통과 (0 failed)"
+    },
+    {
+      "id": 5,
+      "agent": "code-reviewer",
+      "name": "코드 리뷰 — 보안, 역할 분리, 금융 안전, 멱등성",
+      "file": "step-5.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "Must Fix 2건(float 사용 위반, /run/{symbol} 422 테스트 누락), Should Fix 1건(테이블명 f-string SQL 패턴)"
+    }
+  ],
+  "blockers": [],
+  "created": "2026-05-14",
+  "updated": "2026-05-14"
+}

@@ -23,6 +23,51 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ---
 
+## quant-ai / quant-research 아키텍처 정리 ⚠️ 최우선
+
+### P0 — 서비스 역할 재정립 (현재 구조 잘못됨)
+
+- [x] quant-research / quant-ai 역할 분리 리팩터 | project: quant-ai | phase: service-role-refactor | priority: P0 | done: 2026-05-14
+  - **문제**: quant-ai가 분석 파이프라인을 오케스트레이션하고 quant-research에 위임하는 구조 — 역할 역전
+  - **올바른 역할**:
+    - `quant-research`: 기술분석 계산(지표/패턴/추세/지지저항) + DB 저장 + 결과·종목 조회 엔드포인트
+    - `quant-ai`: research가 저장한 분석 결과를 Ollama LLM에 보내 초보 투자자도 이해할 수 있는 자연어 해석 생성 (이유·근거·시사점) — LLM 프로세스만 담당
+  - **필수 파이프라인 흐름** (순서 고정, 생략 불가):
+    - `quant-research` 분석 완료 → 즉시 `quant-ai` 자연어 해석 트리거 → 결과 DB 저장
+    - 수동 트리거(프론트) / 배치 스케줄 모두 동일 흐름
+  - **변경 범위**:
+    - quant-research에 추가: `POST /research/run/{symbol}`, `GET /research/results/{symbol}`, `GET /research/symbols`
+    - quant-research에 이전: `PostgresOhlcvRepository`, `PostgresChartAnalysisRepository`, `PrecomputePipelineService`
+    - quant-ai에서 제거: `/chart-analysis/{symbol}`, `/admin/run-analysis/{symbol}`, `/admin/symbols`
+    - quant-ai 유지: LLM 자연어 해석 엔드포인트, SSE 스트림, 분석 요청 큐
+    - 프론트엔드: `runChartAnalysis`, `fetchChartAnalysis`, `fetchAnalyzedSymbols` → `api-research`로 변경
+
+- [x] Python 서비스 DB 스키마 자동 생성 | project: quant-research | phase: service-role-refactor | priority: P0 | done: 2026-05-14
+  - Python 서비스가 사용하는 테이블은 Python 서비스가 직접 생성 (Kotlin Flyway 의존 금지)
+  - quant-research / quant-ai lifespan 시작 시 `migrations/*.sql` 순서대로 자동 실행
+  - `CREATE TABLE IF NOT EXISTS` 사용으로 멱등성 보장
+  - 대상 테이블: `chart_analysis_result`, `analysis_request_queue`, `popular_symbols`
+
+- [ ] pykrx 일봉·주봉 OHLCV 저장 오류 조사 | project: quant-collector | phase: pykrx-ohlcv-fix | priority: P0
+  - 증상: pykrx provider로 수집 시 데이터가 DB에 제대로 저장되지 않음
+  - 조사 항목: pykrx API 응답 컬럼명 매핑, upsert 로직, market/source 값 일치 여부
+  - 검증: 수집 후 `market_daily_ohlcv`, `market_weekly_ohlcv` 직접 조회로 확인
+
+- [ ] 프론트엔드 차트분석 페이지 리팩터 | project: front | phase: chart-analysis-frontend-refactor | priority: P0
+  - 백엔드 역할 분리(service-role-refactor) 완료 후 진행
+  - **API 엔드포인트 변경**:
+    - `fetchChartAnalysis` (결과 조회) → `api-research`
+    - `runChartAnalysis` (분석 실행) → `api-research`
+    - `fetchAnalyzedSymbols` (종목 목록) → `api-research`
+    - LLM 자연어 해석 스트림 → `api-ai` 유지
+  - **UX 흐름 반영**:
+    - 분석 실행(research) → 자동으로 ai 자연어 해석까지 연결 (한 버튼으로)
+    - 결과 패널에 수치 분석(research) + 자연어 해설(ai) 함께 표시
+    - 자연어 해설은 SSE 스트림으로 실시간 타이핑 표시
+  - `chartAnalysisApi.ts` base URL 및 타입 정리
+
+---
+
 ## trading-api
 
 ### P1
@@ -124,12 +169,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1 — 사용자에게 빠르게 보여주는 에이전트
 
-- [ ] 차트 분석 AI 에이전트 (차트매매용) | project: quant-worker | phase: chart-analysis-agent | priority: P1
-  - 현재 차트 기반 매수·매도 진입점·청산점·손절 판단
-  - 지지선·저항선 자동 탐지 (스윙 고점·저점)
-  - 캔들 패턴 인식 → 반전/지속 신호
-  - 추세 판단 (상승/하락/횡보) + ADX 강도
-  - 출력: "지지선 X, 진입 권고가 Y, 손절 Z" 자연어 리포트
+- [x] 차트 분석 AI 에이전트 (차트매매용) | project: quant-worker | phase: chart-analysis-agent | priority: P1 | done: 2026-05-12
 
 - [ ] 수급·펀더멘탈 기반 종목 추천 엔진 | project: quant-worker | phase: stock-recommendation | priority: P1
   - 외국인·기관 순매수 상위 종목 스크리닝 (데이터 이미 있음)

@@ -1,0 +1,13 @@
+{
+  "description": "약세 엔걸핑 — 이전 양봉을 음봉이 완전히 감싸는 패턴",
+  "pattern": "BEARISH_ENGULFING",
+  "input_candles": [
+    {"date": "2024-01-02", "open": "51000", "high": "53500", "low": "50800", "close": "53000", "volume": "100000"},
+    {"date": "2024-01-03", "open": "53200", "high": "53500", "low": "50500", "close": "50800", "volume": "150000"}
+  ],
+  "expected": {
+    "pattern": "BEARISH_ENGULFING",
+    "detected_at_index": 1,
+    "note": "prev: open=51000 close=53000 (양봉). curr: open=53200 > prev_close=53000, close=50800 < prev_open=51000"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "description": "하락 추세 — MA20 < MA60 역배열, ADX > 25 강한 추세, LL 구조",
+  "expected": {
+    "direction": "DOWNTREND",
+    "strength": "STRONG",
+    "ma_alignment": "MA20<MA60",
+    "hh_ll_structure": "LL"
+  },
+  "mock_indicators": {
+    "ma20": "55000",
+    "ma60": "68000",
+    "ma120": "75000",
+    "rsi14": "35",
+    "macd": "-2000",
+    "macd_signal": "-1500",
+    "macd_hist": "-500",
+    "bb_upper": "62000",
+    "bb_lower": "48000",
+    "atr14": "2500",
+    "adx14": "28",
+    "stoch_k": "25",
+    "stoch_d": "30",
+    "obv": "-3000000",
+    "volume_ma20": "130000"
+  }
+}

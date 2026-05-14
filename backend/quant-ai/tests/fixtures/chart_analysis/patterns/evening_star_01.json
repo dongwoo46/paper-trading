@@ -1,0 +1,14 @@
+{
+  "description": "이브닝 스타 패턴 — 큰 양봉 + 작은 몸통 도지 + 큰 음봉 (첫 봉 중간 이하 마감)",
+  "pattern": "EVENING_STAR",
+  "input_candles": [
+    {"date": "2024-01-02", "open": "50000", "high": "54500", "low": "49800", "close": "54000", "volume": "150000"},
+    {"date": "2024-01-03", "open": "54200", "high": "54600", "low": "54000", "close": "54100", "volume": "80000"},
+    {"date": "2024-01-04", "open": "54000", "high": "54200", "low": "50500", "close": "51000", "volume": "160000"}
+  ],
+  "expected": {
+    "pattern": "EVENING_STAR",
+    "detected_at_index": 2,
+    "note": "첫봉: 큰 양봉 open=50000 close=54000 (body=4000). 중간봉: 작은 body=100. 셋째봉: 음봉 close=51000 < 첫봉 중점=52000"
+  }
+}
