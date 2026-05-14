@@ -4,13 +4,14 @@
 manual
 
 ## 상태
-in_progress
+idle
 
-## 활성 Phase
-- quant-ai/service-role-refactor | step 5/5 | branch: feature/quant-ai-service-role-refactor | worktree: .worktrees/quant-ai-service-role-refactor
+## 완료된 Phase
+- quant-ai/service-role-refactor | step 5(code-reviewer) 스킵 — PR #34 이미 main 머지 완료
+- front/chart-analysis-frontend-refactor | 완료 — 2026-05-14
 
 ## 마지막 액션
-2026-05-14: Step 4 (test-engineer) 완료 — 21개 단위/통합 테스트 전부 통과 (quant-research 18, quant-ai 3).
+2026-05-14: front/chart-analysis-frontend-refactor 완료 — API 엔드포인트 3개 api-ai→api-research 이전 + streamLlmReport SSE 연동 + AiNarrationCard 추가.
 
 ## 다음 액션
-Step 5 (code-reviewer) — 보안·역할분리·금융안전·멱등성·API 코드 리뷰
+idle — 다음 P0 작업: pykrx 일봉·주봉 OHLCV 저장 오류 조사 (quant-collector/pykrx-ohlcv-fix)

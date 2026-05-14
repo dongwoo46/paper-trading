@@ -9,6 +9,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 ---
 
 ## 우선순위 기준
+
 - **P1**: 사용자에게 빠르게 보여줄 수 있거나, 전체 시스템의 필수 기반
 - **P2**: P1 완성 후 품질·깊이 강화
 - **P3**: AI 에이전트 고도화 레이어 (P1·P2 선행 필요)
@@ -17,6 +18,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 ---
 
 ## 보류 정책
+
 - `strategy-execution`은 전략 도메인 리빌딩 이후 재개.
 - TimesFM/Kronos/MiroFish는 백테스팅 엔진 완성 이후 진행.
 - GraphDB RAG·논문 팩터는 핵심 레이어 완성 이후 진행.
@@ -48,12 +50,12 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - `CREATE TABLE IF NOT EXISTS` 사용으로 멱등성 보장
   - 대상 테이블: `chart_analysis_result`, `analysis_request_queue`, `popular_symbols`
 
-- [ ] pykrx 일봉·주봉 OHLCV 저장 오류 조사 | project: quant-collector | phase: pykrx-ohlcv-fix | priority: P0
+- [x] pykrx 일봉·주봉 OHLCV 저장 오류 조사 | project: quant-collector | phase: pykrx-ohlcv-fix | priority: P0
   - 증상: pykrx provider로 수집 시 데이터가 DB에 제대로 저장되지 않음
   - 조사 항목: pykrx API 응답 컬럼명 매핑, upsert 로직, market/source 값 일치 여부
   - 검증: 수집 후 `market_daily_ohlcv`, `market_weekly_ohlcv` 직접 조회로 확인
 
-- [ ] 프론트엔드 차트분석 페이지 리팩터 | project: front | phase: chart-analysis-frontend-refactor | priority: P0
+- [x] 프론트엔드 차트분석 페이지 리팩터 | project: front | phase: chart-analysis-frontend-refactor | priority: P0 | done: 2026-05-14
   - 백엔드 역할 분리(service-role-refactor) 완료 후 진행
   - **API 엔드포인트 변경**:
     - `fetchChartAnalysis` (결과 조회) → `api-research`

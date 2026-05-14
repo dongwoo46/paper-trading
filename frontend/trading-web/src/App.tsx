@@ -6,6 +6,8 @@ import { TopBar } from "./shared/ui/TopBar";
 import { ExecutionToastProvider } from "./features/execution-toast/ui/ExecutionToastProvider";
 import { useToastStore } from "./features/execution-toast/model/useToastStore";
 import { ToastContainer } from "./shared/ui/Toast";
+import { subscribeAnalysisNotifications } from "./shared/api/chartAnalysisApi";
+import { useNotificationStore } from "./shared/model/useNotificationStore";
 
 const RealtimePage = lazy(() => import("./pages/realtime/ui/RealtimePage").then((m) => ({ default: m.RealtimePage })));
 const HistoricalPage = lazy(() => import("./pages/historical/ui/HistoricalPage").then((m) => ({ default: m.HistoricalPage })));
@@ -24,12 +26,23 @@ const TaxSummaryPage = lazy(() => import("./pages/tax-summary/ui/TaxSummaryPage"
 const TradingJournalPage = lazy(() =>
   import("./pages/trading-journal/ui/TradingJournalPage").then((m) => ({ default: m.TradingJournalPage })),
 );
+const ChartAnalysisPage = lazy(() =>
+  import("./pages/chart-analysis/ui/ChartAnalysisPage").then((m) => ({ default: m.ChartAnalysisPage })),
+);
 
 function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const toasts = useToastStore((state) => state.toasts);
   const removeToast = useToastStore((state) => state.removeToast);
+  const addNotification = useNotificationStore((state) => state.addFromLlmDone);
+
+  // 앱 전체 수명 동안 LLM 완료 알림 SSE 구독
+  useEffect(() => {
+    return subscribeAnalysisNotifications((event) => {
+      addNotification(event);
+    });
+  }, [addNotification]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -63,6 +76,8 @@ function App() {
         return "세금 요약";
       case "/trading-journals":
         return "거래 일지";
+      case "/chart-analysis":
+        return "차트 분석";
       default:
         return "Trading Console";
     }
@@ -90,6 +105,7 @@ function App() {
               <Route path="/portfolio" element={<PortfolioChartPage />} />
               <Route path="/tax-summary" element={<TaxSummaryPage />} />
               <Route path="/trading-journals" element={<TradingJournalPage />} />
+              <Route path="/chart-analysis" element={<ChartAnalysisPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>

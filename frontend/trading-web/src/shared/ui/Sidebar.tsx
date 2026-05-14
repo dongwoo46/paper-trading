@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BookOpen, CandlestickChart, ChartLine, ClipboardList, Globe, History, Home, ReceiptText, TrendingUp, Wallet, X, Zap } from "lucide-react";
+import { BarChart2, BookOpen, CandlestickChart, ChartLine, ClipboardList, Globe, History, Home, ReceiptText, TrendingUp, Wallet, X, Zap } from "lucide-react";
 
 const NAV_LINK_BASE = "flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-[14.5px] transition-all duration-200 border";
 const NAV_LINK_ACTIVE = "bg-brand-secondary text-brand-primary border-transparent font-bold";
@@ -118,6 +118,14 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean; setOpen: (v: boo
           >
             <BookOpen size={18} />
             <span>거래 일지</span>
+          </NavLink>
+          <NavLink
+            to="/chart-analysis"
+            className={({ isActive }) => `${NAV_LINK_BASE} ${isActive ? NAV_LINK_ACTIVE : NAV_LINK_INACTIVE}`}
+            onClick={closeOnMobile}
+          >
+            <BarChart2 size={18} />
+            <span>차트 분석</span>
           </NavLink>
         </nav>
 
