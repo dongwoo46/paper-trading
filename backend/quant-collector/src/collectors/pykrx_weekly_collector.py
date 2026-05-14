@@ -57,17 +57,27 @@ class PykrxWeeklyCollector:
         frame = raw.copy().reset_index().rename(
             columns={
                 "날짜": "date",
+                "Date": "date",
                 "시가": "open",
+                "Open": "open",
                 "고가": "high",
+                "High": "high",
                 "저가": "low",
+                "Low": "low",
                 "종가": "close",
+                "Close": "close",
                 "거래량": "volume",
+                "Volume": "volume",
             }
         )
         if "date" not in frame.columns:
             raise ValueError("pykrx response does not include date column")
 
         frame["date"] = pd.to_datetime(frame["date"]).dt.date
+        for col in ("open", "high", "low", "close", "volume"):
+            frame[col] = pd.to_numeric(frame[col].astype(str).str.replace(",", ""), errors="coerce")
+
+        frame = frame.dropna(subset=["date", "open", "high", "low", "close", "volume"])
         frame["symbol"] = request.symbol
         frame["adj_close"] = frame["close"]
         frame["source"] = "pykrx"

@@ -39,6 +39,7 @@ class PostgresSymbolCatalogRepository:
     TABLE_BY_PROVIDER = {
         "yfinance": "yfinance_symbol_catalog",
         "pykrx": "pykrx_symbol_catalog",
+        "kis": "pykrx_symbol_catalog",
     }
 
     def __init__(self, config: DbConfig) -> None:

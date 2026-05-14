@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from .value_objects import (
@@ -42,6 +42,7 @@ class ChartAnalysisResult:
     report_source: ReportSource
     numeric_computed_at: datetime
     llm_computed_at: Optional[datetime]
+    template_report: Optional[NarrativeReport] = None
 
     def __init__(
         self,
@@ -60,6 +61,7 @@ class ChartAnalysisResult:
         report_source: ReportSource,
         numeric_computed_at: datetime,
         llm_computed_at: Optional[datetime],
+        template_report: Optional[NarrativeReport] = None,
     ) -> None:
         object.__setattr__(self, "symbol", symbol)
         object.__setattr__(self, "window", window)
@@ -76,6 +78,7 @@ class ChartAnalysisResult:
         object.__setattr__(self, "report_source", report_source)
         object.__setattr__(self, "numeric_computed_at", numeric_computed_at)
         object.__setattr__(self, "llm_computed_at", llm_computed_at)
+        object.__setattr__(self, "template_report", template_report)
 
     # ------------------------------------------------------------------
     # Command methods (return new instance — immutable)
@@ -84,8 +87,17 @@ class ChartAnalysisResult:
     def with_report(
         self, report: NarrativeReport, source: ReportSource
     ) -> "ChartAnalysisResult":
-        """리포트를 포함한 새 인스턴스를 반환한다 (원본 불변)."""
-        return dataclasses.replace(self, report=report, report_source=source)
+        """LLM 리포트를 포함한 새 인스턴스를 반환한다 (원본 불변)."""
+        return dataclasses.replace(
+            self,
+            report=report,
+            report_source=source,
+            llm_computed_at=datetime.now(timezone.utc),
+        )
+
+    def with_template_report(self, report: NarrativeReport) -> "ChartAnalysisResult":
+        """템플릿 리포트를 포함한 새 인스턴스를 반환한다 (원본 불변)."""
+        return dataclasses.replace(self, template_report=report)
 
     # ------------------------------------------------------------------
     # Query / serialization
@@ -145,9 +157,14 @@ class ChartAnalysisResult:
                 "avg_ratio": str(self.volume_analysis.avg_ratio),
             },
             "report": {
-                "status": "available" if self.report is not None else "none",
-                "source": self.report_source.value,
-                "narrative": _serialize_report(self.report) if self.report is not None else None,
+                "llm": {
+                    "status": "available" if self.report is not None else "none",
+                    "narrative": _serialize_report(self.report) if self.report is not None else None,
+                },
+                "template": {
+                    "status": "available" if self.template_report is not None else "none",
+                    "narrative": _serialize_report(self.template_report) if self.template_report is not None else None,
+                },
             },
         }
 

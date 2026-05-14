@@ -18,14 +18,13 @@ _TIMEZONE = "Asia/Seoul"
 
 
 def _run_async(coro) -> None:
-    """동기 컨텍스트(APScheduler 스레드)에서 async 함수를 실행."""
+    """동기 컨텍스트(APScheduler 스레드)에서 async 함수를 실행.
+
+    asyncio.run()은 스레드 전용 이벤트 루프를 생성·실행·종료하므로
+    ThreadPoolExecutor 스레드에서도 안전하다.
+    """
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(coro, loop)
-            future.result(timeout=3600)
-        else:
-            asyncio.run(coro)
+        asyncio.run(coro)
     except Exception as exc:  # noqa: BLE001
         logger.warning("chart_analysis_schedule:async_run_error error=%s", str(exc))
 

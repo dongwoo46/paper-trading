@@ -42,3 +42,27 @@ def test_fetch_rejects_invalid_window():
     with pytest.raises(ValueError):
         collector.fetch(request)
 
+
+def test_fetch_normalizes_english_columns_and_numeric_strings():
+    raw = pd.DataFrame(
+        {
+            "Open": ["100,000"],
+            "High": ["110,000"],
+            "Low": ["90,000"],
+            "Close": ["105,000"],
+            "Volume": ["1,234,567"],
+        },
+        index=pd.to_datetime(["2024-01-05"]),
+    )
+    raw.index.name = "Date"
+
+    collector = PykrxWeeklyCollector()
+    request = WeeklyCollectRequest(symbol="005930", start_date=date(2024, 1, 1), end_date=date(2024, 1, 31))
+
+    with patch("src.collectors.pykrx_weekly_collector.stock.get_market_ohlcv_by_date", return_value=raw):
+        frame = collector.fetch(request)
+
+    assert len(frame) == 1
+    assert float(frame.iloc[0]["open"]) == 100000.0
+    assert float(frame.iloc[0]["volume"]) == 1234567.0
+

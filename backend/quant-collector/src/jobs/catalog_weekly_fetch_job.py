@@ -10,6 +10,10 @@ from src.collectors.pykrx_weekly_collector import (
     PykrxWeeklyCollector,
     WeeklyCollectRequest as PykrxCollectRequest,
 )
+from src.collectors.kis_weekly_collector import (
+    KisWeeklyCollector,
+    WeeklyCollectRequest as KisCollectRequest,
+)
 from src.collectors.yfinance_weekly_collector import (
     WeeklyCollectRequest as YFinanceCollectRequest,
     YFinanceWeeklyCollector,
@@ -45,9 +49,11 @@ class CatalogWeeklyFetchJob:
         yfinance_collector: YFinanceWeeklyCollector,
         pykrx_collector: PykrxWeeklyCollector,
         ohlcv_repository: MarketWeeklyOhlcvRepository,
+        kis_collector: KisWeeklyCollector | None = None,
     ) -> None:
         self._yfinance_collector = yfinance_collector
         self._pykrx_collector = pykrx_collector
+        self._kis_collector = kis_collector
         self._ohlcv_repository = ohlcv_repository
 
     def run_for_yfinance(
@@ -56,9 +62,10 @@ class CatalogWeeklyFetchJob:
         window: FetchWindow,
         auto_adjust: bool,
     ) -> list[FetchResult]:
+        weekly_last_dates = self._ohlcv_repository.find_max_trade_dates("yfinance")
         results: list[FetchResult] = []
         for item in symbols:
-            effective_start = self._effective_start(item, window)
+            effective_start = self._effective_start(window, weekly_last_dates.get(item.symbol.upper()))
             if effective_start > window.end_date:
                 results.append(
                     FetchResult(
@@ -122,15 +129,92 @@ class CatalogWeeklyFetchJob:
                 )
         return results
 
+    def run_for_kis(
+        self,
+        symbols: list[CatalogSymbol],
+        window: FetchWindow,
+        adjusted: bool,
+    ) -> list[FetchResult]:
+        if self._kis_collector is None:
+            raise RuntimeError("KIS collector is not configured")
+
+        weekly_last_dates = self._ohlcv_repository.find_max_trade_dates("kis")
+        results: list[FetchResult] = []
+        for item in symbols:
+            effective_start = self._effective_start(window, weekly_last_dates.get(item.symbol))
+            if effective_start > window.end_date:
+                results.append(
+                    FetchResult(
+                        provider="kis",
+                        symbol=item.symbol,
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=None,
+                        rows_inserted=0,
+                        skipped=True,
+                        success=True,
+                        error=None,
+                    )
+                )
+                continue
+            request = KisCollectRequest(
+                symbol=item.symbol,
+                start_date=effective_start,
+                end_date=window.end_date,
+                adjusted=adjusted,
+            )
+            try:
+                frame = self._kis_collector.fetch(request)
+                inserted = self._ohlcv_repository.upsert_weekly_rows(
+                    frame,
+                    OhlcvUpsertContext(
+                        source="kis",
+                        symbol=request.symbol,
+                        market=item.market,
+                        provider="kis",
+                        interval="1wk",
+                        is_adjusted=adjusted,
+                    ),
+                )
+                results.append(
+                    FetchResult(
+                        provider="kis",
+                        symbol=request.symbol,
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=_max_trade_date(frame),
+                        rows_inserted=inserted,
+                        skipped=False,
+                        success=True,
+                        error=None,
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001
+                results.append(
+                    FetchResult(
+                        provider="kis",
+                        symbol=request.symbol,
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=None,
+                        rows_inserted=0,
+                        skipped=False,
+                        success=False,
+                        error=str(exc),
+                    )
+                )
+        return results
+
     def run_for_pykrx(
         self,
         symbols: list[CatalogSymbol],
         window: FetchWindow,
         adjusted: bool,
     ) -> list[FetchResult]:
+        weekly_last_dates = self._ohlcv_repository.find_max_trade_dates("pykrx")
         results: list[FetchResult] = []
         for item in symbols:
-            effective_start = self._effective_start(item, window)
+            effective_start = self._effective_start(window, weekly_last_dates.get(item.symbol.upper()))
             if effective_start > window.end_date:
                 results.append(
                     FetchResult(
@@ -194,13 +278,11 @@ class CatalogWeeklyFetchJob:
                 )
         return results
 
-    def _effective_start(self, symbol: CatalogSymbol, window: FetchWindow) -> date:
-        if symbol.fetched_until_date is None:
+    def _effective_start(self, window: FetchWindow, last_weekly_date: date | None) -> date:
+        if last_weekly_date is None:
             return window.start_date
-        next_date = symbol.fetched_until_date + timedelta(days=1)
-        if next_date < window.start_date:
-            return window.start_date
-        return next_date
+        next_date = last_weekly_date + timedelta(days=1)
+        return max(next_date, window.start_date)
 
 
 def _max_trade_date(frame: pd.DataFrame) -> date | None:

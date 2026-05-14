@@ -2,26 +2,26 @@
 
 interval=D → market_daily_ohlcv
 interval=W → market_weekly_ohlcv
-window → from_date 변환: 1M=30일, 3M=90일, 6M=180일, 1Y=365일, 2Y=730일, MAX=NULL
+window → 봉 개수 변환: 1M-D=20, 3M-D=60, 6M-D=120, 1Y-D=240, 1Y-W=52, 2Y-W=104, MAX-W=전체
 """
 from __future__ import annotations
 
-from datetime import date, timedelta
 from decimal import Decimal
 from typing import Optional
 
 from src.chart_analysis.domain.value_objects import Candle
 
 # ---------------------------------------------------------------------------
-# 윈도우 → 일수 매핑 (MAX = None → from_date 제한 없음)
+# 윈도우/간격 → 최근 봉 개수 매핑 (MAX = None → 제한 없음)
 # ---------------------------------------------------------------------------
-_WINDOW_TO_DAYS: dict[str, Optional[int]] = {
-    "1M": 30,
-    "3M": 90,
-    "6M": 180,
-    "1Y": 365,
-    "2Y": 730,
-    "MAX": None,
+_WINDOW_TO_BAR_LIMIT: dict[tuple[str, str], Optional[int]] = {
+    ("1M", "D"): 20,
+    ("3M", "D"): 60,
+    ("6M", "D"): 120,
+    ("1Y", "D"): 240,
+    ("1Y", "W"): 52,
+    ("2Y", "W"): 104,
+    ("MAX", "W"): None,
 }
 
 _INTERVAL_TO_TABLE: dict[str, str] = {
@@ -48,16 +48,16 @@ class PostgresOhlcvRepository:
         Returns:
             list[Candle] — 날짜 오름차순 정렬, 모든 가격 Decimal.
         """
-        if window not in _WINDOW_TO_DAYS:
-            raise ValueError(f"지원하지 않는 window: {window!r}. 가능: {list(_WINDOW_TO_DAYS)}")
+        window_key = (window, interval)
+        if window_key not in _WINDOW_TO_BAR_LIMIT:
+            raise ValueError(f"지원하지 않는 window/interval: {window!r}/{interval!r}")
         if interval not in _INTERVAL_TO_TABLE:
             raise ValueError(f"지원하지 않는 interval: {interval!r}. 가능: D, W")
 
         table = _INTERVAL_TO_TABLE[interval]
-        days = _WINDOW_TO_DAYS[window]
-        from_date: Optional[date] = (date.today() - timedelta(days=days)) if days is not None else None
+        limit = _WINDOW_TO_BAR_LIMIT[window_key]
 
-        query, params = self._build_query(table, symbol, from_date)
+        query, params = self._build_query(table, symbol, limit)
 
         with self._connect() as conn:
             with conn.cursor() as cur:
@@ -71,15 +71,20 @@ class PostgresOhlcvRepository:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _build_query(table: str, symbol: str, from_date: Optional[date]) -> tuple[str, tuple]:
-        if from_date is not None:
+    def _build_query(table: str, symbol: str, limit: Optional[int]) -> tuple[str, tuple]:
+        if limit is not None:
             query = (
-                f"SELECT trade_date, open_price, high_price, low_price, close_price, volume "
-                f"FROM {table} "
-                f"WHERE symbol = %s AND trade_date >= %s "
-                f"ORDER BY trade_date ASC"
+                "SELECT trade_date, open_price, high_price, low_price, close_price, volume "
+                "FROM ("
+                f"  SELECT trade_date, open_price, high_price, low_price, close_price, volume "
+                f"  FROM {table} "
+                f"  WHERE symbol = %s "
+                f"  ORDER BY trade_date DESC "
+                f"  LIMIT %s"
+                ") recent "
+                "ORDER BY trade_date ASC"
             )
-            return query, (symbol, from_date)
+            return query, (symbol, limit)
         else:
             # MAX 윈도우: 전체 기간
             query = (

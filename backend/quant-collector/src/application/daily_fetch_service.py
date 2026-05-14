@@ -7,6 +7,7 @@ from datetime import date, datetime
 
 from src.catalog.postgres_symbol_catalog import DbConfig, PostgresSymbolCatalogRepository
 from src.collectors.pykrx_daily_collector import PykrxDailyCollector
+from src.collectors.kis_daily_collector import KisDailyCollector
 from src.collectors.yfinance_daily_collector import YFinanceDailyCollector
 from src.jobs.catalog_daily_fetch_job import CatalogDailyFetchJob, FetchResult, FetchWindow, to_summary_frame
 from src.repositories.market_daily_ohlcv_repository import MarketDailyOhlcvRepository
@@ -48,6 +49,7 @@ def execute(options: DailyFetchOptions) -> dict[str, object]:
     job = CatalogDailyFetchJob(
         yfinance_collector=YFinanceDailyCollector(),
         pykrx_collector=PykrxDailyCollector(),
+        kis_collector=KisDailyCollector() if options.provider in ("kis", "all") else None,
         ohlcv_repository=ohlcv_repository,
     )
 
@@ -83,23 +85,40 @@ def execute(options: DailyFetchOptions) -> dict[str, object]:
         _sync_collection_status(repository, pykrx_results)
         _log_provider_result("pykrx", pykrx_results)
 
+    if options.provider in ("kis", "all"):
+        kis_symbols = repository.list_symbols(
+            provider="kis",
+            only_default=options.only_default,
+        )
+        logger.info("collect_daily:kis targets=%d", len(kis_symbols))
+        kis_results = job.run_for_kis(
+            symbols=kis_symbols,
+            window=window,
+            adjusted=options.adjusted,
+        )
+        results.extend(kis_results)
+        _sync_collection_status(repository, kis_results)
+        _log_provider_result("kis", kis_results)
+
     total_rows_inserted = sum(r.rows_inserted for r in results if r.success)
 
     response = {
         "provider": options.provider,
         "symbols": len(results),
-        "success_symbols": len([r for r in results if r.success]),
+        "success_symbols": len([r for r in results if r.success and r.rows_inserted > 0]),
         "failed_symbols": len([r for r in results if not r.success]),
+        "skipped_symbols": len([r for r in results if r.skipped or (r.success and r.rows_inserted == 0)]),
         "total_rows_inserted": total_rows_inserted,
         "start": window.start_date.isoformat(),
         "end": window.end_date.isoformat(),
     }
     logger.info(
-        "collect_daily:done provider=%s symbols=%d success=%d failed=%d rows_inserted=%d",
+        "collect_daily:done provider=%s symbols=%d success=%d failed=%d skipped=%d rows_inserted=%d",
         response["provider"],
         response["symbols"],
         response["success_symbols"],
         response["failed_symbols"],
+        response["skipped_symbols"],
         response["total_rows_inserted"],
     )
     return response

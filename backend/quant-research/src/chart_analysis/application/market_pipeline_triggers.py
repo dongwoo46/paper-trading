@@ -49,6 +49,9 @@ def _get_pipeline_service() -> Any:
     from src.chart_analysis.infrastructure.analysis_request_queue_repository import (
         PostgresAnalysisRequestQueueRepository,
     )
+    from src.chart_analysis.infrastructure.rule_template_report_generator import (
+        RuleTemplateReportGenerator,
+    )
     from src.infrastructure.db import load_db_config_from_env, connect
 
     db = load_db_config_from_env()
@@ -65,6 +68,7 @@ def _get_pipeline_service() -> Any:
         llm_generator=_get_null_llm_generator(),
         slack_notifier=_get_slack_notifier(),
         queue_repo=PostgresAnalysisRequestQueueRepository(connect_fn),
+        template_generator=RuleTemplateReportGenerator(),
     )
 
 

@@ -26,3 +26,5 @@ curl http://localhost:8000/health
 ```json
 {"status":"ok"}
 ```
+
+// reasearch, ai, collector로 3개 분리 의존성 문제로 인해 quant-worker안에서 3개로 분리 필요  

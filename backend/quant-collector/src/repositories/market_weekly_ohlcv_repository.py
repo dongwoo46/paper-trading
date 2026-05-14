@@ -93,6 +93,21 @@ class MarketWeeklyOhlcvRepository:
                     cursor.executemany(query, rows[i : i + chunk_size])
             connection.commit()
 
+    def find_max_trade_dates(self, source: str) -> dict[str, date]:
+        """source별 종목의 마지막 주봉 날짜를 반환한다.
+
+        반환: {symbol: max(trade_date)}
+        """
+        from datetime import date as date_cls
+        query = (
+            "SELECT symbol, MAX(trade_date) FROM market_weekly_ohlcv "
+            "WHERE source = %s GROUP BY symbol"
+        )
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (source,))
+                return {row[0]: row[1] for row in cur.fetchall() if row[1] is not None}
+
     def _connect(self):
         return connect(self._config)
 

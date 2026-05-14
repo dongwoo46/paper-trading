@@ -23,7 +23,6 @@ from src.chart_analysis.domain.value_objects import (
     CandlePattern,
     IndicatorSignal,
     LevelSet,
-    NarrativeReport,
     Recommendation,
     ReportSource,
     TradePlan,
@@ -43,8 +42,15 @@ _WINDOWS: list[tuple[str, str]] = [
     ("MAX", "W"),
 ]
 
-# 최소 봉 수
-_MIN_CANDLES = 5
+_MIN_CANDLES_BY_WINDOW: dict[tuple[str, str], int] = {
+    ("1M", "D"): 20,
+    ("3M", "D"): 60,
+    ("6M", "D"): 120,
+    ("1Y", "D"): 240,
+    ("1Y", "W"): 52,
+    ("2Y", "W"): 104,
+    ("MAX", "W"): 120,
+}
 
 
 class PrecomputePipelineService:
@@ -65,6 +71,7 @@ class PrecomputePipelineService:
         llm_generator,
         slack_notifier,
         queue_repo,
+        template_generator=None,
     ) -> None:
         self._ohlcv_repo = ohlcv_repo
         self._chart_repo = chart_analysis_repo
@@ -76,6 +83,7 @@ class PrecomputePipelineService:
         self._llm_generator = llm_generator
         self._slack = slack_notifier
         self._queue_repo = queue_repo
+        self._template_generator = template_generator
 
     async def run_for_symbol(self, symbol: str, is_popular: bool) -> dict:
         """7 윈도우 순회 — 성공/실패/스킵 카운트 반환."""
@@ -138,15 +146,24 @@ class PrecomputePipelineService:
         candles = self._ohlcv_repo.find_window(symbol, window, interval)
 
         # 2. 봉 부족 시 스킵
-        if not candles or len(candles) < _MIN_CANDLES:
+        min_candles = _min_candles_for(window, interval)
+        if not candles or len(candles) < min_candles:
             logger.warning(
-                "precompute:skip_empty_candles symbol=%s window=%s interval=%s candles=%d",
+                "precompute:skip_empty_candles symbol=%s window=%s interval=%s candles=%d min=%d",
                 symbol, window, interval, len(candles) if candles else 0,
+                min_candles,
             )
             return "skipped"
 
         # 3. 보조지표 계산
-        indicators = self._indicator_calc.calculate(candles)
+        try:
+            indicators = self._indicator_calc.calculate(candles)
+        except ValueError as exc:
+            logger.warning(
+                "precompute:skip_indicator_window symbol=%s window=%s interval=%s error=%s",
+                symbol, window, interval, str(exc),
+            )
+            return "skipped"
 
         # 4. ChartSnapshot + hash 계산
         snapshot = ChartSnapshot(symbol, window, interval, candles, indicators)
@@ -157,9 +174,18 @@ class PrecomputePipelineService:
         existing = self._chart_repo.find_one(symbol, window, interval)
 
         if existing is not None and existing.snapshot_hash == new_hash:
-            # 동일 hash → numeric_computed_at만 갱신 (LLM 스킵)
+            # 동일 hash → numeric_computed_at 갱신. 템플릿 미존재 시 생성.
             import dataclasses
             updated = dataclasses.replace(existing, numeric_computed_at=now)
+            if existing.template_report is None and self._template_generator is not None:
+                try:
+                    tmpl = self._template_generator.generate(snapshot=None, result=updated)
+                    updated = updated.with_template_report(tmpl)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "precompute:template_generation_failed symbol=%s window=%s error=%s",
+                        symbol, window, str(exc),
+                    )
             self._chart_repo.upsert(updated)
             logger.debug(
                 "precompute:hash_unchanged symbol=%s window=%s interval=%s",
@@ -196,18 +222,16 @@ class PrecomputePipelineService:
             llm_computed_at=None,
         )
 
-        # 7. is_popular=True 일 때만 LLM 호출
-        if is_popular:
+        # 7. 룰 기반 템플릿 생성 후 저장
+        if self._template_generator is not None:
             try:
-                narrative: NarrativeReport = self._llm_generator.generate(snapshot, result)
-                result = result.with_report(narrative, narrative.source)
+                tmpl = self._template_generator.generate(snapshot=None, result=result)
+                result = result.with_template_report(tmpl)
             except Exception as exc:  # noqa: BLE001
                 logger.warning(
-                    "precompute:llm_failed symbol=%s window=%s interval=%s error=%s",
-                    symbol, window, interval, str(exc),
+                    "precompute:template_generation_failed symbol=%s window=%s error=%s",
+                    symbol, window, str(exc),
                 )
-
-        # 8. upsert
         self._chart_repo.upsert(result)
         return "done"
 
@@ -220,23 +244,77 @@ def _build_indicator_signals(indicators) -> list[IndicatorSignal]:
     """핵심 보조지표를 IndicatorSignal 목록으로 변환."""
     from src.chart_analysis.domain.value_objects import IndicatorSignal
 
-    signals = []
+    signals: list[IndicatorSignal] = []
     rsi = indicators.rsi14
 
     if rsi >= Decimal("70"):
-        rsi_interp = "overbought"
+        rsi_interp = "과매수: 단기 상승 피로가 커질 수 있음"
     elif rsi <= Decimal("30"):
-        rsi_interp = "oversold"
+        rsi_interp = "과매도: 단기 반등 가능성을 점검"
     else:
-        rsi_interp = "neutral"
+        rsi_interp = "중립: 과열/침체 신호는 약함"
 
     signals.append(IndicatorSignal(name="RSI", value=rsi, interpretation=rsi_interp))
 
     macd_hist = indicators.macd_hist
-    macd_interp = "bullish" if macd_hist > Decimal("0") else "bearish"
+    macd_interp = "상승 모멘텀 우위" if macd_hist > Decimal("0") else "하락 모멘텀 우위"
     signals.append(IndicatorSignal(name="MACD_HIST", value=macd_hist, interpretation=macd_interp))
 
+    close_vs_ma20 = indicators.ma20
+    ma_align = (
+        "단기>중기>장기 정배열: 추세 우호"
+        if indicators.ma20 > indicators.ma60 > indicators.ma120
+        else "이동평균 정배열 약함: 추세 확인 필요"
+    )
+    signals.append(IndicatorSignal(name="MA_ALIGNMENT", value=close_vs_ma20, interpretation=ma_align))
+
+    bb_width = indicators.bb_upper - indicators.bb_lower
+    signals.append(
+        IndicatorSignal(
+            name="BOLLINGER_WIDTH",
+            value=bb_width,
+            interpretation="밴드 폭이 클수록 변동성 확대, 작을수록 변동성 축소",
+        )
+    )
+
+    signals.append(
+        IndicatorSignal(
+            name="ATR14",
+            value=indicators.atr14,
+            interpretation="가격 변동폭 지표: 손절/목표가 거리 판단에 사용",
+        )
+    )
+
+    adx_interp = "강한 추세 구간" if indicators.adx14 >= Decimal("25") else "추세 강도 약함 또는 횡보 가능"
+    signals.append(IndicatorSignal(name="ADX14", value=indicators.adx14, interpretation=adx_interp))
+
+    if indicators.stoch_k >= Decimal("80"):
+        stoch_interp = "단기 과열권"
+    elif indicators.stoch_k <= Decimal("20"):
+        stoch_interp = "단기 침체권"
+    else:
+        stoch_interp = "중립권"
+    signals.append(IndicatorSignal(name="STOCH_K", value=indicators.stoch_k, interpretation=stoch_interp))
+    signals.append(
+        IndicatorSignal(
+            name="OBV",
+            value=indicators.obv,
+            interpretation="누적 거래량 방향: 가격 움직임을 거래량이 뒷받침하는지 확인",
+        )
+    )
+    signals.append(
+        IndicatorSignal(
+            name="VOLUME_MA20",
+            value=indicators.volume_ma20,
+            interpretation="최근 20봉 평균 거래량: 현재 거래량 스파이크 판단 기준",
+        )
+    )
+
     return signals
+
+
+def _min_candles_for(window: str, interval: str) -> int:
+    return _MIN_CANDLES_BY_WINDOW.get((window, interval), 5)
 
 
 def _compute_volume_analysis(candles, indicators) -> VolumeAnalysis:

@@ -7,6 +7,7 @@ from datetime import date, datetime
 from src.application.daily_fetch_service import load_db_config_from_env
 from src.catalog.postgres_symbol_catalog import PostgresSymbolCatalogRepository
 from src.collectors.pykrx_weekly_collector import PykrxWeeklyCollector
+from src.collectors.kis_weekly_collector import KisWeeklyCollector
 from src.collectors.yfinance_weekly_collector import YFinanceWeeklyCollector
 from src.jobs.catalog_weekly_fetch_job import CatalogWeeklyFetchJob, FetchResult, FetchWindow
 from src.repositories.market_weekly_ohlcv_repository import MarketWeeklyOhlcvRepository
@@ -28,8 +29,8 @@ def execute(options: WeeklyFetchOptions) -> dict[str, object]:
     window = FetchWindow(start_date=date.fromisoformat(options.start), end_date=date.fromisoformat(options.end))
     if window.start_date > window.end_date:
         raise ValueError("start date must be <= end date")
-    if options.provider not in ("yfinance", "pykrx", "all"):
-        raise ValueError("provider must be yfinance, pykrx, or all")
+    if options.provider not in ("yfinance", "pykrx", "kis", "all"):
+        raise ValueError("provider must be yfinance, pykrx, kis, or all")
 
     db_config = load_db_config_from_env()
     repository = PostgresSymbolCatalogRepository(db_config)
@@ -37,6 +38,7 @@ def execute(options: WeeklyFetchOptions) -> dict[str, object]:
     job = CatalogWeeklyFetchJob(
         yfinance_collector=YFinanceWeeklyCollector(),
         pykrx_collector=PykrxWeeklyCollector(),
+        kis_collector=KisWeeklyCollector() if options.provider in ("kis", "all") else None,
         ohlcv_repository=ohlcv_repository,
     )
 
@@ -53,11 +55,18 @@ def execute(options: WeeklyFetchOptions) -> dict[str, object]:
         results.extend(pykrx_results)
         _sync_collection_status(repository, pykrx_results)
 
+    if options.provider in ("kis", "all"):
+        symbols = repository.list_symbols(provider="kis", only_default=options.only_default)
+        kis_results = job.run_for_kis(symbols=symbols, window=window, adjusted=options.adjusted)
+        results.extend(kis_results)
+        _sync_collection_status(repository, kis_results)
+
     return {
         "provider": options.provider,
         "symbols": len(results),
-        "success_symbols": len([r for r in results if r.success]),
+        "success_symbols": len([r for r in results if r.success and r.rows_inserted > 0]),
         "failed_symbols": len([r for r in results if not r.success]),
+        "skipped_symbols": len([r for r in results if r.skipped or (r.success and r.rows_inserted == 0)]),
         "total_rows_inserted": sum(r.rows_inserted for r in results if r.success),
         "start": window.start_date.isoformat(),
         "end": window.end_date.isoformat(),

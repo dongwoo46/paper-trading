@@ -32,12 +32,13 @@ class SlackWebhookNotifier:
     """
 
     async def notify_analysis_success(
-        self, symbol: str, window: str, source: str
+        self, symbol: str, name: str, window: str, source: str
     ) -> None:
         """LLM 리포트 생성 성공 알림.
 
         Args:
             symbol: 종목 코드
+            name: 종목명 (한글)
             window: 분석 윈도우 (예: '1M', '3M')
             source: 리포트 소스 ('llm_primary' | 'rule_template')
         """
@@ -45,17 +46,18 @@ class SlackWebhookNotifier:
             return
         text = (
             f":white_check_mark: *chart_analysis 리포트 생성 완료*\n"
-            f"symbol={symbol} window={window} source={source}"
+            f"`{symbol}` {name} | window={window} | source={source}"
         )
         await self._post(text)
 
     async def notify_analysis_failure(
-        self, symbol: str, window: str, error: str
+        self, symbol: str, name: str, window: str, error: str
     ) -> None:
         """LLM 리포트 생성 실패 알림.
 
         Args:
             symbol: 종목 코드
+            name: 종목명 (한글)
             window: 분석 윈도우
             error: 에러 메시지 (200자 이내로 잘림)
         """
@@ -64,7 +66,7 @@ class SlackWebhookNotifier:
         safe_error = error[:200]
         text = (
             f":rotating_light: *chart_analysis 리포트 생성 실패*\n"
-            f"symbol={symbol} window={window}\n"
+            f"`{symbol}` {name} | window={window}\n"
             f"error: {safe_error}"
         )
         await self._post(text)

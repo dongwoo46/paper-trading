@@ -10,6 +10,10 @@ from src.collectors.pykrx_daily_collector import (
     DailyCollectRequest as PykrxCollectRequest,
     PykrxDailyCollector,
 )
+from src.collectors.kis_daily_collector import (
+    DailyCollectRequest as KisCollectRequest,
+    KisDailyCollector,
+)
 from src.collectors.yfinance_daily_collector import (
     DailyCollectRequest as YFinanceCollectRequest,
     YFinanceDailyCollector,
@@ -45,9 +49,11 @@ class CatalogDailyFetchJob:
         yfinance_collector: YFinanceDailyCollector,
         pykrx_collector: PykrxDailyCollector,
         ohlcv_repository: MarketDailyOhlcvRepository,
+        kis_collector: KisDailyCollector | None = None,
     ) -> None:
         self._yfinance_collector = yfinance_collector
         self._pykrx_collector = pykrx_collector
+        self._kis_collector = kis_collector
         self._ohlcv_repository = ohlcv_repository
 
     def run_for_yfinance(
@@ -111,6 +117,82 @@ class CatalogDailyFetchJob:
                 results.append(
                     FetchResult(
                         provider="yfinance",
+                        symbol=request.symbol,
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=None,
+                        rows_inserted=0,
+                        skipped=False,
+                        success=False,
+                        error=str(exc),
+                    )
+                )
+        return results
+
+    def run_for_kis(
+        self,
+        symbols: list[CatalogSymbol],
+        window: FetchWindow,
+        adjusted: bool,
+    ) -> list[FetchResult]:
+        if self._kis_collector is None:
+            raise RuntimeError("KIS collector is not configured")
+
+        results: list[FetchResult] = []
+        for item in symbols:
+            effective_start = self._effective_start(item, window)
+            if effective_start > window.end_date:
+                results.append(
+                    FetchResult(
+                        provider="kis",
+                        symbol=item.symbol,
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=None,
+                        rows_inserted=0,
+                        skipped=True,
+                        success=True,
+                        error=None,
+                    )
+                )
+                continue
+
+            request = KisCollectRequest(
+                symbol=item.symbol,
+                start_date=effective_start,
+                end_date=window.end_date,
+                adjusted=adjusted,
+            )
+            try:
+                frame = self._kis_collector.fetch(request)
+                inserted = self._ohlcv_repository.upsert_daily_rows(
+                    frame,
+                    OhlcvUpsertContext(
+                        source="kis",
+                        symbol=request.symbol,
+                        market=item.market,
+                        provider="kis",
+                        interval="1d",
+                        is_adjusted=adjusted,
+                    ),
+                )
+                results.append(
+                    FetchResult(
+                        provider="kis",
+                        symbol=request.symbol,
+                        requested_start=effective_start,
+                        requested_end=window.end_date,
+                        fetched_until_date=_max_trade_date(frame),
+                        rows_inserted=inserted,
+                        skipped=False,
+                        success=True,
+                        error=None,
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001
+                results.append(
+                    FetchResult(
+                        provider="kis",
                         symbol=request.symbol,
                         requested_start=effective_start,
                         requested_end=window.end_date,

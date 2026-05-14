@@ -19,7 +19,7 @@ from src.jobs.investor_flow_schedule import start_investor_flow_scheduler, stop_
 
 
 class CollectDailyRequest(BaseModel):
-    provider: Literal["yfinance", "pykrx", "all"] = "all"
+    provider: Literal["yfinance", "pykrx", "kis", "all"] = "all"
     start: str = "2010-01-01"
     end: str = Field(default_factory=lambda: datetime.now().date().isoformat())
     only_default: bool = False
@@ -32,13 +32,14 @@ class CollectDailyResponse(BaseModel):
     symbols: int
     success_symbols: int
     failed_symbols: int
+    skipped_symbols: int = 0
     total_rows_inserted: int
     start: str
     end: str
 
 
 class CollectWeeklyRequest(BaseModel):
-    provider: Literal["yfinance", "pykrx", "all"] = "all"
+    provider: Literal["yfinance", "pykrx", "kis", "all"] = "all"
     start: str = "2010-01-01"
     end: str = Field(default_factory=lambda: datetime.now().date().isoformat())
     only_default: bool = False
@@ -51,9 +52,21 @@ class CollectWeeklyResponse(BaseModel):
     symbols: int
     success_symbols: int
     failed_symbols: int
+    skipped_symbols: int = 0
     total_rows_inserted: int
     start: str
     end: str
+
+
+class CollectedSymbolRecord(BaseModel):
+    source: str
+    symbol: str
+    name: str
+    market: str
+    daily_bars: int
+    weekly_bars: int
+    last_daily_date: str | None
+    last_weekly_date: str | None
 
 
 logger = logging.getLogger(__name__)
@@ -111,7 +124,7 @@ def list_catalog_symbols(provider: str = "all") -> dict:
     db = load_db_config_from_env()
     repo = PostgresSymbolCatalogRepository(config=db)
 
-    providers = ["yfinance", "pykrx"] if provider == "all" else [provider]
+    providers = ["yfinance", "pykrx", "kis"] if provider == "all" else [provider]
     result = []
     for p in providers:
         try:
@@ -167,6 +180,16 @@ def collect_weekly(request: CollectWeeklyRequest) -> CollectWeeklyResponse:
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return CollectWeeklyResponse(**result)
+
+
+@app.get("/market/collected-symbols", response_model=list[CollectedSymbolRecord])
+def market_collected_symbols(
+    source: Literal["all", "yfinance", "pykrx", "kis"] = "all",
+) -> list[CollectedSymbolRecord]:
+    try:
+        return fetch_collected_symbols(source)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/market/weekly/{symbol}")
@@ -257,6 +280,59 @@ def fetch_market_weekly_bars(
             "is_adjusted": row[12],
             "collected_at": row[13],
         }
+        for row in rows
+    ]
+
+
+def fetch_collected_symbols(source: str) -> list[CollectedSymbolRecord]:
+    db = load_db_config_from_env()
+    source_filter = "" if source == "all" else "WHERE source = %s"
+    params = [] if source == "all" else [source, source]
+    query = (
+        "WITH daily AS ("
+        "  SELECT source, symbol, MAX(market) AS market, COUNT(*) AS daily_bars, MAX(trade_date) AS last_daily_date "
+        "  FROM market_daily_ohlcv "
+        f"  {source_filter} "
+        "  GROUP BY source, symbol"
+        "), weekly AS ("
+        "  SELECT source, symbol, MAX(market) AS market, COUNT(*) AS weekly_bars, MAX(trade_date) AS last_weekly_date "
+        "  FROM market_weekly_ohlcv "
+        f"  {source_filter} "
+        "  GROUP BY source, symbol"
+        ") "
+        "SELECT "
+        "  COALESCE(d.source, w.source) AS source, "
+        "  COALESCE(d.symbol, w.symbol) AS symbol, "
+        "  COALESCE(py.name, yf.name, '') AS name, "
+        "  COALESCE(d.market, w.market, '') AS market, "
+        "  COALESCE(d.daily_bars, 0) AS daily_bars, "
+        "  COALESCE(w.weekly_bars, 0) AS weekly_bars, "
+        "  d.last_daily_date, "
+        "  w.last_weekly_date "
+        "FROM daily d "
+        "FULL OUTER JOIN weekly w ON d.source = w.source AND d.symbol = w.symbol "
+        "LEFT JOIN pykrx_symbol_catalog py ON COALESCE(d.source, w.source) IN ('pykrx', 'kis') "
+        "  AND py.symbol = COALESCE(d.symbol, w.symbol) "
+        "LEFT JOIN yfinance_symbol_catalog yf ON COALESCE(d.source, w.source) = 'yfinance' "
+        "  AND yf.ticker = COALESCE(d.symbol, w.symbol) "
+        "ORDER BY source ASC, symbol ASC"
+    )
+    with connect(db) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+
+    return [
+        CollectedSymbolRecord(
+            source=row[0],
+            symbol=row[1],
+            name=row[2],
+            market=row[3],
+            daily_bars=int(row[4]),
+            weekly_bars=int(row[5]),
+            last_daily_date=row[6].isoformat() if row[6] else None,
+            last_weekly_date=row[7].isoformat() if row[7] else None,
+        )
         for row in rows
     ]
 
