@@ -1,0 +1,26 @@
+{
+  "description": "횡보 — MA20 ≈ MA60 (±0.5% 이내), ADX < 20 약한 추세",
+  "expected": {
+    "direction": "SIDEWAYS",
+    "strength": "WEAK",
+    "ma_alignment": "FLAT",
+    "hh_ll_structure": "RANGING"
+  },
+  "mock_indicators": {
+    "ma20": "53000",
+    "ma60": "53200",
+    "ma120": "52800",
+    "rsi14": "50",
+    "macd": "100",
+    "macd_signal": "80",
+    "macd_hist": "20",
+    "bb_upper": "57000",
+    "bb_lower": "49000",
+    "atr14": "1500",
+    "adx14": "15",
+    "stoch_k": "50",
+    "stoch_d": "48",
+    "obv": "100000",
+    "volume_ma20": "90000"
+  }
+}
