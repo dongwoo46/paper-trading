@@ -4,6 +4,7 @@ import com.papertrading.api.application.notification.SlackNotificationEventPubli
 import com.papertrading.api.application.order.OrderCommandService
 import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.enums.TriggerSkipReason
+import com.papertrading.api.domain.enums.TriggerState
 import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.infrastructure.persistence.OrderRepository
 import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
@@ -30,17 +31,18 @@ class PositionExitTriggerOrchestrator(
 
     @Transactional
     fun onQuote(ticker: String, price: BigDecimal, quoteAt: Instant) {
-        val positions = positionRepository.findByTickerAndQuantityGreaterThan(ticker, BigDecimal.ZERO)
-        positions.forEach { position ->
-            val positionId = position.id ?: return@forEach
+        val triggers = triggerRepository.findByTickerAndState(ticker.uppercase(), TriggerState.ARMED)
+        triggers.forEach { candidate ->
+            val positionId = candidate.positionId
             synchronized(positionLocks.computeIfAbsent(positionId) { Any() }) {
+                val position = positionRepository.findById(positionId).orElse(null) ?: return@synchronized
                 if (position.quantity <= BigDecimal.ZERO) return@synchronized
-                val trigger = triggerRepository.findByPositionIdForUpdate(positionId) ?: return@synchronized
+                val trigger = triggerRepository.findByIdForUpdate(candidate.id ?: return@synchronized) ?: return@synchronized
                 val decision = evaluator.evaluate(position, trigger, price, quoteAt) ?: return@synchronized
                 val lockedPosition = positionRepository.findByIdWithLock(positionId).orElse(null)
                 val skipReason = skipReasonFor(lockedPosition)
                 if (skipReason != null) {
-                    trigger.markSkipped(decision.type, quoteAt, price, skipReason)
+                    trigger.markSkipped(quoteAt, price, skipReason)
                     triggerRepository.save(trigger)
                     return@synchronized
                 }
@@ -48,9 +50,9 @@ class PositionExitTriggerOrchestrator(
                 val orderablePosition = lockedPosition ?: return@synchronized
                 val created = tryCreateAutoExitOrderWithRetry(orderablePosition, trigger.version, decision.type, quoteAt)
                 if (created) {
-                    trigger.markTriggered(decision.type, quoteAt, price)
+                    trigger.markTriggered(quoteAt, price)
                 } else {
-                    trigger.markFailed(decision.type, quoteAt, price)
+                    trigger.markFailed(quoteAt, price)
                 }
                 triggerRepository.save(trigger)
             }

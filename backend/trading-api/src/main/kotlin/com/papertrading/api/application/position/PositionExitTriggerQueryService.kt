@@ -2,11 +2,12 @@ package com.papertrading.api.application.position
 
 import com.papertrading.api.application.position.result.EffectivePositionExitTriggerResult
 import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.domain.enums.TriggerState
+import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.AccountExitTriggerDefaultRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 
 
 // 특정 포지션에 실제로 적용되는 청산 트리거 설정을 조회하는 Query Service
@@ -20,15 +21,18 @@ class PositionExitTriggerQueryService(
     fun getEffectiveTrigger(positionId: Long): EffectivePositionExitTriggerResult {
         val position = positionRepository.findById(positionId)
             .orElseThrow { PositionNotFoundException(positionId = positionId) }
-        val override = positionExitTriggerRepository.findByPositionId(positionId)
-        if (override != null) return EffectivePositionExitTriggerResult(
-            positionId,
-            "POSITION_OVERRIDE",
-            override.enabled,
-            override.stopLossPercent,
-            override.takeProfitPercent,
-            override.version
-        )
+        val overrides = positionExitTriggerRepository.findAllByPositionIdOrderByIdAsc(positionId)
+            .filter { it.state == TriggerState.ARMED }
+        if (overrides.isNotEmpty()) {
+            return EffectivePositionExitTriggerResult(
+                positionId,
+                "POSITION_OVERRIDE",
+                true,
+                overrides.firstOrNull { it.triggerType == TriggerType.STOP_LOSS }?.triggerPercent,
+                overrides.firstOrNull { it.triggerType == TriggerType.TAKE_PROFIT }?.triggerPercent,
+                overrides.maxOf { it.version },
+            )
+        }
         val accountDefault = accountExitTriggerDefaultRepository.findByAccountId(position.account.id!!)
         if (accountDefault != null) return EffectivePositionExitTriggerResult(positionId, "ACCOUNT_DEFAULT", accountDefault.enabled, accountDefault.stopLossPercent, accountDefault.takeProfitPercent, 0)
         return EffectivePositionExitTriggerResult(positionId, "DISABLED", false, null, null, 0)

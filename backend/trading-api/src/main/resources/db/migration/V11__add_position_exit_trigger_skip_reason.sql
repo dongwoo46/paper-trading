@@ -1,2 +1,2 @@
-ALTER TABLE position_exit_triggers
-ADD COLUMN IF NOT EXISTS skip_reason VARCHAR(32);
+-- V7 recreates position_exit_triggers with skip_reason for development databases.
+-- Kept as a no-op so existing Flyway histories remain coherent.

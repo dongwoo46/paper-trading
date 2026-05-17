@@ -5,6 +5,8 @@ import com.papertrading.api.application.position.result.PositionExitTriggerResul
 import com.papertrading.api.common.exception.PositionNotEligibleException
 import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.domain.entity.position.PositionExitTrigger
+import com.papertrading.api.domain.enums.PriceBasisPolicy
+import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.stereotype.Service
@@ -19,25 +21,53 @@ class PositionExitTriggerCommandService(
 ) {
     @Transactional
     fun upsertPositionTrigger(command: UpsertPositionExitTriggerCommand): PositionExitTriggerResult {
-        val current = positionExitTriggerRepository.findByPositionIdForUpdate(command.positionId)
         val position = positionRepository.findByIdWithLock(command.positionId)
             .orElseThrow { PositionNotFoundException(positionId = command.positionId) }
         if (position.quantity <= BigDecimal.ZERO) {
             throw PositionNotEligibleException("position not eligible: already closed")
         }
 
-        val entity = if (current == null) {
-            PositionExitTrigger.create(position.id!!, position.account.id!!, position.ticker, command.enabled, command.stopLossPercent, command.takeProfitPercent)
-        } else {
-            current.upsertPolicy(
-                enabled = command.enabled,
-                stopLossPercent = command.stopLossPercent,
-                takeProfitPercent = command.takeProfitPercent,
-                expectedVersion = command.expectedVersion,
+        val existing = positionExitTriggerRepository.findAllByPositionIdOrderByIdAsc(command.positionId)
+        existing.filter { it.state == com.papertrading.api.domain.enums.TriggerState.ARMED }
+            .forEach { it.cancel(command.expectedVersion) }
+
+        val created = if (command.enabled) {
+            listOfNotNull(
+                command.stopLossPercent?.let { percent ->
+                    PositionExitTrigger.create(
+                        position.id!!,
+                        position.account.id!!,
+                        position.ticker,
+                        TriggerType.STOP_LOSS,
+                        percent,
+                        null,
+                        PriceBasisPolicy.FOLLOW_AVG_PRICE,
+                    )
+                },
+                command.takeProfitPercent?.let { percent ->
+                    PositionExitTrigger.create(
+                        position.id!!,
+                        position.account.id!!,
+                        position.ticker,
+                        TriggerType.TAKE_PROFIT,
+                        percent,
+                        null,
+                        PriceBasisPolicy.FOLLOW_AVG_PRICE,
+                    )
+                },
             )
-            current
+        } else {
+            emptyList()
         }
-        val saved = positionExitTriggerRepository.save(entity)
-        return PositionExitTriggerResult(saved.positionId, saved.enabled, saved.stopLossPercent, saved.takeProfitPercent, saved.version, saved.updatedAt)
+        val saved = positionExitTriggerRepository.saveAll(existing + created)
+        val active = saved.filter { it.state == com.papertrading.api.domain.enums.TriggerState.ARMED }
+        return PositionExitTriggerResult(
+            position.id!!,
+            active.isNotEmpty(),
+            active.firstOrNull { it.triggerType == TriggerType.STOP_LOSS }?.triggerPercent,
+            active.firstOrNull { it.triggerType == TriggerType.TAKE_PROFIT }?.triggerPercent,
+            active.maxOfOrNull { it.version } ?: 0,
+            active.maxByOrNull { it.updatedAt ?: java.time.Instant.EPOCH }?.updatedAt,
+        )
     }
 }

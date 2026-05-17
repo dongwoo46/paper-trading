@@ -3,6 +3,7 @@ package com.papertrading.api.application.position
 import com.papertrading.api.application.position.result.TriggerDecision
 import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.entity.position.PositionExitTrigger
+import com.papertrading.api.domain.enums.PriceBasisPolicy
 import com.papertrading.api.domain.enums.TriggerState
 import com.papertrading.api.domain.enums.TriggerType
 import org.springframework.stereotype.Component
@@ -26,25 +27,31 @@ import java.time.Instant
 @Component
 class PositionExitTriggerEvaluator {
     fun evaluate(position: Position, trigger: PositionExitTrigger, quotePrice: BigDecimal, now: Instant): TriggerDecision? {
-        if (!trigger.enabled) return null
-        if (trigger.triggeredBy != null) return null
+        if (trigger.state != TriggerState.ARMED) return null
 
-        trigger.stopLossPercent?.let { percent ->
-            if (trigger.stopLossState == TriggerState.ARMED) {
-                val threshold = stopLossThreshold(position.avgBuyPrice, percent)
-                if (quotePrice <= threshold) return TriggerDecision(TriggerType.STOP_LOSS, threshold, quotePrice, now)
+        val threshold = effectiveTriggerPrice(position, trigger) ?: return null
+        return when (trigger.triggerType) {
+            TriggerType.STOP_LOSS -> {
+                if (quotePrice <= threshold) TriggerDecision(TriggerType.STOP_LOSS, threshold, quotePrice, now) else null
+            }
+            TriggerType.TAKE_PROFIT -> {
+                if (quotePrice >= threshold) TriggerDecision(TriggerType.TAKE_PROFIT, threshold, quotePrice, now) else null
             }
         }
-
-        trigger.takeProfitPercent?.let { percent ->
-            if (trigger.takeProfitState == TriggerState.ARMED) {
-                val threshold = takeProfitThreshold(position.avgBuyPrice, percent)
-                if (quotePrice >= threshold) return TriggerDecision(TriggerType.TAKE_PROFIT, threshold, quotePrice, now)
-            }
-        }
-
-        return null
     }
+
+    private fun effectiveTriggerPrice(position: Position, trigger: PositionExitTrigger): BigDecimal? =
+        when (trigger.priceBasisPolicy) {
+            PriceBasisPolicy.FIXED_PRICE,
+            PriceBasisPolicy.AVG_PRICE_AT_CREATION -> trigger.triggerPrice
+            PriceBasisPolicy.FOLLOW_AVG_PRICE -> {
+                val percent = trigger.triggerPercent ?: return null
+                when (trigger.triggerType) {
+                    TriggerType.STOP_LOSS -> stopLossThreshold(position.avgBuyPrice, percent)
+                    TriggerType.TAKE_PROFIT -> takeProfitThreshold(position.avgBuyPrice, percent)
+                }
+            }
+        }
 
     private fun stopLossThreshold(entryPrice: BigDecimal, percent: BigDecimal): BigDecimal =
         entryPrice.multiply(BigDecimal.ONE.subtract(percentRatio(percent)))

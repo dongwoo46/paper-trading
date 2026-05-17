@@ -120,6 +120,7 @@ class OrderCommandService(
             limitPrice = command.limitPrice,
             lockedAmount = lockedAmount,
             idempotencyKey = command.idempotencyKey,
+            orderGroupId = command.orderGroupId,
             expireAt = command.expireAt,
             strategyId = command.strategyId,
             signalId = command.signalId,
@@ -171,7 +172,12 @@ class OrderCommandService(
     }
 
     @Transactional
-    fun createAutoExitSellOrder(position: Position, triggerEntityVersion: Long, triggerType: TriggerType): Order {
+    fun createAutoExitSellOrder(
+        position: Position,
+        triggerEntityVersion: Long,
+        triggerType: TriggerType,
+        orderGroupId: String? = null,
+    ): Order {
         val positionId = requireNotNull(position.id) { "position.id is null" }
         val accountId = requireNotNull(position.account.id) { "position.account.id is null" }
         val key = "auto-exit:$positionId:$triggerEntityVersion:${triggerType.name}"
@@ -187,6 +193,7 @@ class OrderCommandService(
                 limitPrice = null,
                 expireAt = null,
                 idempotencyKey = key,
+                orderGroupId = orderGroupId,
             )
         )
     }
