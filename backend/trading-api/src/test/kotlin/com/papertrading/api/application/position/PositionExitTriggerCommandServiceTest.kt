@@ -6,6 +6,9 @@ import com.papertrading.api.domain.entity.position.PositionExitTrigger
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
+import com.papertrading.api.application.position.command.UpsertPositionExitTriggerCommand
+import com.papertrading.api.common.exception.BadRequestException
+import com.papertrading.api.common.exception.PositionNotEligibleException
 import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.support.withId
@@ -25,11 +28,11 @@ class PositionExitTriggerCommandServiceTest {
     fun `enabled 상태에서 퍼센트 없으면 예외`() {
         val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000")).withId(1L)
         val position = Position.createWithHolding(account, "005930", MarketType.KOSPI, BigDecimal("1"), BigDecimal("100")).withId(10L)
-        every { positionRepository.findById(10L) } returns Optional.of(position)
-        every { triggerRepository.findByPositionId(10L) } returns null
+        every { triggerRepository.findByPositionIdForUpdate(10L) } returns null
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.of(position)
         every { triggerRepository.save(any()) } answers { firstArg<PositionExitTrigger>() }
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertThrows(BadRequestException::class.java) {
             service.upsertPositionTrigger(UpsertPositionExitTriggerCommand(10L, true, null, null))
         }
     }
@@ -38,14 +41,14 @@ class PositionExitTriggerCommandServiceTest {
     fun `퍼센트 경계값 0과 100은 거부된다`() {
         val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000")).withId(1L)
         val position = Position.createWithHolding(account, "005930", MarketType.KOSPI, BigDecimal("1"), BigDecimal("100")).withId(10L)
-        every { positionRepository.findById(10L) } returns Optional.of(position)
-        every { triggerRepository.findByPositionId(10L) } returns null
+        every { triggerRepository.findByPositionIdForUpdate(10L) } returns null
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.of(position)
         every { triggerRepository.save(any()) } answers { firstArg<PositionExitTrigger>() }
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertThrows(BadRequestException::class.java) {
             service.upsertPositionTrigger(UpsertPositionExitTriggerCommand(10L, true, BigDecimal("0"), BigDecimal("5")))
         }
-        assertThrows(IllegalArgumentException::class.java) {
+        assertThrows(BadRequestException::class.java) {
             service.upsertPositionTrigger(UpsertPositionExitTriggerCommand(10L, true, BigDecimal("5"), BigDecimal("100")))
         }
     }
@@ -54,8 +57,8 @@ class PositionExitTriggerCommandServiceTest {
     fun `closed position에서는 트리거 설정이 거부되어야 한다`() {
         val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000")).withId(1L)
         val closedPosition = Position.createWithHolding(account, "005930", MarketType.KOSPI, BigDecimal.ZERO, BigDecimal("100")).withId(10L)
-        every { positionRepository.findById(10L) } returns Optional.of(closedPosition)
-        every { triggerRepository.findByPositionId(10L) } returns null
+        every { triggerRepository.findByPositionIdForUpdate(10L) } returns null
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.of(closedPosition)
 
         assertThrows(PositionNotEligibleException::class.java) {
             service.upsertPositionTrigger(UpsertPositionExitTriggerCommand(10L, true, BigDecimal("2.0"), BigDecimal("6.0")))

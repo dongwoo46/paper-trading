@@ -30,6 +30,7 @@ class QuoteRedisPublisherTest {
         low = BigDecimal("74500"),
         volume = BigDecimal("1000"),
         receivedAt = Instant.now(),
+        mode = "paper",
     )
 
     @Test
@@ -38,9 +39,9 @@ class QuoteRedisPublisherTest {
 
         publisher.saveAndPublish(event())
 
-        verify { hashOps.putAll("quote:005930", any()) }
-        verify { redisTemplate.expire("quote:005930", Duration.ofSeconds(60)) }
-        verify { redisTemplate.convertAndSend("quote:005930", any<String>()) }
+        verify { hashOps.putAll("quote:kis:paper:005930", any()) }
+        verify { redisTemplate.expire("quote:kis:paper:005930", Duration.ofSeconds(60)) }
+        verify { redisTemplate.convertAndSend("quote:kis:paper:005930", any<String>()) }
     }
 
     @Test
@@ -52,6 +53,7 @@ class QuoteRedisPublisherTest {
         publisher.saveAndPublish(event())
 
         val json = objectMapper.readTree(messageSlot.captured)
+        assert(json["mode"].asText() == "paper")
         assert(json["ticker"].asText() == "005930")
         assert(json["price"].asText() == "75000")
         assert(json["askp1"].asText() == "75100")

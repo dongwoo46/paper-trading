@@ -74,6 +74,22 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ## trading-api
 
+### P0 — 포지션 청산 트리거 모델 리팩터링 ⚠️ 최우선
+
+- [ ] PositionExitTrigger 단일 조건 모델 리팩터링 | project: trading-api | phase: position-exit-trigger-model-refactor | priority: P0
+  - 현재 구조 문제: 포지션당 trigger row 1개에 `stopLossPercent` / `takeProfitPercent`, `stopLossState` / `takeProfitState`가 같이 있어 트리거별 주문·상태·비율·멱등성 관리가 흐려짐
+  - 목표 모델: `PositionExitTrigger`를 청산 조건 1개를 나타내는 엔티티로 변경
+    - `triggerType`: `STOP_LOSS` / `TAKE_PROFIT`
+    - `triggerPercent`: 조건 퍼센트
+    - `triggerPrice`: 평균매수가 기준으로 등록 시 계산된 발동 가격
+    - `exitRatioPercent`: 발동 시 매도할 포지션 비율
+    - `state`: 단일 상태(`ARMED`, `TRIGGERED`, `CANCELED`, `FAILED`, `SKIPPED`)
+  - Evaluator: trigger type별 가격 비교 방향만 담당하고, 발동 후보 `TriggerDecision` 목록을 반환하도록 변경
+  - Orchestrator: 한 tick에서 여러 트리거가 동시에 조건을 만족하면 `positionId + triggerType` 기준으로 그룹핑하고, 같은 그룹은 `exitRatioPercent`를 합산해 하나의 자동 매도 주문으로 생성
+  - 주문 멱등성: `triggerId + entity version` 기반 idempotency key 사용, 같은 tick에서 묶인 주문은 `orderGroupId`로 추적
+  - 동시성 유지: trigger row와 position row 비관적 락, 수동 청산/매도 잠금 충돌 시 `SKIPPED` + `skipReason` 기록
+  - 변경 범위: entity/migration/repository/querydsl/command/query/orchestrator/evaluator/order DTO/API/tests 전체 갱신
+
 ### P1
 
 - [ ] 전략 실행 모드 설계 결정 | project: trading-api | phase: strategy-execution-mode-design | priority: P1

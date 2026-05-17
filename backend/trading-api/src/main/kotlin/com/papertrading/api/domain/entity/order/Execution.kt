@@ -2,8 +2,11 @@ package com.papertrading.api.domain.entity.order
 
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.base.BaseTimeEntity
+import com.papertrading.api.domain.enums.TradingMode
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -78,6 +81,11 @@ class Execution protected constructor() : BaseTimeEntity() {
     lateinit var executedAt: Instant
         private set
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "execution_mode", nullable = false, length = 20)
+    lateinit var executionMode: TradingMode
+        private set
+
     /** 체결 총 원가 (체결금액 + 수수료) */
     fun totalCost(): BigDecimal = executedQuantity.multiply(executedPrice).add(fee)
 
@@ -94,6 +102,7 @@ class Execution protected constructor() : BaseTimeEntity() {
             krwExecutedPrice: BigDecimal,
             externalExecutionId: String,
             executedAt: Instant,
+            executionMode: TradingMode = account.tradingMode,
             fee: BigDecimal = BigDecimal.ZERO,
             currency: String = "KRW",
             fxRate: BigDecimal? = null
@@ -114,6 +123,7 @@ class Execution protected constructor() : BaseTimeEntity() {
                 this.krwExecutedPrice = krwExecutedPrice
                 this.externalExecutionId = externalExecutionId
                 this.executedAt = executedAt
+                this.executionMode = executionMode
                 this.fee = fee
                 this.currency = currency.uppercase()
                 this.fxRate = fxRate

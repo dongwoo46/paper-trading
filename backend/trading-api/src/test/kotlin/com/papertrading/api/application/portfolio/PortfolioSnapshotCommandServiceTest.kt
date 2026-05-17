@@ -7,7 +7,7 @@ import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.port.MarketQuotePort
-import com.papertrading.api.domain.port.QuoteSnapshot
+import com.papertrading.api.application.common.result.QuoteSnapshot
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.PortfolioSnapshotRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
@@ -67,8 +67,8 @@ class PortfolioSnapshotCommandServiceTest {
 
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { positionRepository.findByAccountIdAndQuantityGreaterThan(1L, BigDecimal.ZERO) } returns listOf(a, b)
-        every { marketQuotePort.getQuote("005930") } returns quote("005930", "70000")
-        every { marketQuotePort.getQuote("000660") } returns quote("000660", "210000")
+        every { marketQuotePort.getQuote(TradingMode.LOCAL, "005930") } returns quote("005930", "70000")
+        every { marketQuotePort.getQuote(TradingMode.LOCAL, "000660") } returns quote("000660", "210000")
         every {
             portfolioSnapshotRepository.findByAccountIdAndBusinessDateAndTicker(1L, businessDate, "005930")
         } returns Optional.of(existingA)
@@ -99,6 +99,7 @@ class PortfolioSnapshotCommandServiceTest {
 
     private fun quote(ticker: String, price: String): QuoteSnapshot = QuoteSnapshot(
         ticker = ticker,
+        tradingMode = TradingMode.LOCAL,
         price = BigDecimal(price),
         askp1 = BigDecimal(price),
         bidp1 = BigDecimal(price),

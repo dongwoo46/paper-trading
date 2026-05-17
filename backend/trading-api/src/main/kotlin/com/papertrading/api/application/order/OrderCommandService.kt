@@ -53,14 +53,14 @@ class OrderCommandService(
         val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null" }
 
         lockSellQuantityIfNeeded(accountId, command)
-        val lockedAmount = calculateLockedAmount(command)
+        val lockedAmount = calculateLockedAmount(command, tradingMode)
         val order = saveOrder(account, command, lockedAmount)
         val orderId = requireNotNull(order.id) { "saved order.id is null" }
 
         recordBuyLockIfNeeded(command, account, orderId, lockedAmount)
         collectorSubscriptionPort.subscribe(tradingMode.name, command.ticker)
 
-        if (cancelIfUnfillableIocFok(accountId, orderId, command, order)) return order
+        if (cancelIfUnfillableIocFok(accountId, orderId, command, order, tradingMode)) return order
 
         submitExternalOrderIfNeeded(tradingMode, order)
         log.info { "order placed: orderId=$orderId, mode=$tradingMode, ticker=${command.ticker}" }
@@ -87,13 +87,13 @@ class OrderCommandService(
         position.lockQuantity(command.quantity)
     }
 
-    private fun calculateLockedAmount(command: PlaceOrderCommand): BigDecimal {
+    private fun calculateLockedAmount(command: PlaceOrderCommand, tradingMode: TradingMode): BigDecimal {
         if (command.orderSide != OrderSide.BUY) return BigDecimal.ZERO
 
         val unitPrice = when (command.orderType) {
             OrderType.LIMIT -> requireNotNull(command.limitPrice) { "limitPrice is null" }
             OrderType.MARKET -> {
-                val quote = marketQuotePort.getQuote(command.ticker)
+                val quote = marketQuotePort.getQuote(tradingMode, command.ticker)
                     ?: throw QuoteUnavailableException(command.ticker)
                 check(Duration.between(quote.updatedAt, Instant.now()).seconds <= 60) {
                     "시세가 오래되었습니다. (stale) ticker=${command.ticker}"
@@ -139,10 +139,16 @@ class OrderCommandService(
         }
     }
 
-    private fun cancelIfUnfillableIocFok(accountId: Long, orderId: Long, command: PlaceOrderCommand, order: Order): Boolean {
+    private fun cancelIfUnfillableIocFok(
+        accountId: Long,
+        orderId: Long,
+        command: PlaceOrderCommand,
+        order: Order,
+        tradingMode: TradingMode,
+    ): Boolean {
         if (command.orderCondition !in setOf(OrderCondition.IOC, OrderCondition.FOK)) return false
 
-        val quote = marketQuotePort.getQuote(command.ticker)
+        val quote = marketQuotePort.getQuote(tradingMode, command.ticker)
         if (quote == null) {
             cancelOrder(accountId, orderId, CancelOrderCommand("시세 없음 — IOC/FOK 즉시 취소"))
             return true
@@ -165,10 +171,10 @@ class OrderCommandService(
     }
 
     @Transactional
-    fun createAutoExitSellOrder(position: Position, triggerVersion: Long, triggerType: TriggerType): Order {
+    fun createAutoExitSellOrder(position: Position, triggerEntityVersion: Long, triggerType: TriggerType): Order {
         val positionId = requireNotNull(position.id) { "position.id is null" }
         val accountId = requireNotNull(position.account.id) { "position.account.id is null" }
-        val key = "auto-exit:$positionId:$triggerVersion:${triggerType.name}"
+        val key = "auto-exit:$positionId:$triggerEntityVersion:${triggerType.name}"
         return placeOrder(
             accountId,
             PlaceOrderCommand(

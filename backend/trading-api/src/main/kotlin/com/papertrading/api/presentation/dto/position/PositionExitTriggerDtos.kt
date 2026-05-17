@@ -1,8 +1,8 @@
 package com.papertrading.api.presentation.dto.position
 
-import com.papertrading.api.application.position.EffectivePositionExitTriggerResult
-import com.papertrading.api.application.position.PositionExitTriggerResult
-import com.papertrading.api.application.position.UpsertPositionExitTriggerCommand
+import com.papertrading.api.application.position.command.UpsertPositionExitTriggerCommand
+import com.papertrading.api.application.position.result.EffectivePositionExitTriggerResult
+import com.papertrading.api.application.position.result.PositionExitTriggerResult
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Digits
@@ -19,9 +19,9 @@ data class UpsertPositionExitTriggerRequest(
     @field:DecimalMin(value = "0.0001")
     @field:DecimalMax(value = "99.9999")
     val takeProfitPercent: BigDecimal?,
-    val expectedTriggerVersion: Long? = null,
+    val expectedVersion: Long? = null,
 ) {
-    fun toCommand(positionId: Long) = UpsertPositionExitTriggerCommand(positionId, enabled, stopLossPercent, takeProfitPercent, expectedTriggerVersion)
+    fun toCommand(positionId: Long) = UpsertPositionExitTriggerCommand(positionId, enabled, stopLossPercent, takeProfitPercent, expectedVersion)
 }
 
 data class PositionExitTriggerResponse(
@@ -29,7 +29,7 @@ data class PositionExitTriggerResponse(
     val enabled: Boolean,
     val stopLossPercent: BigDecimal?,
     val takeProfitPercent: BigDecimal?,
-    val triggerVersion: Long,
+    val version: Long,
     val updatedAt: Instant?,
 )
 
@@ -39,8 +39,8 @@ data class EffectivePositionExitTriggerResponse(
     val enabled: Boolean,
     val stopLossPercent: BigDecimal?,
     val takeProfitPercent: BigDecimal?,
-    val triggerVersion: Long,
+    val version: Long,
 )
 
-fun PositionExitTriggerResult.toResponse() = PositionExitTriggerResponse(positionId, enabled, stopLossPercent, takeProfitPercent, triggerVersion, updatedAt)
-fun EffectivePositionExitTriggerResult.toResponse() = EffectivePositionExitTriggerResponse(positionId, source, enabled, stopLossPercent, takeProfitPercent, triggerVersion)
+fun PositionExitTriggerResult.toResponse() = PositionExitTriggerResponse(positionId, enabled, stopLossPercent, takeProfitPercent, version, updatedAt)
+fun EffectivePositionExitTriggerResult.toResponse() = EffectivePositionExitTriggerResponse(positionId, source, enabled, stopLossPercent, takeProfitPercent, version)

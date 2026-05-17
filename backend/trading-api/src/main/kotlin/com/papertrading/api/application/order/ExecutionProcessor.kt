@@ -131,6 +131,7 @@ class ExecutionProcessor(
                 krwExecutedPrice = fillPrice,
                 externalExecutionId = externalExecutionId,
                 executedAt = executedAt,
+                executionMode = tradingMode,
             )
         )
         val executionId = requireNotNull(execution.id) { "saved execution.id is null" }

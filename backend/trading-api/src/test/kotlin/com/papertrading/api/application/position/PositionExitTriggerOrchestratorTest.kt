@@ -5,14 +5,15 @@ import com.papertrading.api.application.order.OrderCommandService
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.entity.position.PositionExitTrigger
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.position.PositionExitTrigger
-import com.papertrading.api.domain.position.PositionExitTriggerRepository
-import com.papertrading.api.domain.position.TriggerState
-import com.papertrading.api.domain.position.TriggerType
+import com.papertrading.api.domain.enums.TriggerSkipReason
+import com.papertrading.api.domain.enums.TriggerState
+import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.infrastructure.persistence.OrderRepository
+import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.support.withId
 import io.mockk.every
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.dao.DataIntegrityViolationException
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.Optional
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -55,6 +57,7 @@ class PositionExitTriggerOrchestratorTest {
 
         every { positionRepository.findByTickerAndQuantityGreaterThan("005930", BigDecimal.ZERO) } returns listOf(position)
         every { triggerRepository.findByPositionIdForUpdate(10L) } returnsMany listOf(trigger, trigger)
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.of(position)
         every { triggerRepository.save(any()) } answers { firstArg() }
         every { orderCommandService.createAutoExitSellOrder(any(), any(), any()) } returns mockk<Order>()
         every { orderRepository.findByAccountIdAndIdempotencyKey(any(), any()) } returns null
@@ -74,6 +77,7 @@ class PositionExitTriggerOrchestratorTest {
         val orderCallCount = AtomicInteger(0)
 
         every { positionRepository.findByTickerAndQuantityGreaterThan("005930", BigDecimal.ZERO) } returns listOf(position)
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.of(position)
         every { triggerRepository.findByPositionIdForUpdate(10L) } answers {
             barrier.countDown()
             barrier.await(1, TimeUnit.SECONDS)
@@ -111,12 +115,13 @@ class PositionExitTriggerOrchestratorTest {
 
         every { positionRepository.findByTickerAndQuantityGreaterThan("005930", BigDecimal.ZERO) } returns listOf(position)
         every { triggerRepository.findByPositionIdForUpdate(10L) } returns trigger
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.of(position)
         every { triggerRepository.save(any()) } answers { firstArg() }
         every { orderCommandService.createAutoExitSellOrder(any(), any(), any()) } throws DataIntegrityViolationException("uq")
         every {
             orderRepository.findByAccountIdAndIdempotencyKey(
                 1L,
-                "auto-exit:10:1:${TriggerType.STOP_LOSS.name}"
+                "auto-exit:10:0:${TriggerType.STOP_LOSS.name}"
             )
         } returns order
 
@@ -136,12 +141,13 @@ class PositionExitTriggerOrchestratorTest {
 
         every { positionRepository.findByTickerAndQuantityGreaterThan("005930", BigDecimal.ZERO) } returns listOf(position)
         every { triggerRepository.findByPositionIdForUpdate(10L) } returns trigger
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.of(position)
         every { triggerRepository.save(any()) } answers { firstArg() }
         every { orderCommandService.createAutoExitSellOrder(any(), any(), any()) } throws DataIntegrityViolationException("uq")
         every {
             orderRepository.findByAccountIdAndIdempotencyKey(
                 1L,
-                "auto-exit:10:1:${TriggerType.STOP_LOSS.name}"
+                "auto-exit:10:0:${TriggerType.STOP_LOSS.name}"
             )
         } returns null
         every { notificationEventPublisher.publishOrderError(1L, null, capture(msg), any()) } returns Unit
@@ -150,7 +156,55 @@ class PositionExitTriggerOrchestratorTest {
 
         assertEquals(TriggerState.FAILED, trigger.stopLossState)
         assertTrue(msg.captured.contains("positionId=10"))
-        assertTrue(msg.captured.contains("idempotencyKey=auto-exit:10:1:STOP_LOSS"))
+        assertTrue(msg.captured.contains("idempotencyKey=auto-exit:10:0:STOP_LOSS"))
         verify(exactly = 1) { notificationEventPublisher.publishOrderError(1L, null, any(), any()) }
+    }
+
+    @Test
+    fun `트리거 조건 도달 후 최신 포지션이 이미 매도 잠금이면 SKIPPED로 완료`() {
+        val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000")).withId(1L)
+        val stalePosition = Position.createWithHolding(account, "005930", MarketType.KOSPI, BigDecimal("2"), BigDecimal("100")).withId(10L)
+        val lockedPosition = Position.createWithHolding(
+            account = account,
+            ticker = "005930",
+            marketType = MarketType.KOSPI,
+            quantity = BigDecimal("2"),
+            avgBuyPrice = BigDecimal("100"),
+            lockedQuantity = BigDecimal("2"),
+        ).withId(10L)
+        val trigger = PositionExitTrigger.create(10L, 1L, "005930", true, BigDecimal("3"), BigDecimal("7"))
+        val quoteAt = Instant.parse("2026-05-08T12:00:00Z")
+
+        every { positionRepository.findByTickerAndQuantityGreaterThan("005930", BigDecimal.ZERO) } returns listOf(stalePosition)
+        every { triggerRepository.findByPositionIdForUpdate(10L) } returns trigger
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.of(lockedPosition)
+        every { triggerRepository.save(any()) } answers { firstArg() }
+
+        orchestrator.onQuote("005930", BigDecimal("97"), quoteAt)
+
+        assertEquals(TriggerState.SKIPPED, trigger.stopLossState)
+        assertEquals(TriggerState.CANCELED, trigger.takeProfitState)
+        assertEquals(TriggerSkipReason.SELL_ALREADY_LOCKED, trigger.skipReason)
+        verify(exactly = 0) { orderCommandService.createAutoExitSellOrder(any(), any(), any()) }
+    }
+
+    @Test
+    fun `트리거 조건 도달 후 최신 포지션이 없으면 POSITION_CLOSED로 SKIPPED 완료`() {
+        val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000")).withId(1L)
+        val stalePosition = Position.createWithHolding(account, "005930", MarketType.KOSPI, BigDecimal("2"), BigDecimal("100")).withId(10L)
+        val trigger = PositionExitTrigger.create(10L, 1L, "005930", true, BigDecimal("3"), BigDecimal("7"))
+        val quoteAt = Instant.parse("2026-05-08T12:00:00Z")
+
+        every { positionRepository.findByTickerAndQuantityGreaterThan("005930", BigDecimal.ZERO) } returns listOf(stalePosition)
+        every { triggerRepository.findByPositionIdForUpdate(10L) } returns trigger
+        every { positionRepository.findByIdWithLock(10L) } returns Optional.empty()
+        every { triggerRepository.save(any()) } answers { firstArg() }
+
+        orchestrator.onQuote("005930", BigDecimal("97"), quoteAt)
+
+        assertEquals(TriggerState.SKIPPED, trigger.stopLossState)
+        assertEquals(TriggerState.CANCELED, trigger.takeProfitState)
+        assertEquals(TriggerSkipReason.POSITION_CLOSED, trigger.skipReason)
+        verify(exactly = 0) { orderCommandService.createAutoExitSellOrder(any(), any(), any()) }
     }
 }

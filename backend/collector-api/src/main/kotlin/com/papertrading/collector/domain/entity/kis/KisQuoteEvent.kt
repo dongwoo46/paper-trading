@@ -14,6 +14,7 @@ data class KisQuoteEvent(
     val low: BigDecimal,
     val volume: BigDecimal,
     val receivedAt: Instant,
+    val mode: String? = null,
 )
 
 

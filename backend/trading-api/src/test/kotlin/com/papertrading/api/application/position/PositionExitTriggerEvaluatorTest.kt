@@ -6,7 +6,6 @@ import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.entity.position.PositionExitTrigger
-import com.papertrading.api.domain.enums.TriggerState
 import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.support.withId
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -27,8 +26,8 @@ class PositionExitTriggerEvaluatorTest {
         val stop = evaluator.evaluate(position, trigger, BigDecimal("96.5000"), Instant.now())
         assertEquals(TriggerType.STOP_LOSS, stop?.type)
 
-        trigger.stopLossState = TriggerState.CANCELED
-        val take = evaluator.evaluate(position, trigger, BigDecimal("107.0000"), Instant.now())
+        val takeOnlyTrigger = PositionExitTrigger.create(11L, 1L, "005930", true, null, BigDecimal("7.0"))
+        val take = evaluator.evaluate(position, takeOnlyTrigger, BigDecimal("107.0000"), Instant.now())
         assertEquals(TriggerType.TAKE_PROFIT, take?.type)
     }
 

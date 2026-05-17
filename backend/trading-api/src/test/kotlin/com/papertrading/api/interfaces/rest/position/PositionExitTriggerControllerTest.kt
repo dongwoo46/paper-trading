@@ -1,12 +1,12 @@
 package com.papertrading.api.interfaces.rest.position
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.papertrading.api.application.position.EffectivePositionExitTriggerResult
-import com.papertrading.api.application.position.PositionNotEligibleException
+import com.papertrading.api.application.position.command.UpsertPositionExitTriggerCommand
+import com.papertrading.api.application.position.result.EffectivePositionExitTriggerResult
+import com.papertrading.api.application.position.result.PositionExitTriggerResult
 import com.papertrading.api.application.position.PositionExitTriggerCommandService
 import com.papertrading.api.application.position.PositionExitTriggerQueryService
-import com.papertrading.api.application.position.PositionExitTriggerResult
-import com.papertrading.api.application.position.UpsertPositionExitTriggerCommand
+import com.papertrading.api.common.exception.PositionNotEligibleException
 import com.papertrading.api.presentation.controller.PositionExitTriggerController
 import com.papertrading.api.presentation.exception.GlobalExceptionHandler
 import org.junit.jupiter.api.Test

@@ -1,6 +1,8 @@
 package com.papertrading.api.application.position
 
-import com.papertrading.api.common.exception.InvalidPercentScaleException
+import com.papertrading.api.application.position.command.UpsertPositionExitTriggerCommand
+import com.papertrading.api.application.position.result.PositionExitTriggerResult
+import com.papertrading.api.common.exception.PositionNotEligibleException
 import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.domain.entity.position.PositionExitTrigger
 import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
@@ -8,24 +10,8 @@ import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
-import java.time.Instant
 
-data class UpsertPositionExitTriggerCommand(
-    val positionId: Long,
-    val enabled: Boolean,
-    val stopLossPercent: BigDecimal?,
-    val takeProfitPercent: BigDecimal?,
-    val expectedTriggerVersion: Long? = null,
-)
-data class PositionExitTriggerResult(
-    val positionId: Long,
-    val enabled: Boolean,
-    val stopLossPercent: BigDecimal?,
-    val takeProfitPercent: BigDecimal?,
-    val triggerVersion: Long,
-    val updatedAt: Instant?,
-)
-
+// 포지션 자동 청산 조건 생성 및 수정
 @Service
 class PositionExitTriggerCommandService(
     private val positionRepository: PositionRepository,
@@ -33,36 +19,25 @@ class PositionExitTriggerCommandService(
 ) {
     @Transactional
     fun upsertPositionTrigger(command: UpsertPositionExitTriggerCommand): PositionExitTriggerResult {
-        val position = positionRepository.findById(command.positionId)
+        val current = positionExitTriggerRepository.findByPositionIdForUpdate(command.positionId)
+        val position = positionRepository.findByIdWithLock(command.positionId)
             .orElseThrow { PositionNotFoundException(positionId = command.positionId) }
         if (position.quantity <= BigDecimal.ZERO) {
             throw PositionNotEligibleException("position not eligible: already closed")
         }
-        validatePercentScale(command.stopLossPercent)
-        validatePercentScale(command.takeProfitPercent)
-        val current = positionExitTriggerRepository.findByPositionId(command.positionId)
+
         val entity = if (current == null) {
             PositionExitTrigger.create(position.id!!, position.account.id!!, position.ticker, command.enabled, command.stopLossPercent, command.takeProfitPercent)
         } else {
-            if (command.expectedTriggerVersion != null && command.expectedTriggerVersion != current.triggerVersion) {
-                throw StaleTriggerVersionException(
-                    "stale trigger version: expected=${command.expectedTriggerVersion}, actual=${current.triggerVersion}"
-                )
-            }
-            current.enabled = command.enabled
-            current.stopLossPercent = command.stopLossPercent
-            current.takeProfitPercent = command.takeProfitPercent
-            current.triggerVersion += 1
-            current.validate()
+            current.upsertPolicy(
+                enabled = command.enabled,
+                stopLossPercent = command.stopLossPercent,
+                takeProfitPercent = command.takeProfitPercent,
+                expectedVersion = command.expectedVersion,
+            )
             current
         }
         val saved = positionExitTriggerRepository.save(entity)
-        return PositionExitTriggerResult(saved.positionId, saved.enabled, saved.stopLossPercent, saved.takeProfitPercent, saved.triggerVersion, saved.updatedAt)
-    }
-
-    private fun validatePercentScale(value: BigDecimal?) {
-        if (value != null && value.stripTrailingZeros().scale() > 4) {
-            throw InvalidPercentScaleException()
-        }
+        return PositionExitTriggerResult(saved.positionId, saved.enabled, saved.stopLossPercent, saved.takeProfitPercent, saved.version, saved.updatedAt)
     }
 }

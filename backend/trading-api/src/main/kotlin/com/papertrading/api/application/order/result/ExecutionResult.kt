@@ -1,6 +1,7 @@
 package com.papertrading.api.application.order.result
 
 import com.papertrading.api.domain.entity.order.Execution
+import com.papertrading.api.domain.enums.TradingMode
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -12,6 +13,7 @@ data class ExecutionResult(
     val executedPrice: BigDecimal,
     val fee: BigDecimal,
     val executedAt: Instant,
+    val executionMode: TradingMode,
 ) {
     companion object {
         fun from(execution: Execution) = ExecutionResult(
@@ -22,7 +24,7 @@ data class ExecutionResult(
             executedPrice = execution.executedPrice,
             fee = execution.fee,
             executedAt = requireNotNull(execution.executedAt) { "execution.executedAt is null" },
+            executionMode = execution.executionMode,
         )
     }
 }
-

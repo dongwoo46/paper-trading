@@ -3,6 +3,7 @@ package com.papertrading.api.application.position.result
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.PriceSource
 import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.port.LivePositionSnapshot
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -40,6 +41,24 @@ data class PositionResult(
             returnRate = p.returnRate,
             priceSource = p.priceSource,
             priceUpdatedAt = p.priceUpdatedAt,
+        )
+
+        fun from(snapshot: LivePositionSnapshot): PositionResult = PositionResult(
+            id = snapshot.id,
+            accountId = snapshot.accountId,
+            ticker = snapshot.ticker,
+            marketType = snapshot.marketType,
+            quantity = snapshot.quantity,
+            orderableQuantity = snapshot.orderableQuantity,
+            lockedQuantity = snapshot.lockedQuantity,
+            avgBuyPrice = snapshot.avgBuyPrice,
+            totalBuyAmount = snapshot.totalBuyAmount,
+            currentPrice = snapshot.currentPrice,
+            evaluationAmount = snapshot.evaluationAmount,
+            unrealizedPnl = snapshot.unrealizedPnl,
+            returnRate = snapshot.returnRate,
+            priceSource = snapshot.priceSource,
+            priceUpdatedAt = snapshot.priceUpdatedAt,
         )
     }
 }

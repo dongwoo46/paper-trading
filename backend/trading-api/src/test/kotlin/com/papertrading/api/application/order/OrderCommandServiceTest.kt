@@ -16,7 +16,7 @@ import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.domain.port.MarketQuotePort
-import com.papertrading.api.domain.port.QuoteSnapshot
+import com.papertrading.api.application.common.result.QuoteSnapshot
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
@@ -106,7 +106,7 @@ class OrderCommandServiceTest {
         val account = localAccount()
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-2") } returns null
-        every { marketQuotePort.getQuote("005930") } returns null
+        every { marketQuotePort.getQuote(TradingMode.LOCAL, "005930") } returns null
 
         assertThrows<QuoteUnavailableException> {
             service.placeOrder(1L, PlaceOrderCommand(
@@ -144,7 +144,7 @@ class OrderCommandServiceTest {
         every { orderRepository.save(any()) } returns savedOrderObj
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { collectorSubscriptionPort.subscribe("LOCAL", "005930") } just runs
-        every { marketQuotePort.getQuote("005930") } returns null
+        every { marketQuotePort.getQuote(TradingMode.LOCAL, "005930") } returns null
         // cancelOrder 호출
         every { orderRepository.findByIdWithOptimisticLock(10L) } returns Optional.of(savedOrderObj)
 
@@ -161,10 +161,10 @@ class OrderCommandServiceTest {
     @Test
     fun `시장가 매수 — 정상 시세 시 주문 접수`() {
         val account = localAccount()
-        val quote = QuoteSnapshot("005930", BigDecimal("72000"), BigDecimal("72100"), BigDecimal("71900"), Instant.now())
+        val quote = QuoteSnapshot("005930", TradingMode.LOCAL, BigDecimal("72000"), BigDecimal("72100"), BigDecimal("71900"), Instant.now())
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-5") } returns null
-        every { marketQuotePort.getQuote("005930") } returns quote
+        every { marketQuotePort.getQuote(TradingMode.LOCAL, "005930") } returns quote
         every { orderRepository.save(any()) } answers { firstArg<Order>().withId(11L) }
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { collectorSubscriptionPort.subscribe("LOCAL", "005930") } just runs
