@@ -27,6 +27,11 @@ import java.math.BigDecimal
 import java.time.Duration
 import java.time.Instant
 
+data class AutoExitTriggerAuditInput(
+    val triggerId: Long,
+    val triggerVersion: Long,
+)
+
 @Service
 class OrderCommandService(
     private val accountRepository: AccountRepository,
@@ -169,6 +174,38 @@ class OrderCommandService(
             TradingMode.KIS_LIVE -> kisLiveOrderExecutor.submit(order)
             else -> {}
         }
+    }
+
+    @Transactional
+    fun createGroupedAutoExitSellOrder(
+        accountId: Long,
+        ticker: String,
+        marketType: com.papertrading.api.domain.enums.MarketType,
+        quantity: BigDecimal,
+        orderGroupId: String,
+        triggerAuditInputs: List<AutoExitTriggerAuditInput>,
+    ): Order {
+        require(triggerAuditInputs.isNotEmpty()) { "triggerAuditInputs must not be empty" }
+        val triggerAuditKey = triggerAuditInputs
+            .sortedWith(compareBy<AutoExitTriggerAuditInput> { it.triggerId }.thenBy { it.triggerVersion })
+            .joinToString(",") { "${it.triggerId}@${it.triggerVersion}" }
+        val idempotencyKey = "$orderGroupId:$triggerAuditKey"
+
+        return placeOrder(
+            accountId,
+            PlaceOrderCommand(
+                ticker = ticker,
+                marketType = marketType,
+                orderType = OrderType.MARKET,
+                orderSide = OrderSide.SELL,
+                orderCondition = OrderCondition.DAY,
+                quantity = quantity,
+                limitPrice = null,
+                expireAt = null,
+                idempotencyKey = idempotencyKey,
+                orderGroupId = orderGroupId,
+            ),
+        )
     }
 
     @Transactional

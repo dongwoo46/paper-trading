@@ -30,14 +30,22 @@ class PositionExitTriggerEvaluator {
         if (trigger.state != TriggerState.ARMED) return null
 
         val threshold = effectiveTriggerPrice(position, trigger) ?: return null
-        return when (trigger.triggerType) {
-            TriggerType.STOP_LOSS -> {
-                if (quotePrice <= threshold) TriggerDecision(TriggerType.STOP_LOSS, threshold, quotePrice, now) else null
-            }
-            TriggerType.TAKE_PROFIT -> {
-                if (quotePrice >= threshold) TriggerDecision(TriggerType.TAKE_PROFIT, threshold, quotePrice, now) else null
-            }
+        val fired = when (trigger.triggerType) {
+            TriggerType.STOP_LOSS -> quotePrice <= threshold
+            TriggerType.TAKE_PROFIT -> quotePrice >= threshold
         }
+        if (!fired) return null
+
+        return TriggerDecision(
+            triggerId = trigger.id ?: return null,
+            triggerVersion = trigger.version,
+            positionId = trigger.positionId,
+            triggerType = trigger.triggerType,
+            effectiveTriggerPrice = threshold,
+            quotePrice = quotePrice,
+            quoteAt = now,
+            exitRatioPercent = trigger.exitRatioPercent,
+        )
     }
 
     private fun effectiveTriggerPrice(position: Position, trigger: PositionExitTrigger): BigDecimal? =
