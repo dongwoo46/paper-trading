@@ -1,40 +1,26 @@
 package com.papertrading.api.application.position
 
-import com.papertrading.api.application.position.result.EffectivePositionExitTriggerResult
+import com.papertrading.api.application.position.result.PositionExitTriggerListResult
+import com.papertrading.api.application.position.result.PositionExitTriggerResult
 import com.papertrading.api.common.exception.PositionNotFoundException
-import com.papertrading.api.domain.enums.TriggerState
-import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.infrastructure.persistence.PositionExitTriggerRepository
-import com.papertrading.api.infrastructure.persistence.AccountExitTriggerDefaultRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
-
-// 특정 포지션에 실제로 적용되는 청산 트리거 설정을 조회하는 Query Service
-// 수정필요함 redis에서 가져오고
+// 포지션에 직접 등록된 청산 트리거 목록을 조회한다. 계정 기본값은 이 API에 병합하지 않는다.
 @Service
 class PositionExitTriggerQueryService(
     private val positionRepository: PositionRepository,
     private val positionExitTriggerRepository: PositionExitTriggerRepository,
-    private val accountExitTriggerDefaultRepository: AccountExitTriggerDefaultRepository,
 ) {
-    fun getEffectiveTrigger(positionId: Long): EffectivePositionExitTriggerResult {
-        val position = positionRepository.findById(positionId)
-            .orElseThrow { PositionNotFoundException(positionId = positionId) }
-        val overrides = positionExitTriggerRepository.findAllByPositionIdOrderByIdAsc(positionId)
-            .filter { it.state == TriggerState.ARMED }
-        if (overrides.isNotEmpty()) {
-            return EffectivePositionExitTriggerResult(
-                positionId,
-                "POSITION_OVERRIDE",
-                true,
-                overrides.firstOrNull { it.triggerType == TriggerType.STOP_LOSS }?.triggerPercent,
-                overrides.firstOrNull { it.triggerType == TriggerType.TAKE_PROFIT }?.triggerPercent,
-                overrides.maxOf { it.version },
-            )
+    @Transactional(readOnly = true)
+    fun listPositionTriggers(positionId: Long): PositionExitTriggerListResult {
+        if (!positionRepository.existsById(positionId)) {
+            throw PositionNotFoundException(positionId = positionId)
         }
-        val accountDefault = accountExitTriggerDefaultRepository.findByAccountId(position.account.id!!)
-        if (accountDefault != null) return EffectivePositionExitTriggerResult(positionId, "ACCOUNT_DEFAULT", accountDefault.enabled, accountDefault.stopLossPercent, accountDefault.takeProfitPercent, 0)
-        return EffectivePositionExitTriggerResult(positionId, "DISABLED", false, null, null, 0)
+        val triggers = positionExitTriggerRepository.findAllByPositionIdOrderByIdAsc(positionId)
+            .map(PositionExitTriggerResult::from)
+        return PositionExitTriggerListResult(positionId, triggers)
     }
 }
