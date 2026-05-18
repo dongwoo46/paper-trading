@@ -1,16 +1,14 @@
-package com.papertrading.api.application.market
+package com.papertrading.api.application.position
 
-import com.papertrading.api.application.position.PositionExitTriggerOrchestrator
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.Instant
 
 @Component
-class QuoteEventListener(
+class PositionExitQuoteEventListener(
     private val orchestrator: PositionExitTriggerOrchestrator,
 ) {
     fun onQuote(ticker: String, price: BigDecimal, quoteAt: Instant) {
         orchestrator.onQuote(ticker, price, quoteAt)
     }
 }
-

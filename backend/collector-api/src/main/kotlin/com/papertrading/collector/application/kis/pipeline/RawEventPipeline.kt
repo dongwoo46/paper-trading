@@ -37,12 +37,14 @@ class RawEventPipeline(
 
     private fun publishQuote(source: String, payload: String) {
         val event = parser.parse(payload) ?: return
-        publisher.saveAndPublish(event)
-        runCatching { marketFeatureAggregationService.onTick(event) }
+        val mode = modeFromSource(source) ?: return
+        val modeEvent = event.copy(mode = mode)
+        publisher.saveAndPublish(modeEvent)
+        runCatching { marketFeatureAggregationService.onTick(modeEvent) }
             .onFailure { ex ->
-                log.warn(ex) { "market feature aggregation failed: source=$source, ticker=${event.ticker}" }
+                log.warn(ex) { "market feature aggregation failed: source=$source, mode=$mode, ticker=${event.ticker}" }
             }
-        log.debug { "quote published: source=$source, ticker=${event.ticker}, price=${event.price}" }
+        log.debug { "quote published: source=$source, mode=$mode, ticker=${event.ticker}, price=${event.price}" }
     }
 
     private fun publishOrderbook(source: String, payload: String) {
@@ -57,5 +59,11 @@ class RawEventPipeline(
                 log.warn(ex) { "orderbook redis store failed: source=$source, ticker=${event.ticker}" }
             }
         log.debug { "orderbook stored: source=$source, ticker=${event.ticker}" }
+    }
+
+    private fun modeFromSource(source: String): String? = when (source.trim().lowercase()) {
+        "kis-paper", "paper" -> "paper"
+        "kis-live", "live" -> "live"
+        else -> null
     }
 }

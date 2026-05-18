@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param
 import java.math.BigDecimal
 import java.util.Optional
 
-interface PositionRepository : JpaRepository<Position, Long> {
+interface PositionRepository : JpaRepository<Position, Long>, PositionRepositoryCustom {
     fun findByAccountIdAndTicker(accountId: Long, ticker: String): Optional<Position>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -19,6 +19,10 @@ interface PositionRepository : JpaRepository<Position, Long> {
         @Param("accountId") accountId: Long,
         @Param("ticker") ticker: String
     ): Optional<Position>
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Position p WHERE p.id = :positionId")
+    fun findByIdWithLock(@Param("positionId") positionId: Long): Optional<Position>
 
     fun findByAccountIdAndQuantityGreaterThan(accountId: Long, minQuantity: BigDecimal): List<Position>
 

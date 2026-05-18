@@ -1,7 +1,8 @@
 package com.papertrading.api.infrastructure.redis
 
 import com.papertrading.api.domain.port.MarketQuotePort
-import com.papertrading.api.domain.port.QuoteSnapshot
+import com.papertrading.api.application.common.result.QuoteSnapshot
+import com.papertrading.api.domain.enums.TradingMode
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -15,11 +16,19 @@ class RedisMarketQuoteAdapter(
 
     companion object {
         private val STALE_THRESHOLD = Duration.ofSeconds(60)
-        private fun quoteKey(ticker: String) = "quote:$ticker"
+        private fun quoteKey(tradingMode: TradingMode, ticker: String): String {
+            val normalizedTicker = ticker.uppercase()
+            return when (tradingMode) {
+                TradingMode.KIS_PAPER -> "quote:kis:paper:$normalizedTicker"
+                TradingMode.KIS_LIVE -> "quote:kis:live:$normalizedTicker"
+                TradingMode.UPBIT_LIVE -> "quote:upbit:live:$normalizedTicker"
+                TradingMode.LOCAL -> "quote:local:$normalizedTicker"
+            }
+        }
     }
 
-    override fun getQuote(ticker: String): QuoteSnapshot? {
-        val hash = redisTemplate.opsForHash<String, String>().entries(quoteKey(ticker))
+    override fun getQuote(tradingMode: TradingMode, ticker: String): QuoteSnapshot? {
+        val hash = redisTemplate.opsForHash<String, String>().entries(quoteKey(tradingMode, ticker))
         if (hash.isEmpty()) return null
 
         val updatedAt = hash["updatedAt"]?.toLongOrNull()
@@ -30,7 +39,8 @@ class RedisMarketQuoteAdapter(
 
         return runCatching {
             QuoteSnapshot(
-                ticker = ticker,
+                ticker = ticker.uppercase(),
+                tradingMode = tradingMode,
                 price = BigDecimal(hash.getValue("price")),
                 askp1 = BigDecimal(hash.getValue("askp1")),
                 bidp1 = BigDecimal(hash.getValue("bidp1")),
@@ -38,4 +48,5 @@ class RedisMarketQuoteAdapter(
             )
         }.getOrNull()
     }
+
 }

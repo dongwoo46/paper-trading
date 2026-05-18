@@ -17,6 +17,7 @@ data class PlaceOrderCommand(
     val limitPrice: BigDecimal?,   // LIMIT 주문 시 필수
     val expireAt: Instant?,        // GTD 주문 시 필수
     val idempotencyKey: String,
+    val orderGroupId: String? = null,
     val strategyId: Long? = null,
     val signalId: Long? = null,
 )

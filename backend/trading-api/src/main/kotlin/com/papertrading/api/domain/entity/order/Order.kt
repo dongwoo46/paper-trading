@@ -107,6 +107,10 @@ class Order protected constructor() : BaseAuditEntity() {
     lateinit var idempotencyKey: String
         private set
 
+    @Column(name = "order_group_id", length = 100)
+    var orderGroupId: String? = null
+        private set
+
     @Column(name = "external_order_id", length = 100)
     var externalOrderId: String? = null
         private set
@@ -169,6 +173,7 @@ class Order protected constructor() : BaseAuditEntity() {
             limitPrice: BigDecimal? = null,
             lockedAmount: BigDecimal = BigDecimal.ZERO,
             idempotencyKey: String,
+            orderGroupId: String? = null,
             expireAt: Instant? = null,
             strategyId: Long? = null,
             signalId: Long? = null
@@ -179,6 +184,7 @@ class Order protected constructor() : BaseAuditEntity() {
             require(limitPrice == null || limitPrice > BigDecimal.ZERO) { "주문 가격은 0보다 커야 합니다." }
             require(lockedAmount >= BigDecimal.ZERO) { "잠금 금액은 0 이상이어야 합니다." }
             require(idempotencyKey.isNotBlank()) { "idempotencyKey는 비어 있을 수 없습니다." }
+            require(orderGroupId == null || orderGroupId.isNotBlank()) { "orderGroupId는 비어 있을 수 없습니다." }
 
             return Order().apply {
                 this.account = account
@@ -191,6 +197,7 @@ class Order protected constructor() : BaseAuditEntity() {
                 this.limitPrice = limitPrice
                 this.lockedAmount = lockedAmount
                 this.idempotencyKey = idempotencyKey
+                this.orderGroupId = orderGroupId
                 this.expireAt = expireAt
                 this.strategyId = strategyId
                 this.signalId = signalId

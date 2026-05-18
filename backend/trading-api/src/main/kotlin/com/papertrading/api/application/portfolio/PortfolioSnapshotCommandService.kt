@@ -27,7 +27,9 @@ class PortfolioSnapshotCommandService(
         val positions = positionRepository.findByAccountIdAndQuantityGreaterThan(accountId, BigDecimal.ZERO)
 
         val priced = positions.map { position ->
-            val closePrice = marketQuotePort.getQuote(position.ticker!!)?.price ?: position.currentPrice ?: BigDecimal.ZERO
+            val closePrice = marketQuotePort.getQuote(position.account.tradingMode, position.ticker)?.price
+                ?: position.currentPrice
+                ?: BigDecimal.ZERO
             PricedPosition(position, closePrice, closePrice.multiply(position.quantity))
         }
         val totalMarketValue = priced.fold(BigDecimal.ZERO) { acc, item -> acc.add(item.marketValue) }

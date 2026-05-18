@@ -27,6 +27,11 @@ import java.math.BigDecimal
 import java.time.Duration
 import java.time.Instant
 
+data class AutoExitTriggerAuditInput(
+    val triggerId: Long,
+    val triggerVersion: Long,
+)
+
 @Service
 class OrderCommandService(
     private val accountRepository: AccountRepository,
@@ -53,14 +58,14 @@ class OrderCommandService(
         val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null" }
 
         lockSellQuantityIfNeeded(accountId, command)
-        val lockedAmount = calculateLockedAmount(command)
+        val lockedAmount = calculateLockedAmount(command, tradingMode)
         val order = saveOrder(account, command, lockedAmount)
         val orderId = requireNotNull(order.id) { "saved order.id is null" }
 
         recordBuyLockIfNeeded(command, account, orderId, lockedAmount)
         collectorSubscriptionPort.subscribe(tradingMode.name, command.ticker)
 
-        if (cancelIfUnfillableIocFok(accountId, orderId, command, order)) return order
+        if (cancelIfUnfillableIocFok(accountId, orderId, command, order, tradingMode)) return order
 
         submitExternalOrderIfNeeded(tradingMode, order)
         log.info { "order placed: orderId=$orderId, mode=$tradingMode, ticker=${command.ticker}" }
@@ -87,13 +92,13 @@ class OrderCommandService(
         position.lockQuantity(command.quantity)
     }
 
-    private fun calculateLockedAmount(command: PlaceOrderCommand): BigDecimal {
+    private fun calculateLockedAmount(command: PlaceOrderCommand, tradingMode: TradingMode): BigDecimal {
         if (command.orderSide != OrderSide.BUY) return BigDecimal.ZERO
 
         val unitPrice = when (command.orderType) {
             OrderType.LIMIT -> requireNotNull(command.limitPrice) { "limitPrice is null" }
             OrderType.MARKET -> {
-                val quote = marketQuotePort.getQuote(command.ticker)
+                val quote = marketQuotePort.getQuote(tradingMode, command.ticker)
                     ?: throw QuoteUnavailableException(command.ticker)
                 check(Duration.between(quote.updatedAt, Instant.now()).seconds <= 60) {
                     "시세가 오래되었습니다. (stale) ticker=${command.ticker}"
@@ -120,6 +125,7 @@ class OrderCommandService(
             limitPrice = command.limitPrice,
             lockedAmount = lockedAmount,
             idempotencyKey = command.idempotencyKey,
+            orderGroupId = command.orderGroupId,
             expireAt = command.expireAt,
             strategyId = command.strategyId,
             signalId = command.signalId,
@@ -139,10 +145,16 @@ class OrderCommandService(
         }
     }
 
-    private fun cancelIfUnfillableIocFok(accountId: Long, orderId: Long, command: PlaceOrderCommand, order: Order): Boolean {
+    private fun cancelIfUnfillableIocFok(
+        accountId: Long,
+        orderId: Long,
+        command: PlaceOrderCommand,
+        order: Order,
+        tradingMode: TradingMode,
+    ): Boolean {
         if (command.orderCondition !in setOf(OrderCondition.IOC, OrderCondition.FOK)) return false
 
-        val quote = marketQuotePort.getQuote(command.ticker)
+        val quote = marketQuotePort.getQuote(tradingMode, command.ticker)
         if (quote == null) {
             cancelOrder(accountId, orderId, CancelOrderCommand("시세 없음 — IOC/FOK 즉시 취소"))
             return true
@@ -165,10 +177,47 @@ class OrderCommandService(
     }
 
     @Transactional
-    fun createAutoExitSellOrder(position: Position, triggerVersion: Long, triggerType: TriggerType): Order {
+    fun createGroupedAutoExitSellOrder(
+        accountId: Long,
+        ticker: String,
+        marketType: com.papertrading.api.domain.enums.MarketType,
+        quantity: BigDecimal,
+        orderGroupId: String,
+        triggerAuditInputs: List<AutoExitTriggerAuditInput>,
+    ): Order {
+        require(triggerAuditInputs.isNotEmpty()) { "triggerAuditInputs must not be empty" }
+        val triggerAuditKey = triggerAuditInputs
+            .sortedWith(compareBy<AutoExitTriggerAuditInput> { it.triggerId }.thenBy { it.triggerVersion })
+            .joinToString(",") { "${it.triggerId}@${it.triggerVersion}" }
+        val idempotencyKey = "$orderGroupId:$triggerAuditKey"
+
+        return placeOrder(
+            accountId,
+            PlaceOrderCommand(
+                ticker = ticker,
+                marketType = marketType,
+                orderType = OrderType.MARKET,
+                orderSide = OrderSide.SELL,
+                orderCondition = OrderCondition.DAY,
+                quantity = quantity,
+                limitPrice = null,
+                expireAt = null,
+                idempotencyKey = idempotencyKey,
+                orderGroupId = orderGroupId,
+            ),
+        )
+    }
+
+    @Transactional
+    fun createAutoExitSellOrder(
+        position: Position,
+        triggerEntityVersion: Long,
+        triggerType: TriggerType,
+        orderGroupId: String? = null,
+    ): Order {
         val positionId = requireNotNull(position.id) { "position.id is null" }
         val accountId = requireNotNull(position.account.id) { "position.account.id is null" }
-        val key = "auto-exit:$positionId:$triggerVersion:${triggerType.name}"
+        val key = "auto-exit:$positionId:$triggerEntityVersion:${triggerType.name}"
         return placeOrder(
             accountId,
             PlaceOrderCommand(
@@ -181,6 +230,7 @@ class OrderCommandService(
                 limitPrice = null,
                 expireAt = null,
                 idempotencyKey = key,
+                orderGroupId = orderGroupId,
             )
         )
     }

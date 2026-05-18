@@ -16,8 +16,9 @@ class RedisListenerConfig {
     ): RedisMessageListenerContainer {
         val container = RedisMessageListenerContainer()
         container.setConnectionFactory(connectionFactory)
-        // quote:{ticker} 패턴 구독 → 모든 종목 시세 이벤트 수신
-        container.addMessageListener(quoteEventListener, PatternTopic("quote:*"))
+        // quote:{provider}:{mode}:{ticker} 패턴 구독 → provider/mode별 시세 이벤트 수신
+        container.addMessageListener(quoteEventListener, PatternTopic("quote:kis:*:*"))
+        container.addMessageListener(quoteEventListener, PatternTopic("quote:upbit:*:*"))
         return container
     }
 }

@@ -1,11 +1,12 @@
 package com.papertrading.api.infrastructure.redis
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.papertrading.api.application.market.QuoteEventListener as ExitTriggerQuoteEventListener
 import com.papertrading.api.application.order.LocalMatchingEngine
+import com.papertrading.api.application.position.PositionExitQuoteEventListener
 import com.papertrading.api.application.position.PositionCommandService
 import com.papertrading.api.domain.enums.PriceSource
-import com.papertrading.api.domain.port.QuoteSnapshot
+import com.papertrading.api.domain.enums.TradingMode
+import com.papertrading.api.application.common.result.QuoteSnapshot
 import mu.KotlinLogging
 import org.springframework.data.redis.connection.Message
 import org.springframework.data.redis.connection.MessageListener
@@ -15,14 +16,14 @@ import java.time.Instant
 
 /**
  * Redis Pub/Sub 시세 이벤트 수신기
- * collector-api가 quote:{ticker} 채널에 발행한 메시지를 수신해 LocalMatchingEngine 트리거.
+ * collector-api가 quote:{provider}:{mode}:{ticker} 채널에 발행한 메시지를 수신해 LocalMatchingEngine 트리거.
  * 메시지 형식: {"ticker":"...","price":"...","askp1":"...","bidp1":"...","updatedAt":...}
  */
 @Component("redisQuoteEventListener")
 class QuoteEventListener(
     private val localMatchingEngine: LocalMatchingEngine,
     private val positionCommandService: PositionCommandService,
-    private val exitTriggerQuoteEventListener: ExitTriggerQuoteEventListener,
+    private val positionExitQuoteEventListener: PositionExitQuoteEventListener,
     private val objectMapper: ObjectMapper,
 ) : MessageListener {
 
@@ -33,9 +34,19 @@ class QuoteEventListener(
         runCatching { localMatchingEngine.tryMatchPendingOrders(quote.ticker, quote) }
             .onFailure { log.warn { "매칭 처리 오류: ticker=${quote.ticker}, reason=${it.message}" } }
         // 포지션 평가손익 갱신 (체결 엔진과 독립적으로 처리)
-        runCatching { positionCommandService.updateCurrentPriceByTicker(quote.ticker, quote.price, PriceSource.REDIS_LIVE) }
-            .onFailure { log.warn { "포지션 시세 갱신 오류: ticker=${quote.ticker}, reason=${it.message}" } }
-        runCatching { exitTriggerQuoteEventListener.onQuote(quote.ticker, quote.price, quote.updatedAt) }
+        runCatching {
+            positionCommandService.updateCurrentPriceByTicker(
+                quote.ticker,
+                quote.price,
+                PriceSource.REDIS_LIVE,
+                quote.tradingMode,
+            )
+        }.onFailure {
+            log.warn {
+                "포지션 시세 갱신 오류: ticker=${quote.ticker}, tradingMode=${quote.tradingMode}, reason=${it.message}"
+            }
+        }
+        runCatching { positionExitQuoteEventListener.onQuote(quote.ticker, quote.price, quote.updatedAt) }
             .onFailure { log.warn { "exit trigger 처리 오류: ticker=${quote.ticker}, reason=${it.message}" } }
     }
 
@@ -43,6 +54,7 @@ class QuoteEventListener(
         val map = objectMapper.readValue(body, Map::class.java)
         QuoteSnapshot(
             ticker = map["ticker"] as? String ?: return@runCatching null,
+            tradingMode = parseTradingMode(map) ?: return@runCatching null,
             price = BigDecimal(map["price"] as? String ?: return@runCatching null),
             askp1 = BigDecimal(map["askp1"] as? String ?: return@runCatching null),
             bidp1 = BigDecimal(map["bidp1"] as? String ?: return@runCatching null),
@@ -52,5 +64,19 @@ class QuoteEventListener(
     }.getOrElse {
         log.warn { "quote 메시지 파싱 실패: ${it.message}" }
         null
+    }
+
+    private fun parseTradingMode(map: Map<*, *>): TradingMode? {
+        val raw = (map["tradingMode"] ?: map["mode"] ?: map["source"])?.toString()
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: return null
+
+        return when (raw.uppercase()) {
+            "PAPER", "KIS-PAPER", "KIS_PAPER" -> TradingMode.KIS_PAPER
+            "LIVE", "KIS-LIVE", "KIS_LIVE" -> TradingMode.KIS_LIVE
+            "UPBIT", "UPBIT-LIVE", "UPBIT_LIVE" -> TradingMode.UPBIT_LIVE
+            else -> null
+        }
     }
 }

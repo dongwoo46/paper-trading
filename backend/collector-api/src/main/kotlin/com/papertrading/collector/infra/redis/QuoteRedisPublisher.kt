@@ -9,11 +9,11 @@ import java.time.Duration
 /**
  * 시세 Redis 저장 + Pub/Sub 발행
  *
- * Hash (quote:{ticker}): 최신 시세 스냅샷 1개만 유지 (putAll = 덮어쓰기)
+ * Hash (quote:kis:{mode}:{ticker}): 최신 시세 스냅샷 1개만 유지 (putAll = 덮어쓰기)
  *   TTL 60초 = stale 기준. Key 존재 → 신선, Key 없음 → stale.
  *   시장가/지정가 주문 접수 시 현재가 조회용.
  *
- * Pub/Sub (quote:{ticker}): 새 틱 도착 알림 → trading-api 매칭 엔진 트리거
+ * Pub/Sub (quote:kis:{mode}:{ticker}): 새 틱 도착 알림 → trading-api 매칭 엔진 트리거
  */
 @Component
 class QuoteRedisPublisher(
@@ -22,17 +22,19 @@ class QuoteRedisPublisher(
 ) {
     companion object {
         private val QUOTE_TTL = Duration.ofSeconds(60)
-        private fun quoteKey(ticker: String) = "quote:$ticker"
-        private fun quoteChannel(ticker: String) = "quote:$ticker"
+        private fun quoteKey(mode: String, ticker: String) = "quote:kis:$mode:${ticker.uppercase()}"
+        private fun quoteChannel(mode: String, ticker: String) = "quote:kis:$mode:${ticker.uppercase()}"
     }
 
     fun saveAndPublish(event: KisQuoteEvent) {
-        val key = quoteKey(event.ticker)
+        val mode = requireNotNull(event.mode) { "quote mode is required" }.lowercase()
+        val key = quoteKey(mode, event.ticker)
         val updatedAt = event.receivedAt.toEpochMilli().toString()
 
         redisTemplate.opsForHash<String, String>().putAll(
             key,
             mapOf(
+                "mode"      to mode,
                 "price"     to event.price.toPlainString(),
                 "askp1"     to event.askp1.toPlainString(),
                 "bidp1"     to event.bidp1.toPlainString(),
@@ -45,9 +47,10 @@ class QuoteRedisPublisher(
         redisTemplate.expire(key, QUOTE_TTL)
 
         redisTemplate.convertAndSend(
-            quoteChannel(event.ticker),
+            quoteChannel(mode, event.ticker),
             objectMapper.writeValueAsString(
                 mapOf(
+                    "mode"      to mode,
                     "ticker"    to event.ticker,
                     "price"     to event.price.toPlainString(),
                     "askp1"     to event.askp1.toPlainString(),

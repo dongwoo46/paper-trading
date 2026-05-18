@@ -53,13 +53,14 @@ class RawEventPipelineTest {
         val event = sampleQuoteEvent()
         val payload = "0|H0STCNT0|001|payload-data"
         every { parser.parse(payload) } returns event
-        every { publisher.saveAndPublish(event) } just runs
-        every { aggregationService.onTick(event) } throws IllegalStateException("redis down")
+        val modeEvent = event.copy(mode = "paper")
+        every { publisher.saveAndPublish(modeEvent) } just runs
+        every { aggregationService.onTick(modeEvent) } throws IllegalStateException("redis down")
 
-        buildPipeline().publish("kis", payload)
+        buildPipeline().publish("kis-paper", payload)
 
-        verify(exactly = 1) { publisher.saveAndPublish(event) }
-        verify(exactly = 1) { aggregationService.onTick(event) }
+        verify(exactly = 1) { publisher.saveAndPublish(modeEvent) }
+        verify(exactly = 1) { aggregationService.onTick(modeEvent) }
         // orderbookParser must NOT be called for H0STCNT0
         verify(exactly = 0) { orderbookParser.parse(any()) }
     }

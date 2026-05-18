@@ -2,8 +2,9 @@ package com.papertrading.api.presentation.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.papertrading.api.application.order.LocalMatchingEngine
+import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
-import com.papertrading.api.domain.port.QuoteSnapshot
+import com.papertrading.api.application.common.result.QuoteSnapshot
 import com.papertrading.api.infrastructure.kis.KisOrderRestClient
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -112,7 +113,7 @@ class OrderControllerIntegrationTest {
         val orderId = objectMapper.readTree(orderResult.response.contentAsString)["orderId"].asLong()
 
         // QuoteEventListener 역할: 시세 이벤트로 매칭 트리거
-        val quote = QuoteSnapshot("005930", BigDecimal("70000"), BigDecimal("70100"), BigDecimal("69900"), Instant.now())
+        val quote = QuoteSnapshot("005930", TradingMode.LOCAL, BigDecimal("70000"), BigDecimal("70100"), BigDecimal("69900"), Instant.now())
         localMatchingEngine.tryMatchPendingOrders("005930", quote)
 
         // 주문 FILLED 확인
