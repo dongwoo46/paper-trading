@@ -18,9 +18,11 @@ from chart_analysis.domain.value_objects import (
     Direction,
     Grade,
     IndicatorSignal,
+    LevelSet,
     PatternType,
     Recommendation,
     Strength,
+    TradePlan,
     TrendAnalysis,
     VolumeAnalysis,
 )
@@ -59,6 +61,15 @@ def _bearish_pattern() -> CandlePattern:
 
 def _rsi_signal(value: str) -> IndicatorSignal:
     return IndicatorSignal(name="RSI", value=Decimal(value), interpretation="RSI")
+
+
+def _trade_plan(stop: str, target: str) -> TradePlan:
+    return TradePlan(
+        entry_price=Decimal("100"),
+        stop_loss=Decimal(stop),
+        target_price=Decimal(target),
+        risk_reward_ratio=Decimal("1.00"),
+    )
 
 
 class TestWeightedRuleConfidenceScorer:
@@ -232,3 +243,113 @@ class TestWeightedRuleConfidenceScorer:
             volume_analysis=_make_neutral_volume(),
         )
         assert isinstance(result.grade, Grade)
+
+    def test_valid_support_resistance_plan_adds_bounded_confidence(self, scorer):
+        """올바른 방향의 지지/저항 기반 trade plan은 작은 범위 안에서 confidence를 높인다."""
+        baseline = scorer.score(
+            trend=TrendAnalysis(
+                direction=Direction.SIDEWAYS,
+                strength=Strength.WEAK,
+                ma_alignment="FLAT",
+                adx=Decimal("15"),
+                hh_ll_structure="RANGING",
+            ),
+            patterns=[],
+            indicator_signals=[],
+            volume_analysis=_make_neutral_volume(),
+        )
+
+        adjusted = scorer.score(
+            trend=TrendAnalysis(
+                direction=Direction.SIDEWAYS,
+                strength=Strength.WEAK,
+                ma_alignment="FLAT",
+                adx=Decimal("15"),
+                hh_ll_structure="RANGING",
+            ),
+            patterns=[],
+            indicator_signals=[],
+            volume_analysis=_make_neutral_volume(),
+            levels=LevelSet(
+                supports=[Decimal("95"), Decimal("90")],
+                resistances=[Decimal("108"), Decimal("115")],
+            ),
+            trade_plan=_trade_plan("95", "108"),
+            last_close=Decimal("100"),
+        )
+
+        delta = adjusted.confidence - baseline.confidence
+        assert Decimal("0") < delta <= Decimal("0.0500")
+        assert adjusted.grade == Grade.HOLD
+
+    def test_invalid_trade_plan_subtracts_bounded_confidence(self, scorer):
+        """잘못된 방향의 stop/target은 bounded penalty로 confidence를 낮춘다."""
+        baseline = scorer.score(
+            trend=TrendAnalysis(
+                direction=Direction.SIDEWAYS,
+                strength=Strength.WEAK,
+                ma_alignment="FLAT",
+                adx=Decimal("15"),
+                hh_ll_structure="RANGING",
+            ),
+            patterns=[],
+            indicator_signals=[],
+            volume_analysis=_make_neutral_volume(),
+        )
+
+        adjusted = scorer.score(
+            trend=TrendAnalysis(
+                direction=Direction.SIDEWAYS,
+                strength=Strength.WEAK,
+                ma_alignment="FLAT",
+                adx=Decimal("15"),
+                hh_ll_structure="RANGING",
+            ),
+            patterns=[],
+            indicator_signals=[],
+            volume_analysis=_make_neutral_volume(),
+            levels=LevelSet(supports=[Decimal("105")], resistances=[Decimal("95")]),
+            trade_plan=_trade_plan("105", "95"),
+            last_close=Decimal("100"),
+        )
+
+        delta = baseline.confidence - adjusted.confidence
+        assert Decimal("0") < delta <= Decimal("0.0500")
+        assert adjusted.grade == Grade.HOLD
+
+    def test_support_resistance_only_does_not_change_hold_to_buy_or_sell(self, scorer):
+        """SR 품질 보정만으로 중립 방향성 신호가 BUY/SELL로 바뀌지 않는다."""
+        neutral_kwargs = {
+            "trend": TrendAnalysis(
+                direction=Direction.SIDEWAYS,
+                strength=Strength.WEAK,
+                ma_alignment="FLAT",
+                adx=Decimal("15"),
+                hh_ll_structure="RANGING",
+            ),
+            "patterns": [],
+            "indicator_signals": [],
+            "volume_analysis": _make_neutral_volume(),
+        }
+
+        valid_plan = scorer.score(
+            **neutral_kwargs,
+            levels=LevelSet(
+                supports=[Decimal("95")],
+                resistances=[Decimal("108")],
+            ),
+            trade_plan=_trade_plan("95", "108"),
+            last_close=Decimal("100"),
+        )
+        invalid_plan = scorer.score(
+            **neutral_kwargs,
+            levels=LevelSet(
+                supports=[Decimal("105")],
+                resistances=[Decimal("95")],
+            ),
+            trade_plan=_trade_plan("105", "95"),
+            last_close=Decimal("100"),
+        )
+
+        assert valid_plan.grade == Grade.HOLD
+        assert invalid_plan.grade == Grade.HOLD

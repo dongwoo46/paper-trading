@@ -145,7 +145,15 @@ class SupportResistanceFinder(Protocol):
     인프라 어댑터: ScipyPeaksSupportResistanceFinder (scipy.signal.find_peaks 기반)
     """
 
-    def find(self, candles: list[Candle], atr: Decimal) -> LevelSet:
+    def find(
+        self,
+        candles: list[Candle],
+        atr: Decimal,
+        *,
+        window: str | None = None,
+        interval: str | None = None,
+        last_close: Decimal | None = None,
+    ) -> LevelSet:
         """봉 목록과 ATR을 받아 지지·저항 레벨 세트를 반환한다."""
         ...
 
@@ -189,6 +197,10 @@ class ConfidenceScorer(Protocol):
         patterns: list[CandlePattern],
         indicator_signals: list[IndicatorSignal],
         volume_analysis: VolumeAnalysis,
+        *,
+        levels: LevelSet | None = None,
+        trade_plan: object | None = None,
+        last_close: Decimal | None = None,
     ) -> Recommendation:
         """분석 결과를 받아 Recommendation (grade + confidence)을 반환한다."""
         ...

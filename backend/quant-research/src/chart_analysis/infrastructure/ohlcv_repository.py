@@ -48,11 +48,11 @@ class PostgresOhlcvRepository:
         Returns:
             list[Candle] — 날짜 오름차순 정렬, 모든 가격 Decimal.
         """
+        if interval not in _INTERVAL_TO_TABLE:
+            raise ValueError(f"지원하지 않는 interval: {interval!r}. 가능: D, W")
         window_key = (window, interval)
         if window_key not in _WINDOW_TO_BAR_LIMIT:
             raise ValueError(f"지원하지 않는 window/interval: {window!r}/{interval!r}")
-        if interval not in _INTERVAL_TO_TABLE:
-            raise ValueError(f"지원하지 않는 interval: {interval!r}. 가능: D, W")
 
         table = _INTERVAL_TO_TABLE[interval]
         limit = _WINDOW_TO_BAR_LIMIT[window_key]

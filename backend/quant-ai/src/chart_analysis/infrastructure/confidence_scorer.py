@@ -21,16 +21,32 @@ from __future__ import annotations
 import os
 from decimal import Decimal, ROUND_HALF_UP
 
-from src.chart_analysis.domain.value_objects import (
-    CandlePattern,
-    Grade,
-    IndicatorSignal,
-    PatternType,
-    Recommendation,
-    Strength,
-    TrendAnalysis,
-    VolumeAnalysis,
-)
+try:
+    from chart_analysis.domain.value_objects import (
+        CandlePattern,
+        Grade,
+        IndicatorSignal,
+        LevelSet,
+        PatternType,
+        Recommendation,
+        Strength,
+        TradePlan,
+        TrendAnalysis,
+        VolumeAnalysis,
+    )
+except ImportError:
+    from src.chart_analysis.domain.value_objects import (
+        CandlePattern,
+        Grade,
+        IndicatorSignal,
+        LevelSet,
+        PatternType,
+        Recommendation,
+        Strength,
+        TradePlan,
+        TrendAnalysis,
+        VolumeAnalysis,
+    )
 
 # ------------------------------------------------------------------ #
 # 가중치 상수 (모두 Decimal)
@@ -42,6 +58,8 @@ _W_VOLUME_SPIKE_BULLISH = Decimal("0.10")
 _W_BEARISH_PATTERN = Decimal("-0.15")
 _W_RSI_OVERBOUGHT = Decimal("-0.10")
 _W_MA_ADX_BEARISH = Decimal("-0.25")
+_W_SR_VALID_PLAN = Decimal("0.08")
+_W_SR_INVALID_PLAN = Decimal("-0.08")
 
 # 기준 임계값
 _DEFAULT_STRONG_THRESHOLD = Decimal("0.7")
@@ -86,6 +104,10 @@ class WeightedRuleConfidenceScorer:
         patterns: list[CandlePattern],
         indicator_signals: list[IndicatorSignal],
         volume_analysis: VolumeAnalysis,
+        *,
+        levels: LevelSet | None = None,
+        trade_plan: TradePlan | None = None,
+        last_close: Decimal | None = None,
     ) -> Recommendation:
         """분석 결과를 받아 Recommendation (grade + confidence)을 반환한다.
 
@@ -112,8 +134,17 @@ class WeightedRuleConfidenceScorer:
         # 거래량 spike
         raw_score += self._score_volume(volume_analysis)
 
+        directional_score = raw_score
+
+        # 지지/저항 quality와 trade-plan validity는 방향성 판정이 아닌 confidence 신뢰도만 보정한다.
+        adjusted_score = raw_score + self._score_support_resistance_quality(
+            levels=levels,
+            trade_plan=trade_plan,
+            last_close=last_close,
+        )
+
         # clamp to [-1, 1] then normalize to [0, 1]
-        clamped = max(Decimal("-1"), min(Decimal("1"), raw_score))
+        clamped = max(Decimal("-1"), min(Decimal("1"), adjusted_score))
         confidence = (clamped + _ONE) / _TWO  # [-1,1] → [0,1]
 
         # 임계값 (환경변수 외부화)
@@ -121,7 +152,7 @@ class WeightedRuleConfidenceScorer:
         buy_threshold = _get_threshold("CHART_ANALYSIS_CONFIDENCE_BUY_THRESHOLD", _DEFAULT_BUY_THRESHOLD)
         # grade 결정
         grade = self._map_to_grade(
-            raw_score=raw_score,
+            raw_score=directional_score,
             confidence=confidence,
             strong_threshold=strong_threshold,
             buy_threshold=buy_threshold,
@@ -176,6 +207,30 @@ class WeightedRuleConfidenceScorer:
         if volume.spike_detected and volume.trend in ("up", "bullish"):
             return _W_VOLUME_SPIKE_BULLISH
         return _ZERO
+
+    @staticmethod
+    def _score_support_resistance_quality(
+        *,
+        levels: LevelSet | None,
+        trade_plan: TradePlan | None,
+        last_close: Decimal | None,
+    ) -> Decimal:
+        """Bounded confidence adjustment from SR quality and trade-plan validity."""
+        if levels is None or trade_plan is None or last_close is None:
+            return _ZERO
+
+        valid_supports = [level for level in levels.supports if level < last_close]
+        valid_resistances = [level for level in levels.resistances if level > last_close]
+        plan_uses_valid_support = trade_plan.stop_loss < last_close
+        plan_uses_valid_resistance = trade_plan.target_price > last_close
+
+        if valid_supports and valid_resistances and plan_uses_valid_support and plan_uses_valid_resistance:
+            return _W_SR_VALID_PLAN
+        if not plan_uses_valid_support or not plan_uses_valid_resistance:
+            return _W_SR_INVALID_PLAN
+        if valid_supports or valid_resistances:
+            return _W_SR_VALID_PLAN / _TWO
+        return _W_SR_INVALID_PLAN
 
     @staticmethod
     def _map_to_grade(

@@ -1,4 +1,4 @@
-"""PrecomputePipelineService 단위 테스트."""
+﻿"""PrecomputePipelineService 단위 테스트."""
 from __future__ import annotations
 
 import sys
@@ -6,13 +6,16 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'src'))
 
 import asyncio
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from chart_analysis.application.precompute_pipeline_service import PrecomputePipelineService
+from chart_analysis.application.precompute_pipeline_service import (
+    PrecomputePipelineService,
+    _build_trade_plan,
+)
 from chart_analysis.domain.value_objects import (
     Candle,
     CandlePattern,
@@ -34,7 +37,7 @@ from chart_analysis.domain.chart_analysis_result import ChartAnalysisResult
 
 def _make_candle(close: str = "70000", idx: int = 0) -> Candle:
     return Candle(
-        date=date(2024, 1, idx + 1),
+        date=date(2024, 1, 1) + timedelta(days=idx),
         open=Decimal("69000"),
         high=Decimal("71000"),
         low=Decimal("68000"),
@@ -178,7 +181,7 @@ class TestPrecomputePipelineService:
 
     def test_run_for_symbol_enqueues_popular(self):
         """is_popular=True, 해시 변경 시 queue_repo.enqueue 호출 확인."""
-        candles = _make_candles(10)
+        candles = _make_candles(240)
         # existing result with different hash → triggers recompute
         existing = _make_result(hash_val="old_hash")
         svc, mocks = _make_service(ohlcv_candles=candles, existing_result=existing)
@@ -201,7 +204,7 @@ class TestPrecomputePipelineService:
 
     def test_run_for_symbol_no_enqueue_when_not_popular(self):
         """is_popular=False → queue_repo.enqueue 미호출."""
-        candles = _make_candles(10)
+        candles = _make_candles(240)
         existing = _make_result(hash_val="old_hash")
         svc, mocks = _make_service(ohlcv_candles=candles, existing_result=existing)
 
@@ -217,3 +220,45 @@ class TestPrecomputePipelineService:
             )
 
         mocks["queue_repo"].enqueue.assert_not_called()
+
+    def test_build_trade_plan_uses_nearest_valid_levels_on_correct_side(self):
+        """trade plan은 현재가 아래 nearest support와 현재가 위 nearest resistance를 선택한다."""
+        levels = LevelSet(
+            supports=[Decimal("101"), Decimal("97"), Decimal("94")],
+            resistances=[Decimal("99"), Decimal("103"), Decimal("110")],
+        )
+
+        plan = _build_trade_plan(levels, Decimal("100"))
+
+        assert plan.stop_loss == Decimal("97")
+        assert plan.target_price == Decimal("103")
+        assert isinstance(plan.stop_loss, Decimal)
+        assert isinstance(plan.target_price, Decimal)
+
+    def test_pipeline_passes_window_and_price_context_to_sr_and_confidence(self):
+        """pipeline은 finder와 confidence scorer에 window/current-price context를 전달한다."""
+        candles = _make_candles(60)
+        existing = _make_result(hash_val="old_hash")
+        svc, mocks = _make_service(ohlcv_candles=candles, existing_result=existing)
+
+        with patch(
+            "chart_analysis.application.precompute_pipeline_service.ChartSnapshot"
+        ) as MockSnapshot:
+            mock_snap = MagicMock()
+            mock_snap.compute_hash.return_value = "new_hash_different"
+            MockSnapshot.return_value = mock_snap
+
+            asyncio.get_event_loop().run_until_complete(
+                svc._process_window("005930", "3M", "D", is_popular=False)
+            )
+
+        mocks["sr_finder"].find.assert_called_once_with(
+            candles,
+            _make_indicator_set().atr14,
+            window="3M",
+            interval="D",
+            last_close=candles[-1].close,
+        )
+        assert mocks["confidence_scorer"].score.call_args.kwargs["levels"] == mocks["sr_finder"].find.return_value
+        assert mocks["confidence_scorer"].score.call_args.kwargs["last_close"] == candles[-1].close
+        assert isinstance(mocks["confidence_scorer"].score.call_args.kwargs["trade_plan"], TradePlan)
