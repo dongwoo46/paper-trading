@@ -2,7 +2,6 @@ package com.papertrading.api.application.position
 
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.application.order.AutoExitTriggerAuditInput
-import com.papertrading.api.application.order.OrderCommandService
 import com.papertrading.api.application.position.result.TriggerDecision
 import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.enums.TriggerSkipReason
@@ -27,7 +26,7 @@ class PositionExitTriggerOrchestrator(
     private val positionRepository: PositionRepository,
     private val triggerRepository: PositionExitTriggerRepository,
     private val evaluator: PositionExitTriggerEvaluator,
-    private val orderCommandService: OrderCommandService,
+    private val autoExitOrderPlacementService: AutoExitOrderPlacementService,
     private val orderRepository: OrderRepository,
     private val notificationEventPublisher: SlackNotificationEventPublisher,
 ) {
@@ -139,7 +138,7 @@ class PositionExitTriggerOrchestrator(
         val triggerType = decisions.first().triggerType
         repeat(maxOrderCreateRetries) { attempt ->
             try {
-                orderCommandService.createGroupedAutoExitSellOrder(
+                autoExitOrderPlacementService.createGroupedAutoExitSellOrder(
                     accountId = accountId,
                     ticker = position.ticker,
                     marketType = position.marketType,

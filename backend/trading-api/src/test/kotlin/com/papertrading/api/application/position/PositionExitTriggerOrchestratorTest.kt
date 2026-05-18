@@ -2,7 +2,6 @@ package com.papertrading.api.application.position
 
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.application.order.AutoExitTriggerAuditInput
-import com.papertrading.api.application.order.OrderCommandService
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.order.Order
 import com.papertrading.api.domain.entity.position.Position
@@ -35,14 +34,14 @@ class PositionExitTriggerOrchestratorTest {
     private val positionRepository = mockk<PositionRepository>()
     private val triggerRepository = mockk<PositionExitTriggerRepository>()
     private val evaluator = PositionExitTriggerEvaluator()
-    private val orderCommandService = mockk<OrderCommandService>()
+    private val autoExitOrderPlacementService = mockk<AutoExitOrderPlacementService>()
     private val orderRepository = mockk<OrderRepository>()
     private val notificationEventPublisher = mockk<SlackNotificationEventPublisher>(relaxed = true)
     private val orchestrator = PositionExitTriggerOrchestrator(
         positionRepository,
         triggerRepository,
         evaluator,
-        orderCommandService,
+        autoExitOrderPlacementService,
         orderRepository,
         notificationEventPublisher,
     )
@@ -66,7 +65,7 @@ class PositionExitTriggerOrchestratorTest {
         assertEquals(TriggerState.TRIGGERED, first.state)
         assertEquals(TriggerState.TRIGGERED, second.state)
         verify(exactly = 1) {
-            orderCommandService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any())
+            autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any())
         }
     }
 
@@ -81,7 +80,7 @@ class PositionExitTriggerOrchestratorTest {
         every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.TAKE_PROFIT) } returns listOf(takeProfit)
         every { orderRepository.existsOpenOrderByAccountTickerSideWithoutGroup(1L, "005930") } returns false
         every { orderRepository.sumOpenSellQuantity(1L, "005930") } returns BigDecimal.ZERO
-        every { orderCommandService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) } returns mockk<Order>()
+        every { autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) } returns mockk<Order>()
         every { triggerRepository.saveAll(any<List<PositionExitTrigger>>()) } answers { firstArg() }
 
         orchestrator.onQuote("005930", BigDecimal("100.0000"), quoteAt)
@@ -89,7 +88,7 @@ class PositionExitTriggerOrchestratorTest {
         assertEquals(TriggerState.TRIGGERED, stopLoss.state)
         assertEquals(TriggerState.TRIGGERED, takeProfit.state)
         verify(exactly = 2) {
-            orderCommandService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any())
+            autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any())
         }
     }
 
@@ -105,7 +104,7 @@ class PositionExitTriggerOrchestratorTest {
         every { orderRepository.existsOpenOrderByAccountTickerSideWithoutGroup(1L, "005930") } returns false
         every { orderRepository.sumOpenSellQuantity(1L, "005930") } returns BigDecimal("3.0000")
         every {
-            orderCommandService.createGroupedAutoExitSellOrder(
+            autoExitOrderPlacementService.createGroupedAutoExitSellOrder(
                 accountId = 1L,
                 ticker = "005930",
                 marketType = MarketType.KOSPI,
@@ -137,7 +136,7 @@ class PositionExitTriggerOrchestratorTest {
         assertEquals(TriggerState.SKIPPED, trigger.state)
         assertEquals(TriggerSkipReason.SELL_ALREADY_LOCKED, trigger.skipReason)
         verify(exactly = 0) {
-            orderCommandService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any())
+            autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any())
         }
     }
 
@@ -156,7 +155,7 @@ class PositionExitTriggerOrchestratorTest {
         assertEquals(TriggerState.SKIPPED, trigger.state)
         assertEquals(TriggerSkipReason.MANUAL_SELL_CONFLICT, trigger.skipReason)
         verify(exactly = 0) {
-            orderCommandService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any())
+            autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any())
         }
     }
 
@@ -169,7 +168,7 @@ class PositionExitTriggerOrchestratorTest {
         every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.STOP_LOSS) } returns listOf(trigger)
         every { orderRepository.existsOpenOrderByAccountTickerSideWithoutGroup(1L, "005930") } returns false
         every { orderRepository.sumOpenSellQuantity(1L, "005930") } returns BigDecimal.ZERO
-        every { orderCommandService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) } throws
+        every { autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) } throws
             DataIntegrityViolationException("uq")
         every { orderRepository.findByAccountIdAndOrderGroupId(1L, any()) } returns mockk<Order>()
         every { triggerRepository.saveAll(any<List<PositionExitTrigger>>()) } answers { firstArg() }
@@ -189,7 +188,7 @@ class PositionExitTriggerOrchestratorTest {
         every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.STOP_LOSS) } returns listOf(trigger)
         every { orderRepository.existsOpenOrderByAccountTickerSideWithoutGroup(1L, "005930") } returns false
         every { orderRepository.sumOpenSellQuantity(1L, "005930") } returns BigDecimal.ZERO
-        every { orderCommandService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) } throws
+        every { autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) } throws
             IllegalStateException("broker unavailable")
         every { triggerRepository.saveAll(any<List<PositionExitTrigger>>()) } answers { firstArg() }
 
@@ -232,7 +231,7 @@ class PositionExitTriggerOrchestratorTest {
         every { orderRepository.existsOpenOrderByAccountTickerSideWithoutGroup(1L, "005930") } returns false
         every { orderRepository.sumOpenSellQuantity(1L, "005930") } returns BigDecimal.ZERO
         every {
-            orderCommandService.createGroupedAutoExitSellOrder(
+            autoExitOrderPlacementService.createGroupedAutoExitSellOrder(
                 accountId = 1L,
                 ticker = "005930",
                 marketType = MarketType.KOSPI,
