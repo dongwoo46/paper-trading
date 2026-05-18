@@ -31,6 +31,15 @@ Act as the paper-trading project Orchestrator.
 7. Report concise progress and next action.
 8. Absolute approval gate: even in `auto` mode, after Step 1(planner) completion, never start Step 2 automatically. Ask user approval first, set `state.md` to `needs_input`, and keep Step 2 pending until approval.
 
+## Planner Decision Policy
+
+- The orchestrator and planner agents must not present only a single chosen design path.
+- Planner Pass A must give the user real choices: feature/concept explanation, at least 3 options when feasible, pros, cons, implementation difficulty, validation method, and one explicit recommendation per decision.
+- If fewer than 3 realistic options exist, explain why.
+- The orchestrator must preserve the feature/concept explanation and alternatives when relaying planner output and ask the user to choose.
+- User-facing summaries must explain what each feature/decision means before listing options. Do not omit this explanation to shorten the response.
+- `spec.md` and downstream step files may be written only from user-confirmed decisions.
+
 ## Codex Delegation
 
 - Use Codex subagents via `spawn_agent`/`wait_agent` when delegation is needed and available.

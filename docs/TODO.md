@@ -29,7 +29,10 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P0 — 서비스 역할 재정립 (현재 구조 잘못됨)
 
-- [] 종목 분석 시 3M, 6M, 1Y , 2Y, MAX의 지지 저항 차트 분석의 신뢰도가 떨어짐 이거 문제가 좀 잇을듯 이거 수정해야함
+- [x] 종목 분석 시 3M, 6M, 1Y, 2Y, MAX 지지·저항 차트 분석 신뢰도 개선 | project: quant-research | phase: chart-analysis-support-resistance-quality | priority: P0 | done: 2026-05-19 | pr: #36
+  - 증상: 장기 window(3M/6M/1Y/2Y/MAX)에서 지지·저항 레벨이 실제 차트 맥락과 맞지 않아 분석 품질이 떨어짐
+  - 조사 항목: window별 봉 수/interval 매핑, peak 탐지 파라미터, ATR 기반 클러스터링 폭, 최근성/터치 횟수/거래량 가중치, 장기 추세 구간 분리 여부
+  - 목표: 장기 구간에서도 주요 지지·저항 레벨이 시각적으로 납득 가능하고, confidence score와 자연어 근거가 계산 품질을 반영하도록 개선
 
 - [x] quant-research / quant-ai 역할 분리 리팩터 | project: quant-ai | phase: service-role-refactor | priority: P0 | done: 2026-05-14
   - **문제**: quant-ai가 분석 파이프라인을 오케스트레이션하고 quant-research에 위임하는 구조 — 역할 역전

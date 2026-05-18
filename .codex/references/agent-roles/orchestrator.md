@@ -47,13 +47,20 @@ Each phase lives at `docs/phase/{project}/{feature}/`.
 ## Step Gates and Planning
 
 - Planner steps must ask all relevant questions first, align design and flow with the user, then write docs.
+- Planner/orchestrator decision policy:
+  - Do not collapse design discussion into a single recommendation.
+  - For every meaningful feature, algorithm, API, schema, workflow, UX, or quant-design choice, agents must present multiple user-selectable options before writing final docs.
+  - Each option set must include: a short explanation of the feature/concept, at least 3 options when feasible, pros, cons, implementation difficulty, validation method, one explicit recommendation, and a clear statement that the user makes the final decision.
+  - If only 1-2 realistic options exist, explain why fewer than 3 options are available.
+  - The orchestrator must not summarize only the recommendation when relaying planner output; it must preserve the feature/concept explanation and alternatives so the user can choose.
+  - User-facing orchestration summaries for planner choices must include what each feature/decision means before listing options. Do not omit this explanation to shorten the response.
 - Every generated step file should begin with the step's open questions and confirmed design choices before directives.
 - `spec.md` must reflect confirmed decisions only.
 - Step files contain directives, not implementation bodies.
 - Interactive Q&A loop policy:
   - The question/answer loop for planner steps is owned by the main orchestrator thread.
   - Use a two-pass planner pattern:
-    1) Planner pass A: read context and produce a structured question list plus recommended options only.
+    1) Planner pass A: read context and produce a structured question list with feature explanations, multiple options, pros/cons, difficulty, validation method, and one recommendation per decision.
     2) Orchestrator: run multi-turn Q&A with the user until decisions are confirmed.
     3) Planner pass B: generate `spec.md` and `step-2..N.md` from confirmed decisions only.
   - Do not rely on one spawned planner run to both ask/resolve Q&A and finalize docs.
