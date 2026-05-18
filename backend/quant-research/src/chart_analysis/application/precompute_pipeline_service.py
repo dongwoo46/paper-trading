@@ -17,17 +17,30 @@ import logging
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from src.chart_analysis.domain.chart_analysis_result import ChartAnalysisResult
-from src.chart_analysis.domain.chart_snapshot import ChartSnapshot
-from src.chart_analysis.domain.value_objects import (
-    CandlePattern,
-    IndicatorSignal,
-    LevelSet,
-    Recommendation,
-    ReportSource,
-    TradePlan,
-    VolumeAnalysis,
-)
+try:
+    from chart_analysis.domain.chart_analysis_result import ChartAnalysisResult
+    from chart_analysis.domain.chart_snapshot import ChartSnapshot
+    from chart_analysis.domain.value_objects import (
+        CandlePattern,
+        IndicatorSignal,
+        LevelSet,
+        Recommendation,
+        ReportSource,
+        TradePlan,
+        VolumeAnalysis,
+    )
+except ImportError:
+    from src.chart_analysis.domain.chart_analysis_result import ChartAnalysisResult
+    from src.chart_analysis.domain.chart_snapshot import ChartSnapshot
+    from src.chart_analysis.domain.value_objects import (
+        CandlePattern,
+        IndicatorSignal,
+        LevelSet,
+        Recommendation,
+        ReportSource,
+        TradePlan,
+        VolumeAnalysis,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -196,13 +209,25 @@ class PrecomputePipelineService:
         # 6. 수치 분석 재실행
         trend = self._trend_classifier.classify(candles, indicators)
         patterns: list[CandlePattern] = self._pattern_detector.detect(candles)
-        levels: LevelSet = self._sr_finder.find(candles, indicators.atr14)
+        levels: LevelSet = self._sr_finder.find(
+            candles,
+            indicators.atr14,
+            window=window,
+            interval=interval,
+            last_close=candles[-1].close,
+        )
         indicator_signals: list[IndicatorSignal] = _build_indicator_signals(indicators)
         volume_analysis: VolumeAnalysis = _compute_volume_analysis(candles, indicators)
-        recommendation: Recommendation = self._confidence_scorer.score(
-            trend, patterns, indicator_signals, volume_analysis
-        )
         trade_plan = _build_trade_plan(levels, candles[-1].close)
+        recommendation: Recommendation = self._confidence_scorer.score(
+            trend,
+            patterns,
+            indicator_signals,
+            volume_analysis,
+            levels=levels,
+            trade_plan=trade_plan,
+            last_close=candles[-1].close,
+        )
 
         result = ChartAnalysisResult(
             symbol=symbol,
@@ -242,8 +267,6 @@ class PrecomputePipelineService:
 
 def _build_indicator_signals(indicators) -> list[IndicatorSignal]:
     """핵심 보조지표를 IndicatorSignal 목록으로 변환."""
-    from src.chart_analysis.domain.value_objects import IndicatorSignal
-
     signals: list[IndicatorSignal] = []
     rsi = indicators.rsi14
 
@@ -339,8 +362,19 @@ def _build_trade_plan(levels: LevelSet, last_close: Decimal) -> TradePlan:
     """레벨셋과 현재가로 기본 Trade Plan 생성."""
     entry = last_close
 
-    stop_loss = levels.supports[0] if levels.supports else (last_close * Decimal("0.95")).quantize(Decimal("0.01"))
-    target = levels.resistances[0] if levels.resistances else (last_close * Decimal("1.10")).quantize(Decimal("0.01"))
+    valid_supports = [level for level in levels.supports if level < last_close]
+    valid_resistances = [level for level in levels.resistances if level > last_close]
+
+    stop_loss = (
+        max(valid_supports)
+        if valid_supports
+        else (last_close * Decimal("0.95")).quantize(Decimal("0.01"))
+    )
+    target = (
+        min(valid_resistances)
+        if valid_resistances
+        else (last_close * Decimal("1.10")).quantize(Decimal("0.01"))
+    )
 
     risk = entry - stop_loss
     reward = target - entry
