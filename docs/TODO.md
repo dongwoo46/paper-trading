@@ -76,7 +76,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P0 — 포지션 청산 트리거 모델 리팩터링 ⚠️ 최우선
 
-- [ ] PositionExitTrigger 단일 조건 모델 리팩터링 | project: trading-api | phase: position-exit-trigger-model-refactor | priority: P0
+- [x] PositionExitTrigger 단일 조건 모델 리팩터링 | project: trading-api | phase: position-exit-trigger-model-refactor | priority: P0 | done: 2026-05-19
   - 현재 구조 문제: 포지션당 trigger row 1개에 `stopLossPercent` / `takeProfitPercent`, `stopLossState` / `takeProfitState`가 같이 있어 트리거별 주문·상태·비율·멱등성 관리가 흐려짐
   - 목표 모델: `PositionExitTrigger`를 청산 조건 1개를 나타내는 엔티티로 변경
     - `triggerType`: `STOP_LOSS` / `TAKE_PROFIT`

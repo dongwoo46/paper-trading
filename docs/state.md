@@ -1,4 +1,4 @@
-# Orchestrator State
+﻿# Orchestrator State
 
 ## 모드
 manual
@@ -7,11 +7,12 @@ manual
 idle
 
 ## 완료된 Phase
+- trading-api/position-exit-trigger-model-refactor | 완료 — 2026-05-19
 - quant-ai/service-role-refactor | step 5(code-reviewer) 스킵 — PR #34 이미 main 머지 완료
 - front/chart-analysis-frontend-refactor | 완료 — 2026-05-14
 
 ## 마지막 액션
-2026-05-14: front/chart-analysis-frontend-refactor 완료 — API 엔드포인트 3개 api-ai→api-research 이전 + streamLlmReport SSE 연동 + AiNarrationCard 추가.
+2026-05-19: trading-api/position-exit-trigger-model-refactor 완료 — 단일 조건 PositionExitTrigger 모델, 신규 plural API, grouped auto-exit order, focused tests/review/rework 완료.
 
 ## 다음 액션
-idle — 다음 P0 작업: pykrx 일봉·주봉 OHLCV 저장 오류 조사 (quant-collector/pykrx-ohlcv-fix)
+idle — 다음 작업 선택 대기.

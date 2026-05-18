@@ -1,0 +1,87 @@
+﻿{
+  "project": "trading-api",
+  "feature": "position-exit-trigger-model-refactor",
+  "status": "completed",
+  "mode": "manual",
+  "branch": "feature/trading-api-position-exit-trigger-model-refactor",
+  "worktree": ".worktrees/trading-api-position-exit-trigger-model-refactor",
+  "current_step": 7,
+  "total_steps": 7,
+  "created": "2026-05-18",
+  "updated": "2026-05-18",
+  "retry_count": 0,
+  "blockers": [],
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "name": "Planner question pass and implementation audit",
+      "agent": "service-planner",
+      "status": "completed",
+      "file": "step-1.md",
+      "result": "PASS: WIP audit completed; user decisions confirmed for planner pass B.",
+      "substeps": [
+        { "name": "graphify + requirements", "status": "completed" },
+        { "name": "decision points + user choices", "status": "completed" },
+        { "name": "DDD model", "status": "completed" },
+        { "name": "API + DB design", "status": "completed" },
+        { "name": "spec.md", "status": "completed" },
+        { "name": "step files generation", "status": "completed" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Domain model, migration, and repository contracts",
+      "agent": "fullstack-dev",
+      "status": "completed",
+      "file": "step-2.md",
+      "result": "PASS: Single-condition domain model, migration, repository contracts, and orderGroupId audit support implemented; compileKotlin passed.",
+      "substeps": []
+    },
+    {
+      "id": 3,
+      "name": "Command, query, DTO, and controller refactor",
+      "agent": "fullstack-dev",
+      "status": "completed",
+      "file": "step-3.md",
+      "result": "PASS: Replaced combined position trigger API/DTO with plural single-trigger command/query/controller API; compileKotlin passed.",
+      "substeps": []
+    },
+    {
+      "id": 4,
+      "name": "Evaluator, orchestrator, grouped order, and quantity cap",
+      "agent": "fullstack-dev",
+      "status": "completed",
+      "file": "step-4.md",
+      "result": "PASS: Evaluator decision metadata, grouped trigger orchestration, pending sell quantity cap, grouped auto-exit order idempotency, and SKIPPED/FAILED handling implemented; compileKotlin passed.",
+      "substeps": []
+    },
+    {
+      "id": 5,
+      "name": "Test coverage and verification",
+      "agent": "test-engineer",
+      "status": "completed",
+      "file": "step-5.md",
+      "result": "PASS: PositionExitTrigger focused tests updated for single-condition model; 24 focused tests and compileKotlin passed.",
+      "substeps": []
+    },
+    {
+      "id": 6,
+      "name": "Review pass",
+      "agent": "code-reviewer",
+      "status": "completed",
+      "file": "step-6.md",
+      "result": "PASS after rework: Auto-exit order placement now runs in REQUIRES_NEW transaction boundary; focused tests and compileKotlin passed.",
+      "substeps": []
+    },
+    {
+      "id": 7,
+      "name": "Cleanup and phase handoff",
+      "agent": "cleanup",
+      "status": "completed",
+      "file": "step-7.md",
+      "result": "PASS: Final focused tests and compileKotlin passed; no TODO/FIXME found in changed files; summary and handoff prepared.",
+      "substeps": []
+    }
+  ]
+}
