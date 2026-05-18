@@ -2,10 +2,11 @@ package com.papertrading.api.application.position
 
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.entity.position.PositionExitTrigger
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
+import com.papertrading.api.domain.enums.PriceBasisPolicy
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.entity.position.PositionExitTrigger
 import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.support.withId
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -16,42 +17,91 @@ import java.time.Instant
 
 class PositionExitTriggerEvaluatorTest {
     private val evaluator = PositionExitTriggerEvaluator()
+    private val quoteAt = Instant.parse("2026-05-08T12:00:00Z")
 
     @Test
-    fun `stop loss와 take profit 조건을 BigDecimal로 평가한다`() {
-        val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000")).withId(1L)
-        val position = Position.createWithHolding(account, "005930", MarketType.KOSPI, BigDecimal("1"), BigDecimal("100"))
-        val trigger = PositionExitTrigger.create(10L, 1L, "005930", true, BigDecimal("3.5"), BigDecimal("7.0"))
+    fun `stop loss fires when quote is equal to or below trigger price`() {
+        val position = position(avgBuyPrice = BigDecimal("100.0000"))
+        val trigger = fixedTrigger(100L, TriggerType.STOP_LOSS, BigDecimal("95.0000"))
 
-        val stop = evaluator.evaluate(position, trigger, BigDecimal("96.5000"), Instant.now())
-        assertEquals(TriggerType.STOP_LOSS, stop?.type)
+        val equality = evaluator.evaluate(position, trigger, BigDecimal("95.0000"), quoteAt)
+        val below = evaluator.evaluate(position, trigger, BigDecimal("94.9999"), quoteAt)
 
-        val takeOnlyTrigger = PositionExitTrigger.create(11L, 1L, "005930", true, null, BigDecimal("7.0"))
-        val take = evaluator.evaluate(position, takeOnlyTrigger, BigDecimal("107.0000"), Instant.now())
-        assertEquals(TriggerType.TAKE_PROFIT, take?.type)
+        assertEquals(TriggerType.STOP_LOSS, equality?.triggerType)
+        assertEquals(0, BigDecimal("95.0000").compareTo(equality?.effectiveTriggerPrice))
+        assertEquals(TriggerType.STOP_LOSS, below?.triggerType)
     }
 
     @Test
-    fun `threshold와 quote가 동일하면 트리거된다`() {
-        val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000")).withId(1L)
-        val position = Position.createWithHolding(account, "005930", MarketType.KOSPI, BigDecimal("1"), BigDecimal("100"))
+    fun `stop loss does not fire when quote is above trigger price`() {
+        val position = position(avgBuyPrice = BigDecimal("100.0000"))
+        val trigger = fixedTrigger(100L, TriggerType.STOP_LOSS, BigDecimal("95.0000"))
 
-        val stopTrigger = PositionExitTrigger.create(10L, 1L, "005930", true, BigDecimal("5.0"), null)
-        val stopDecision = evaluator.evaluate(position, stopTrigger, BigDecimal("95.0000"), Instant.now())
-        assertEquals(TriggerType.STOP_LOSS, stopDecision?.type)
-
-        val takeTrigger = PositionExitTrigger.create(10L, 1L, "005930", true, null, BigDecimal("7.0"))
-        val takeDecision = evaluator.evaluate(position, takeTrigger, BigDecimal("107.0000"), Instant.now())
-        assertEquals(TriggerType.TAKE_PROFIT, takeDecision?.type)
+        assertNull(evaluator.evaluate(position, trigger, BigDecimal("95.0001"), quoteAt))
     }
 
     @Test
-    fun `threshold 경계를 넘지 않으면 트리거되지 않는다`() {
-        val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000")).withId(1L)
-        val position = Position.createWithHolding(account, "005930", MarketType.KOSPI, BigDecimal("1"), BigDecimal("100"))
-        val trigger = PositionExitTrigger.create(10L, 1L, "005930", true, BigDecimal("5.0"), BigDecimal("7.0"))
+    fun `take profit fires when quote is equal to or above trigger price`() {
+        val position = position(avgBuyPrice = BigDecimal("100.0000"))
+        val trigger = fixedTrigger(101L, TriggerType.TAKE_PROFIT, BigDecimal("107.0000"))
 
-        assertNull(evaluator.evaluate(position, trigger, BigDecimal("95.0001"), Instant.now()))
-        assertNull(evaluator.evaluate(position, trigger, BigDecimal("106.9999"), Instant.now()))
+        val equality = evaluator.evaluate(position, trigger, BigDecimal("107.0000"), quoteAt)
+        val above = evaluator.evaluate(position, trigger, BigDecimal("107.0001"), quoteAt)
+
+        assertEquals(TriggerType.TAKE_PROFIT, equality?.triggerType)
+        assertEquals(0, BigDecimal("107.0000").compareTo(equality?.effectiveTriggerPrice))
+        assertEquals(TriggerType.TAKE_PROFIT, above?.triggerType)
     }
+
+    @Test
+    fun `take profit does not fire when quote is below trigger price`() {
+        val position = position(avgBuyPrice = BigDecimal("100.0000"))
+        val trigger = fixedTrigger(101L, TriggerType.TAKE_PROFIT, BigDecimal("107.0000"))
+
+        assertNull(evaluator.evaluate(position, trigger, BigDecimal("106.9999"), quoteAt))
+    }
+
+    @Test
+    fun `follow avg price recomputes threshold from current position average price`() {
+        val position = position(avgBuyPrice = BigDecimal("120.0000"))
+        val trigger = PositionExitTrigger.create(
+            positionId = 10L,
+            accountId = 1L,
+            ticker = "005930",
+            triggerType = TriggerType.STOP_LOSS,
+            triggerPercent = BigDecimal("10.0000"),
+            triggerPrice = null,
+            priceBasisPolicy = PriceBasisPolicy.FOLLOW_AVG_PRICE,
+            exitRatioPercent = BigDecimal("40.0000"),
+        ).withId(102L)
+
+        val decision = evaluator.evaluate(position, trigger, BigDecimal("108.0000"), quoteAt)
+
+        assertEquals(102L, decision?.triggerId)
+        assertEquals(0, BigDecimal("108.00000000").compareTo(decision?.effectiveTriggerPrice))
+        assertEquals(BigDecimal("40.0000"), decision?.exitRatioPercent)
+    }
+
+    private fun position(avgBuyPrice: BigDecimal): Position {
+        val account = Account.create("a", AccountType.STOCK, TradingMode.LOCAL, BigDecimal("1000.0000")).withId(1L)
+        return Position.createWithHolding(
+            account = account,
+            ticker = "005930",
+            marketType = MarketType.KOSPI,
+            quantity = BigDecimal("10.0000"),
+            avgBuyPrice = avgBuyPrice,
+        ).withId(10L)
+    }
+
+    private fun fixedTrigger(id: Long, type: TriggerType, price: BigDecimal): PositionExitTrigger =
+        PositionExitTrigger.create(
+            positionId = 10L,
+            accountId = 1L,
+            ticker = "005930",
+            triggerType = type,
+            triggerPercent = null,
+            triggerPrice = price,
+            priceBasisPolicy = PriceBasisPolicy.FIXED_PRICE,
+            exitRatioPercent = BigDecimal("100.0000"),
+        ).withId(id)
 }

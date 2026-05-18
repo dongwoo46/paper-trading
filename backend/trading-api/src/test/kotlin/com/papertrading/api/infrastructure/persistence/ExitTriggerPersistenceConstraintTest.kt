@@ -7,10 +7,13 @@ import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderType
+import com.papertrading.api.domain.enums.PriceBasisPolicy
 import com.papertrading.api.domain.enums.TradingMode
+import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.domain.entity.position.PositionExitTrigger
 import com.querydsl.jpa.impl.JPAQueryFactory
 import jakarta.persistence.EntityManager
+import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
@@ -22,7 +25,6 @@ import org.springframework.context.annotation.Import
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.test.context.ActiveProfiles
-import org.hibernate.exception.ConstraintViolationException
 import java.math.BigDecimal
 
 @DataJpaTest
@@ -40,12 +42,28 @@ class ExitTriggerPersistenceConstraintTest {
     lateinit var entityManager: TestEntityManager
 
     @Test
-    fun `position_id unique 제약을 위반하면 예외`() {
-        val first = PositionExitTrigger.create(9001L, 1001L, "005930", true, BigDecimal("3"), BigDecimal("7"))
-        val second = PositionExitTrigger.create(9001L, 1002L, "005930", true, BigDecimal("4"), BigDecimal("8"))
+    fun `single condition model allows multiple triggers for the same position`() {
+        val first = PositionExitTrigger.create(
+            positionId = 9001L,
+            accountId = 1001L,
+            ticker = "005930",
+            triggerType = TriggerType.STOP_LOSS,
+            triggerPercent = null,
+            triggerPrice = BigDecimal("95.0000"),
+            priceBasisPolicy = PriceBasisPolicy.FIXED_PRICE,
+        )
+        val second = PositionExitTrigger.create(
+            positionId = 9001L,
+            accountId = 1001L,
+            ticker = "005930",
+            triggerType = TriggerType.TAKE_PROFIT,
+            triggerPercent = null,
+            triggerPrice = BigDecimal("107.0000"),
+            priceBasisPolicy = PriceBasisPolicy.FIXED_PRICE,
+        )
         entityManager.persistAndFlush(first)
 
-        assertThrows(ConstraintViolationException::class.java) {
+        assertDoesNotThrow {
             entityManager.persistAndFlush(second)
         }
     }
