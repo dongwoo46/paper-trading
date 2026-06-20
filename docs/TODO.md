@@ -185,6 +185,14 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 성과 지표: Sharpe / MDD / 연환산 수익률 / Calmar / 승률
   - 장투·단투 전략 타입별 분리 검증
 
+- [ ] 멀티팩터 AI 전략 DSL 변인 확장 | project: quant-worker | phase: backtest-multifactor-dsl-expansion | priority: P1
+  - 백테스트 엔진 기본 구조 완료 후 진행
+  - local AI가 생성하는 전략 DSL에서 가격/기술지표 외 변인 지원 확장
+  - 대상 변인: 수급, 펀더멘탈, 거시경제, 뉴스 감성, 공시, 이벤트 캘린더, 논문 기반 팩터
+  - 각 변인별 point-in-time 데이터 계약과 look-ahead bias 방지 규칙 정의
+  - LEAN custom data export/loader 구현
+  - 변인별 fixture + golden backtest regression 추가
+
 - [ ] 알파 팩터 파이프라인 | project: quant-worker | phase: alpha-pipeline | priority: P1
   - 팩터 계산: 수급 모멘텀 / 기술적 신호 / 밸류(PER·PBR 분위) / 거시
   - 팩터 정규화 (Z-score), IC(Information Coefficient) 분석

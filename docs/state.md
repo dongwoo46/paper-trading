@@ -4,7 +4,14 @@
 manual
 
 ## 상태
-idle
+needs_input
+
+## 활성 Phase
+- project: quant-worker
+- phase: backtest-engine
+- branch: feature/quant-worker-backtest-engine
+- worktree: .worktrees/quant-worker-backtest-engine
+- current_step: 4
 
 ## 완료된 Phase
 - quant-research/chart-analysis-support-resistance-quality | 완료 — 2026-05-19 | PR #36
@@ -13,7 +20,7 @@ idle
 - front/chart-analysis-frontend-refactor | 완료 — 2026-05-14
 
 ## 마지막 액션
-2026-05-19: quant-research/chart-analysis-support-resistance-quality PR #36 생성 — feature branch push 완료, cleanup 문서 PR 번호 반영.
+2026-05-31: quant-worker/backtest-engine Step 3 완료 — LEAN template, DB OHLCV export, workspace builder, Docker runner 구현 및 targeted tests 통과.
 
 ## 다음 액션
-idle — 다음 작업 선택 대기.
+needs_input — Step 4(quant-dev: async execution integration and result normalization) 실행 승인 대기.

@@ -1,0 +1,184 @@
+{
+  "phase": "backtest-engine",
+  "project": "quant-worker",
+  "status": "in_progress",
+  "current_step": 4,
+  "total_steps": 7,
+  "branch": "feature/quant-worker-backtest-engine",
+  "worktree_path": ".worktrees/quant-worker-backtest-engine",
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "agent": "quant-planner",
+      "name": "Backtesting engine design options and implementation plan",
+      "file": "step-1.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "Planner Pass B completed: spec.md and step-2.md through step-7.md generated from confirmed LEAN/JSON DSL decisions.",
+      "substeps": [
+        {
+          "name": "codebase context review",
+          "status": "completed"
+        },
+        {
+          "name": "decision options and user questions",
+          "status": "completed"
+        },
+        {
+          "name": "confirmed spec.md",
+          "status": "completed"
+        },
+        {
+          "name": "step files generation",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "agent": "quant-dev",
+      "name": "Backtest domain, DSL, persistence, and run API skeleton",
+      "file": "step-2.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "Step 2 PASS: implemented JSON DSL validation/domain models, backtest_runs migration/repository/service, and async run API skeleton. Targeted backtest tests, py_compile, rg TODO/FIXME, and git diff --check passed.",
+      "substeps": [
+        {
+          "name": "DSL validation tests",
+          "status": "completed"
+        },
+        {
+          "name": "domain models and market policy",
+          "status": "completed"
+        },
+        {
+          "name": "backtest_runs migration and repository",
+          "status": "completed"
+        },
+        {
+          "name": "async run API skeleton",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "agent": "quant-dev",
+      "name": "LEAN template, data export, and Docker runner",
+      "file": "step-3.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "Step 3 PASS: implemented OHLCV exporter, fixed LEAN template, run workspace builder, and Docker runner with mocked success/failure/timeout tests. Targeted tests, py_compile, rg TODO/FIXME, and git diff --check passed.",
+      "substeps": [
+        {
+          "name": "OHLCV exporter tests",
+          "status": "completed"
+        },
+        {
+          "name": "LEAN template workspace builder",
+          "status": "completed"
+        },
+        {
+          "name": "Docker runner",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "agent": "quant-dev",
+      "name": "Async execution integration and result normalization",
+      "file": "step-4.md",
+      "status": "pending",
+      "retry_count": 0,
+      "result": "",
+      "substeps": [
+        {
+          "name": "execution orchestrator",
+          "status": "pending"
+        },
+        {
+          "name": "LEAN result parser",
+          "status": "pending"
+        },
+        {
+          "name": "result and logs API integration",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "agent": "test-engineer",
+      "name": "Targeted QA verification",
+      "file": "step-5.md",
+      "status": "pending",
+      "retry_count": 0,
+      "result": "",
+      "substeps": [
+        {
+          "name": "targeted tests",
+          "status": "pending"
+        },
+        {
+          "name": "compile and diff checks",
+          "status": "pending"
+        },
+        {
+          "name": "optional Docker smoke",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "agent": "code-reviewer",
+      "name": "Code and quant review",
+      "file": "step-6.md",
+      "status": "pending",
+      "retry_count": 0,
+      "result": "",
+      "substeps": [
+        {
+          "name": "diff and spec review",
+          "status": "pending"
+        },
+        {
+          "name": "security and quant safety review",
+          "status": "pending"
+        },
+        {
+          "name": "test coverage review",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "agent": "orchestrator",
+      "name": "Cleanup summary and PR prep",
+      "file": "step-7.md",
+      "status": "pending",
+      "retry_count": 0,
+      "result": "",
+      "substeps": [
+        {
+          "name": "final verification",
+          "status": "pending"
+        },
+        {
+          "name": "summary docs",
+          "status": "pending"
+        },
+        {
+          "name": "PR preparation",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "blockers": [],
+  "created": "2026-05-31",
+  "updated": "2026-05-31"
+}
