@@ -1,0 +1,36 @@
+{
+  "platform": "web",
+  "backend": "fastapi",
+  "tier": "반자동",
+  "tierRecommendation": {
+    "preset": "반자동",
+    "reason": "공유 백엔드 계약 신호",
+    "signals": {
+      "monorepo": false,
+      "multiPlatform": false,
+      "migrations": false,
+      "riskDeps": false,
+      "sharedBackend": true
+    }
+  },
+  "orient": "on",
+  "testRunner": {
+    "present": true,
+    "kinds": ["vitest", "testing-library"]
+  },
+  "verifyCommand": null,
+  "projects": [
+    { "path": "backend/trading-api", "compileCommand": "./gradlew compileKotlin" },
+    { "path": "backend/collector-api", "compileCommand": "./gradlew compileKotlin" },
+    { "path": "frontend/trading-web", "compileCommand": "npm run build" }
+  ],
+  "detectedFrom": [
+    "CLAUDE.md (멀티모듈이라 stack-detect 자동 감지 불가 → 사람 확인으로 기록, 2026-08-04)",
+    "frontend/trading-web/package.json"
+  ],
+  "confidence": "high",
+  "nonStandard": [
+    "platform: react-vite (next 아님) — frontend/trading-web",
+    "backend: kotlin-spring-boot — backend/trading-api·collector-api (fastapi 외 추가 백엔드)"
+  ]
+}
