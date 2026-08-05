@@ -1,0 +1,80 @@
+notify = ["/Users/dongwoo/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-06-02T02:11:05Z"
+source_type = "local"
+source = "/Users/dongwoo/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-06-02T01:07:45Z"
+source_type = "local"
+source = "/Users/dongwoo/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[features]
+js_repl = false
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/Codex.app/Contents/Resources/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = ""
+NODE_REPL_NODE_PATH = "/Applications/Codex.app/Contents/Resources/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/dongwoo/.codex"
+CODEX_HOME = "/Users/dongwoo/.codex"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "0b0d41e7a14a4903d2f95b0b3f427ed796b12c8edca2fa392a03df43997075ae"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+CODEX_CLI_PATH = "/Applications/Codex.app/Contents/Resources/codex"
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+startup_timeout_sec = 120
+
+[mcp_servers.notion]
+command = "/bin/zsh"
+args = ["-lc", "source ~/.codex/mcp-secrets.sh >/dev/null 2>&1; test -n \"$NOTION_TOKEN\" || { echo \"NOTION_TOKEN is not set in ~/.codex/mcp-secrets.sh\" >&2; exit 1; }; exec npx -y @notionhq/notion-mcp-server"]
+startup_timeout_sec = 120
+
+[mcp_servers.github]
+command = "/bin/zsh"
+args = ["-lc", "source ~/.codex/mcp-secrets.sh >/dev/null 2>&1; export GITHUB_PERSONAL_ACCESS_TOKEN=\"${GITHUB_PERSONAL_ACCESS_TOKEN:-$GITHUB_PAT}\"; test -n \"$GITHUB_PERSONAL_ACCESS_TOKEN\" || { echo \"GITHUB_PERSONAL_ACCESS_TOKEN or GITHUB_PAT is not set in ~/.codex/mcp-secrets.sh\" >&2; exit 1; }; exec docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server"]
+startup_timeout_sec = 120
+
+[desktop]
+conversationDetailMode = "STEPS_COMMANDS"
+ambient-suggestions-enabled = true
+
+[projects."/Users/dongwoo"]
+trust_level = "trusted"
+
+[projects."/Users/dongwoo/Documents/Codex/2026-06-01/slack"]
+trust_level = "trusted"
+
+[projects."/Users/dongwoo/Documents/Codex/2026-06-02/graph-db-neo4j-rag"]
+trust_level = "trusted"
+
+[projects."/Users/dongwoo/Desktop/paper-trading"]
+trust_level = "trusted"
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./gradlew compileKotlin)"
+      "Bash(./gradlew compileKotlin)",
+      "mcp__playwright__browser_snapshot"
     ]
   }
 }
