@@ -1,6 +1,8 @@
 import type { TaxSummaryResponse } from "../../../entities/tax-summary/model/types";
 import { mapTaxSummaryStatusLabel } from "../../../entities/tax-summary/model/types";
 import { formatAmount, formatRate } from "../../../shared/utils/format";
+import { Badge } from "@/shared/ui/shadcn/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card";
 
 interface TaxSummarySummaryPanelProps {
   summary: TaxSummaryResponse;
@@ -43,17 +45,17 @@ export function TaxSummarySummaryPanel({ summary }: TaxSummarySummaryPanelProps)
   ] as const;
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", fontSize: "14px" }}>
-        <span>상태: {mapTaxSummaryStatusLabel(summary.status)}</span>
+    <div className="grid gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+        <Badge variant="secondary">상태: {mapTaxSummaryStatusLabel(summary.status)}</Badge>
         <span>계산 시각: {summary.computedAt ?? "-"}</span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map(([title, value]) => (
-          <article key={title} style={{ border: "1px solid var(--border, #e5e7eb)", borderRadius: "8px", padding: "12px" }}>
-            <div style={{ fontSize: "12px", color: "var(--text-secondary, #6b7280)", marginBottom: "4px" }}>{title}</div>
-            <strong style={{ fontSize: "16px" }}>{value}</strong>
-          </article>
+          <Card key={title} size="sm">
+            <CardHeader><CardTitle className="text-xs text-muted-foreground">{title}</CardTitle></CardHeader>
+            <CardContent className="font-semibold tabular-nums">{value}</CardContent>
+          </Card>
         ))}
       </div>
     </div>

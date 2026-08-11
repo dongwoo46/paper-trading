@@ -41,21 +41,18 @@ describe('AccountCard', () => {
     expect(screen.queryByText('비활성')).not.toBeInTheDocument()
   })
 
-  it('applies selected style when isSelected=true', () => {
-    const { container } = render(
+  it('exposes selected state when isSelected=true', () => {
+    render(
       <AccountCard account={baseAccount} isSelected={true} onClick={() => {}} />
     )
-    const card = container.firstChild as HTMLElement
-    // Selected card has a 2px solid border style
-    expect(card.style.border).toContain('2px solid')
+    expect(screen.getByRole('button', { name: /테스트계좌/ })).toHaveAttribute('data-selected', 'true')
   })
 
-  it('applies non-selected style when isSelected=false', () => {
-    const { container } = render(
+  it('exposes non-selected state when isSelected=false', () => {
+    render(
       <AccountCard account={baseAccount} isSelected={false} onClick={() => {}} />
     )
-    const card = container.firstChild as HTMLElement
-    expect(card.style.border).toContain('1px solid')
+    expect(screen.getByRole('button', { name: /테스트계좌/ })).toHaveAttribute('data-selected', 'false')
   })
 
   it('calls onClick when card is clicked', async () => {

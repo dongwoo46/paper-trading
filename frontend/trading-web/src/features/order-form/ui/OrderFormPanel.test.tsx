@@ -37,15 +37,13 @@ beforeEach(() => {
 describe('OrderFormPanel', () => {
   it('renders required form fields on initial render', () => {
     renderPanel();
-    // ticker input — identified by placeholder
-    expect(screen.getByPlaceholderText(/005930/)).toBeInTheDocument();
-    // selects: marketType, orderType, orderSide, orderCondition
-    expect(screen.getByDisplayValue('KOSPI')).toBeInTheDocument();
-    expect(screen.getByDisplayValue(/MARKET/)).toBeInTheDocument();
-    expect(screen.getByDisplayValue(/BUY/)).toBeInTheDocument();
-    expect(screen.getByDisplayValue('DAY')).toBeInTheDocument();
-    // quantity input
-    expect(screen.getByPlaceholderText(/10/)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '종목코드' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: '시장' })).toHaveValue('KOSPI');
+    expect(screen.getByRole('combobox', { name: '주문 유형' })).toHaveValue('MARKET');
+    expect(screen.getByRole('combobox', { name: '매매 방향' })).toHaveValue('BUY');
+    expect(screen.getByRole('combobox', { name: '주문 조건' })).toHaveValue('DAY');
+    expect(screen.getByRole('spinbutton', { name: '수량' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '주문 제출' })).toHaveAttribute('data-slot', 'button');
   });
 
   it('does NOT show limitPrice input when orderType is MARKET', () => {

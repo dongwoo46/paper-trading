@@ -58,7 +58,7 @@ describe('AccountDashboardPage', () => {
 
     render(<AccountDashboardPage />, { wrapper: createWrapper() })
 
-    expect(screen.getByText('계좌 정보를 불러오는 중...')).toBeInTheDocument()
+    expect(screen.getByText('계좌 정보를 불러오는 중...')).toHaveAttribute('data-slot', 'skeleton')
   })
 
   it('renders AccountCard after accounts load successfully', async () => {
@@ -87,7 +87,7 @@ describe('AccountDashboardPage', () => {
     render(<AccountDashboardPage />, { wrapper: createWrapper() })
 
     await waitFor(() => {
-      expect(screen.getByText('계좌 목록을 불러오지 못했습니다.')).toBeInTheDocument()
+      expect(screen.getByText('계좌 목록을 불러오지 못했습니다.').closest('[role="alert"]')).toBeInTheDocument()
     })
   })
 })

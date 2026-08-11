@@ -1,6 +1,7 @@
 import { Chip } from "../../../shared/ui";
 import type { ModeSubscriptions } from "../../../shared/api";
 import type { Mode } from "../../../entities/symbol/model/types";
+import { Badge } from "@/shared/ui/shadcn/badge";
 
 interface Props {
   data: ModeSubscriptions;
@@ -17,34 +18,25 @@ export function KisModeList({ data, symbolNameMap }: Props) {
   ];
 
   if (allSymbols.length === 0) {
-    return <p className="py-10 px-6 text-center text-text-muted italic w-full">구독 중인 종목이 없습니다.</p>;
+    return <p className="w-full px-6 py-10 text-center text-muted-foreground">구독 중인 종목이 없습니다.</p>;
   }
 
   return (
     <div className="flex flex-wrap gap-2.5 p-6">
       {allSymbols.map(({ symbol, mode }) => (
-        <Chip key={`${mode}-${symbol}`} statusColor={mode === "live" ? "var(--status-error)" : "var(--status-success)"}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
-            <span style={{ fontWeight: 800, fontSize: "14px", color: "var(--text-primary)" }}>{symbol}</span>
+        <Chip key={`${mode}-${symbol}`} className="w-full justify-between">
+          <span className={`size-2 rounded-full ${mode === "live" ? "bg-market-negative" : "bg-market-positive"}`} />
+          <div className="flex flex-1 flex-col gap-0.5">
+            <span className="text-sm font-extrabold text-foreground">{symbol}</span>
             {symbolNameMap && symbolNameMap[symbol] && (
-              <span style={{ color: "var(--text-secondary)", fontSize: "11px", fontWeight: 500 }}>
+              <span className="text-xs font-medium text-muted-foreground">
                 {symbolNameMap[symbol]}
               </span>
             )}
           </div>
-          <span
-            style={{
-              marginLeft: "auto",
-              fontSize: "10px",
-              padding: "2px 6px",
-              background: "rgba(0,0,0,0.06)",
-              borderRadius: "4px",
-              color: "var(--text-muted)",
-              fontWeight: 700
-            }}
-          >
+          <Badge variant="outline" className="ml-auto text-[10px]">
             {mode.toUpperCase()}
-          </span>
+          </Badge>
         </Chip>
       ))}
     </div>

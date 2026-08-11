@@ -43,6 +43,14 @@ import {
   type OhlcvInput,
 } from "../../../features/unified-chart-indicators/model/indicators";
 import { IndicatorToggleBar } from "../../../features/unified-chart-indicators/ui/IndicatorToggleBar";
+import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
+import { Badge } from "@/shared/ui/shadcn/badge";
+import { Button } from "@/shared/ui/shadcn/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card";
+import { Input } from "@/shared/ui/shadcn/input";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
+import { Skeleton } from "@/shared/ui/shadcn/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/shadcn/table";
 
 const INTERVAL_LABEL: Record<UnifiedInterval, string> = {
   "1m": "1분봉",
@@ -51,6 +59,45 @@ const INTERVAL_LABEL: Record<UnifiedInterval, string> = {
   "1d": "일봉",
   "1w": "주봉",
 };
+
+type ChartTheme = {
+  background: string;
+  foreground: string;
+  grid: string;
+  border: string;
+  up: string;
+  down: string;
+  ma5: string;
+  ma20: string;
+  ma60: string;
+  ma120: string;
+  band: string;
+  bandMiddle: string;
+  rsi: string;
+  cross: string;
+};
+
+function readChartTheme(root: HTMLElement): ChartTheme {
+  const styles = getComputedStyle(root);
+  const token = (name: string) => styles.getPropertyValue(name).trim();
+
+  return {
+    background: token("--chart-background"),
+    foreground: token("--chart-foreground"),
+    grid: token("--chart-grid"),
+    border: token("--chart-border"),
+    up: token("--chart-up"),
+    down: token("--chart-down"),
+    ma5: token("--chart-ma5"),
+    ma20: token("--chart-ma20"),
+    ma60: token("--chart-ma60"),
+    ma120: token("--chart-ma120"),
+    band: token("--chart-band"),
+    bandMiddle: token("--chart-band-middle"),
+    rsi: token("--chart-rsi"),
+    cross: token("--chart-cross"),
+  };
+}
 
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 2 }).format(
@@ -243,24 +290,25 @@ function UnifiedCandlestickChart({
       (investorFlowActive ? 120 : 0);
 
     setChartHeight(computedHeight);
+    const theme = readChartTheme(root);
 
     const chart = createChart(root, {
       width: root.clientWidth,
       height: computedHeight,
       layout: {
-        background: { type: ColorType.Solid, color: "#0b1220" },
-        textColor: "#d1d5db",
+        background: { type: ColorType.Solid, color: theme.background },
+        textColor: theme.foreground,
       },
       grid: {
-        vertLines: { color: "rgba(255,255,255,0.06)" },
-        horzLines: { color: "rgba(255,255,255,0.06)" },
+        vertLines: { color: theme.grid },
+        horzLines: { color: theme.grid },
       },
       crosshair: { mode: CrosshairMode.Normal },
       rightPriceScale: {
-        borderColor: "rgba(255,255,255,0.2)",
+        borderColor: theme.border,
       },
       timeScale: {
-        borderColor: "rgba(255,255,255,0.2)",
+        borderColor: theme.border,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -278,11 +326,11 @@ function UnifiedCandlestickChart({
     });
 
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: "#22c55e",
-      downColor: "#ef4444",
+      upColor: theme.up,
+      downColor: theme.down,
       borderVisible: true,
-      wickUpColor: "#22c55e",
-      wickDownColor: "#ef4444",
+      wickUpColor: theme.up,
+      wickDownColor: theme.down,
     });
 
     const volSeries = chart.addSeries(
@@ -305,7 +353,7 @@ function UnifiedCandlestickChart({
     if (active.ma5) {
       const ma5 = chart.addSeries(
         LineSeries,
-        { color: "#facc15", lineWidth: 1, priceLineVisible: false },
+        { color: theme.ma5, lineWidth: 1, priceLineVisible: false },
         0,
       );
       ma5Ref.current = ma5;
@@ -313,7 +361,7 @@ function UnifiedCandlestickChart({
     if (active.ma20) {
       const ma20 = chart.addSeries(
         LineSeries,
-        { color: "#60a5fa", lineWidth: 1, priceLineVisible: false },
+        { color: theme.ma20, lineWidth: 1, priceLineVisible: false },
         0,
       );
       ma20Ref.current = ma20;
@@ -321,7 +369,7 @@ function UnifiedCandlestickChart({
     if (active.ma60) {
       const ma60 = chart.addSeries(
         LineSeries,
-        { color: "#f97316", lineWidth: 1, priceLineVisible: false },
+        { color: theme.ma60, lineWidth: 1, priceLineVisible: false },
         0,
       );
       ma60Ref.current = ma60;
@@ -329,7 +377,7 @@ function UnifiedCandlestickChart({
     if (active.ma120) {
       const ma120 = chart.addSeries(
         LineSeries,
-        { color: "#c084fc", lineWidth: 1, priceLineVisible: false },
+        { color: theme.ma120, lineWidth: 1, priceLineVisible: false },
         0,
       );
       ma120Ref.current = ma120;
@@ -338,13 +386,13 @@ function UnifiedCandlestickChart({
     if (bbActive) {
       const bbUpper = chart.addSeries(
         LineSeries,
-        { color: "#6366f1", lineWidth: 1, priceLineVisible: false },
+        { color: theme.band, lineWidth: 1, priceLineVisible: false },
         0,
       );
       const bbMiddle = chart.addSeries(
         LineSeries,
         {
-          color: "#818cf8",
+          color: theme.bandMiddle,
           lineWidth: 1,
           lineStyle: LineStyle.Dashed,
           priceLineVisible: false,
@@ -353,7 +401,7 @@ function UnifiedCandlestickChart({
       );
       const bbLower = chart.addSeries(
         LineSeries,
-        { color: "#6366f1", lineWidth: 1, priceLineVisible: false },
+        { color: theme.band, lineWidth: 1, priceLineVisible: false },
         0,
       );
       bbUpperRef.current = bbUpper;
@@ -361,16 +409,16 @@ function UnifiedCandlestickChart({
       bbLowerRef.current = bbLower;
     }
 
-    let rsiPaneIndex = 2;
+    const rsiPaneIndex = 2;
     if (rsiActive) {
       const rsiSeries = chart.addSeries(
         LineSeries,
-        { color: "#f59e0b", lineWidth: 1 },
+        { color: theme.rsi, lineWidth: 1 },
         rsiPaneIndex,
       );
       rsiSeries.createPriceLine({
         price: 70,
-        color: "#ef4444",
+        color: theme.down,
         lineWidth: 1,
         lineStyle: LineStyle.Dashed,
         axisLabelVisible: true,
@@ -378,7 +426,7 @@ function UnifiedCandlestickChart({
       });
       rsiSeries.createPriceLine({
         price: 30,
-        color: "#22c55e",
+        color: theme.up,
         lineWidth: 1,
         lineStyle: LineStyle.Dashed,
         axisLabelVisible: true,
@@ -392,12 +440,12 @@ function UnifiedCandlestickChart({
       const macdPaneIndex = rsiActive ? 3 : 2;
       const macdLine = chart.addSeries(
         LineSeries,
-        { color: "#60a5fa", lineWidth: 1 },
+        { color: theme.ma20, lineWidth: 1 },
         macdPaneIndex,
       );
       const macdSignal = chart.addSeries(
         LineSeries,
-        { color: "#f97316", lineWidth: 1 },
+        { color: theme.ma60, lineWidth: 1 },
         macdPaneIndex,
       );
       const macdHist = chart.addSeries(
@@ -414,19 +462,19 @@ function UnifiedCandlestickChart({
     if (investorFlowActive) {
       const flowPaneIndex = 2 + (rsiActive ? 1 : 0) + (macdActive ? 1 : 0);
       const flowForeign = chart.addSeries(LineSeries, {
-        color: "#60a5fa",
+        color: theme.ma20,
         lineWidth: 1,
         priceLineVisible: false,
         title: "외국인",
       }, flowPaneIndex);
       const flowInst = chart.addSeries(LineSeries, {
-        color: "#22c55e",
+        color: theme.up,
         lineWidth: 1,
         priceLineVisible: false,
         title: "기관",
       }, flowPaneIndex);
       const flowIndiv = chart.addSeries(LineSeries, {
-        color: "#ef4444",
+        color: theme.down,
         lineWidth: 1,
         priceLineVisible: false,
         title: "개인",
@@ -485,10 +533,11 @@ function UnifiedCandlestickChart({
     }));
     series.setData(data);
 
+    const theme = rootRef.current ? readChartTheme(rootRef.current) : null;
     const volData = bars.map((bar) => ({
       time: toChartTime(bar.startedAt),
       value: bar.volume,
-      color: bar.close >= bar.open ? "#22c55e" : "#ef4444",
+      color: bar.close >= bar.open ? theme?.up : theme?.down,
     }));
     volSeriesRef.current?.setData(volData);
 
@@ -561,7 +610,7 @@ function UnifiedCandlestickChart({
         macd.map((p) => ({
           time: p.time as Time,
           value: p.histogram,
-          color: p.histogram >= 0 ? "#22c55e" : "#ef4444",
+          color: p.histogram >= 0 ? theme?.up : theme?.down,
         })),
       );
     }
@@ -722,7 +771,7 @@ function UnifiedCandlestickChart({
             y1={(line.y / chartHeight) * 100}
             x2="100"
             y2={(line.y / chartHeight) * 100}
-            className="[vector-effect:non-scaling-stroke] stroke-cyan-400 [stroke-dasharray:6_4] [stroke-width:1.4]"
+            className="stroke-chart-cross [stroke-dasharray:6_4] [stroke-width:1.4] [vector-effect:non-scaling-stroke]"
           />
         ))}
         {overlay.trendSegments.map((line) => (
@@ -736,7 +785,7 @@ function UnifiedCandlestickChart({
               (line.x2 / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100
             }
             y2={(line.y2 / chartHeight) * 100}
-            className="[vector-effect:non-scaling-stroke] stroke-amber-500 [stroke-width:1.8]"
+            className="stroke-chart-rsi [stroke-width:1.8] [vector-effect:non-scaling-stroke]"
           />
         ))}
         {overlay.crossSegments.map((line) => (
@@ -746,36 +795,36 @@ function UnifiedCandlestickChart({
               y1={(line.y / chartHeight) * 100}
               x2="100"
               y2={(line.y / chartHeight) * 100}
-              className="[vector-effect:non-scaling-stroke] stroke-emerald-400 [stroke-dasharray:4_3] [stroke-width:1.2]"
+              className="stroke-chart-up [stroke-dasharray:4_3] [stroke-width:1.2] [vector-effect:non-scaling-stroke]"
             />
             <line
               x1={(line.x / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100}
               y1="0"
               x2={(line.x / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100}
               y2="100"
-              className="[vector-effect:non-scaling-stroke] stroke-emerald-400 [stroke-dasharray:4_3] [stroke-width:1.2]"
+              className="stroke-chart-up [stroke-dasharray:4_3] [stroke-width:1.2] [vector-effect:non-scaling-stroke]"
             />
             <circle
               cx={(line.x / Math.max(rootRef.current?.clientWidth ?? 1, 1)) * 100}
               cy={(line.y / chartHeight) * 100}
               r="0.6"
-              className="fill-emerald-400"
-              style={{ vectorEffect: "non-scaling-stroke" }}
+              className="fill-chart-up [vector-effect:non-scaling-stroke]"
             />
           </g>
         ))}
       </svg>
       {(trendLines.length > 0 || hLines.length > 0 || crossLines.length > 0) && (
-        <button
+        <Button
           type="button"
-          className="absolute right-2 top-2 inline-flex items-center justify-center gap-2.5 px-4 py-2 rounded-xl font-semibold text-sm cursor-pointer transition-all border border-white/12 text-text-primary bg-transparent hover:bg-white/5 hover:border-text-muted"
+          variant="destructive"
+          className="absolute right-2 top-2"
           onClick={() => {
             clearLines(chartKey);
             setPendingTrendStart(null);
           }}
         >
           선 전체 삭제
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -835,154 +884,131 @@ export function MarketUnifiedChartPage() {
   const bars = barsQuery.data ?? [];
   const last = bars[bars.length - 1];
 
-  const ACTIVE_TOOL_CLS = "border-blue-400 text-blue-100 bg-blue-500/[0.16]";
-  const BTN_BASE =
-    "inline-flex items-center justify-center gap-2.5 px-4 py-2 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
-  const BTN_OUTLINE =
-    "bg-transparent border-white/12 text-text-primary hover:bg-white/5 hover:border-text-muted";
-
   return (
     <section className="flex flex-col gap-5 animate-fade-in">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[28px] font-bold tracking-tight">통합 시세 차트</h2>
-        <p className="text-text-secondary text-[15px] max-w-3xl">
+        <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">
           종목 선택 후 주봉/일봉/1·5·10분봉을 한 화면에서 전환해서 확인합니다.
         </p>
       </div>
 
-      <div className="grid grid-cols-[360px_1fr] gap-4 max-lg:grid-cols-1">
+      <div className="grid grid-cols-[minmax(18rem,22.5rem)_1fr] gap-4 max-lg:grid-cols-1">
         {/* Left column */}
         <div className="flex flex-col gap-3">
-          <div className="bg-bg-card border border-white/12 rounded-[20px] p-4">
+          <Card>
+            <CardContent>
             <div className="grid grid-cols-[1fr_auto_auto] gap-2 max-lg:grid-cols-1">
-              <input
-                className="bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card"
+              <Input
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 placeholder="종목 검색 (예: AAPL, 005930)"
+                aria-label="종목 검색"
               />
-              <select
-                className="bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card"
+              <NativeSelect
+                aria-label="시세 데이터 소스"
                 value={source}
                 onChange={(e) => setSource(e.target.value as MarketSource)}
               >
-                <option value="yfinance">yfinance</option>
-                <option value="pykrx">pykrx</option>
-              </select>
-              <button
-                className={`${BTN_BASE} ${BTN_OUTLINE}`}
+                <NativeSelectOption value="yfinance">yfinance</NativeSelectOption>
+                <NativeSelectOption value="pykrx">pykrx</NativeSelectOption>
+              </NativeSelect>
+              <Button variant="outline"
                 onClick={() => symbolsQuery.refetch()}
               >
                 새로고침
-              </button>
+              </Button>
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <section className="bg-bg-card border border-white/12 rounded-[20px] flex flex-col overflow-hidden shadow-md">
-            <div className="px-6 py-5 border-b border-white/12 flex items-center justify-between bg-white/[0.01]">
-              <h3 className="text-[17px] font-semibold text-text-primary">
-                종목 테이블
-              </h3>
-            </div>
-            <div className="max-h-[360px] overflow-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">
-                      심볼
-                    </th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">
-                      이름
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+          <Card className="gap-0">
+            <CardHeader className="border-b"><CardTitle>종목 테이블</CardTitle></CardHeader>
+            <CardContent className="max-h-90 overflow-auto px-0">
+              <Table>
+                <TableHeader className="sticky top-0 bg-muted"><TableRow><TableHead>심볼</TableHead><TableHead>이름</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {symbolsQuery.isLoading && <TableRow><TableCell colSpan={2}><Skeleton className="h-16 w-full" aria-label="종목 목록 로딩 중" /></TableCell></TableRow>}
+                  {symbolsQuery.isError && <TableRow><TableCell colSpan={2} className="text-center text-destructive">종목 목록을 불러오지 못했습니다.</TableCell></TableRow>}
+                  {!symbolsQuery.isLoading && !symbolsQuery.isError && filteredSymbols.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground">검색 결과가 없습니다.</TableCell></TableRow>}
                   {filteredSymbols.map((item) => (
-                    <tr
+                    <TableRow
                       key={`${item.symbol}-${item.name}`}
-                      className={`cursor-pointer ${selectedSymbol === item.symbol ? "bg-blue-500/[0.14]" : "hover:bg-white/[0.02]"}`}
+                      className={selectedSymbol === item.symbol ? "cursor-pointer bg-accent" : "cursor-pointer"}
                       onClick={() => setSelectedSymbol(item.symbol)}
                     >
-                      <td
-                        className={`px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap ${selectedSymbol === item.symbol ? "text-blue-100" : "text-text-secondary"}`}
-                      >
-                        {item.symbol}
-                      </td>
-                      <td
-                        className={`px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap ${selectedSymbol === item.symbol ? "text-blue-100" : "text-text-secondary"}`}
-                      >
-                        {item.name}
-                      </td>
-                    </tr>
+                      <TableCell className={selectedSymbol === item.symbol ? "font-semibold text-primary" : "text-muted-foreground"}>{item.symbol}</TableCell>
+                      <TableCell className={selectedSymbol === item.symbol ? "font-semibold text-primary" : "text-muted-foreground"}>{item.name}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right column */}
         <div className="flex flex-col gap-3">
-          <div className="bg-bg-card border border-white/12 rounded-[20px] p-4">
+          <Card>
+            <CardContent>
             {/* Interval tabs */}
             <div className="flex flex-wrap gap-2">
               {(["1w", "1d", "1m", "5m", "10m"] as UnifiedInterval[]).map(
                 (v) => (
-                  <button
+                  <Button
                     key={v}
-                    className={`${BTN_BASE} ${interval === v ? "bg-bg-card text-brand-primary shadow-md border border-white/12" : BTN_OUTLINE}`}
+                    variant={interval === v ? "secondary" : "outline"}
                     onClick={() => setInterval(v)}
                     type="button"
                   >
                     {INTERVAL_LABEL[v]}
-                  </button>
+                  </Button>
                 ),
               )}
               {(interval === "1m" ||
                 interval === "5m" ||
                 interval === "10m") && (
-                <select
+                <NativeSelect
                   aria-label="분봉 조회 개수"
-                  className="bg-bg-input border border-white/12 text-text-primary px-3 py-2 rounded-xl outline-none transition-all focus:border-brand-primary focus:bg-bg-card"
                   value={minuteLimit}
                   onChange={(e) => setMinuteLimit(Number(e.target.value))}
                 >
-                  <option value={50}>50개</option>
-                  <option value={100}>100개</option>
-                </select>
+                  <NativeSelectOption value={50}>50개</NativeSelectOption>
+                  <NativeSelectOption value={100}>100개</NativeSelectOption>
+                </NativeSelect>
               )}
             </div>
 
             {/* Draw tools */}
             <div className="flex flex-wrap gap-2 mt-2">
-              <button
+              <Button
                 type="button"
-                className={`${BTN_BASE} ${drawTool === "none" ? ACTIVE_TOOL_CLS : BTN_OUTLINE}`}
+                variant={drawTool === "none" ? "default" : "outline"}
                 onClick={() => setDrawTool("none")}
               >
                 선택
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={`${BTN_BASE} ${drawTool === "trend" ? ACTIVE_TOOL_CLS : BTN_OUTLINE}`}
+                variant={drawTool === "trend" ? "default" : "outline"}
                 onClick={() => setDrawTool("trend")}
               >
                 추세선
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={`${BTN_BASE} ${drawTool === "hline" ? ACTIVE_TOOL_CLS : BTN_OUTLINE}`}
+                variant={drawTool === "hline" ? "default" : "outline"}
                 onClick={() => setDrawTool("hline")}
               >
                 수평선
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={`${BTN_BASE} ${drawTool === "cross" ? ACTIVE_TOOL_CLS : BTN_OUTLINE}`}
+                variant={drawTool === "cross" ? "default" : "outline"}
                 onClick={() => setDrawTool("cross")}
               >
                 크로스
-              </button>
+              </Button>
             </div>
 
             {/* Indicator toggles */}
@@ -992,107 +1018,109 @@ export function MarketUnifiedChartPage() {
 
             {/* Meta info */}
             <div className="flex gap-2 flex-wrap mt-2">
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+              <Badge variant="secondary">
                 선택 종목: {selectedSymbol || "-"}
-              </span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+              </Badge>
+              <Badge variant="secondary">
                 주기: {INTERVAL_LABEL[interval]}
-              </span>
-              <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+              </Badge>
+              <Badge variant="secondary">
                 데이터: {bars.length}건
-              </span>
+              </Badge>
               {last && (
-                <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+                <Badge variant="secondary">
                   최신 종가: {formatNumber(last.close)}
-                </span>
+                </Badge>
               )}
               {crosshairInfo && (
                 <>
-                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+                  <Badge variant="outline">
                     포인트: {crosshairInfo.startedAt}
-                  </span>
-                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+                  </Badge>
+                  <Badge variant="outline">
                     O: {formatNumber(crosshairInfo.open)}
-                  </span>
-                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+                  </Badge>
+                  <Badge variant="outline">
                     H: {formatNumber(crosshairInfo.high)}
-                  </span>
-                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+                  </Badge>
+                  <Badge variant="outline">
                     L: {formatNumber(crosshairInfo.low)}
-                  </span>
-                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+                  </Badge>
+                  <Badge variant="outline">
                     C: {formatNumber(crosshairInfo.close)}
-                  </span>
-                  <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1">
+                  </Badge>
+                  <Badge variant="outline">
                     V: {formatNumber(crosshairInfo.volume)}
-                  </span>
+                  </Badge>
                   {crosshairInfo.indicators.ma5 !== undefined && (
-                    <span className="text-xs text-yellow-300 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-ma5">
                       MA5: {formatNumber(crosshairInfo.indicators.ma5)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.ma20 !== undefined && (
-                    <span className="text-xs text-blue-300 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-ma20">
                       MA20: {formatNumber(crosshairInfo.indicators.ma20)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.ma60 !== undefined && (
-                    <span className="text-xs text-orange-400 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-ma60">
                       MA60: {formatNumber(crosshairInfo.indicators.ma60)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.ma120 !== undefined && (
-                    <span className="text-xs text-purple-400 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-ma120">
                       MA120: {formatNumber(crosshairInfo.indicators.ma120)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.bbUpper !== undefined && (
-                    <span className="text-xs text-indigo-300 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-band">
                       BB상단: {formatNumber(crosshairInfo.indicators.bbUpper)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.bbMiddle !== undefined && (
-                    <span className="text-xs text-indigo-300 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-band">
                       BB중단: {formatNumber(crosshairInfo.indicators.bbMiddle)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.bbLower !== undefined && (
-                    <span className="text-xs text-indigo-300 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-band">
                       BB하단: {formatNumber(crosshairInfo.indicators.bbLower)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.rsi !== undefined && (
-                    <span className="text-xs text-amber-400 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-rsi">
                       RSI: {formatNumber(crosshairInfo.indicators.rsi)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.macd !== undefined && (
-                    <span className="text-xs text-sky-300 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-ma20">
                       MACD: {formatNumber(crosshairInfo.indicators.macd)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.macdSignal !== undefined && (
-                    <span className="text-xs text-orange-300 border border-white/12 rounded-full px-2.5 py-1">
+                    <Badge variant="outline" className="text-chart-ma60">
                       Signal: {formatNumber(crosshairInfo.indicators.macdSignal)}
-                    </span>
+                    </Badge>
                   )}
                   {crosshairInfo.indicators.macdHist !== undefined && (
-                    <span className={`text-xs border border-white/12 rounded-full px-2.5 py-1 ${crosshairInfo.indicators.macdHist >= 0 ? "text-green-400" : "text-red-400"}`}>
+                    <Badge variant="outline" className={crosshairInfo.indicators.macdHist >= 0 ? "text-chart-up" : "text-chart-down"}>
                       HIST: {formatNumber(crosshairInfo.indicators.macdHist)}
-                    </span>
+                    </Badge>
                   )}
                 </>
               )}
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Chart area */}
-          <div className="w-full min-h-[380px] border border-white/12 rounded-[16px] bg-white/[0.02] p-3">
-            {barsQuery.isLoading && <p>차트 데이터를 불러오는 중...</p>}
-            {barsQuery.isError && <p>차트 조회 중 오류가 발생했습니다.</p>}
+          <Card className="min-h-95 w-full">
+            <CardContent>
+            {barsQuery.isLoading && <Skeleton className="h-95 w-full" aria-label="차트 데이터 로딩 중" />}
+            {barsQuery.isError && <Alert variant="destructive"><AlertDescription>차트 조회 중 오류가 발생했습니다.</AlertDescription></Alert>}
             {!barsQuery.isLoading &&
               !barsQuery.isError &&
-              bars.length === 0 && <p>데이터가 없습니다.</p>}
+              bars.length === 0 && <Alert><AlertDescription>데이터가 없습니다.</AlertDescription></Alert>}
             {!barsQuery.isLoading && !barsQuery.isError && bars.length > 0 && (
               <UnifiedCandlestickChart
                 bars={bars}
@@ -1104,72 +1132,35 @@ export function MarketUnifiedChartPage() {
                 onCrosshairChange={setCrosshairInfo}
               />
             )}
-          </div>
+            </CardContent>
+          </Card>
 
           {/* OHLCV table */}
-          <section className="bg-bg-card border border-white/12 rounded-[20px] flex flex-col overflow-hidden shadow-md">
-            <div className="px-6 py-5 border-b border-white/12 flex items-center justify-between bg-white/[0.01]">
-              <h3 className="text-[17px] font-semibold text-text-primary">
-                OHLCV 테이블
-              </h3>
-            </div>
-            <div className="overflow-x-auto rounded-[16px] bg-black/20 border border-white/12 flex-1 min-h-[300px]">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">
-                      시각/일자
-                    </th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">
-                      시가
-                    </th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">
-                      고가
-                    </th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">
-                      저가
-                    </th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">
-                      종가
-                    </th>
-                    <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">
-                      거래량
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+          <Card className="gap-0">
+            <CardHeader className="border-b"><CardTitle>OHLCV 테이블</CardTitle></CardHeader>
+            <CardContent className="min-h-75 overflow-x-auto px-0">
+              <Table>
+                <TableHeader><TableRow><TableHead>시각/일자</TableHead><TableHead>시가</TableHead><TableHead>고가</TableHead><TableHead>저가</TableHead><TableHead>종가</TableHead><TableHead>거래량</TableHead></TableRow></TableHeader>
+                <TableBody>
                   {bars
                     .slice()
                     .reverse()
                     .map((bar) => (
-                      <tr
+                      <TableRow
                         key={`${bar.startedAt}-${bar.close}`}
-                        className="hover:bg-white/[0.02]"
                       >
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">
-                          {bar.startedAt}
-                        </td>
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">
-                          {formatNumber(bar.open)}
-                        </td>
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">
-                          {formatNumber(bar.high)}
-                        </td>
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">
-                          {formatNumber(bar.low)}
-                        </td>
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">
-                          {formatNumber(bar.close)}
-                        </td>
-                        <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">
-                          {formatNumber(bar.volume)}
-                        </td>
-                      </tr>
+                        <TableCell className="text-muted-foreground">{bar.startedAt}</TableCell>
+                        <TableCell className="tabular-nums text-muted-foreground">{formatNumber(bar.open)}</TableCell>
+                        <TableCell className="tabular-nums text-muted-foreground">{formatNumber(bar.high)}</TableCell>
+                        <TableCell className="tabular-nums text-muted-foreground">{formatNumber(bar.low)}</TableCell>
+                        <TableCell className="tabular-nums text-muted-foreground">{formatNumber(bar.close)}</TableCell>
+                        <TableCell className="tabular-nums text-muted-foreground">{formatNumber(bar.volume)}</TableCell>
+                      </TableRow>
                     ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>

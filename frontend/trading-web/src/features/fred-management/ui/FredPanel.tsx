@@ -4,6 +4,12 @@ import { Activity, Database, RefreshCw, Search, Trash2 } from "lucide-react";
 import type { CatalogResponse, FredCatalogItem } from "../../../entities/symbol/model/types";
 import { fetchJson } from "../../../shared/api";
 import { Chip, SectionCard, StatusBar } from "../../../shared/ui";
+import { Badge } from "@/shared/ui/shadcn/badge";
+import { Button } from "@/shared/ui/shadcn/button";
+import { Input } from "@/shared/ui/shadcn/input";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/shadcn/table";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";
 
 type StatusFilter = "" | "SUBSCRIBED" | "UNSUBSCRIBED";
 
@@ -13,14 +19,6 @@ const EMPTY: CatalogResponse<FredCatalogItem> = {
   totalCatalogCount: 0,
   totalSubscribedCount: 0
 };
-
-const INPUT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
-const SELECT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
-const BTN_BASE = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
-const BTN_PRIMARY = `${BTN_BASE} bg-brand-primary text-white shadow-sm border-transparent hover:bg-brand-primary/90`;
-const BTN_OUTLINE = `${BTN_BASE} bg-white border-border-primary text-text-primary hover:bg-bg-input hover:border-text-muted`;
-const BTN_PRIMARY_SM = "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs cursor-pointer transition-all border border-transparent bg-brand-primary text-white shadow-sm hover:bg-brand-primary/90 whitespace-nowrap";
-const BTN_DANGER_SM = "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs cursor-pointer transition-all border bg-red-50 text-red-600 border-red-200 hover:bg-red-100 whitespace-nowrap";
 
 export function FredPanel() {
   const queryClient = useQueryClient();
@@ -110,19 +108,14 @@ export function FredPanel() {
     return "준비 완료";
   };
 
-  const subTabCls = (active: boolean) =>
-    `px-4 py-2 rounded-xl text-sm font-semibold transition-all ${active ? "bg-white text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"}`;
-
   return (
     <div className="flex flex-col gap-2.5 mt-5">
-      <div className="flex gap-2 p-1 bg-bg-input rounded-[16px] mb-5 border border-border-primary w-fit">
-        <button className={subTabCls(activeTab === "catalog")} onClick={() => setActiveTab("catalog")}>
-          경제지표 탐색
-        </button>
-        <button className={subTabCls(activeTab === "sync")} onClick={() => setActiveTab("sync")}>
-          데이터 연동 및 품질 관리
-        </button>
-      </div>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="mb-5">
+        <TabsList className="h-auto flex-wrap">
+          <TabsTrigger value="catalog" className="px-4 py-2">경제지표 탐색</TabsTrigger>
+          <TabsTrigger value="sync" className="px-4 py-2">데이터 연동 및 품질 관리</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {activeTab === "catalog" && (
         <div className="grid grid-cols-[2fr_1fr] gap-6 max-lg:grid-cols-1">
@@ -131,8 +124,8 @@ export function FredPanel() {
             icon={Database}
             headerAction={(
               <div className="flex gap-3 flex-wrap">
-                <input
-                  className={`${INPUT_CLS} w-[220px]`}
+                <Input
+                  className="w-55"
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
@@ -141,91 +134,75 @@ export function FredPanel() {
                   onKeyDown={(e) => e.key === "Enter" && setIsSearching(true)}
                   placeholder="시리즈 ID 또는 지표명"
                 />
-                <input className={`${INPUT_CLS} w-[120px]`} value={category} onChange={(e) => setCategory(e.target.value)} placeholder="카테고리" />
-                <select className={`${SELECT_CLS} w-[130px]`} value={frequency} onChange={(e) => setFrequency(e.target.value)}>
-                  <option value="">전체 주기</option>
-                  <option value="D">일간 (Daily)</option>
-                  <option value="W">주간 (Weekly)</option>
-                  <option value="M">월간 (Monthly)</option>
-                  <option value="Q">분기 (Quarterly)</option>
-                  <option value="A">연간 (Annual)</option>
-                </select>
-                <select className={`${SELECT_CLS} w-[130px]`} value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
-                  <option value="">전체 상태</option>
-                  <option value="SUBSCRIBED">구독 중</option>
-                  <option value="UNSUBSCRIBED">미구독</option>
-                </select>
-                <button className={BTN_OUTLINE} onClick={() => setIsSearching(true)}>
+                <Input className="w-30" aria-label="카테고리" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="카테고리" />
+                <NativeSelect className="w-32" aria-label="주기" value={frequency} onChange={(e) => setFrequency(e.target.value)}>
+                  <NativeSelectOption value="">전체 주기</NativeSelectOption><NativeSelectOption value="D">일간 (Daily)</NativeSelectOption><NativeSelectOption value="W">주간 (Weekly)</NativeSelectOption><NativeSelectOption value="M">월간 (Monthly)</NativeSelectOption><NativeSelectOption value="Q">분기 (Quarterly)</NativeSelectOption><NativeSelectOption value="A">연간 (Annual)</NativeSelectOption>
+                </NativeSelect>
+                <NativeSelect className="w-32" aria-label="구독 상태" value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
+                  <NativeSelectOption value="">전체 상태</NativeSelectOption><NativeSelectOption value="SUBSCRIBED">구독 중</NativeSelectOption><NativeSelectOption value="UNSUBSCRIBED">미구독</NativeSelectOption>
+                </NativeSelect>
+                <Button variant="outline" size="icon" onClick={() => setIsSearching(true)} aria-label="경제지표 검색">
                   <Search size={14} />
-                </button>
+                </Button>
               </div>
             )}
           >
             <div className="flex gap-2.5 flex-wrap px-6 pb-3.5">
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 카탈로그: {catalog.totalCatalogCount}</span>
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 구독 중: {catalog.totalSubscribedCount}</span>
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과: {catalog.returnedCount}</span>
+              <Badge variant="secondary">전체 카탈로그: {catalog.totalCatalogCount}</Badge>
+              <Badge variant="secondary">전체 구독 중: {catalog.totalSubscribedCount}</Badge>
+              <Badge variant="secondary">조회 결과: {catalog.returnedCount}</Badge>
             </div>
-            <div className="overflow-x-auto rounded-[16px] bg-white border border-border-primary flex-1 min-h-[300px]">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="bg-bg-input px-6 py-3.5 text-left text-[12px] text-text-secondary font-semibold border-b border-border-primary whitespace-nowrap">시리즈 ID</th>
-                    <th className="bg-bg-input px-6 py-3.5 text-left text-[12px] text-text-secondary font-semibold border-b border-border-primary whitespace-nowrap">지표명 (Title)</th>
-                    <th className="bg-bg-input px-6 py-3.5 text-left text-[12px] text-text-secondary font-semibold border-b border-border-primary whitespace-nowrap">주기</th>
-                    <th className="bg-bg-input px-6 py-3.5 text-center text-[12px] text-text-secondary font-semibold border-b border-border-primary whitespace-nowrap">구독 상태</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="min-h-75 flex-1 overflow-x-auto rounded-xl border">
+              <Table>
+                <TableHeader><TableRow><TableHead>시리즈 ID</TableHead><TableHead>지표명 (Title)</TableHead><TableHead>주기</TableHead><TableHead className="text-center">구독 상태</TableHead></TableRow></TableHeader>
+                <TableBody>
                   {catalog.items.map((row) => {
                     const active = isSubscribed(row.seriesId);
                     return (
-                      <tr key={row.seriesId} className="hover:bg-bg-input transition-colors">
-                        <td className="px-6 py-4 text-[14px] border-b border-border-primary whitespace-nowrap font-bold text-text-primary">{row.seriesId}</td>
-                        <td className="px-6 py-4 text-[14px] border-b border-border-primary whitespace-nowrap text-text-secondary">{row.title}</td>
-                        <td className="px-6 py-4 text-[14px] border-b border-border-primary whitespace-nowrap text-text-secondary">{row.frequency || "-"}</td>
-                        <td className="px-6 py-4 text-[14px] border-b border-border-primary whitespace-nowrap text-center">
-                          <button
-                            className={active ? BTN_DANGER_SM : BTN_PRIMARY_SM}
+                      <TableRow key={row.seriesId}>
+                        <TableCell className="font-bold">{row.seriesId}</TableCell>
+                        <TableCell className="text-muted-foreground">{row.title}</TableCell>
+                        <TableCell className="text-muted-foreground">{row.frequency || "-"}</TableCell>
+                        <TableCell className="text-center">
+                          <Button size="sm" variant={active ? "destructive" : "default"}
                             onClick={() => subscriptionMutation.mutate({ method: active ? "DELETE" : "POST", selectedSeriesId: row.seriesId })}
                           >
                             {active ? "해지" : "구독"}
-                          </button>
-                        </td>
-                      </tr>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
             {catalog.items.length < catalog.totalCatalogCount && (
-              <button
-                className="load-more-btn"
+              <Button variant="ghost" className="mx-6 my-2 w-fit"
                 onClick={() => setCatalogLimit(prev => prev + 20)}
               >
                 <RefreshCw size={14} /> 더보기 ({catalog.items.length} / {catalog.totalCatalogCount})
-              </button>
+              </Button>
             )}
           </SectionCard>
 
           <SectionCard title={`활성 구독 시리즈 (${subscriptions.length})`} icon={Activity}>
             <div className="flex flex-wrap gap-2.5 p-6 flex-1">
-              {subscriptions.length === 0 && <p className="py-10 px-6 text-center text-text-muted italic w-full">구독 중인 지표가 없습니다.</p>}
+              {subscriptions.length === 0 && <p className="w-full px-6 py-10 text-center text-muted-foreground">구독 중인 지표가 없습니다.</p>}
               {subscriptions.map((row) => (
                 <Chip key={`fred-${row.seriesId}`} className="w-full justify-between">
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-status-success shadow-[0_0_8px_var(--status-success)]" />
+                      <span className="size-2 rounded-full bg-market-positive" />
                       <strong>{row.seriesId}</strong>
                     </div>
-                    <span className="text-text-secondary text-[11px] font-medium">{row.title}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{row.title}</span>
                   </div>
-                  <button
+                  <Button type="button" variant="ghost" size="icon-xs" className="text-destructive"
                     onClick={() => subscriptionMutation.mutate({ method: "DELETE", selectedSeriesId: row.seriesId })}
-                    className="text-status-error border-none bg-transparent cursor-pointer flex"
+                    aria-label={`${row.seriesId} 구독 해지`}
                   >
                     <Trash2 size={14} />
-                  </button>
+                  </Button>
                 </Chip>
               ))}
             </div>
@@ -237,43 +214,43 @@ export function FredPanel() {
         <div className="grid grid-cols-[2fr_1fr] gap-6 max-lg:grid-cols-1">
           <SectionCard title="FRED 외부 API 탐색" icon={Search}>
             <div className="px-6 py-4 flex flex-col gap-3">
-              <p className="text-text-secondary text-sm">
+              <p className="text-sm text-muted-foreground">
                 FRED 서버에서 직접 지표 정보를 검색하고 메타데이터를 수집합니다.
               </p>
               <div className="flex gap-3 flex-wrap">
-                <input className={`${INPUT_CLS} w-[260px]`} value={externalQuery} onChange={(e) => setExternalQuery(e.target.value)} placeholder="검색 키워드 (시리즈 검색)" />
-                <button className={BTN_OUTLINE} onClick={() => void refetchExternalSearch()}>
+                <Input className="w-65" aria-label="FRED 외부 검색" value={externalQuery} onChange={(e) => setExternalQuery(e.target.value)} placeholder="검색 키워드 (시리즈 검색)" />
+                <Button variant="outline" onClick={() => void refetchExternalSearch()}>
                   외부 시리즈 검색
-                </button>
-                <span className="text-text-secondary text-xs self-center">검색 결과: {searchSeriesCount}건</span>
+                </Button>
+                <Badge variant="secondary" className="self-center">검색 결과: {searchSeriesCount}건</Badge>
               </div>
               <div className="flex gap-3 flex-wrap">
-                <input className={`${INPUT_CLS} w-[260px]`} value={seriesId} onChange={(e) => setSeriesId(e.target.value.toUpperCase())} placeholder="시리즈 ID (상세정보/관측치)" />
-                <button className={BTN_PRIMARY} onClick={() => void refetchInfo()}>
+                <Input className="w-65" aria-label="FRED 시리즈 ID" value={seriesId} onChange={(e) => setSeriesId(e.target.value.toUpperCase())} placeholder="시리즈 ID (상세정보/관측치)" />
+                <Button onClick={() => void refetchInfo()}>
                   상세정보 조회
-                </button>
-                <button className={BTN_PRIMARY} onClick={() => void refetchObservations()}>
+                </Button>
+                <Button onClick={() => void refetchObservations()}>
                   관측치 조회
-                </button>
+                </Button>
               </div>
               <div className="flex gap-2.5 flex-wrap">
-                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">상세정보 로드: {infoResult ? "성공" : "없음"}</span>
-                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">관측치 수: {observationCount}건</span>
+                <Badge variant="secondary">상세정보 로드: {infoResult ? "성공" : "없음"}</Badge>
+                <Badge variant="secondary">관측치 수: {observationCount}건</Badge>
               </div>
             </div>
           </SectionCard>
 
           <SectionCard title="카탈로그 동기화" icon={RefreshCw}>
             <div className="px-6 py-4 flex flex-col gap-3">
-              <p className="text-text-secondary text-sm">
+              <p className="text-sm text-muted-foreground">
                 로컬 DB의 카탈로그 정보를 최신 데이터와 동기화합니다.
               </p>
               <div className="flex gap-3 flex-wrap">
-                <input className={`${INPUT_CLS} w-[160px]`} value={maxCategories} onChange={(e) => setMaxCategories(e.target.value)} placeholder="최대 카테고리 수" />
-                <input className={`${INPUT_CLS} w-[160px]`} value={pageSize} onChange={(e) => setPageSize(e.target.value)} placeholder="페이지 크기" />
-                <button className={BTN_OUTLINE} onClick={() => syncMutation.mutate()}>
+                <Input className="w-40" aria-label="최대 카테고리 수" value={maxCategories} onChange={(e) => setMaxCategories(e.target.value)} placeholder="최대 카테고리 수" />
+                <Input className="w-40" aria-label="페이지 크기" value={pageSize} onChange={(e) => setPageSize(e.target.value)} placeholder="페이지 크기" />
+                <Button variant="outline" onClick={() => syncMutation.mutate()}>
                   카탈로그 동기화 시작
-                </button>
+                </Button>
               </div>
             </div>
           </SectionCard>

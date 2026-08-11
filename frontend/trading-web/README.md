@@ -18,27 +18,15 @@ The project follows the [FSD architecture](https://feature-sliced.design/) to ma
 -   **Modularity**: Large feature panels must be broken down into smaller sub-components (e.g., `CatalogTable`, `SelectionChips`) to keep the code readable and easy to debug.
 -   **Type Safety**: Always use TypeScript and prefer shared model types from `entities/`.
 
-## 🎨 Design Philosophy: Premium Pro-Trader Look
+## 🎨 Design System
 
-The UI uses a **Glassmorphism Dark Theme** designed for high productivity and professional aesthetics.
+The dashboard uses **shadcn/ui Base Nova** on Tailwind CSS 4 with a light, data-dense trading theme.
 
-### 1. Color Palette & Contrast
--   **Background**: Deep `06070a` (Main) to `0a0c12` (Sidebar).
--   **Text Contrast**: High contrast is mandatory. 
-    -   Primary: `#ffffff`
-    -   Secondary: `#cbd5e1` (readable light slate)
-    -   Muted/Gray: `#94a3b8` (not darker!)
--   **Accents**: `--brand-primary` (`#3b82f6`) and `--brand-secondary` (`#10b981`). Use gradients (`--grad-primary`) sparingly.
+- Primitive components live in `src/shared/ui/shadcn`.
+- Existing application-wide compositions live in `src/shared/ui` and compose those primitives.
+- Feature-specific UI stays in its `features/*/ui` folder.
+- Semantic colors, spacing and radii come from `src/app/styles/index.css`; component-level hex/rgb values are not allowed.
+- Trading direction uses dedicated order and market tokens so action states do not get confused with price movement.
+- Tables use the shared Table primitive, which provides horizontal overflow handling.
 
-### 2. Responsiveness (Mobile-First)
--   Use the `.feature-grid` or `.card-grid` classes for layout.
--   Grids must stack vertically on screens smaller than **1024px**.
--   Tables must be wrapped in a `.scroll-container` (`shared/ui`) to prevent overflow.
-
-### 3. Micro-interactions
--   Add `:hover` effects to all clickable cards and buttons (`transform: translateY(-2px)`).
--   Use `.fade-in` animation for all page and panel entries.
-
----
-
-*Maintainer: Antigravity AI (Google DeepMind)*
+The implementation contract and examples are documented in `docs/UI_GUIDE.md`.
