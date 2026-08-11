@@ -5,6 +5,8 @@ import type { BenchmarkPoint } from "../../../entities/portfolio/model/types";
 import { buildReturnSeries } from "../../../features/portfolio-chart/model/normalizeSeries";
 import { PortfolioChartPanel } from "../../../features/portfolio-chart/ui/PortfolioChartPanel";
 import { fetchDailyBalances, fetchKospiBenchmark } from "../../../shared/api/portfolioApi";
+import { Label } from "@/shared/ui/shadcn/label";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
 
 function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -60,37 +62,37 @@ export function PortfolioChartPage() {
     <section className="flex flex-col gap-5 animate-fade-in">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[28px] font-bold tracking-tight">포트폴리오 차트</h2>
-        <p className="text-text-secondary text-[15px] max-w-3xl">일별 평가금액 추이와 KOSPI 대비 누적 수익률을 확인합니다.</p>
+        <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">일별 평가금액 추이와 KOSPI 대비 누적 수익률을 확인합니다.</p>
       </div>
-      <div className="flex gap-3 mb-4">
-        <label className="flex items-center gap-2 text-text-secondary text-sm">
-          계좌 선택
-          <select
+      <div className="mb-4 flex flex-wrap gap-4">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="portfolio-account">계좌 선택</Label>
+          <NativeSelect
+            id="portfolio-account"
             aria-label="계좌 선택"
-            className="bg-bg-input border border-white/12 text-text-primary px-3 py-2 rounded-xl outline-none transition-all focus:border-brand-primary focus:bg-bg-card"
             value={resolvedAccountId ?? ""}
             onChange={(e) => setSelectedAccountId(Number(e.target.value))}
           >
             {accounts.map((account) => (
-              <option key={account.id} value={account.id}>
+              <NativeSelectOption key={account.id} value={account.id}>
                 {account.accountName}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-text-secondary text-sm">
-          기간
-          <select
+          </NativeSelect>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="portfolio-range">기간</Label>
+          <NativeSelect
+            id="portfolio-range"
             aria-label="기간 선택"
-            className="bg-bg-input border border-white/12 text-text-primary px-3 py-2 rounded-xl outline-none transition-all focus:border-brand-primary focus:bg-bg-card"
             value={rangeDays}
             onChange={(e) => setRangeDays(Number(e.target.value))}
           >
-            <option value={30}>1개월</option>
-            <option value={90}>3개월</option>
-            <option value={180}>6개월</option>
-          </select>
-        </label>
+            <NativeSelectOption value={30}>1개월</NativeSelectOption>
+            <NativeSelectOption value={90}>3개월</NativeSelectOption>
+            <NativeSelectOption value={180}>6개월</NativeSelectOption>
+          </NativeSelect>
+        </div>
       </div>
       <PortfolioChartPanel
         series={chartQuery.data?.series ?? []}

@@ -7,6 +7,13 @@ import { fetchSubscriptionStatus } from "../../../shared/api/subscriptionStatusA
 import { SectionCard, StatusBar } from "../../../shared/ui";
 import { KisModeList } from "./KisModeList";
 import { KisSearchList } from "./KisSearchList";
+import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
+import { Badge } from "@/shared/ui/shadcn/badge";
+import { Button } from "@/shared/ui/shadcn/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card";
+import { Input } from "@/shared/ui/shadcn/input";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
+import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 
 type KisChannel = "ws" | "rest";
 type StatusFilter = "" | "subscribed" | "unsubscribed";
@@ -17,13 +24,6 @@ const EMPTY_KIS_CATALOG: CatalogResponse<KrSymbol> = {
   totalCatalogCount: 0,
   totalSubscribedCount: 0
 };
-
-const INPUT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
-const SELECT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
-const BTN_BASE = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
-const BTN_PRIMARY = `${BTN_BASE} bg-brand-primary text-white shadow-sm border-transparent hover:bg-brand-primary/90`;
-const BTN_OUTLINE = `${BTN_BASE} bg-white border-border-primary text-text-primary hover:bg-bg-input hover:border-text-muted`;
-const BTN_DANGER = `${BTN_BASE} bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm`;
 
 export function KisPanel() {
   const queryClient = useQueryClient();
@@ -125,18 +125,9 @@ export function KisPanel() {
     <div className="flex flex-col gap-6">
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-1">
-        <div className="border border-border-primary rounded-[16px] bg-bg-card shadow-sm px-5 py-4 flex flex-col gap-1">
-          <span className="text-text-muted text-[13px] font-medium">계좌 모드</span>
-          <strong className="text-xl text-brand-primary tracking-tight">{mode === "paper" ? "모의투자" : "실전투자"}</strong>
-        </div>
-        <div className="border border-border-primary rounded-[16px] bg-bg-card shadow-sm px-5 py-4 flex flex-col gap-1">
-          <span className="text-text-muted text-[13px] font-medium">수집 채널</span>
-          <strong className="text-xl text-brand-primary tracking-tight">{channel === "ws" ? "실시간 (WS)" : "일반 (REST)"}</strong>
-        </div>
-        <div className="border border-border-primary rounded-[16px] bg-bg-card shadow-sm px-5 py-4 flex flex-col gap-1">
-          <span className="text-text-muted text-[13px] font-medium">현재 구독 수</span>
-          <strong className="text-xl text-brand-primary tracking-tight">{modeSubscriptions.items?.length ?? 0} 건</strong>
-        </div>
+        <Card size="sm"><CardHeader><CardTitle className="text-muted-foreground">계좌 모드</CardTitle></CardHeader><CardContent className="text-xl font-semibold text-primary">{mode === "paper" ? "모의투자" : "실전투자"}</CardContent></Card>
+        <Card size="sm"><CardHeader><CardTitle className="text-muted-foreground">수집 채널</CardTitle></CardHeader><CardContent className="text-xl font-semibold text-primary">{channel === "ws" ? "실시간 (WS)" : "일반 (REST)"}</CardContent></Card>
+        <Card size="sm"><CardHeader><CardTitle className="text-muted-foreground">현재 구독 수</CardTitle></CardHeader><CardContent className="text-xl font-semibold text-primary">{modeSubscriptions.items?.length ?? 0} 건</CardContent></Card>
       </div>
 
       <div className="grid grid-cols-[2fr_1fr] gap-6 max-lg:grid-cols-1">
@@ -145,32 +136,18 @@ export function KisPanel() {
           icon={Search}
           headerAction={(
             <div className="flex gap-3 flex-wrap">
-              <select className={`${SELECT_CLS} w-[120px]`} value={mode} onChange={(e) => setMode(e.target.value as Mode)}>
-                <option value="paper">모의투자</option>
-                <option value="live">실전투자</option>
-              </select>
-              <select className={`${SELECT_CLS} w-[100px]`} value={channel} onChange={(e) => setChannel(e.target.value as KisChannel)}>
-                <option value="ws">WS</option>
-                <option value="rest">REST</option>
-              </select>
-              <input className={`${INPUT_CLS} w-[180px]`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="종목코드 또는 이름" />
-              <select className={`${SELECT_CLS} w-[120px]`} value={market} onChange={(e) => setMarket(e.target.value)}>
-                <option value="">전체 시장</option>
-                <option value="KOSPI">KOSPI</option>
-                <option value="KOSDAQ">KOSDAQ</option>
-              </select>
-              <select className={`${SELECT_CLS} w-[140px]`} value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
-                <option value="">전체 상태</option>
-                <option value="subscribed">구독 중</option>
-                <option value="unsubscribed">미구독</option>
-              </select>
+              <NativeSelect className="w-30" aria-label="계좌 모드" value={mode} onChange={(e) => setMode(e.target.value as Mode)}><NativeSelectOption value="paper">모의투자</NativeSelectOption><NativeSelectOption value="live">실전투자</NativeSelectOption></NativeSelect>
+              <NativeSelect className="w-25" aria-label="수집 채널" value={channel} onChange={(e) => setChannel(e.target.value as KisChannel)}><NativeSelectOption value="ws">WS</NativeSelectOption><NativeSelectOption value="rest">REST</NativeSelectOption></NativeSelect>
+              <Input className="w-45" aria-label="종목 검색" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="종목코드 또는 이름" />
+              <NativeSelect className="w-30" aria-label="시장" value={market} onChange={(e) => setMarket(e.target.value)}><NativeSelectOption value="">전체 시장</NativeSelectOption><NativeSelectOption value="KOSPI">KOSPI</NativeSelectOption><NativeSelectOption value="KOSDAQ">KOSDAQ</NativeSelectOption></NativeSelect>
+              <NativeSelect className="w-35" aria-label="구독 상태" value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}><NativeSelectOption value="">전체 상태</NativeSelectOption><NativeSelectOption value="subscribed">구독 중</NativeSelectOption><NativeSelectOption value="unsubscribed">미구독</NativeSelectOption></NativeSelect>
             </div>
           )}
         >
           <div className="flex gap-2.5 flex-wrap px-6 pb-3.5">
-            <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 카탈로그: {catalog.totalCatalogCount}</span>
-            <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 구독 중: {catalog.totalSubscribedCount}</span>
-            <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과: {catalog.returnedCount}</span>
+            <Badge variant="secondary">전체 카탈로그: {catalog.totalCatalogCount}</Badge>
+            <Badge variant="secondary">전체 구독 중: {catalog.totalSubscribedCount}</Badge>
+            <Badge variant="secondary">조회 결과: {catalog.returnedCount}</Badge>
           </div>
           <KisSearchList
             results={catalog.items}
@@ -179,34 +156,35 @@ export function KisPanel() {
             }}
           />
           {catalog.items.length < catalog.totalCatalogCount && (
-            <button
-              className="load-more-btn"
+            <Button
+              variant="ghost"
+              className="mx-6 my-2 w-fit"
               onClick={() => setCatalogLimit(prev => prev + 20)}
             >
               <RefreshCw size={14} /> 더보기 ({catalog.items.length} / {catalog.totalCatalogCount})
-            </button>
+            </Button>
           )}
         </SectionCard>
 
         <SectionCard title="KIS 구독 제어" icon={Activity}>
           <div className="px-6 py-4 flex flex-col gap-3">
             <div className="flex gap-3 flex-wrap">
-              <input
-                className={`${INPUT_CLS} w-[150px]`}
+              <Input
+                className="w-38"
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value.toUpperCase())}
                 placeholder="종목코드"
               />
-              <button className={BTN_PRIMARY} onClick={() => symbol && subscriptionMutation.mutate({ action: "add", targetSymbol: symbol })}>
+              <Button onClick={() => symbol && subscriptionMutation.mutate({ action: "add", targetSymbol: symbol })}>
                 구독 추가
-              </button>
-              <button className={BTN_DANGER} onClick={() => symbol && subscriptionMutation.mutate({ action: "remove", targetSymbol: symbol })}>
+              </Button>
+              <Button variant="destructive" onClick={() => symbol && subscriptionMutation.mutate({ action: "remove", targetSymbol: symbol })}>
                 구독 해지
-              </button>
+              </Button>
             </div>
             <div className="flex gap-2.5 flex-wrap">
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">선택된 종목: {symbol || "-"}</span>
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">구독 중인 종목: {selectedSet.size}건</span>
+              <Badge variant="secondary">선택된 종목: {symbol || "-"}</Badge>
+              <Badge variant="secondary">구독 중인 종목: {selectedSet.size}건</Badge>
             </div>
             <div className="flex flex-col">
               <KisModeList data={asModeSubscriptions(modeSubscriptions.items ?? [], mode)} symbolNameMap={symbolNameMap} />
@@ -219,18 +197,18 @@ export function KisPanel() {
         <SectionCard title="KIS 실시간 시세 조회 (REST)" icon={DollarSign}>
           <div className="px-6 py-4 flex flex-col gap-3">
             <div className="flex gap-3 flex-wrap">
-              <input
-                className={`${INPUT_CLS} w-[150px]`}
+              <Input
+                className="w-38"
                 value={priceSymbol}
                 onChange={(e) => setPriceSymbol(e.target.value.toUpperCase())}
                 placeholder="종목코드"
               />
-              <button className={BTN_OUTLINE} onClick={() => void refetchPrice()}>
+              <Button variant="outline" onClick={() => void refetchPrice()}>
                 현재가 조회
-              </button>
+              </Button>
             </div>
             <div className="flex gap-2.5 flex-wrap">
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과 로드: {priceResult ? "성공" : "없음"}</span>
+              <Badge variant="secondary">조회 결과 로드: {priceResult ? "성공" : "없음"}</Badge>
             </div>
           </div>
         </SectionCard>
@@ -238,9 +216,9 @@ export function KisPanel() {
         <SectionCard title="레거시 API 연결 상태 (WS/REST 목록)" icon={Activity}>
           <div className="px-6 py-4 flex flex-col gap-2.5">
             <div className="flex gap-2.5 flex-wrap">
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">모의투자 구독: {oldModeSubscriptions.paper.length}건</span>
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">실전투자 구독: {oldModeSubscriptions.live.length}건</span>
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">엔드포인트: {oldPath}</span>
+              <Badge variant="secondary">모의투자 구독: {oldModeSubscriptions.paper.length}건</Badge>
+              <Badge variant="secondary">실전투자 구독: {oldModeSubscriptions.live.length}건</Badge>
+              <Badge variant="secondary">엔드포인트: {oldPath}</Badge>
             </div>
           </div>
         </SectionCard>
@@ -251,39 +229,39 @@ export function KisPanel() {
           title="구독 상태 모니터링 (읽기 전용)"
           icon={Activity}
           headerAction={(
-            <button className={BTN_OUTLINE} onClick={() => void refetchSubscriptionStatus()}>
+            <Button variant="outline" onClick={() => void refetchSubscriptionStatus()}>
               새로고침
-            </button>
+            </Button>
           )}
         >
           <div className="px-6 py-4 flex flex-col gap-3">
-            {isSubscriptionStatusLoading && <div>로딩 중</div>}
+            {isSubscriptionStatusLoading && <Skeleton className="h-24 w-full" aria-label="구독 상태 로딩 중" />}
             {isSubscriptionStatusError && (
-              <div>상태 조회 실패: {subscriptionStatusError instanceof Error ? subscriptionStatusError.message : "알 수 없는 오류"}</div>
+              <Alert variant="destructive"><AlertDescription>상태 조회 실패: {subscriptionStatusError instanceof Error ? subscriptionStatusError.message : "알 수 없는 오류"}</AlertDescription></Alert>
             )}
             {!isSubscriptionStatusLoading && !isSubscriptionStatusError && subscriptionStatus && (
               <>
                 <div className="flex gap-2.5 flex-wrap">
-                  <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">생성 시각: {subscriptionStatus.generatedAt}</span>
-                  <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전역 WS 슬롯: {subscriptionStatus.totalWsSlotUsed} / {subscriptionStatus.totalWsSlotMax}</span>
+                  <Badge variant="secondary">생성 시각: {subscriptionStatus.generatedAt}</Badge>
+                  <Badge variant="secondary">전역 WS 슬롯: {subscriptionStatus.totalWsSlotUsed} / {subscriptionStatus.totalWsSlotMax}</Badge>
                 </div>
                 {subscriptionStatus.modes.length === 0 && <div>모드 상태 데이터가 없습니다.</div>}
                 {subscriptionStatus.modes.map((item) => (
-                  <div key={item.mode} className="border border-border-primary rounded-[8px] p-3 grid gap-2">
+                  <Card key={item.mode} size="sm" className="gap-2 p-3">
                     <div className="flex gap-2.5 flex-wrap">
                       <strong>{item.mode}</strong>
-                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">{item.connectionStatus}</span>
-                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">마지막 연결: {item.lastConnectedAt ?? "-"}</span>
-                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">재연결 횟수: {item.reconnectAttempts}</span>
-                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">WS 슬롯: {item.wsSlotUsed} / {item.wsSlotMax}</span>
+                      <Badge variant="secondary">{item.connectionStatus}</Badge>
+                      <Badge variant="secondary">마지막 연결: {item.lastConnectedAt ?? "-"}</Badge>
+                      <Badge variant="secondary">재연결 횟수: {item.reconnectAttempts}</Badge>
+                      <Badge variant="secondary">WS 슬롯: {item.wsSlotUsed} / {item.wsSlotMax}</Badge>
                     </div>
                     <div className="flex gap-2.5 flex-wrap">
-                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">WS 심볼({item.wsSymbols.length}): {item.wsSymbols.join(", ") || "-"}</span>
+                      <Badge variant="secondary">WS 심볼({item.wsSymbols.length}): {item.wsSymbols.join(", ") || "-"}</Badge>
                     </div>
                     <div className="flex gap-2.5 flex-wrap">
-                      <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">REST 심볼({item.restSymbols.length}): {item.restSymbols.join(", ") || "-"}</span>
+                      <Badge variant="secondary">REST 심볼({item.restSymbols.length}): {item.restSymbols.join(", ") || "-"}</Badge>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </>
             )}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Database, Info, RefreshCw, Search, Sparkles, X } from "lucide-react";
+import { BarChart3, Database, Info, RefreshCw, Search, Sparkles } from "lucide-react";
 import {
   collectBatchDaily,
   collectBatchWeekly,
@@ -18,6 +18,12 @@ import {
   type RunAnalysisResponse,
   type TriggerLlmReportResponse,
 } from "../../../shared/api/chartAnalysisApi";
+import { Badge } from "@/shared/ui/shadcn/badge";
+import { Button } from "@/shared/ui/shadcn/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui/shadcn/dialog";
+import { Input } from "@/shared/ui/shadcn/input";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/shadcn/table";
 
 const WINDOWS = ["1M", "3M", "6M", "1Y", "2Y", "MAX"];
 
@@ -35,8 +41,7 @@ const COLLECTION_COMMANDS: CollectionCommand[] = [
   { id: "yfinance-weekly", label: "yfinance 전체 주봉 수집", provider: "yfinance", interval: "weekly" },
 ];
 
-const panelClass = "bg-bg-card border border-border-primary rounded-lg shadow-sm";
-const buttonBase = "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+const panelClass = "rounded-xl border bg-card shadow-sm";
 const HELP_TEXT: Record<string, { title: string; body: string }> = {
   summary: {
     title: "추천 요약",
@@ -75,20 +80,16 @@ const WINDOW_LABEL: Record<string, string> = {
 
 function recommendationClass(rec: string): string {
   const upper = rec.toUpperCase();
-  if (upper === "BUY") return "bg-red-50 text-red-600 border-red-100";
-  if (upper === "SELL") return "bg-blue-50 text-blue-600 border-blue-100";
-  return "bg-amber-50 text-amber-700 border-amber-100";
+  if (upper === "BUY") return "border-order-buy/20 bg-order-buy/10 text-order-buy";
+  if (upper === "SELL") return "border-order-sell/20 bg-order-sell/10 text-order-sell";
+  return "border-market-warning/20 bg-market-warning/10 text-market-warning";
 }
 
 function directionClass(dir: string): string {
   const upper = dir.toUpperCase();
-  if (upper === "UP" || upper === "BULLISH") return "bg-red-50 text-red-600 border-red-100";
-  if (upper === "DOWN" || upper === "BEARISH") return "bg-blue-50 text-blue-600 border-blue-100";
-  return "bg-gray-100 text-text-secondary border-border-primary";
-}
-
-function Badge({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold ${className}`}>{children}</span>;
+  if (upper === "UP" || upper === "BULLISH") return "border-market-positive/20 bg-market-positive/10 text-market-positive";
+  if (upper === "DOWN" || upper === "BEARISH") return "border-market-negative/20 bg-market-negative/10 text-market-negative";
+  return "border-border bg-muted text-muted-foreground";
 }
 
 function explainVolumeTrend(trend: string): string {
@@ -114,14 +115,16 @@ function explainPattern(patterns: Pattern[]): string {
 
 function HelpButton({ topic, onInfo }: { topic: keyof typeof HELP_TEXT; onInfo: (topic: keyof typeof HELP_TEXT) => void }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="icon-xs"
       onClick={() => onInfo(topic)}
-      className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border-primary bg-bg-input text-text-muted hover:border-brand-primary hover:text-brand-primary"
+      className="rounded-full"
       aria-label={`${HELP_TEXT[topic].title} 설명`}
     >
       <Info size={13} />
-    </button>
+    </Button>
   );
 }
 
@@ -129,17 +132,14 @@ function HelpModal({ topic, onClose }: { topic: keyof typeof HELP_TEXT | null; o
   if (!topic) return null;
   const help = HELP_TEXT[topic];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
-      <div className="w-full max-w-md rounded-xl border border-border-primary bg-bg-card p-5 shadow-xl">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h3 className="text-lg font-bold text-text-primary">{help.title}</h3>
-          <button type="button" onClick={onClose} className="rounded-full p-1 text-text-muted hover:bg-bg-input hover:text-text-primary">
-            <X size={18} />
-          </button>
-        </div>
-        <p className="text-sm leading-6 text-text-secondary">{help.body}</p>
-      </div>
-    </div>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{help.title}</DialogTitle>
+          <DialogDescription className="leading-6">{help.body}</DialogDescription>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -149,14 +149,14 @@ function SummaryCard({ win, onInfo }: { win: AnalysisWindow; onInfo: (topic: key
       <div className="flex flex-wrap items-center gap-4">
         <HelpButton topic="summary" onInfo={onInfo} />
         <div className="flex items-center gap-2">
-          <span className="text-sm text-text-muted">추천</span>
-          <Badge className={recommendationClass(win.summary.recommendation)}>{win.summary.recommendation}</Badge>
+          <span className="text-sm text-muted-foreground">추천</span>
+          <Badge variant="outline" className={recommendationClass(win.summary.recommendation)}>{win.summary.recommendation}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-text-muted">신뢰도</span>
-          <span className="text-sm font-semibold text-text-primary">{win.summary.confidence}</span>
+          <span className="text-sm text-muted-foreground">신뢰도</span>
+          <span className="text-sm font-semibold text-foreground">{win.summary.confidence}</span>
         </div>
-        <div className="ml-auto text-xs text-text-muted">분석 시각 {win.computed_at}</div>
+        <div className="ml-auto text-xs text-muted-foreground">분석 시각 {win.computed_at}</div>
       </div>
     </section>
   );
@@ -166,15 +166,15 @@ function TrendCard({ win, onInfo }: { win: AnalysisWindow; onInfo: (topic: keyof
   const { trend } = win.technical;
   return (
     <section className={`${panelClass} p-5`}>
-      <div className="mb-3 flex items-center gap-2"><h3 className="text-[15px] font-semibold text-text-primary">추세</h3><HelpButton topic="trend" onInfo={onInfo} /></div>
+      <div className="mb-3 flex items-center gap-2"><h3 className="text-[15px] font-semibold text-foreground">추세</h3><HelpButton topic="trend" onInfo={onInfo} /></div>
       <div className="mb-3 flex flex-wrap gap-2">
-        <Badge className={directionClass(trend.direction)}>{trend.direction}</Badge>
-        <Badge className={directionClass(trend.strength)}>{trend.strength}</Badge>
+        <Badge variant="outline" className={directionClass(trend.direction)}>{trend.direction}</Badge>
+        <Badge variant="outline" className={directionClass(trend.strength)}>{trend.strength}</Badge>
       </div>
       <dl className="grid gap-2 text-sm">
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">MA 정렬</dt><dd className="text-right text-text-primary">{trend.ma_alignment}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">ADX</dt><dd className="text-right text-text-primary">{trend.adx}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">HH/LL</dt><dd className="text-right text-text-primary">{trend.hh_ll_structure}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">MA 정렬</dt><dd className="text-right text-foreground">{trend.ma_alignment}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">ADX</dt><dd className="text-right text-foreground">{trend.adx}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">HH/LL</dt><dd className="text-right text-foreground">{trend.hh_ll_structure}</dd></div>
       </dl>
     </section>
   );
@@ -184,14 +184,14 @@ function LevelsCard({ win, onInfo }: { win: AnalysisWindow; onInfo: (topic: keyo
   const { levels } = win;
   return (
     <section className={`${panelClass} p-5`}>
-      <div className="mb-3 flex items-center gap-2"><h3 className="text-[15px] font-semibold text-text-primary">가격 레벨</h3><HelpButton topic="levels" onInfo={onInfo} /></div>
+      <div className="mb-3 flex items-center gap-2"><h3 className="text-[15px] font-semibold text-foreground">가격 레벨</h3><HelpButton topic="levels" onInfo={onInfo} /></div>
       <dl className="grid gap-2 text-sm">
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">지지</dt><dd className="text-right text-text-primary">{levels.supports.join(", ") || "-"}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">저항</dt><dd className="text-right text-text-primary">{levels.resistances.join(", ") || "-"}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">진입</dt><dd className="text-right font-semibold text-brand-primary">{levels.entry}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">손절</dt><dd className="text-right font-semibold text-blue-600">{levels.stop_loss}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">목표</dt><dd className="text-right font-semibold text-red-600">{levels.target}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">R/R</dt><dd className="text-right text-text-primary">{levels.risk_reward}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">지지</dt><dd className="text-right text-foreground">{levels.supports.join(", ") || "-"}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">저항</dt><dd className="text-right text-foreground">{levels.resistances.join(", ") || "-"}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">진입</dt><dd className="text-right font-semibold text-primary">{levels.entry}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">손절</dt><dd className="text-right font-semibold text-market-negative">{levels.stop_loss}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">목표</dt><dd className="text-right font-semibold text-market-positive">{levels.target}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">R/R</dt><dd className="text-right text-foreground">{levels.risk_reward}</dd></div>
       </dl>
     </section>
   );
@@ -201,13 +201,13 @@ function VolumePatternCard({ win, onInfo }: { win: AnalysisWindow; onInfo: (topi
   const patterns: Pattern[] = win.technical.patterns;
   return (
     <section className={`${panelClass} p-5`}>
-      <div className="mb-3 flex items-center gap-2"><h3 className="text-[15px] font-semibold text-text-primary">거래량/패턴</h3><HelpButton topic="volume" onInfo={onInfo} /></div>
+      <div className="mb-3 flex items-center gap-2"><h3 className="text-[15px] font-semibold text-foreground">거래량/패턴</h3><HelpButton topic="volume" onInfo={onInfo} /></div>
       <dl className="grid gap-2 text-sm">
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">거래량 추세</dt><dd className="text-right text-text-primary">{win.volume.trend}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">스파이크</dt><dd className="text-right text-text-primary">{win.volume.spike_detected ? "감지" : "없음"}</dd></div>
-        <div className="flex justify-between gap-4"><dt className="text-text-muted">평균 비율</dt><dd className="text-right text-text-primary">{win.volume.avg_ratio}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">거래량 추세</dt><dd className="text-right text-foreground">{win.volume.trend}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">스파이크</dt><dd className="text-right text-foreground">{win.volume.spike_detected ? "감지" : "없음"}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-muted-foreground">평균 비율</dt><dd className="text-right text-foreground">{win.volume.avg_ratio}</dd></div>
       </dl>
-      <div className="mt-4 rounded-lg bg-bg-input p-3 text-sm leading-6 text-text-secondary">
+      <div className="mt-4 rounded-lg bg-muted p-3 text-sm leading-6 text-muted-foreground">
         <p>{explainVolumeTrend(win.volume.trend)}</p>
         <p>{explainVolumeRatio(win.volume.avg_ratio)}</p>
         <p>{win.volume.spike_detected ? "거래량 스파이크는 평소보다 거래가 갑자기 몰렸다는 뜻입니다." : "거래량 스파이크는 없습니다. 급격한 관심 집중 신호는 약합니다."}</p>
@@ -215,9 +215,9 @@ function VolumePatternCard({ win, onInfo }: { win: AnalysisWindow; onInfo: (topi
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {patterns.length === 0 ? (
-          <span className="text-sm text-text-muted">감지된 패턴 없음</span>
+          <span className="text-sm text-muted-foreground">감지된 패턴 없음</span>
         ) : (
-          patterns.map((p, i) => <Badge key={`${p.type}-${i}`} className="bg-bg-input text-text-secondary border-border-primary">{p.type} · {p.date}</Badge>)
+          patterns.map((p, i) => <Badge key={`${p.type}-${i}`} variant="secondary">{p.type} · {p.date}</Badge>)
         )}
       </div>
     </section>
@@ -229,20 +229,20 @@ function WindowMetaCard({ win }: { win: AnalysisWindow }) {
     <section className={`${panelClass} p-5`}>
       <div className="grid gap-3 text-sm md:grid-cols-4">
         <div>
-          <p className="text-xs font-semibold text-text-muted">윈도우</p>
-          <p className="font-semibold text-text-primary">{WINDOW_LABEL[win.window] ?? win.window}</p>
+          <p className="text-xs font-semibold text-muted-foreground">윈도우</p>
+          <p className="font-semibold text-foreground">{WINDOW_LABEL[win.window] ?? win.window}</p>
         </div>
         <div>
-          <p className="text-xs font-semibold text-text-muted">봉 종류</p>
-          <p className="font-semibold text-text-primary">{win.interval === "D" ? "일봉" : "주봉"}</p>
+          <p className="text-xs font-semibold text-muted-foreground">봉 종류</p>
+          <p className="font-semibold text-foreground">{win.interval === "D" ? "일봉" : "주봉"}</p>
         </div>
         <div>
-          <p className="text-xs font-semibold text-text-muted">리포트 상태</p>
-          <p className="font-semibold text-text-primary">LLM: {win.report.llm.status} / 템플릿: {win.report.template.status}</p>
+          <p className="text-xs font-semibold text-muted-foreground">리포트 상태</p>
+          <p className="font-semibold text-foreground">LLM: {win.report.llm.status} / 템플릿: {win.report.template.status}</p>
         </div>
         <div>
-          <p className="text-xs font-semibold text-text-muted">스냅샷</p>
-          <p className="break-all font-mono text-xs text-text-secondary">{win.snapshot_hash}</p>
+          <p className="text-xs font-semibold text-muted-foreground">스냅샷</p>
+          <p className="break-all font-mono text-xs text-muted-foreground">{win.snapshot_hash}</p>
         </div>
       </div>
     </section>
@@ -252,31 +252,25 @@ function WindowMetaCard({ win }: { win: AnalysisWindow }) {
 function PatternDetailCard({ patterns }: { patterns: Pattern[] }) {
   return (
     <section className={`${panelClass} overflow-hidden`}>
-      <div className="border-b border-border-primary px-5 py-4">
-        <h3 className="text-[15px] font-semibold text-text-primary">패턴 상세</h3>
+      <div className="border-b border-border px-5 py-4">
+        <h3 className="text-[15px] font-semibold text-foreground">패턴 상세</h3>
       </div>
       {patterns.length === 0 ? (
-        <p className="px-5 py-4 text-sm text-text-muted">감지된 캔들 패턴이 없습니다.</p>
+        <p className="px-5 py-4 text-sm text-muted-foreground">감지된 캔들 패턴이 없습니다.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-bg-input text-text-muted">
-              <tr>
-                <th className="px-5 py-3 text-left font-semibold">패턴</th>
-                <th className="px-5 py-3 text-left font-semibold">날짜</th>
-                <th className="px-5 py-3 text-right font-semibold">봉 위치</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader><TableRow><TableHead>패턴</TableHead><TableHead>날짜</TableHead><TableHead className="text-right">봉 위치</TableHead></TableRow></TableHeader>
+            <TableBody>
               {patterns.map((p, i) => (
-                <tr key={`${p.type}-${p.date}-${i}`} className="border-t border-border-primary">
-                  <td className="px-5 py-3 font-medium text-text-primary">{p.type}</td>
-                  <td className="px-5 py-3 text-text-secondary">{p.date}</td>
-                  <td className="px-5 py-3 text-right text-text-secondary">{p.index}</td>
-                </tr>
+                <TableRow key={`${p.type}-${p.date}-${i}`}>
+                  <TableCell className="font-medium">{p.type}</TableCell>
+                  <TableCell className="text-muted-foreground">{p.date}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">{p.index}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </section>
@@ -295,9 +289,9 @@ function NarrativeSections({ narrative }: { narrative: LlmNarrative }) {
           ["리스크", narrative.risk_section],
         ] as [string, string][]
       ).map(([label, content]) => (
-        <div key={label} className="rounded-lg bg-bg-input p-4">
-          <p className="mb-1 text-xs font-semibold text-text-muted">{label}</p>
-          <p className="text-sm leading-6 text-text-secondary">{content ?? "-"}</p>
+        <div key={label} className="rounded-lg bg-muted p-4">
+          <p className="mb-1 text-xs font-semibold text-muted-foreground">{label}</p>
+          <p className="text-sm leading-6 text-muted-foreground">{content ?? "-"}</p>
         </div>
       ))}
     </div>
@@ -324,17 +318,17 @@ function ChartNarrativeCard({
       {/* 템플릿 섹션 — 항상 표시. 없으면 안내 메시지 */}
       <section className={`${panelClass} p-5`}>
         <div className="mb-4 flex items-center gap-2">
-          <Sparkles size={17} className="text-text-secondary" />
-          <h3 className="text-[15px] font-semibold text-text-primary">템플릿 분석</h3>
+          <Sparkles size={17} className="text-muted-foreground" />
+          <h3 className="text-[15px] font-semibold text-foreground">템플릿 분석</h3>
           <HelpButton topic="llm" onInfo={onInfo} />
-          <Badge className="bg-bg-input text-text-secondary border-border-primary">룰 기반</Badge>
+          <Badge variant="secondary">룰 기반</Badge>
         </div>
         {templateNarrative ? (
           <NarrativeSections narrative={templateNarrative} />
         ) : (
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-muted-foreground">
             템플릿 리포트가 없습니다.{" "}
-            <span className="font-semibold text-text-primary">해당 종목 분석하기</span> 버튼을 눌러 생성하세요.
+            <span className="font-semibold text-foreground">해당 종목 분석하기</span> 버튼을 눌러 생성하세요.
           </p>
         )}
       </section>
@@ -342,24 +336,24 @@ function ChartNarrativeCard({
       {/* LLM 섹션 — 항상 표시. 없으면 안내 메시지 */}
       <section className={`${panelClass} p-5`}>
         <div className="mb-4 flex items-center gap-2">
-          <Sparkles size={17} className="text-brand-primary" />
-          <h3 className="text-[15px] font-semibold text-text-primary">LLM 분석</h3>
+          <Sparkles size={17} className="text-primary" />
+          <h3 className="text-[15px] font-semibold text-foreground">LLM 분석</h3>
           <HelpButton topic="llm" onInfo={onInfo} />
-          <Badge className="bg-brand-secondary text-brand-primary border-brand-secondary">AI 생성</Badge>
-          {isGenerating && <span className="animate-pulse text-xs text-brand-primary">백그라운드 생성 중...</span>}
+          <Badge>AI 생성</Badge>
+          {isGenerating && <span className="animate-pulse text-xs text-primary">백그라운드 생성 중...</span>}
         </div>
         {llmNarrative ? (
           <NarrativeSections narrative={llmNarrative} />
         ) : isGenerating ? (
-          <p className="text-sm text-text-muted">LLM 리포트를 백그라운드에서 생성 중입니다. 완료되면 알림이 표시됩니다.</p>
+          <p className="text-sm text-muted-foreground">LLM 리포트를 백그라운드에서 생성 중입니다. 완료되면 알림이 표시됩니다.</p>
         ) : (
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-muted-foreground">
             {llmStatus && LLM_STATUS_LABEL[llmStatus]
               ? LLM_STATUS_LABEL[llmStatus]
-              : <>LLM 리포트가 없습니다.{" "}<span className="font-semibold text-brand-primary">LLM 차트 분석 요청</span> 버튼을 눌러 생성하세요.</>}
+              : <>LLM 리포트가 없습니다.{" "}<span className="font-semibold text-primary">LLM 차트 분석 요청</span> 버튼을 눌러 생성하세요.</>}
           </p>
         )}
-        {error && <p className="mt-2 text-sm text-blue-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
       </section>
     </div>
   );
@@ -368,43 +362,37 @@ function ChartNarrativeCard({
 function IndicatorTable({ signals, onInfo }: { signals: IndicatorSignal[]; onInfo: (topic: keyof typeof HELP_TEXT) => void }) {
   return (
     <section className={`${panelClass} overflow-hidden`}>
-      <div className="border-b border-border-primary px-5 py-4">
-        <div className="flex items-center gap-2"><h3 className="text-[15px] font-semibold text-text-primary">지표 신호</h3><HelpButton topic="indicators" onInfo={onInfo} /></div>
+      <div className="border-b border-border px-5 py-4">
+        <div className="flex items-center gap-2"><h3 className="text-[15px] font-semibold text-foreground">지표 신호</h3><HelpButton topic="indicators" onInfo={onInfo} /></div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-bg-input text-text-muted">
-            <tr>
-              <th className="px-5 py-3 text-left font-semibold">지표</th>
-              <th className="px-5 py-3 text-left font-semibold">값</th>
-              <th className="px-5 py-3 text-left font-semibold">해석</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader><TableRow><TableHead>지표</TableHead><TableHead>값</TableHead><TableHead>해석</TableHead></TableRow></TableHeader>
+          <TableBody>
             {signals.map((sig, i) => (
-              <tr key={`${sig.name}-${i}`} className="border-t border-border-primary">
-                <td className="px-5 py-3 font-medium text-text-primary">{sig.name}</td>
-                <td className="px-5 py-3 text-text-secondary">{sig.value}</td>
-                <td className="px-5 py-3 text-text-secondary">{sig.interpretation}</td>
-              </tr>
+              <TableRow key={`${sig.name}-${i}`}>
+                <TableCell className="font-medium">{sig.name}</TableCell>
+                <TableCell className="text-muted-foreground">{sig.value}</TableCell>
+                <TableCell className="text-muted-foreground">{sig.interpretation}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </section>
   );
 }
 
 function CollectionResult({ result }: { result: CollectBatchResponse | null }) {
-  if (!result) return <span className="text-sm text-text-muted">아직 실행된 수집 작업이 없습니다.</span>;
+  if (!result) return <span className="text-sm text-muted-foreground">아직 실행된 수집 작업이 없습니다.</span>;
   return (
     <div className="flex flex-wrap gap-2 text-sm">
-      <Badge className="bg-bg-input text-text-primary border-border-primary">대상 {result.symbols}</Badge>
-      <Badge className="bg-red-50 text-red-600 border-red-100">성공 {result.success_symbols}</Badge>
-      <Badge className="bg-blue-50 text-blue-600 border-blue-100">실패 {result.failed_symbols}</Badge>
-      <Badge className="bg-amber-50 text-amber-700 border-amber-100">스킵 {result.skipped_symbols ?? 0}</Badge>
-      <Badge className="bg-bg-input text-text-primary border-border-primary">저장 {result.total_rows_inserted}행</Badge>
-      <Badge className="bg-bg-input text-text-secondary border-border-primary">{result.start} ~ {result.end}</Badge>
+      <Badge variant="secondary">대상 {result.symbols}</Badge>
+      <Badge variant="outline" className="border-market-positive/20 bg-market-positive/10 text-market-positive">성공 {result.success_symbols}</Badge>
+      <Badge variant="destructive">실패 {result.failed_symbols}</Badge>
+      <Badge variant="outline" className="border-market-warning/20 bg-market-warning/10 text-market-warning">스킵 {result.skipped_symbols ?? 0}</Badge>
+      <Badge variant="secondary">저장 {result.total_rows_inserted}행</Badge>
+      <Badge variant="secondary">{result.start} ~ {result.end}</Badge>
     </div>
   );
 }
@@ -496,144 +484,138 @@ export function ChartAnalysisPage() {
 
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-[26px] font-bold text-text-primary">차트 분석</h2>
-          <p className="text-sm text-text-secondary">OHLCV 수집, 종목 분석, LLM 설명 저장 상태를 한 화면에서 처리합니다.</p>
+          <h2 className="text-[26px] font-bold text-foreground">차트 분석</h2>
+          <p className="text-sm text-muted-foreground">OHLCV 수집, 종목 분석, LLM 설명 저장 상태를 한 화면에서 처리합니다.</p>
         </div>
-        <button
-          className={`${buttonBase} border border-border-primary bg-bg-card text-text-primary hover:bg-bg-input`}
+        <Button
+          variant="outline"
+          size="lg"
           onClick={() => collectedQuery.refetch()}
         >
           <RefreshCw size={16} />
           수집 종목 새로고침
-        </button>
+        </Button>
       </header>
 
       <section className={`${panelClass} p-5`}>
         <div className="mb-4 flex items-center gap-2">
-          <Database size={18} className="text-brand-primary" />
-          <h3 className="text-[17px] font-semibold text-text-primary">전체 데이터 수집</h3>
+          <Database size={18} className="text-primary" />
+          <h3 className="text-[17px] font-semibold text-foreground">전체 데이터 수집</h3>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {COLLECTION_COMMANDS.map((cmd) => {
             const pending = collectMutation.isPending && collectMutation.variables?.id === cmd.id;
             return (
-              <button
+              <Button
                 key={cmd.id}
-                className={`${buttonBase} min-h-[54px] border border-border-primary bg-bg-input text-text-primary hover:border-brand-primary hover:bg-brand-secondary`}
+                variant="secondary"
+                className="min-h-14"
                 onClick={() => collectMutation.mutate(cmd)}
                 disabled={collectMutation.isPending}
               >
                 {pending ? <RefreshCw size={16} className="animate-spin" /> : <Database size={16} />}
                 {pending ? "수집 중..." : cmd.label}
-              </button>
+              </Button>
             );
           })}
         </div>
-        <div className="mt-4 rounded-lg bg-bg-input p-4">
+        <div className="mt-4 rounded-lg bg-muted p-4">
           <CollectionResult result={lastCollection} />
-          {collectMutation.isError && <p className="mt-2 text-sm text-blue-600">{collectMutation.error.message}</p>}
+          {collectMutation.isError && <p className="mt-2 text-sm text-destructive">{collectMutation.error.message}</p>}
         </div>
       </section>
 
       <section className={`${panelClass} overflow-hidden`}>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-primary px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
           <div className="flex items-center gap-2">
-            <BarChart3 size={18} className="text-brand-primary" />
-            <h3 className="text-[17px] font-semibold text-text-primary">수집된 종목</h3>
+            <BarChart3 size={18} className="text-primary" />
+            <h3 className="text-[17px] font-semibold text-foreground">수집된 종목</h3>
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
                 value={symbolFilter}
                 onChange={(e) => setSymbolFilter(e.target.value)}
                 placeholder="종목/이름/시장 검색"
-                className="h-10 w-[180px] rounded-lg border border-border-primary bg-bg-input pl-9 pr-3 text-sm outline-none focus:border-brand-primary"
+                className="w-45 pl-9"
+                aria-label="수집 종목 검색"
               />
             </div>
-            <select
+            <NativeSelect
+              aria-label="데이터 소스"
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value as "all" | "yfinance" | "pykrx" | "kis")}
-              className="h-10 rounded-lg border border-border-primary bg-bg-input px-3 text-sm outline-none focus:border-brand-primary"
             >
-              <option value="all">전체</option>
-              <option value="yfinance">yfinance</option>
-              <option value="kis">KIS</option>
-              <option value="pykrx">pykrx</option>
-            </select>
+              <NativeSelectOption value="all">전체</NativeSelectOption>
+              <NativeSelectOption value="yfinance">yfinance</NativeSelectOption>
+              <NativeSelectOption value="kis">KIS</NativeSelectOption>
+              <NativeSelectOption value="pykrx">pykrx</NativeSelectOption>
+            </NativeSelect>
           </div>
         </div>
-        <div className="max-h-[360px] overflow-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-bg-input text-text-muted">
-              <tr>
-                <th className="px-5 py-3 text-left font-semibold">종목</th>
-                <th className="px-5 py-3 text-left font-semibold">종목명</th>
-                <th className="px-5 py-3 text-left font-semibold">소스</th>
-                <th className="px-5 py-3 text-left font-semibold">시장</th>
-                <th className="px-5 py-3 text-right font-semibold">일봉</th>
-                <th className="px-5 py-3 text-right font-semibold">주봉</th>
-                <th className="px-5 py-3 text-left font-semibold">최근 일봉(수)</th>
-                <th className="px-5 py-3 text-left font-semibold">최근 주봉(수)</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="max-h-90 overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-muted"><TableRow><TableHead>종목</TableHead><TableHead>종목명</TableHead><TableHead>소스</TableHead><TableHead>시장</TableHead><TableHead className="text-right">일봉</TableHead><TableHead className="text-right">주봉</TableHead><TableHead>최근 일봉(수)</TableHead><TableHead>최근 주봉(수)</TableHead></TableRow></TableHeader>
+            <TableBody>
               {collectedQuery.isLoading && (
-                <tr><td className="px-5 py-8 text-center text-text-muted" colSpan={8}>수집 종목 조회 중</td></tr>
+                <TableRow><TableCell className="py-8 text-center text-muted-foreground" colSpan={8}>수집 종목 조회 중</TableCell></TableRow>
               )}
               {collectedQuery.isError && (
-                <tr><td className="px-5 py-8 text-center text-blue-600" colSpan={8}>{collectedQuery.error.message}</td></tr>
+                <TableRow><TableCell className="py-8 text-center text-destructive" colSpan={8}>{collectedQuery.error.message}</TableCell></TableRow>
               )}
               {!collectedQuery.isLoading && filteredSymbols.length === 0 && (
-                <tr><td className="px-5 py-8 text-center text-text-muted" colSpan={8}>수집된 종목이 없습니다.</td></tr>
+                <TableRow><TableCell className="py-8 text-center text-muted-foreground" colSpan={8}>수집된 종목이 없습니다.</TableCell></TableRow>
               )}
               {filteredSymbols.map((item) => {
                 const active = selectedSymbol?.source === item.source && selectedSymbol.symbol === item.symbol;
                 return (
-                  <tr
+                  <TableRow
                     key={`${item.source}:${item.symbol}`}
                     onClick={() => setSelectedSymbol(item)}
-                    className={`cursor-pointer border-t border-border-primary transition-colors ${active ? "bg-brand-secondary" : "hover:bg-bg-input"}`}
+                    className={active ? "cursor-pointer bg-accent" : "cursor-pointer"}
                   >
-                    <td className="px-5 py-3 font-semibold text-text-primary">{item.symbol}</td>
-                    <td className="px-5 py-3 text-text-primary">{item.name || "-"}</td>
-                    <td className="px-5 py-3"><Badge className="bg-bg-input text-text-secondary border-border-primary">{item.source}</Badge></td>
-                    <td className="px-5 py-3 text-text-secondary">{item.market}</td>
-                    <td className="px-5 py-3 text-right text-text-primary">{item.daily_bars}</td>
-                    <td className="px-5 py-3 text-right text-text-primary">{item.weekly_bars}</td>
-                    <td className="px-5 py-3 text-text-secondary">{item.last_daily_date ? `${item.last_daily_date} (${item.daily_bars})` : "-"}</td>
-                    <td className="px-5 py-3 text-text-secondary">{item.last_weekly_date ? `${item.last_weekly_date} (${item.weekly_bars})` : "-"}</td>
-                  </tr>
+                    <TableCell className="font-semibold">{item.symbol}</TableCell>
+                    <TableCell>{item.name || "-"}</TableCell>
+                    <TableCell><Badge variant="secondary">{item.source}</Badge></TableCell>
+                    <TableCell className="text-muted-foreground">{item.market}</TableCell>
+                    <TableCell className="text-right tabular-nums">{item.daily_bars}</TableCell>
+                    <TableCell className="text-right tabular-nums">{item.weekly_bars}</TableCell>
+                    <TableCell className="text-muted-foreground">{item.last_daily_date ? `${item.last_daily_date} (${item.daily_bars})` : "-"}</TableCell>
+                    <TableCell className="text-muted-foreground">{item.last_weekly_date ? `${item.last_weekly_date} (${item.weekly_bars})` : "-"}</TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </section>
 
       <section className={`${panelClass} p-5`}>
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-text-muted">선택 종목</p>
-            <p className="truncate text-lg font-bold text-text-primary">{selectedSymbolText || "종목을 선택하세요"}</p>
+            <p className="text-xs font-semibold text-muted-foreground">선택 종목</p>
+            <p className="truncate text-lg font-bold text-foreground">{selectedSymbolText || "종목을 선택하세요"}</p>
           </div>
-          <button
-            className={`${buttonBase} bg-brand-primary text-white hover:bg-brand-primary/90`}
+          <Button
+            size="lg"
             disabled={!selectedSymbol || runAnalysisMutation.isPending}
             onClick={() => selectedSymbol && runAnalysisMutation.mutate(selectedSymbol.symbol)}
           >
             {runAnalysisMutation.isPending ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
             {runAnalysisMutation.isPending ? "분석 중..." : "해당 종목 분석하기"}
-          </button>
-          <button
-            className={`${buttonBase} border border-border-primary bg-bg-card text-text-primary hover:bg-bg-input`}
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
             disabled={!selectedSymbol || analysisQuery.isPending}
             onClick={() => selectedSymbol && analysisQuery.mutate(selectedSymbol.symbol)}
           >
             결과 보기
-          </button>
-          <button
-            className={`${buttonBase} border border-brand-primary bg-brand-secondary text-brand-primary hover:bg-brand-secondary/80`}
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
             disabled={!selectedSymbol || !activeWin || llmRequestMutation.isPending}
             onClick={() => {
               if (selectedSymbol && activeWin) {
@@ -647,44 +629,44 @@ export function ChartAnalysisPage() {
           >
             {llmRequestMutation.isPending ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
             {llmRequestMutation.isPending ? "LLM 요청 중..." : "LLM 차트 분석 요청"}
-          </button>
+          </Button>
         </div>
         {runAnalysisMutation.isSuccess && (
-          <p className="mt-3 text-sm text-text-secondary">
+          <p className="mt-3 text-sm text-muted-foreground">
             분석 완료: 성공 {runAnalysisMutation.data.success}, 실패 {runAnalysisMutation.data.failed}, 스킵 {runAnalysisMutation.data.skipped}
           </p>
         )}
-        {runAnalysisMutation.isError && <p className="mt-3 text-sm text-blue-600">{runAnalysisMutation.error.message}</p>}
-        {analysisQuery.isError && <p className="mt-3 text-sm text-blue-600">{analysisQuery.error.message}</p>}
-        {llmRequestMutation.isError && <p className="mt-3 text-sm text-blue-600">{llmRequestMutation.error.message}</p>}
+        {runAnalysisMutation.isError && <p className="mt-3 text-sm text-destructive">{runAnalysisMutation.error.message}</p>}
+        {analysisQuery.isError && <p className="mt-3 text-sm text-destructive">{analysisQuery.error.message}</p>}
+        {llmRequestMutation.isError && <p className="mt-3 text-sm text-destructive">{llmRequestMutation.error.message}</p>}
       </section>
 
       {data && (
         <div className="flex flex-wrap gap-2">
           {availableWindows.map((w) => (
-            <button
+            <Button
               key={w}
+              variant={selectedWindow === w ? "secondary" : "outline"}
               onClick={() => setSelectedWindow(w)}
-              className={`${buttonBase} border ${selectedWindow === w ? "border-brand-primary bg-brand-secondary text-brand-primary" : "border-border-primary bg-bg-card text-text-primary hover:bg-bg-input"}`}
             >
               {w}
-            </button>
+            </Button>
           ))}
         </div>
       )}
 
-      {analysisQuery.isPending && <section className={`${panelClass} p-5 text-sm text-text-muted`}>분석 결과 조회 중</section>}
+      {analysisQuery.isPending && <section className={`${panelClass} p-5 text-sm text-muted-foreground`}>분석 결과 조회 중</section>}
 
       {activeWin && (
         <div className="flex flex-col gap-4">
           <div className={`${panelClass} p-5`}>
             <div className="mb-2 flex items-center gap-2">
-              <BarChart3 size={18} className="text-brand-primary" />
-              <h3 className="text-[17px] font-semibold text-text-primary">
+              <BarChart3 size={18} className="text-primary" />
+              <h3 className="text-[17px] font-semibold text-foreground">
                 {WINDOW_LABEL[activeWin.window] ?? activeWin.window} · {activeWin.interval === "D" ? "일봉" : "주봉"} 분석 결과
               </h3>
             </div>
-            <p className="text-sm text-text-secondary">
+            <p className="text-sm text-muted-foreground">
               선택한 윈도우의 수치 분석, 지표, 패턴, 거래량, 저장 리포트 상태를 모두 보여줍니다.
             </p>
           </div>

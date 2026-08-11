@@ -1,4 +1,13 @@
 import type { PositionResponse } from "../../../entities/account/model/types";
+import { cn } from "../../../shared/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../../shared/ui/shadcn/table";
 import { formatAmount, formatRate } from "../../../shared/utils/format";
 
 interface PositionTableProps {
@@ -8,61 +17,51 @@ interface PositionTableProps {
 export function PositionTable({ positions }: PositionTableProps) {
   if (positions.length === 0) {
     return (
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-        <thead>
+      <Table>
+        <TableHeader>
           <PositionTableHead />
-        </thead>
-        <tbody>
-          <tr>
-            <td
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell
               colSpan={9}
-              style={{ textAlign: "center", padding: "32px", color: "var(--text-secondary, #6b7280)" }}
+              className="h-24 text-center text-muted-foreground"
             >
               포지션 없음
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     );
   }
 
   return (
-    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-      <thead>
+    <Table>
+      <TableHeader>
         <PositionTableHead />
-      </thead>
-      <tbody>
+      </TableHeader>
+      <TableBody>
         {positions.map((pos) => (
           <PositionRow key={pos.ticker} position={pos} />
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 
 function PositionTableHead() {
-  const thStyle: React.CSSProperties = {
-    padding: "10px 12px",
-    textAlign: "right",
-    fontWeight: 600,
-    color: "var(--text-secondary, #6b7280)",
-    borderBottom: "1px solid var(--border, #e5e7eb)",
-    whiteSpace: "nowrap",
-  };
-  const thLeftStyle: React.CSSProperties = { ...thStyle, textAlign: "left" };
-
   return (
-    <tr>
-      <th style={thLeftStyle}>종목</th>
-      <th style={thLeftStyle}>시장</th>
-      <th style={thStyle}>수량</th>
-      <th style={thStyle}>평균단가</th>
-      <th style={thStyle}>현재가</th>
-      <th style={thStyle}>평가금액</th>
-      <th style={thStyle}>평가손익</th>
-      <th style={thStyle}>수익률</th>
-      <th style={thLeftStyle}>가격소스</th>
-    </tr>
+    <TableRow>
+      <TableHead>종목</TableHead>
+      <TableHead>시장</TableHead>
+      <TableHead className="text-right">수량</TableHead>
+      <TableHead className="text-right">평균단가</TableHead>
+      <TableHead className="text-right">현재가</TableHead>
+      <TableHead className="text-right">평가금액</TableHead>
+      <TableHead className="text-right">평가손익</TableHead>
+      <TableHead className="text-right">수익률</TableHead>
+      <TableHead>가격소스</TableHead>
+    </TableRow>
   );
 }
 
@@ -71,37 +70,38 @@ interface PositionRowProps {
 }
 
 function PositionRow({ position }: PositionRowProps) {
-  const tdStyle: React.CSSProperties = {
-    padding: "10px 12px",
-    textAlign: "right",
-    borderBottom: "1px solid var(--border, #f3f4f6)",
-  };
-  const tdLeftStyle: React.CSSProperties = { ...tdStyle, textAlign: "left" };
-
   const returnRateFloat = position.returnRate !== null ? parseFloat(position.returnRate) : null;
   const unrealizedPnlFloat = position.unrealizedPnl !== null ? parseFloat(position.unrealizedPnl) : null;
 
-  const returnRateColor =
-    returnRateFloat === null ? undefined : returnRateFloat >= 0 ? "#10b981" : "#ef4444";
+  const tone = returnRateFloat === null ? null : returnRateFloat >= 0 ? "positive" : "negative";
+  const toneClass = tone === "positive"
+    ? "text-market-positive"
+    : tone === "negative"
+      ? "text-market-negative"
+      : "text-muted-foreground";
 
   const unrealizedPnlDisplay =
     position.unrealizedPnl === null
       ? "-"
       : unrealizedPnlFloat !== null && unrealizedPnlFloat > 0
-        ? `+${formatAmount(position.unrealizedPnl)}`
+        ? "+" + formatAmount(position.unrealizedPnl)
         : formatAmount(position.unrealizedPnl);
 
   return (
-    <tr>
-      <td style={tdLeftStyle}>{position.ticker}</td>
-      <td style={tdLeftStyle}>{position.marketType}</td>
-      <td style={tdStyle}>{position.quantity}</td>
-      <td style={tdStyle}>{formatAmount(position.avgBuyPrice)}</td>
-      <td style={tdStyle}>{formatAmount(position.currentPrice)}</td>
-      <td style={tdStyle}>{formatAmount(position.evaluationAmount)}</td>
-      <td style={{ ...tdStyle, color: returnRateColor }}>{unrealizedPnlDisplay}</td>
-      <td style={{ ...tdStyle, color: returnRateColor }}>{formatRate(position.returnRate)}</td>
-      <td style={tdLeftStyle}>{position.priceSource}</td>
-    </tr>
+    <TableRow>
+      <TableCell className="font-medium">{position.ticker}</TableCell>
+      <TableCell>{position.marketType}</TableCell>
+      <TableCell className="text-right">{position.quantity}</TableCell>
+      <TableCell className="text-right">{formatAmount(position.avgBuyPrice)}</TableCell>
+      <TableCell className="text-right">{formatAmount(position.currentPrice)}</TableCell>
+      <TableCell className="text-right">{formatAmount(position.evaluationAmount)}</TableCell>
+      <TableCell className={cn("text-right", toneClass)} data-tone={tone ?? undefined}>
+        {unrealizedPnlDisplay}
+      </TableCell>
+      <TableCell className={cn("text-right", toneClass)} data-tone={tone ?? undefined}>
+        {formatRate(position.returnRate)}
+      </TableCell>
+      <TableCell>{position.priceSource}</TableCell>
+    </TableRow>
   );
 }

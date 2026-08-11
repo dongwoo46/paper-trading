@@ -8,6 +8,8 @@ import {
 import { TaxSummaryActionPanel } from "../../../features/tax-summary/ui/TaxSummaryActionPanel";
 import { TaxSummarySelectionPanel } from "../../../features/tax-summary/ui/TaxSummarySelectionPanel";
 import { TaxSummarySummaryPanel } from "../../../features/tax-summary/ui/TaxSummarySummaryPanel";
+import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
+import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 
 function parseStatusCode(error: unknown): number | null {
   if (!(error instanceof Error)) return null;
@@ -65,13 +67,17 @@ export function TaxSummaryPage() {
     <section className="flex flex-col gap-5 animate-fade-in">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[28px] font-bold tracking-tight">세금 요약</h2>
-        <p className="text-text-secondary text-[15px] max-w-3xl">계좌와 연도를 선택해 세금 요약을 조회하고 수동 재계산을 실행할 수 있습니다.</p>
+        <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">계좌와 연도를 선택해 세금 요약을 조회하고 수동 재계산을 실행할 수 있습니다.</p>
       </div>
 
-      {isAccountsLoading && <div className="py-6 text-center text-text-muted">계좌 정보를 불러오는 중...</div>}
-      {isAccountsError && <div className="p-4 text-status-error">계좌 목록을 불러오지 못했습니다.</div>}
+      {isAccountsLoading && (
+        <Skeleton className="h-24 w-full" aria-label="계좌 정보 로딩 중">
+          <span className="sr-only">계좌 정보를 불러오는 중...</span>
+        </Skeleton>
+      )}
+      {isAccountsError && <Alert variant="destructive"><AlertDescription>계좌 목록을 불러오지 못했습니다.</AlertDescription></Alert>}
       {!isAccountsLoading && !isAccountsError && accounts.length === 0 && (
-        <div className="py-6 text-center text-text-muted">등록된 계좌가 없습니다.</div>
+        <Alert><AlertDescription>등록된 계좌가 없습니다.</AlertDescription></Alert>
       )}
 
       {resolvedAccountId !== null && (
@@ -96,17 +102,15 @@ export function TaxSummaryPage() {
             }}
           />
           {recalculateMutation.isError && (
-            <div className="pb-4 text-status-error text-sm">
-              {getRecalculateErrorMessage(recalculateMutation.error)}
-            </div>
+            <Alert variant="destructive"><AlertDescription>{getRecalculateErrorMessage(recalculateMutation.error)}</AlertDescription></Alert>
           )}
 
-          {summaryQuery.isLoading && <div className="py-6 text-center text-text-muted">세금 요약을 불러오는 중...</div>}
+          {summaryQuery.isLoading && <Skeleton className="h-48 w-full" aria-label="세금 요약 로딩 중" />}
           {summaryQuery.isError && (
-            <div className="p-4 text-status-error">{getSummaryErrorMessage(summaryQuery.error)}</div>
+            <Alert variant="destructive"><AlertDescription>{getSummaryErrorMessage(summaryQuery.error)}</AlertDescription></Alert>
           )}
           {!summaryQuery.isLoading && !summaryQuery.isError && summaryQuery.data === null && (
-            <div className="py-6 text-center text-text-muted">세금 요약 데이터가 없습니다.</div>
+            <Alert><AlertDescription>세금 요약 데이터가 없습니다.</AlertDescription></Alert>
           )}
           {summaryQuery.data && <TaxSummarySummaryPanel summary={summaryQuery.data} />}
         </>

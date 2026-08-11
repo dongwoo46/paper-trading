@@ -1,4 +1,6 @@
 import type { AccountResponse } from "../../../entities/account/model/types";
+import { Label } from "@/shared/ui/shadcn/label";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
 
 interface TaxSummarySelectionPanelProps {
   accounts: AccountResponse[];
@@ -19,27 +21,27 @@ export function TaxSummarySelectionPanel({
   const years = Array.from({ length: 6 }, (_, index) => currentYear - index);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", marginBottom: "16px" }}>
-      <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "14px" }}>
-        계좌 선택
-        <select value={accountId} onChange={(event) => onChangeAccountId(parseInt(event.target.value, 10))}>
+    <div className="mb-4 grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-1.5">
+        <Label htmlFor="tax-account">계좌 선택</Label>
+        <NativeSelect id="tax-account" className="w-full" value={accountId} onChange={(event) => onChangeAccountId(parseInt(event.target.value, 10))}>
           {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
+            <NativeSelectOption key={account.id} value={account.id}>
               {account.accountName}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-      </label>
-      <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "14px" }}>
-        연도 선택
-        <select value={taxYear} onChange={(event) => onChangeTaxYear(parseInt(event.target.value, 10))}>
+        </NativeSelect>
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="tax-year">연도 선택</Label>
+        <NativeSelect id="tax-year" className="w-full" value={taxYear} onChange={(event) => onChangeTaxYear(parseInt(event.target.value, 10))}>
           {years.map((year) => (
-            <option key={year} value={year}>
+            <NativeSelectOption key={year} value={year}>
               {year}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-      </label>
+        </NativeSelect>
+      </div>
     </div>
   );
 }

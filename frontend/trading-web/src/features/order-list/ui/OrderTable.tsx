@@ -1,4 +1,14 @@
 import type { OrderResponse, OrderStatus } from '../../../entities/order/model/types';
+import { Badge } from '../../../shared/ui/shadcn/badge';
+import { Button } from '../../../shared/ui/shadcn/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../shared/ui/shadcn/table';
 
 interface OrderTableProps {
   orders: OrderResponse[];
@@ -7,85 +17,96 @@ interface OrderTableProps {
 }
 
 const STATUS_BADGE_CLS: Record<OrderStatus, string> = {
-  PENDING: 'bg-amber-600',
-  PARTIAL: 'bg-blue-600',
-  FILLED: 'bg-green-600',
-  CANCELLED: 'bg-gray-500',
-  REJECTED: 'bg-red-600',
+  PENDING: 'border-market-warning/20 bg-market-warning/10 text-market-warning',
+  PARTIAL: 'border-primary/20 bg-primary/10 text-primary',
+  FILLED: 'border-market-positive/20 bg-market-positive/10 text-market-positive',
+  CANCELLED: 'border-border bg-muted text-muted-foreground',
+  REJECTED: 'border-destructive/20 bg-destructive/10 text-destructive',
 };
+
+const SIDE_BADGE_CLS = {
+  BUY: 'border-order-buy/20 bg-order-buy/10 text-order-buy',
+  SELL: 'border-order-sell/20 bg-order-sell/10 text-order-sell',
+} as const;
 
 const CANCEL_ACTIVE: Set<OrderStatus> = new Set(['PENDING', 'PARTIAL']);
 
 function StatusBadge({ status }: { status: OrderStatus }) {
-  return <span className={`inline-block rounded px-2 py-0.5 text-[11px] font-bold text-white ${STATUS_BADGE_CLS[status]}`}>{status}</span>;
+  return (
+    <Badge variant="outline" className={STATUS_BADGE_CLS[status]} data-status={status}>
+      {status}
+    </Badge>
+  );
 }
 
 export function OrderTable({ orders, onCancel, isCancelling }: OrderTableProps) {
   if (orders.length === 0) {
-    return <p className="rounded-xl border border-white/12 bg-bg-card px-4 py-6 text-center text-sm text-text-secondary">주문 내역이 없습니다.</p>;
+    return <p className="rounded-xl border bg-card px-4 py-6 text-center text-sm text-muted-foreground">주문 내역이 없습니다.</p>;
   }
 
   return (
-    <div className="overflow-x-auto rounded-[16px] border border-white/12 bg-black/20">
-      <table className="min-w-full text-sm">
-        <thead className="bg-white/[0.03] text-text-secondary">
-          <tr className="[&>th]:px-3 [&>th]:py-2.5 [&>th]:text-left [&>th]:font-semibold [&>th]:whitespace-nowrap border-b border-white/12">
-            <th>주문 ID</th>
-            <th>종목</th>
-            <th>시장</th>
-            <th>매매</th>
-            <th>유형</th>
-            <th>조건</th>
-            <th>수량/체결</th>
-            <th>지정가</th>
-            <th>평균체결가</th>
-            <th>수수료</th>
-            <th>상태</th>
-            <th>주문일시</th>
-            <th>취소</th>
-          </tr>
-        </thead>
-        <tbody className="[&>tr]:border-b [&>tr]:border-white/8 [&>tr:last-child]:border-b-0">
+    <div className="rounded-xl border bg-card">
+      <Table>
+        <TableHeader className="bg-muted/50">
+          <TableRow>
+            <TableHead>주문 ID</TableHead>
+            <TableHead>종목</TableHead>
+            <TableHead>시장</TableHead>
+            <TableHead>매매</TableHead>
+            <TableHead>유형</TableHead>
+            <TableHead>조건</TableHead>
+            <TableHead>수량/체결</TableHead>
+            <TableHead>지정가</TableHead>
+            <TableHead>평균체결가</TableHead>
+            <TableHead>수수료</TableHead>
+            <TableHead>상태</TableHead>
+            <TableHead>주문일시</TableHead>
+            <TableHead>취소</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {orders.map((order) => {
             const canCancel = CANCEL_ACTIVE.has(order.orderStatus);
             return (
-              <tr key={order.orderId} className="hover:bg-white/[0.02]">
-                <td className="whitespace-nowrap px-3 py-2.5 font-bold text-brand-primary">{order.orderId}</td>
-                <td className="whitespace-nowrap px-3 py-2.5 font-semibold">{order.ticker}</td>
-                <td className="whitespace-nowrap px-3 py-2.5">{order.marketType}</td>
-                <td className="whitespace-nowrap px-3 py-2.5">
-                  <span
-                    className={`inline-block rounded px-2 py-0.5 text-[11px] font-bold text-white ${
-                      order.orderSide === 'BUY' ? 'bg-blue-600' : 'bg-red-600'
-                    }`}
+              <TableRow key={order.orderId}>
+                <TableCell className="font-semibold text-primary">{order.orderId}</TableCell>
+                <TableCell className="font-semibold">{order.ticker}</TableCell>
+                <TableCell>{order.marketType}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={SIDE_BADGE_CLS[order.orderSide]}
+                    data-tone={order.orderSide === 'BUY' ? 'order-buy' : 'order-sell'}
                   >
                     {order.orderSide}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-3 py-2.5">{order.orderType}</td>
-                <td className="whitespace-nowrap px-3 py-2.5">{order.orderCondition}</td>
-                <td className="whitespace-nowrap px-3 py-2.5">{order.quantity} / {order.filledQuantity}</td>
-                <td className="whitespace-nowrap px-3 py-2.5">{order.limitPrice ?? '-'}</td>
-                <td className="whitespace-nowrap px-3 py-2.5">{order.avgFilledPrice ?? '-'}</td>
-                <td className="whitespace-nowrap px-3 py-2.5">{order.fee}</td>
-                <td className="whitespace-nowrap px-3 py-2.5"><StatusBadge status={order.orderStatus} /></td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-xs">
+                  </Badge>
+                </TableCell>
+                <TableCell>{order.orderType}</TableCell>
+                <TableCell>{order.orderCondition}</TableCell>
+                <TableCell>{order.quantity} / {order.filledQuantity}</TableCell>
+                <TableCell>{order.limitPrice ?? '-'}</TableCell>
+                <TableCell>{order.avgFilledPrice ?? '-'}</TableCell>
+                <TableCell>{order.fee}</TableCell>
+                <TableCell><StatusBadge status={order.orderStatus} /></TableCell>
+                <TableCell className="text-xs">
                   {new Date(order.createdAt).toLocaleString('ko-KR')}
-                </td>
-                <td className="whitespace-nowrap px-3 py-2.5">
-                  <button
-                    className="rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-45"
+                </TableCell>
+                <TableCell>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="xs"
                     disabled={!canCancel || isCancelling}
                     onClick={() => onCancel(order.orderId)}
                   >
                     취소
-                  </button>
-                </td>
-              </tr>
+                  </Button>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
