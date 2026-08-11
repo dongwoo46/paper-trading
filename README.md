@@ -293,7 +293,7 @@ step 5: /cleanup   — 요약 작성·PR 생성
 
 ## 아키텍처 개요
 
-### `market-collector`
+### `collector-api`
 
 실시간 시장데이터를 수집하는 서비스입니다.
 
@@ -306,8 +306,9 @@ step 5: /cleanup   — 요약 작성·PR 생성
 
 #### 기술 선택 이유
 
-이 서비스는 수많은 실시간 이벤트를 비동기적으로 처리해야 하므로,  
-스트리밍·연결 유지·재연결·backpressure 처리에 적합한 WebFlux 기반으로 설계합니다.
+HTTP API와 영속성은 Spring MVC/JPA로 처리하고, 외부 REST·WebSocket 통신은
+WebFlux 클라이언트를 사용합니다. 실시간 연결과 주문 도메인을 분리해 수집 장애가
+거래 처리에 직접 전파되지 않도록 구성합니다.
 
 ---
 
@@ -364,9 +365,10 @@ step 5: /cleanup   — 요약 작성·PR 생성
   - Spring Data JPA
   - PostgreSQL
   - Redis
-- `market-collector`
+- `collector-api`
   - Kotlin
-  - Spring WebFlux
+  - Spring MVC / Spring Data JPA
+  - Spring WebFlux client
   - Redis
   - PostgreSQL (히스토리 저장)
 
@@ -387,7 +389,7 @@ paper-trading/
 
   backend/
     trading-api/
-    market-collector/
+    collector-api/
 
   infra/
     docker-compose.yml
@@ -412,7 +414,7 @@ paper-trading/
 - 실시간 자동매매 전략 실행
 - Paper / KIS Live Execution Adapter
 
-### market-collector (Kotlin/Spring)
+### collector-api (Kotlin/Spring)
 - Upbit 시세 수집
 - 한국투자증권 시세 수집
 - Redis 최신 상태 반영
