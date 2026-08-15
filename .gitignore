@@ -3,6 +3,8 @@
 .env*
 .env
 
+.vscode/*
+
 # Windows/MSYS2 crash dumps
 *.stackdump
 

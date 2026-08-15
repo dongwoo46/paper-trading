@@ -1,7 +1,7 @@
 ﻿# Orchestrator State
 
 ## 모드
-manual
+auto
 
 ## 상태
 idle
