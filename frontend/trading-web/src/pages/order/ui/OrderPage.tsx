@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { ClipboardList } from 'lucide-react';
 import { AccountSelector } from '../../../features/order-form/ui/AccountSelector';
 import { OrderFormPanel } from '../../../features/order-form/ui/OrderFormPanel';
 import { OrderTablePanel } from '../../../features/order-list/ui/OrderTablePanel';
 import { Card, CardContent } from '../../../shared/ui/shadcn/card';
 import { Label } from '../../../shared/ui/shadcn/label';
 import { Tabs, TabsList, TabsTrigger } from '../../../shared/ui/shadcn/tabs';
+import { PageHeader } from '../../../shared/ui/PageHeader';
 
 type ActiveTab = 'form' | 'list';
 
@@ -19,15 +19,11 @@ export function OrderPage() {
 
   return (
     <section className="flex flex-col gap-5 animate-fade-in">
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-4">
-          <ClipboardList size={32} className="text-primary" />
-          <h2 className="text-[28px] font-bold tracking-tight">주문 관리</h2>
-        </div>
-        <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">
-          계좌를 선택하고 주문을 생성하거나 주문 내역을 조회하고 취소할 수 있습니다.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="트레이딩"
+        title="주문 관리"
+        description="계좌를 선택해 주문을 생성하고 기존 주문을 조회하거나 취소합니다."
+      />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Label htmlFor="account-selector" className="sm:min-w-12">계좌</Label>

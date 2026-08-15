@@ -35,6 +35,7 @@ import type {
   CrossLine,
 } from "../../../features/chart-drawing/model/useChartDrawStore";
 import { useIndicatorStore } from "../../../features/unified-chart-indicators/model/useIndicatorStore";
+import { PageHeader } from "../../../shared/ui/PageHeader";
 import {
   calcBollingerBands,
   calcRsi,
@@ -886,12 +887,11 @@ export function MarketUnifiedChartPage() {
 
   return (
     <section className="flex flex-col gap-5 animate-fade-in">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-[28px] font-bold tracking-tight">통합 시세 차트</h2>
-        <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">
-          종목 선택 후 주봉/일봉/1·5·10분봉을 한 화면에서 전환해서 확인합니다.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="시장 데이터"
+        title="통합 시세 차트"
+        description="종목별 주봉·일봉·분봉을 전환하고 기술 지표를 한 화면에서 비교합니다."
+      />
 
       <div className="grid grid-cols-[minmax(18rem,22.5rem)_1fr] gap-4 max-lg:grid-cols-1">
         {/* Left column */}

@@ -4,6 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { fetchAccounts, fetchPositions } from "../../../entities/account/api/accountApi";
 import { AccountCard } from "../../../features/account-overview/ui/AccountCard";
 import { PositionTable } from "../../../features/position-table/ui/PositionTable";
+import { PageHeader } from "../../../shared/ui/PageHeader";
 import { Alert, AlertDescription } from "../../../shared/ui/shadcn/alert";
 import { Button } from "../../../shared/ui/shadcn/button";
 import { Skeleton } from "../../../shared/ui/shadcn/skeleton";
@@ -45,12 +46,11 @@ export function AccountDashboardPage() {
 
   return (
     <section className="flex flex-col gap-5 animate-fade-in">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-[28px] font-bold tracking-tight">계좌·포지션</h2>
-        <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">
-          계좌별 예수금 현황과 보유 포지션을 확인합니다. 포지션의 현재가는 Redis 시세 기준이며, 장 외 시간에는 "-"로 표시될 수 있습니다.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="개요"
+        title="계좌·포지션"
+        description={'계좌별 예수금과 보유 포지션을 확인합니다. 현재가는 Redis 시세 기준이며 장 외 시간에는 "-"로 표시될 수 있습니다.'}
+      />
 
       {/* Account List Section */}
       <div className="mb-6">
