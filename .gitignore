@@ -3,6 +3,10 @@
 .env*
 .env
 
+# Local devkit runtime state
+.claude/.proposal-receipts.json
+.claude/.skill-output-warned.json
+
 .vscode/*
 
 # Windows/MSYS2 crash dumps
