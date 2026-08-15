@@ -23,7 +23,7 @@
 - [ ] desktop/mobile 시각 증거 확보
 - [x] 독립 code review 필수 finding 0건
 - [x] 독립 spec review 제품·계약 finding 0건
-- [ ] commit·push·Ready PR 생성
+- [x] commit·push·Ready PR #41 생성
 
 ## 3. 작업 기록
 
@@ -57,4 +57,4 @@
 ## 6. 결과
 
 - 코드·계약·리뷰 마감 완료.
-- commit·push·Ready PR 생성 후 이 문서에 PR을 연결한다.
+- Ready PR: https://github.com/dongwoo46/paper-trading/pull/41

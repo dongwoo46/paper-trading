@@ -26,10 +26,11 @@
 - [x] route/API·도메인 계산 무변경 diff
 - [x] 독립 code review LGTM — active finding 0
 - [x] 독립 spec review — 제품·계약 finding 0
+- [x] commit·push·Ready PR #41 생성
 
 ## 진행중
 
-- [ ] Step 6 — Ready PR 생성 및 기록
+- [ ] Step 6 — desktop/mobile browser visual evidence
 
 ## 대기
 

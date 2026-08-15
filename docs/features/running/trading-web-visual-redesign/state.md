@@ -14,7 +14,7 @@
 
 ## 1. 현재 위치
 
-Step 6 진행 중. 구현, deterministic QA, 독립 code review는 끝났고 Ready PR 생성과 브라우저 시각 증거만 남았다.
+Step 6 진행 중. 구현·deterministic QA·독립 리뷰와 Ready PR #41 생성은 끝났고 브라우저 시각 증거만 남았다.
 
 ## 2. Step 목록
 
@@ -25,7 +25,7 @@ Step 6 진행 중. 구현, deterministic QA, 독립 code review는 끝났고 Rea
 | 3 | 작업 중심 홈 | 완료 | `steps/step-3.md` | 실제 기능 진입점·가짜 KPI 제거 |
 | 4 | 10개 하위 화면 PageHeader 통합 | 완료 | `steps/step-4.md` | 총 11개 화면 단일 h1 |
 | 5 | 반응형·접근성·motion 정리 | 완료 | `steps/step-5.md` | focus, inert, reduced motion, 1024px 경계 |
-| 6 | 전체 검증·리뷰·PR 마감 | 진행중 | `steps/step-6.md` | 코드·계약 PASS, visual BLOCKED, Ready PR 준비 |
+| 6 | 전체 검증·리뷰·PR 마감 | 진행중 | `steps/step-6.md` | Ready PR #41, 코드·계약 PASS, visual BLOCKED |
 
 ## 3. 변경 이력
 
