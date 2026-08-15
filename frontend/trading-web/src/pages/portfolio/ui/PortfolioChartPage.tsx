@@ -5,6 +5,7 @@ import type { BenchmarkPoint } from "../../../entities/portfolio/model/types";
 import { buildReturnSeries } from "../../../features/portfolio-chart/model/normalizeSeries";
 import { PortfolioChartPanel } from "../../../features/portfolio-chart/ui/PortfolioChartPanel";
 import { fetchDailyBalances, fetchKospiBenchmark } from "../../../shared/api/portfolioApi";
+import { PageHeader } from "../../../shared/ui/PageHeader";
 import { Label } from "@/shared/ui/shadcn/label";
 import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
 
@@ -60,10 +61,11 @@ export function PortfolioChartPage() {
 
   return (
     <section className="flex flex-col gap-5 animate-fade-in">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-[28px] font-bold tracking-tight">포트폴리오 차트</h2>
-        <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">일별 평가금액 추이와 KOSPI 대비 누적 수익률을 확인합니다.</p>
-      </div>
+      <PageHeader
+        eyebrow="트레이딩"
+        title="포트폴리오 차트"
+        description="일별 평가금액 추이와 KOSPI 대비 누적 수익률을 비교합니다."
+      />
       <div className="mb-4 flex flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Label htmlFor="portfolio-account">계좌 선택</Label>

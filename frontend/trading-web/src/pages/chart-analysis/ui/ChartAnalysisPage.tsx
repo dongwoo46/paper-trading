@@ -24,6 +24,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/shared/ui/shadcn/input";
 import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/shadcn/table";
+import { PageHeader } from "@/shared/ui/PageHeader";
 
 const WINDOWS = ["1M", "3M", "6M", "1Y", "2Y", "MAX"];
 
@@ -482,20 +483,21 @@ export function ChartAnalysisPage() {
     <div className="flex flex-col gap-6">
       <HelpModal topic={helpTopic} onClose={() => setHelpTopic(null)} />
 
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-[26px] font-bold text-foreground">차트 분석</h2>
-          <p className="text-sm text-muted-foreground">OHLCV 수집, 종목 분석, LLM 설명 저장 상태를 한 화면에서 처리합니다.</p>
-        </div>
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={() => collectedQuery.refetch()}
-        >
-          <RefreshCw size={16} />
-          수집 종목 새로고침
-        </Button>
-      </header>
+      <PageHeader
+        eyebrow="분석"
+        title="차트 분석"
+        description="OHLCV 수집부터 기술 분석과 LLM 설명 저장까지 한 흐름에서 처리합니다."
+        actions={(
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => collectedQuery.refetch()}
+          >
+            <RefreshCw size={16} />
+            수집 종목 새로고침
+          </Button>
+        )}
+      />
 
       <section className={`${panelClass} p-5`}>
         <div className="mb-4 flex items-center gap-2">

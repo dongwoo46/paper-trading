@@ -9,6 +9,9 @@ import { ToastContainer } from "./shared/ui/Toast";
 import { subscribeAnalysisNotifications } from "./shared/api/chartAnalysisApi";
 import { useNotificationStore } from "./shared/model/useNotificationStore";
 import { Skeleton } from "./shared/ui/shadcn/skeleton";
+import { RouteErrorBoundary } from "./shared/ui/RouteErrorPage";
+
+const DESKTOP_BREAKPOINT_PX = 1024;
 
 const RealtimePage = lazy(() => import("./pages/realtime/ui/RealtimePage").then((m) => ({ default: m.RealtimePage })));
 const HistoricalPage = lazy(() => import("./pages/historical/ui/HistoricalPage").then((m) => ({ default: m.HistoricalPage })));
@@ -47,7 +50,7 @@ function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 1024) setSidebarOpen(true);
+      if (window.innerWidth >= DESKTOP_BREAKPOINT_PX) setSidebarOpen(true);
       else setSidebarOpen(false);
     };
     handleResize();
@@ -55,61 +58,36 @@ function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const getPageTitle = (path: string) => {
-    switch (path) {
-      case "/":
-        return "대시보드";
-      case "/realtime":
-        return "실시간 데이터 수집";
-      case "/historical":
-        return "과거 OHLCV 수집";
-      case "/macro":
-        return "거시경제 데이터";
-      case "/market-unified":
-        return "통합 시세 차트";
-      case "/account":
-        return "계좌·포지션";
-      case "/orders":
-        return "주문 관리";
-      case "/portfolio":
-        return "포트폴리오 차트";
-      case "/tax-summary":
-        return "세금 요약";
-      case "/trading-journals":
-        return "거래 일지";
-      case "/chart-analysis":
-        return "차트 분석";
-      default:
-        return "Trading Console";
-    }
-  };
-
   return (
     <div className="flex min-h-screen w-screen overflow-hidden bg-background">
       <ExecutionToastProvider />
 
       <Sidebar isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <TopBar title={getPageTitle(location.pathname)} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+      <main className="relative flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+        <TopBar toggleSidebar={() => setSidebarOpen((open) => !open)} />
 
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto bg-background px-4 py-5 sm:gap-6 sm:px-6 sm:py-6 lg:gap-8 lg:px-8 lg:py-8">
-          <Suspense fallback={<Skeleton className="h-48 w-full" aria-label="페이지 로딩 중" />}>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/realtime" element={<RealtimePage />} />
-              <Route path="/historical" element={<HistoricalPage />} />
-              <Route path="/macro" element={<MacroPage />} />
-              <Route path="/market-unified" element={<MarketUnifiedChartPage />} />
-              <Route path="/account" element={<AccountDashboardPage />} />
-              <Route path="/orders" element={<OrderPage />} />
-              <Route path="/portfolio" element={<PortfolioChartPage />} />
-              <Route path="/tax-summary" element={<TaxSummaryPage />} />
-              <Route path="/trading-journals" element={<TradingJournalPage />} />
-              <Route path="/chart-analysis" element={<ChartAnalysisPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
+        <div className="flex flex-1 overflow-y-auto bg-background">
+          <div className="mx-auto flex w-full max-w-screen-2xl flex-col px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
+            <RouteErrorBoundary resetKey={location.key}>
+              <Suspense fallback={<Skeleton className="h-48 w-full" aria-label="페이지 로딩 중" />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/realtime" element={<RealtimePage />} />
+                  <Route path="/historical" element={<HistoricalPage />} />
+                  <Route path="/macro" element={<MacroPage />} />
+                  <Route path="/market-unified" element={<MarketUnifiedChartPage />} />
+                  <Route path="/account" element={<AccountDashboardPage />} />
+                  <Route path="/orders" element={<OrderPage />} />
+                  <Route path="/portfolio" element={<PortfolioChartPage />} />
+                  <Route path="/tax-summary" element={<TaxSummaryPage />} />
+                  <Route path="/trading-journals" element={<TradingJournalPage />} />
+                  <Route path="/chart-analysis" element={<ChartAnalysisPage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </RouteErrorBoundary>
+          </div>
         </div>
       </main>
 

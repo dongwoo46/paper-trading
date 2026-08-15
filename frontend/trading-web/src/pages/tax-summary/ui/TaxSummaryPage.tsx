@@ -8,6 +8,7 @@ import {
 import { TaxSummaryActionPanel } from "../../../features/tax-summary/ui/TaxSummaryActionPanel";
 import { TaxSummarySelectionPanel } from "../../../features/tax-summary/ui/TaxSummarySelectionPanel";
 import { TaxSummarySummaryPanel } from "../../../features/tax-summary/ui/TaxSummarySummaryPanel";
+import { PageHeader } from "../../../shared/ui/PageHeader";
 import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
 import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 
@@ -65,10 +66,11 @@ export function TaxSummaryPage() {
 
   return (
     <section className="flex flex-col gap-5 animate-fade-in">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-[28px] font-bold tracking-tight">세금 요약</h2>
-        <p className="max-w-3xl text-sm text-muted-foreground sm:text-base">계좌와 연도를 선택해 세금 요약을 조회하고 수동 재계산을 실행할 수 있습니다.</p>
-      </div>
+      <PageHeader
+        eyebrow="트레이딩"
+        title="세금 요약"
+        description="계좌와 연도를 선택해 세금 요약을 조회하고 필요할 때 다시 계산합니다."
+      />
 
       {isAccountsLoading && (
         <Skeleton className="h-24 w-full" aria-label="계좌 정보 로딩 중">

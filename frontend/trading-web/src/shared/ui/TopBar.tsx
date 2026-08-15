@@ -82,7 +82,7 @@ function NotificationDropdown({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function TopBar({ title, toggleSidebar }: { title: string; toggleSidebar: () => void }) {
+export function TopBar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
@@ -101,15 +101,13 @@ export function TopBar({ title, toggleSidebar }: { title: string; toggleSidebar:
   }, [open]);
 
   function handleBellClick() {
-    setOpen((prev) => {
-      if (!prev) markAllRead();
-      return !prev;
-    });
+    if (!open) markAllRead();
+    setOpen((previousOpen) => !previousOpen);
   }
 
   return (
-    <header className="z-30 flex h-topbar items-center justify-between border-b bg-card px-4 sm:px-8">
-      <div className="flex items-center gap-4">
+    <header className="z-30 flex h-topbar items-center justify-between border-b bg-card/95 px-4 backdrop-blur sm:px-6 lg:px-8">
+      <div className="flex min-w-0 items-center gap-3">
         <Button
           type="button"
           variant="outline"
@@ -120,7 +118,13 @@ export function TopBar({ title, toggleSidebar }: { title: string; toggleSidebar:
         >
           <Menu size={20} />
         </Button>
-        <h2 className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
+        <div className="hidden min-w-0 items-center gap-2 sm:flex">
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Paper Trading
+          </span>
+          <span aria-hidden="true" className="size-1 rounded-full bg-border" />
+          <span className="truncate text-sm text-muted-foreground">운영 워크스테이션</span>
+        </div>
       </div>
 
       <div className="relative" ref={dropdownRef}>

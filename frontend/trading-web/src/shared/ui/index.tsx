@@ -18,7 +18,7 @@ type IconComponent = React.ComponentType<LucideProps>;
 export const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <ShadcnCard
     className={cn(
-      "relative animate-fade-in p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg",
+      "relative animate-fade-in p-6 transition-[border-color,box-shadow] duration-200 hover:border-primary/50 hover:shadow-md",
       className,
     )}
   >

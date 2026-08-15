@@ -217,3 +217,17 @@ input, select, textarea {
 .animate-spin-slow { animation: spin 1s linear infinite; }
 .animate-slide-in-right { animation: slideInRight 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
 .animate-toast-in { animation: toast-slide-in 0.25s ease-out forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

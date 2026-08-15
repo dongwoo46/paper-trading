@@ -10,6 +10,7 @@ import type { JournalSentiment } from "../../../entities/trading-journal/model/t
 import { TradingJournalDetailPanel } from "../../../features/trading-journal/ui/TradingJournalDetailPanel";
 import { TradingJournalFilterPanel } from "../../../features/trading-journal/ui/TradingJournalFilterPanel";
 import { TradingJournalListPanel } from "../../../features/trading-journal/ui/TradingJournalListPanel";
+import { PageHeader } from "../../../shared/ui/PageHeader";
 
 function yyyyMmDd(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -62,9 +63,11 @@ export function TradingJournalPage() {
 
   return (
     <section className="flex flex-col gap-5 animate-fade-in">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-[28px] font-bold tracking-tight">거래 일지</h2>
-      </div>
+      <PageHeader
+        eyebrow="트레이딩"
+        title="거래 일지"
+        description="거래 기록을 조회하고 판단 근거와 회고를 남깁니다."
+      />
       <TradingJournalFilterPanel
         ticker={tickerInput}
         from={from}
@@ -74,7 +77,7 @@ export function TradingJournalPage() {
         onChangeTo={setTo}
         onSubmit={() => setTicker(tickerInput.trim())}
       />
-      <div className="grid gap-4 grid-cols-[1fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-2">
         <TradingJournalListPanel
           items={listQuery.data?.items ?? []}
           selectedJournalId={selectedJournalId}
