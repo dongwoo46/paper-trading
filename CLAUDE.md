@@ -8,6 +8,11 @@ Market data collection → strategy execution → order/execution/settlement →
 - quant-worker: daily OHLCV collection, backtesting, AI quant strategies — Python 3.11/FastAPI/SQLAlchemy/LangChain
 - trading-web: operations dashboard UI — React/TypeScript/Vite
 
+## Frontend Design System
+
+- trading-web의 공식 디자인 시스템은 shadcn/ui Base Nova다.
+- 프론트엔드 작업은 `frontend/trading-web/CODEX.md`와 `frontend/trading-web/docs/UI_GUIDE.md`를 먼저 적용한다.
+
 Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (matching engine)
 
 ---

@@ -8,6 +8,7 @@ import { useToastStore } from "./features/execution-toast/model/useToastStore";
 import { ToastContainer } from "./shared/ui/Toast";
 import { subscribeAnalysisNotifications } from "./shared/api/chartAnalysisApi";
 import { useNotificationStore } from "./shared/model/useNotificationStore";
+import { Skeleton } from "./shared/ui/shadcn/skeleton";
 
 const RealtimePage = lazy(() => import("./pages/realtime/ui/RealtimePage").then((m) => ({ default: m.RealtimePage })));
 const HistoricalPage = lazy(() => import("./pages/historical/ui/HistoricalPage").then((m) => ({ default: m.HistoricalPage })));
@@ -84,7 +85,7 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-screen w-screen bg-bg-main overflow-hidden">
+    <div className="flex min-h-screen w-screen overflow-hidden bg-background">
       <ExecutionToastProvider />
 
       <Sidebar isOpen={isSidebarOpen} setOpen={setSidebarOpen} />
@@ -92,8 +93,8 @@ function App() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <TopBar title={getPageTitle(location.pathname)} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
 
-        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 flex flex-col gap-5 sm:gap-6 lg:gap-8 bg-bg-main">
-          <Suspense fallback={<div className="text-sm text-text-secondary">페이지 로딩 중...</div>}>
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto bg-background px-4 py-5 sm:gap-6 sm:px-6 sm:py-6 lg:gap-8 lg:px-8 lg:py-8">
+          <Suspense fallback={<Skeleton className="h-48 w-full" aria-label="페이지 로딩 중" />}>
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/realtime" element={<RealtimePage />} />

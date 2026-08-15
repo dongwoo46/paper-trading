@@ -32,6 +32,7 @@ describe('OrderTable', () => {
 
   it('shows enabled cancel button for PENDING order', () => {
     render(<OrderTable orders={[makeOrder({ orderStatus: 'PENDING' })]} onCancel={vi.fn()} isCancelling={false} />);
+    expect(screen.getByRole('table')).toHaveAttribute('data-slot', 'table');
     expect(screen.getByRole('button', { name: '취소' })).not.toBeDisabled();
   });
 
@@ -67,19 +68,19 @@ describe('OrderTable', () => {
     });
   });
 
-  describe('orderSide color', () => {
-    it('BUY orderSide renders with blue-related background color', () => {
+  describe('orderSide semantics', () => {
+    it('marks BUY with the order-buy tone', () => {
       render(<OrderTable orders={[makeOrder({ orderSide: 'BUY' })]} onCancel={vi.fn()} isCancelling={false} />);
       const buyBadge = screen.getByText('BUY');
-      // #2563eb is the blue color used for BUY
-      expect(buyBadge).toHaveStyle({ background: '#2563eb' });
+      expect(buyBadge).toHaveAttribute('data-slot', 'badge');
+      expect(buyBadge).toHaveAttribute('data-tone', 'order-buy');
     });
 
-    it('SELL orderSide renders with red-related background color', () => {
+    it('marks SELL with the order-sell tone', () => {
       render(<OrderTable orders={[makeOrder({ orderSide: 'SELL' })]} onCancel={vi.fn()} isCancelling={false} />);
       const sellBadge = screen.getByText('SELL');
-      // #dc2626 is the red color used for SELL
-      expect(sellBadge).toHaveStyle({ background: '#dc2626' });
+      expect(sellBadge).toHaveAttribute('data-slot', 'badge');
+      expect(sellBadge).toHaveAttribute('data-tone', 'order-sell');
     });
   });
 });

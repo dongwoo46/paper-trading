@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchPlaceOrder } from '../../../entities/order/api/orderApi';
 import type { MarketType, OrderCondition, OrderSide, OrderType } from '../../../entities/order/model/types';
+import { Alert, AlertDescription } from '../../../shared/ui/shadcn/alert';
+import { Button } from '../../../shared/ui/shadcn/button';
+import { Input } from '../../../shared/ui/shadcn/input';
+import { Label } from '../../../shared/ui/shadcn/label';
+import { NativeSelect, NativeSelectOption } from '../../../shared/ui/shadcn/native-select';
 
 interface OrderFormPanelProps {
   accountId: number;
@@ -30,10 +35,7 @@ const DEFAULT_FORM: FormState = {
   expireAt: '',
 };
 
-const INPUT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
-const SELECT_CLS = INPUT_CLS;
-const LABEL_CLS = "min-w-[80px] text-text-secondary text-[13px]";
-const BTN_PRIMARY = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border border-transparent bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow hover:-translate-y-0.5 hover:brightness-110 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed";
+const FIELD_ROW = 'grid gap-2 sm:grid-cols-[7rem_minmax(0,14rem)] sm:items-center';
 
 export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
   const queryClient = useQueryClient();
@@ -92,13 +94,15 @@ export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
     };
 
+  const errorMessage = validationError
+    ?? (mutation.error instanceof Error ? mutation.error.message : mutation.error ? '주문 실패' : null);
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
-      <div className="flex gap-3 flex-wrap">
-        <label className={LABEL_CLS}>종목코드</label>
-        <input
-          className={INPUT_CLS}
-          style={{ width: '160px' }}
+    <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-4 py-4">
+      <div className={FIELD_ROW}>
+        <Label htmlFor="order-ticker">종목코드</Label>
+        <Input
+          id="order-ticker"
           value={form.ticker}
           onChange={set('ticker')}
           placeholder="예: 005930"
@@ -106,50 +110,49 @@ export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
         />
       </div>
 
-      <div className="flex gap-3 flex-wrap">
-        <label className={LABEL_CLS}>시장</label>
-        <select className={SELECT_CLS} style={{ width: '160px' }} value={form.marketType} onChange={set('marketType')}>
-          <option value="KOSPI">KOSPI</option>
-          <option value="KOSDAQ">KOSDAQ</option>
-          <option value="NASDAQ">NASDAQ</option>
-          <option value="NYSE">NYSE</option>
-          <option value="CRYPTO">CRYPTO</option>
-        </select>
+      <div className={FIELD_ROW}>
+        <Label htmlFor="order-market">시장</Label>
+        <NativeSelect id="order-market" className="w-full" value={form.marketType} onChange={set('marketType')}>
+          <NativeSelectOption value="KOSPI">KOSPI</NativeSelectOption>
+          <NativeSelectOption value="KOSDAQ">KOSDAQ</NativeSelectOption>
+          <NativeSelectOption value="NASDAQ">NASDAQ</NativeSelectOption>
+          <NativeSelectOption value="NYSE">NYSE</NativeSelectOption>
+          <NativeSelectOption value="CRYPTO">CRYPTO</NativeSelectOption>
+        </NativeSelect>
       </div>
 
-      <div className="flex gap-3 flex-wrap">
-        <label className={LABEL_CLS}>주문 유형</label>
-        <select className={SELECT_CLS} style={{ width: '160px' }} value={form.orderType} onChange={set('orderType')}>
-          <option value="MARKET">MARKET (시장가)</option>
-          <option value="LIMIT">LIMIT (지정가)</option>
-        </select>
+      <div className={FIELD_ROW}>
+        <Label htmlFor="order-type">주문 유형</Label>
+        <NativeSelect id="order-type" className="w-full" value={form.orderType} onChange={set('orderType')}>
+          <NativeSelectOption value="MARKET">MARKET (시장가)</NativeSelectOption>
+          <NativeSelectOption value="LIMIT">LIMIT (지정가)</NativeSelectOption>
+        </NativeSelect>
       </div>
 
-      <div className="flex gap-3 flex-wrap">
-        <label className={LABEL_CLS}>매매 방향</label>
-        <select className={SELECT_CLS} style={{ width: '160px' }} value={form.orderSide} onChange={set('orderSide')}>
-          <option value="BUY">BUY (매수)</option>
-          <option value="SELL">SELL (매도)</option>
-        </select>
+      <div className={FIELD_ROW}>
+        <Label htmlFor="order-side">매매 방향</Label>
+        <NativeSelect id="order-side" className="w-full" value={form.orderSide} onChange={set('orderSide')}>
+          <NativeSelectOption value="BUY">BUY (매수)</NativeSelectOption>
+          <NativeSelectOption value="SELL">SELL (매도)</NativeSelectOption>
+        </NativeSelect>
       </div>
 
-      <div className="flex gap-3 flex-wrap">
-        <label className={LABEL_CLS}>주문 조건</label>
-        <select className={SELECT_CLS} style={{ width: '160px' }} value={form.orderCondition} onChange={set('orderCondition')}>
-          <option value="DAY">DAY</option>
-          <option value="GTC">GTC</option>
-          <option value="IOC">IOC</option>
-          <option value="FOK">FOK</option>
-          <option value="GTD">GTD</option>
-        </select>
+      <div className={FIELD_ROW}>
+        <Label htmlFor="order-condition">주문 조건</Label>
+        <NativeSelect id="order-condition" className="w-full" value={form.orderCondition} onChange={set('orderCondition')}>
+          <NativeSelectOption value="DAY">DAY</NativeSelectOption>
+          <NativeSelectOption value="GTC">GTC</NativeSelectOption>
+          <NativeSelectOption value="IOC">IOC</NativeSelectOption>
+          <NativeSelectOption value="FOK">FOK</NativeSelectOption>
+          <NativeSelectOption value="GTD">GTD</NativeSelectOption>
+        </NativeSelect>
       </div>
 
-      <div className="flex gap-3 flex-wrap">
-        <label className={LABEL_CLS}>수량</label>
-        <input
+      <div className={FIELD_ROW}>
+        <Label htmlFor="order-quantity">수량</Label>
+        <Input
+          id="order-quantity"
           type="number"
-          className={INPUT_CLS}
-          style={{ width: '160px' }}
           value={form.quantity}
           onChange={set('quantity')}
           placeholder="예: 10"
@@ -160,12 +163,11 @@ export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
       </div>
 
       {form.orderType === 'LIMIT' && (
-        <div className="flex gap-3 flex-wrap">
-          <label className={LABEL_CLS}>지정가</label>
-          <input
+        <div className={FIELD_ROW}>
+          <Label htmlFor="order-limit-price">지정가</Label>
+          <Input
+            id="order-limit-price"
             type="number"
-            className={INPUT_CLS}
-            style={{ width: '160px' }}
             value={form.limitPrice}
             onChange={set('limitPrice')}
             placeholder="예: 75000"
@@ -176,33 +178,32 @@ export function OrderFormPanel({ accountId, onSuccess }: OrderFormPanelProps) {
       )}
 
       {form.orderCondition === 'GTD' && (
-        <div className="flex gap-3 flex-wrap">
-          <label className={LABEL_CLS}>만료일시</label>
-          <input
+        <div className={FIELD_ROW}>
+          <Label htmlFor="order-expire-at">만료일시</Label>
+          <Input
+            id="order-expire-at"
             type="datetime-local"
-            className={INPUT_CLS}
-            style={{ width: '220px' }}
             value={form.expireAt}
             onChange={set('expireAt')}
           />
         </div>
       )}
 
-      {(validationError ?? mutation.error) && (
-        <p className="text-status-error text-[13px] m-0">
-          {validationError ?? (mutation.error instanceof Error ? mutation.error.message : '주문 실패')}
-        </p>
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
       )}
 
-      <div className="flex gap-3 flex-wrap">
-        <button
+      <div className="sm:pl-[7rem]">
+        <Button
           type="submit"
-          className={BTN_PRIMARY}
+          size="lg"
+          className="min-w-30"
           disabled={mutation.isPending}
-          style={{ minWidth: '120px' }}
         >
           {mutation.isPending ? '주문 중...' : '주문 제출'}
-        </button>
+        </Button>
       </div>
     </form>
   );

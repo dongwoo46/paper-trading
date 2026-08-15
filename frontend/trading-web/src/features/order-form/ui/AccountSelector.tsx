@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchListAccounts } from '../../../entities/order/api/orderApi';
+import { NativeSelect, NativeSelectOption } from '../../../shared/ui/shadcn/native-select';
 
 interface AccountSelectorProps {
   value: number | null;
@@ -13,31 +14,41 @@ export function AccountSelector({ value, onChange }: AccountSelectorProps) {
   });
 
   if (isLoading) {
-    return <select disabled><option>로딩 중...</option></select>;
+    return (
+      <NativeSelect id="account-selector" className="w-full sm:w-64" disabled>
+        <NativeSelectOption>로딩 중...</NativeSelectOption>
+      </NativeSelect>
+    );
   }
 
   if (isError) {
-    return <select disabled><option>계좌 목록 조회 실패</option></select>;
+    return (
+      <NativeSelect id="account-selector" className="w-full sm:w-64" disabled>
+        <NativeSelectOption>계좌 목록 조회 실패</NativeSelectOption>
+      </NativeSelect>
+    );
   }
 
   return (
-    <select
+    <NativeSelect
+      id="account-selector"
+      className="w-full sm:w-64"
       value={value ?? ''}
       onChange={(e) => {
         const id = parseInt(e.target.value, 10);
         if (!isNaN(id)) onChange(id);
       }}
     >
-      <option value="">계좌 선택</option>
+      <NativeSelectOption value="">계좌 선택</NativeSelectOption>
       {accounts.map((account) => (
-        <option
+        <NativeSelectOption
           key={account.id}
           value={account.id}
           disabled={!account.isActive}
         >
           {account.accountName} ({account.tradingMode}){!account.isActive ? ' — 비활성' : ''}
-        </option>
+        </NativeSelectOption>
       ))}
-    </select>
+    </NativeSelect>
   );
 }

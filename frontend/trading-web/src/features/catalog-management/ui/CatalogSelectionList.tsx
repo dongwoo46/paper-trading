@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { Chip } from "../../../shared/ui";
 import type { SymbolCatalogItem } from "../../../entities/symbol/model/types";
+import { Button } from "@/shared/ui/shadcn/button";
 
 interface Props {
   items: SymbolCatalogItem[];
@@ -10,22 +11,26 @@ interface Props {
 export function CatalogSelectionList({ items, onRemove }: Props) {
   return (
     <div className="flex flex-wrap gap-2.5 p-6">
-      {items.length === 0 && <p className="py-10 px-6 text-center text-text-muted italic w-full">선택된 항목이 없습니다.</p>}
+      {items.length === 0 && <p className="w-full px-6 py-10 text-center text-muted-foreground">선택된 항목이 없습니다.</p>}
       {items.map((row) => {
         const id = row.symbol ?? row.ticker;
         return (
-          <Chip key={`sel-${id}`} style={{ width: "100%", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span className="w-2 h-2 rounded-full bg-status-success" style={{ boxShadow: "0 0 8px var(--status-success)" }} />
+          <Chip key={`sel-${id}`} className="w-full justify-between">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-market-positive" />
               <strong>{id}</strong>
-              <span style={{ color: "var(--text-secondary)", fontSize: "12px" }}>{row.name}</span>
+              <span className="text-xs text-muted-foreground">{row.name}</span>
             </div>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
               onClick={() => onRemove(id!)}
-              style={{ color: "var(--status-error)", border: "none", background: "transparent", cursor: "pointer", display: "flex" }}
+              className="text-destructive"
+              aria-label={`${id} 구독 해지`}
             >
               <Trash2 size={14} />
-            </button>
+            </Button>
           </Chip>
         );
       })}

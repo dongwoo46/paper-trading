@@ -15,12 +15,18 @@ function yyyyMmDd(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+const initialToDate = new Date();
+const initialFromDate = new Date(initialToDate);
+initialFromDate.setDate(initialFromDate.getDate() - 30);
+const INITIAL_FROM = yyyyMmDd(initialFromDate);
+const INITIAL_TO = yyyyMmDd(initialToDate);
+
 export function TradingJournalPage() {
   const queryClient = useQueryClient();
   const [tickerInput, setTickerInput] = useState("");
   const [ticker, setTicker] = useState("");
-  const [from, setFrom] = useState(yyyyMmDd(new Date(Date.now() - 1000 * 60 * 60 * 24 * 30)));
-  const [to, setTo] = useState(yyyyMmDd(new Date()));
+  const [from, setFrom] = useState(INITIAL_FROM);
+  const [to, setTo] = useState(INITIAL_TO);
   const [selectedJournalId, setSelectedJournalId] = useState<number | null>(null);
 
   const { data: accounts = [] } = useQuery({

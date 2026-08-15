@@ -1,5 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { JournalSentiment, TradingJournalDetailResponse } from "../../../entities/trading-journal/model/types";
+import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
+import { Button } from "@/shared/ui/shadcn/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card";
+import { Input } from "@/shared/ui/shadcn/input";
+import { Label } from "@/shared/ui/shadcn/label";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
+import { Skeleton } from "@/shared/ui/shadcn/skeleton";
+import { Textarea } from "@/shared/ui/shadcn/textarea";
 
 type Props = {
   detail: TradingJournalDetailResponse | null;
@@ -9,49 +17,49 @@ type Props = {
   onSave: (body: { title: string; content: string; sentiment: JournalSentiment }) => void;
 };
 
-export function TradingJournalDetailPanel({ detail, isLoading, isError, isSaving, onSave }: Props) {
-  const [sentiment, setSentiment] = useState<JournalSentiment>("NEUTRAL");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-
-  useEffect(() => {
-    if (detail) {
-      setSentiment(detail.sentiment);
-      setTitle(detail.title);
-      setContent(detail.content);
-    }
-  }, [detail]);
+function TradingJournalEditor({ detail, isSaving, onSave }: Pick<Props, "detail" | "isSaving" | "onSave"> & { detail: TradingJournalDetailResponse }) {
+  const [sentiment, setSentiment] = useState<JournalSentiment>(detail.sentiment);
+  const [title, setTitle] = useState(detail.title);
+  const [content, setContent] = useState(detail.content);
 
   return (
-    <section className="rounded-[20px] border border-white/12 bg-bg-card p-4 sm:p-5">
-      <h3 className="mb-3 text-base font-semibold">일지 상세</h3>
-      {isLoading && <div className="p-4 text-sm text-text-secondary">상세를 불러오는 중...</div>}
-      {isError && <div className="p-4 text-sm text-status-error">상세를 불러오지 못했습니다.</div>}
-      {!isLoading && !isError && !detail && <div className="p-4 text-sm text-text-secondary">거래 일지를 선택하세요.</div>}
+    <div className="grid gap-3">
+      <div className="grid gap-1.5">
+        <Label htmlFor="journal-sentiment">심리</Label>
+        <NativeSelect id="journal-sentiment" className="w-full" value={sentiment} onChange={(e) => setSentiment(e.target.value as JournalSentiment)}>
+          <NativeSelectOption value="BULLISH">BULLISH</NativeSelectOption>
+          <NativeSelectOption value="BEARISH">BEARISH</NativeSelectOption>
+          <NativeSelectOption value="NEUTRAL">NEUTRAL</NativeSelectOption>
+          <NativeSelectOption value="REFLECTIVE">REFLECTIVE</NativeSelectOption>
+        </NativeSelect>
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="journal-title">제목</Label>
+        <Input id="journal-title" aria-label="제목" value={title} onChange={(e) => setTitle(e.target.value)} />
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="journal-content">내용</Label>
+        <Textarea id="journal-content" className="min-h-40" aria-label="내용" value={content} onChange={(e) => setContent(e.target.value)} rows={6} />
+      </div>
+      <Button className="w-fit" type="button" disabled={isSaving} onClick={() => onSave({ title, content, sentiment })}>
+        저장
+      </Button>
+    </div>
+  );
+}
+
+export function TradingJournalDetailPanel({ detail, isLoading, isError, isSaving, onSave }: Props) {
+  return (
+    <Card>
+      <CardHeader><CardTitle>일지 상세</CardTitle></CardHeader>
+      <CardContent>
+      {isLoading && <Skeleton className="h-48 w-full" aria-label="거래 일지 상세 로딩 중" />}
+      {isError && <Alert variant="destructive"><AlertDescription>상세를 불러오지 못했습니다.</AlertDescription></Alert>}
+      {!isLoading && !isError && !detail && <Alert><AlertDescription>거래 일지를 선택하세요.</AlertDescription></Alert>}
       {!isLoading && !isError && detail && (
-        <div className="grid gap-3">
-          <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            심리
-            <select className="h-10 rounded-lg border border-white/12 bg-bg-input px-3 text-text-primary outline-none focus:border-brand-primary" value={sentiment} onChange={(e) => setSentiment(e.target.value as JournalSentiment)}>
-              <option value="BULLISH">BULLISH</option>
-              <option value="BEARISH">BEARISH</option>
-              <option value="NEUTRAL">NEUTRAL</option>
-              <option value="REFLECTIVE">REFLECTIVE</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            제목
-            <input className="h-10 rounded-lg border border-white/12 bg-bg-input px-3 text-text-primary outline-none focus:border-brand-primary" aria-label="제목" value={title} onChange={(e) => setTitle(e.target.value)} />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            내용
-            <textarea className="min-h-[160px] rounded-lg border border-white/12 bg-bg-input px-3 py-2 text-text-primary outline-none focus:border-brand-primary" aria-label="내용" value={content} onChange={(e) => setContent(e.target.value)} rows={6} />
-          </label>
-          <button className="h-10 w-fit rounded-lg border border-brand-primary/40 bg-brand-primary/15 px-4 text-sm font-semibold text-brand-primary transition hover:bg-brand-primary/25 disabled:cursor-not-allowed disabled:opacity-50" type="button" disabled={isSaving} onClick={() => onSave({ title, content, sentiment })}>
-            저장
-          </button>
-        </div>
+        <TradingJournalEditor key={detail.journalId} detail={detail} isSaving={isSaving} onSave={onSave} />
       )}
-    </section>
+      </CardContent>
+    </Card>
   );
 }

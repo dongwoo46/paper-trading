@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { TrendingDown, TrendingUp, X } from 'lucide-react';
 import type { Toast } from './types';
+import { Button } from '../shadcn/button';
+import { Card, CardContent } from '../shadcn/card';
 
 interface ToastItemProps {
   toast: Toast;
@@ -32,14 +34,15 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
   }, [toast.id, onDismiss]);
 
   return (
-    <div
-      className={`pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-lg min-w-[280px] max-w-[360px] bg-bg-card text-text-primary shadow-[0_4px_16px_rgba(0,0,0,0.4)] border-l-4 animate-toast-in ${isBuy ? 'border-status-success' : 'border-status-error'}`}
+    <Card
+      className={`pointer-events-auto min-w-70 max-w-90 animate-toast-in gap-0 border-l-4 py-0 shadow-lg ${isBuy ? 'border-order-buy' : 'border-order-sell'}`}
     >
-      <div className="shrink-0 mt-0.5">
+      <CardContent className="flex items-start gap-2.5 px-4 py-3">
+      <div className="mt-0.5 shrink-0">
         {isBuy ? (
-          <TrendingUp size={18} className="text-status-success" />
+          <TrendingUp size={18} className="text-order-buy" />
         ) : (
-          <TrendingDown size={18} className="text-status-error" />
+          <TrendingDown size={18} className="text-order-sell" />
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -49,13 +52,17 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
         </div>
         <div className="text-xs opacity-60 mt-0.5">주문 #{event.orderId}</div>
       </div>
-      <button
-        className="shrink-0 p-0.5 text-text-secondary opacity-60 hover:opacity-100 transition-opacity mt-0.5"
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        className="mt-0.5 shrink-0"
         onClick={() => onDismiss(toast.id)}
         aria-label="닫기"
       >
         <X size={14} />
-      </button>
-    </div>
+      </Button>
+      </CardContent>
+    </Card>
   );
 }

@@ -6,6 +6,13 @@ import { fetchJson } from "../../../shared/api";
 import { SectionCard, StatusBar } from "../../../shared/ui";
 import { CatalogSelectionList } from "./CatalogSelectionList";
 import { CatalogTable } from "./CatalogTable";
+import { Badge } from "@/shared/ui/shadcn/badge";
+import { Button } from "@/shared/ui/shadcn/button";
+import { Checkbox } from "@/shared/ui/shadcn/checkbox";
+import { Input } from "@/shared/ui/shadcn/input";
+import { Label } from "@/shared/ui/shadcn/label";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";
 
 type StatusFilter = "" | "SUBSCRIBED" | "UNSUBSCRIBED";
 
@@ -15,12 +22,6 @@ const EMPTY: CatalogResponse<SymbolCatalogItem> = {
   totalCatalogCount: 0,
   totalSubscribedCount: 0
 };
-
-const INPUT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
-const SELECT_CLS = "bg-bg-input border border-border-primary text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-white";
-const BTN_BASE = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
-const BTN_PRIMARY = `${BTN_BASE} bg-brand-primary text-white shadow-sm border-transparent hover:bg-brand-primary/90`;
-const BTN_OUTLINE = `${BTN_BASE} bg-white border-border-primary text-text-primary hover:bg-bg-input hover:border-text-muted`;
 
 export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: string }) {
   const queryClient = useQueryClient();
@@ -172,22 +173,15 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
     return "준비 완료";
   };
 
-  const subTabCls = (active: boolean) =>
-    `px-4 py-2 rounded-xl text-sm font-semibold transition-all ${active ? "bg-white text-text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"}`;
-
   return (
     <div className="flex flex-col gap-2.5 mt-5">
-      <div className="flex gap-2 p-1 bg-bg-input rounded-[16px] mb-5 border border-border-primary w-fit">
-        <button className={subTabCls(activeTab === "catalog")} onClick={() => setActiveTab("catalog")}>
-          종목 탐색
-        </button>
-        <button className={subTabCls(activeTab === "operations")} onClick={() => setActiveTab("operations")}>
-          데이터 수집 관리
-        </button>
-        <button className={subTabCls(activeTab === "ohlcv")} onClick={() => setActiveTab("ohlcv")}>
-          시세 데이터 조회
-        </button>
-      </div>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="mb-5">
+        <TabsList className="h-auto flex-wrap">
+          <TabsTrigger value="catalog" className="px-4 py-2">종목 탐색</TabsTrigger>
+          <TabsTrigger value="operations" className="px-4 py-2">데이터 수집 관리</TabsTrigger>
+          <TabsTrigger value="ohlcv" className="px-4 py-2">시세 데이터 조회</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {activeTab === "catalog" && (
         <div className="grid grid-cols-[2fr_1fr] gap-6 max-lg:grid-cols-1">
@@ -196,8 +190,8 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
             icon={Database}
             headerAction={(
               <div className="flex gap-3 flex-wrap">
-                <input
-                  className={`${INPUT_CLS} w-[220px]`}
+                <Input
+                  className="w-55"
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
@@ -206,27 +200,27 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
                   onKeyDown={(e) => e.key === "Enter" && setIsSearching(true)}
                   placeholder="심볼 또는 종목명 검색"
                 />
-                <select className={`${SELECT_CLS} w-[140px]`} value={market} onChange={(e) => setMarket(e.target.value)}>
-                  <option value="">전체 시장</option>
+                <NativeSelect className="w-35" aria-label="시장" value={market} onChange={(e) => setMarket(e.target.value)}>
+                  <NativeSelectOption value="">전체 시장</NativeSelectOption>
                   {marketOptions.map((m) => (
-                    <option key={m} value={m}>{m}</option>
+                    <NativeSelectOption key={m} value={m}>{m}</NativeSelectOption>
                   ))}
-                </select>
-                <select className={`${SELECT_CLS} w-[150px]`} value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
-                  <option value="">전체 상태</option>
-                  <option value="SUBSCRIBED">구독 중</option>
-                  <option value="UNSUBSCRIBED">미구독</option>
-                </select>
-                <button className={BTN_OUTLINE} onClick={() => setIsSearching(true)}>
+                </NativeSelect>
+                <NativeSelect className="w-38" aria-label="구독 상태" value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
+                  <NativeSelectOption value="">전체 상태</NativeSelectOption>
+                  <NativeSelectOption value="SUBSCRIBED">구독 중</NativeSelectOption>
+                  <NativeSelectOption value="UNSUBSCRIBED">미구독</NativeSelectOption>
+                </NativeSelect>
+                <Button variant="outline" size="icon" onClick={() => setIsSearching(true)} aria-label="종목 검색">
                   <Search size={14} />
-                </button>
+                </Button>
               </div>
             )}
           >
             <div className="flex gap-2.5 flex-wrap px-6 pb-3.5">
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 카탈로그: {catalog.totalCatalogCount}</span>
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">전체 구독 중: {catalog.totalSubscribedCount}</span>
-              <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과: {catalog.returnedCount}</span>
+              <Badge variant="secondary">전체 카탈로그: {catalog.totalCatalogCount}</Badge>
+              <Badge variant="secondary">전체 구독 중: {catalog.totalSubscribedCount}</Badge>
+              <Badge variant="secondary">조회 결과: {catalog.returnedCount}</Badge>
             </div>
             <CatalogTable
               rows={catalog.items.map((item) => {
@@ -236,12 +230,13 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
               onToggle={(id) => handleToggle(id)}
             />
             {catalog.items.length < catalog.totalCatalogCount && (
-              <button
-                className="load-more-btn"
+              <Button
+                variant="ghost"
+                className="mx-6 my-2 w-fit"
                 onClick={() => setCatalogLimit(prev => prev + 20)}
               >
                 <RefreshCw size={14} /> 더보기 ({catalog.items.length} / {catalog.totalCatalogCount})
-              </button>
+              </Button>
             )}
           </SectionCard>
 
@@ -255,53 +250,53 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
         <div className="grid grid-cols-[2fr_1fr] gap-6 max-lg:grid-cols-1">
           <SectionCard title="데이터 소스 관리" icon={RefreshCw}>
             <div className="px-6 py-4 flex flex-col gap-3">
-              <p className="text-text-secondary text-sm">
+              <p className="text-sm text-muted-foreground">
                 시장에서 유효한 종목 목록을 동기화하거나 특정 종목의 과거 데이터 수집 범위를 조정합니다.
               </p>
               {isPykrx && (
-                <button className={`${BTN_OUTLINE} w-fit`} onClick={() => syncMutation.mutate()}>
+                <Button variant="outline" className="w-fit" onClick={() => syncMutation.mutate()}>
                   전체 카탈로그 수동 동기화
-                </button>
+                </Button>
               )}
               <div className="flex gap-3 flex-wrap mt-3">
-                <input
-                  className={`${INPUT_CLS} w-[220px]`}
+                <Input
+                  className="w-55"
                   value={targetId}
                   onChange={(e) => setTargetId(e.target.value)}
                   placeholder={isPykrx ? "심볼 (예: 005930)" : "티커 (예: AAPL)"}
                 />
-                <input type="date" className={`${INPUT_CLS} w-[180px]`} value={fetchedUntilDate} onChange={(e) => setFetchedUntilDate(e.target.value)} />
-                <button className={BTN_PRIMARY} onClick={() => collectionStatusMutation.mutate()}>
+                <Input type="date" className="w-45" aria-label="수집 기준일" value={fetchedUntilDate} onChange={(e) => setFetchedUntilDate(e.target.value)} />
+                <Button onClick={() => collectionStatusMutation.mutate()}>
                   수집 기준일 업데이트
-                </button>
+                </Button>
               </div>
             </div>
           </SectionCard>
 
           <SectionCard title="전체 시세 데이터 동기화 (Batch)" icon={RefreshCw}>
             <div className="px-6 py-4 flex flex-col gap-3">
-              <p className="text-text-secondary text-sm">
+              <p className="text-sm text-muted-foreground">
                 구독된 모든 종목의 일봉 데이터를 일괄 수집합니다. (마지막 수집일 이후 증분 수집)
               </p>
               <div className="flex gap-3 flex-wrap">
-                <select className={`${SELECT_CLS} w-[130px]`} value={collectProvider} onChange={(e) => setCollectProvider(e.target.value as "all" | "yfinance" | "pykrx")}>
-                  <option value="all">모든 소스</option>
-                  <option value="pykrx">국내 주식</option>
-                  <option value="yfinance">해외 주식</option>
-                </select>
+                <NativeSelect className="w-32" aria-label="수집 소스" value={collectProvider} onChange={(e) => setCollectProvider(e.target.value as "all" | "yfinance" | "pykrx")}>
+                  <NativeSelectOption value="all">모든 소스</NativeSelectOption>
+                  <NativeSelectOption value="pykrx">국내 주식</NativeSelectOption>
+                  <NativeSelectOption value="yfinance">해외 주식</NativeSelectOption>
+                </NativeSelect>
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] text-text-muted">기본 종목만</span>
-                  <input type="checkbox" checked={isOnlyDefault} onChange={(e) => setIsOnlyDefault(e.target.checked)} className="w-[18px] h-[18px]" />
+                  <Checkbox id="only-default-symbols" checked={isOnlyDefault} onCheckedChange={setIsOnlyDefault} />
+                  <Label htmlFor="only-default-symbols">기본 종목만</Label>
                 </div>
               </div>
               <div className="flex gap-3 flex-wrap">
-                <span className="text-[13px] text-text-muted">시작:</span>
-                <input type="date" className={`${INPUT_CLS} w-[160px]`} value={collectStart} onChange={(e) => setCollectStart(e.target.value)} />
-                <span className="text-[13px] text-text-muted">종료:</span>
-                <input type="date" className={`${INPUT_CLS} w-[160px]`} value={collectEnd} onChange={(e) => setCollectEnd(e.target.value)} />
-                <button className={BTN_PRIMARY} onClick={() => { setCollectSummary(null); collectMutation.mutate(); }}>
+                <Label htmlFor="collect-start" className="self-center">시작</Label>
+                <Input id="collect-start" type="date" className="w-40" value={collectStart} onChange={(e) => setCollectStart(e.target.value)} />
+                <Label htmlFor="collect-end" className="self-center">종료</Label>
+                <Input id="collect-end" type="date" className="w-40" value={collectEnd} onChange={(e) => setCollectEnd(e.target.value)} />
+                <Button onClick={() => { setCollectSummary(null); collectMutation.mutate(); }}>
                   데이터 수집 시작
-                </button>
+                </Button>
               </div>
             </div>
           </SectionCard>
@@ -313,19 +308,19 @@ export function SymbolCatalogPanel({ isPykrx }: { isPykrx: boolean; title: strin
           <SectionCard title="과거 시세 조회 (OHLCV)" icon={Database}>
             <div className="px-6 py-4 flex flex-col gap-3">
               <div className="flex gap-2.5 flex-wrap">
-                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">데이터 수집 상태 통합 확인</span>
-                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">DB 로드 가능 종목: {ohlcvSymbols.length}</span>
+                <Badge variant="secondary">데이터 수집 상태 통합 확인</Badge>
+                <Badge variant="secondary">DB 로드 가능 종목: {ohlcvSymbols.length}</Badge>
               </div>
               <div className="flex gap-3 flex-wrap">
-                <input className={`${INPUT_CLS} w-[160px]`} value={ohlcvSymbol} onChange={(e) => setOhlcvSymbol(e.target.value.toUpperCase())} placeholder="심볼" />
-                <input type="date" className={`${INPUT_CLS} w-[160px]`} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                <input type="date" className={`${INPUT_CLS} w-[160px]`} value={toDate} onChange={(e) => setToDate(e.target.value)} />
-                <button className={BTN_PRIMARY} onClick={() => void refetchDaily()}>
+                <Input className="w-40" aria-label="OHLCV 심볼" value={ohlcvSymbol} onChange={(e) => setOhlcvSymbol(e.target.value.toUpperCase())} placeholder="심볼" />
+                <Input type="date" className="w-40" aria-label="OHLCV 시작일" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                <Input type="date" className="w-40" aria-label="OHLCV 종료일" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+                <Button onClick={() => void refetchDaily()}>
                   시세 데이터 로드
-                </button>
+                </Button>
               </div>
               <div className="flex gap-2.5 flex-wrap">
-                <span className="text-xs text-text-secondary bg-bg-input rounded-full px-3 py-1.5 font-medium">조회 결과: {dailyBars.length}건</span>
+                <Badge variant="secondary">조회 결과: {dailyBars.length}건</Badge>
               </div>
             </div>
           </SectionCard>

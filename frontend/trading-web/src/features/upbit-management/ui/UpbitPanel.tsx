@@ -4,6 +4,11 @@ import { Activity, Cpu, RefreshCw, Search, Trash2 } from "lucide-react";
 import type { CatalogResponse, UpbitCatalogItem } from "../../../entities/symbol/model/types";
 import { fetchJson } from "../../../shared/api";
 import { Chip, SectionCard, StatusBar } from "../../../shared/ui";
+import { Badge } from "@/shared/ui/shadcn/badge";
+import { Button } from "@/shared/ui/shadcn/button";
+import { Input } from "@/shared/ui/shadcn/input";
+import { NativeSelect, NativeSelectOption } from "@/shared/ui/shadcn/native-select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/shadcn/table";
 
 type StatusFilter = "" | "SUBSCRIBED" | "UNSUBSCRIBED";
 
@@ -13,13 +18,6 @@ const EMPTY: CatalogResponse<UpbitCatalogItem> = {
   totalCatalogCount: 0,
   totalSubscribedCount: 0
 };
-
-const INPUT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all w-full focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
-const SELECT_CLS = "bg-bg-input border border-white/12 text-text-primary px-4 py-3 rounded-xl outline-none transition-all focus:border-brand-primary focus:shadow-[0_0_0_4px_rgba(96,165,250,0.25)] focus:bg-bg-card";
-const BTN_BASE = "inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer transition-all border whitespace-nowrap";
-const BTN_PRIMARY_SM = "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs cursor-pointer transition-all border border-transparent bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow hover:brightness-110 whitespace-nowrap";
-const BTN_DANGER_SM = "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs cursor-pointer transition-all border bg-red-500/8 text-red-500 border-red-500/20 hover:bg-red-500/15 whitespace-nowrap";
-const BTN_OUTLINE = `${BTN_BASE} bg-transparent border-white/12 text-text-primary hover:bg-white/5 hover:border-text-muted`;
 
 export function UpbitPanel() {
   const queryClient = useQueryClient();
@@ -82,8 +80,8 @@ export function UpbitPanel() {
           icon={Cpu}
           headerAction={(
             <div className="flex gap-3 flex-wrap">
-              <input
-                className={`${INPUT_CLS} w-[220px]`}
+              <Input
+                className="w-55"
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -92,87 +90,69 @@ export function UpbitPanel() {
                 onKeyDown={(e) => e.key === "Enter" && setIsSearching(true)}
                 placeholder="마켓 또는 종목명 검색"
               />
-              <select className={`${SELECT_CLS} w-[130px]`} value={marketGroup} onChange={(e) => setMarketGroup(e.target.value)}>
-                <option value="">전체 그룹</option>
-                <option value="KRW">KRW</option>
-                <option value="BTC">BTC</option>
-                <option value="USDT">USDT</option>
-              </select>
-              <select className={`${SELECT_CLS} w-[130px]`} value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
-                <option value="">전체 상태</option>
-                <option value="SUBSCRIBED">구독 중</option>
-                <option value="UNSUBSCRIBED">미구독</option>
-              </select>
-              <button className={BTN_OUTLINE} onClick={() => setIsSearching(true)}>
+              <NativeSelect className="w-32" aria-label="마켓 그룹" value={marketGroup} onChange={(e) => setMarketGroup(e.target.value)}><NativeSelectOption value="">전체 그룹</NativeSelectOption><NativeSelectOption value="KRW">KRW</NativeSelectOption><NativeSelectOption value="BTC">BTC</NativeSelectOption><NativeSelectOption value="USDT">USDT</NativeSelectOption></NativeSelect>
+              <NativeSelect className="w-32" aria-label="구독 상태" value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}><NativeSelectOption value="">전체 상태</NativeSelectOption><NativeSelectOption value="SUBSCRIBED">구독 중</NativeSelectOption><NativeSelectOption value="UNSUBSCRIBED">미구독</NativeSelectOption></NativeSelect>
+              <Button variant="outline" size="icon" onClick={() => setIsSearching(true)} aria-label="업비트 마켓 검색">
                 <Search size={14} />
-              </button>
+              </Button>
             </div>
           )}
         >
           <div className="flex gap-2.5 flex-wrap px-6 pb-3.5">
-            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 카탈로그: {catalog.totalCatalogCount}</span>
-            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">전체 구독 중: {catalog.totalSubscribedCount}</span>
-            <span className="text-xs text-text-secondary border border-white/12 rounded-full px-2.5 py-1.5 bg-white/[0.02]">조회 결과: {catalog.returnedCount}</span>
+            <Badge variant="secondary">전체 카탈로그: {catalog.totalCatalogCount}</Badge>
+            <Badge variant="secondary">전체 구독 중: {catalog.totalSubscribedCount}</Badge>
+            <Badge variant="secondary">조회 결과: {catalog.returnedCount}</Badge>
           </div>
-          <div className="overflow-x-auto rounded-[16px] bg-black/20 border border-white/12 flex-1 min-h-[300px] max-h-[520px]">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">마켓</th>
-                  <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">종목명 (KOR)</th>
-                  <th className="bg-white/[0.02] px-6 py-3.5 text-left text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">그룹</th>
-                  <th className="bg-white/[0.02] px-6 py-3.5 text-center text-[11px] uppercase tracking-widest text-text-muted font-bold border-b border-white/12 whitespace-nowrap">구독 상태</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="max-h-130 min-h-75 flex-1 overflow-x-auto rounded-xl border">
+            <Table>
+              <TableHeader><TableRow><TableHead>마켓</TableHead><TableHead>종목명 (KOR)</TableHead><TableHead>그룹</TableHead><TableHead className="text-center">구독 상태</TableHead></TableRow></TableHeader>
+              <TableBody>
                 {catalog.items.map((row) => {
                   const active = isSubscribed(row.market);
                   const koreanName = row.koreanName ?? row.name ?? "-";
                   return (
-                    <tr key={row.market} className="hover:bg-white/[0.02]">
-                      <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap font-bold text-brand-primary">{row.market}</td>
-                      <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">{koreanName}</td>
-                      <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-text-secondary">{row.marketGroup}</td>
-                      <td className="px-6 py-4 text-[14.5px] border-b border-white/12 whitespace-nowrap text-center">
-                        <button
-                          className={active ? BTN_DANGER_SM : BTN_PRIMARY_SM}
+                    <TableRow key={row.market}>
+                      <TableCell className="font-bold text-primary">{row.market}</TableCell>
+                      <TableCell className="text-muted-foreground">{koreanName}</TableCell>
+                      <TableCell className="text-muted-foreground">{row.marketGroup}</TableCell>
+                      <TableCell className="text-center">
+                        <Button size="sm" variant={active ? "destructive" : "default"}
                           onClick={() => subscriptionMutation.mutate({ method: active ? "DELETE" : "POST", market: row.market })}
                         >
                           {active ? "해지" : "구독"}
-                        </button>
-                      </td>
-                    </tr>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           {catalog.items.length < catalog.totalCatalogCount && (
-            <button
-              className="inline-flex items-center gap-1.5 px-4 py-2 my-2 mx-6 text-[13px] font-semibold text-text-muted bg-transparent border border-white/12 rounded-lg cursor-pointer transition-all hover:bg-white/5 hover:text-text-primary"
+            <Button variant="ghost" className="mx-6 my-2 w-fit"
               onClick={() => setCatalogLimit(prev => prev + 20)}
             >
               <RefreshCw size={14} /> 더보기 ({catalog.items.length} / {catalog.totalCatalogCount})
-            </button>
+            </Button>
           )}
         </SectionCard>
 
         <SectionCard title={`활성 구독 마켓 (${subscriptions.length})`} icon={Activity}>
           <div className="flex flex-wrap gap-2.5 p-6">
-            {subscriptions.length === 0 && <p className="py-10 px-6 text-center text-text-muted italic w-full">구독 중인 마켓이 없습니다.</p>}
+            {subscriptions.length === 0 && <p className="w-full px-6 py-10 text-center text-muted-foreground">구독 중인 마켓이 없습니다.</p>}
             {subscriptions.map((row) => (
               <Chip key={row.market} className="w-full justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-status-success shadow-[0_0_8px_var(--status-success)]" />
+                  <span className="size-2 rounded-full bg-market-positive" />
                   <strong>{row.market}</strong>
-                  <span className="text-text-secondary text-xs">{row.koreanName ?? row.englishName ?? row.name ?? "-"}</span>
+                  <span className="text-xs text-muted-foreground">{row.koreanName ?? row.englishName ?? row.name ?? "-"}</span>
                 </div>
-                <button
+                <Button type="button" variant="ghost" size="icon-xs" className="text-destructive"
                   onClick={() => subscriptionMutation.mutate({ method: "DELETE", market: row.market })}
-                  className="text-status-error border-none bg-transparent cursor-pointer flex"
+                  aria-label={`${row.market} 구독 해지`}
                 >
                   <Trash2 size={14} />
-                </button>
+                </Button>
               </Chip>
             ))}
           </div>
@@ -181,9 +161,9 @@ export function UpbitPanel() {
 
       <SectionCard title="카탈로그 동기화" icon={RefreshCw}>
         <div className="px-6 py-4">
-          <button className={BTN_OUTLINE} onClick={() => syncMutation.mutate()}>
+          <Button variant="outline" onClick={() => syncMutation.mutate()}>
             업비트 시장 정보 동기화 실행
-          </button>
+          </Button>
         </div>
       </SectionCard>
 

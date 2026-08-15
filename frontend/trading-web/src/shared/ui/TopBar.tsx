@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, Menu, X } from "lucide-react";
 import { useNotificationStore } from "../model/useNotificationStore";
+import { Button } from "./shadcn/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./shadcn/card";
 
 function NotificationDropdown({ onClose }: { onClose: () => void }) {
   const notifications = useNotificationStore((s) => s.notifications);
@@ -8,62 +10,66 @@ function NotificationDropdown({ onClose }: { onClose: () => void }) {
   const clear = useNotificationStore((s) => s.clear);
 
   return (
-    <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-xl border border-border-primary bg-bg-card shadow-xl">
-      <div className="flex items-center justify-between border-b border-border-primary px-4 py-3">
-        <span className="text-sm font-semibold text-text-primary">알림</span>
+    <Card className="absolute right-0 top-full z-50 mt-2 w-80 gap-0 py-0 shadow-xl">
+      <CardHeader className="flex flex-row items-center justify-between border-b py-3">
+        <CardTitle>알림</CardTitle>
         <div className="flex items-center gap-2">
           {notifications.length > 0 && (
             <>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="xs"
                 onClick={markAllRead}
-                className="text-xs text-text-muted hover:text-text-primary"
               >
                 모두 읽음
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
+                size="xs"
                 onClick={clear}
-                className="text-xs text-text-muted hover:text-text-primary"
               >
                 지우기
-              </button>
+              </Button>
             </>
           )}
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-xs"
             onClick={onClose}
-            className="rounded-full p-1 text-text-muted hover:bg-bg-input hover:text-text-primary"
+            aria-label="알림 닫기"
           >
             <X size={14} />
-          </button>
+          </Button>
         </div>
-      </div>
+      </CardHeader>
 
-      <div className="max-h-80 overflow-y-auto">
+      <CardContent className="max-h-80 overflow-y-auto px-0">
         {notifications.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-text-muted">알림이 없습니다.</p>
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">알림이 없습니다.</p>
         ) : (
           notifications.map((n) => (
             <div
               key={n.id}
-              className={`border-b border-border-primary px-4 py-3 last:border-0 ${n.read ? "" : "bg-brand-secondary"}`}
+              className={`border-b px-4 py-3 last:border-0 ${n.read ? "" : "bg-accent"}`}
             >
               <div className="flex items-start gap-2">
                 {!n.read && (
-                  <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-brand-primary" />
+                  <span className="mt-1.5 size-2 flex-shrink-0 rounded-full bg-primary" />
                 )}
                 <div className={n.read ? "ml-4" : ""}>
-                  <p className="text-sm font-semibold text-text-primary">
+                  <p className="text-sm font-semibold text-foreground">
                     LLM 분석 완료
                   </p>
-                  <p className="mt-0.5 text-xs text-text-secondary">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     <span className="font-mono">{n.symbol}</span> {n.name}
                   </p>
-                  <p className="mt-0.5 text-xs text-text-muted">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {n.window} / {n.interval === "D" ? "일봉" : "주봉"} · {n.source}
                   </p>
-                  <p className="mt-0.5 text-xs text-text-muted">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {n.createdAt.toLocaleTimeString("ko-KR")}
                   </p>
                 </div>
@@ -71,8 +77,8 @@ function NotificationDropdown({ onClose }: { onClose: () => void }) {
             </div>
           ))
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -102,31 +108,37 @@ export function TopBar({ title, toggleSidebar }: { title: string; toggleSidebar:
   }
 
   return (
-    <header className="h-[72px] flex items-center justify-between px-8 border-b border-border-primary bg-bg-card z-40">
+    <header className="z-30 flex h-topbar items-center justify-between border-b bg-card px-4 sm:px-8">
       <div className="flex items-center gap-4">
-        <button
-          className="flex lg:hidden items-center justify-center px-3 py-2 rounded-xl border border-border-primary text-text-secondary hover:bg-bg-input transition-all"
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="lg:hidden"
           onClick={toggleSidebar}
+          aria-label="사이드바 열기"
         >
           <Menu size={20} />
-        </button>
-        <h2 className="text-xl font-semibold text-text-primary tracking-tight">{title}</h2>
+        </Button>
+        <h2 className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
       </div>
 
       <div className="relative" ref={dropdownRef}>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon"
           onClick={handleBellClick}
-          className="relative p-2 rounded-xl border border-border-primary text-text-secondary hover:bg-bg-input transition-all"
+          className="relative"
           aria-label="알림"
         >
           <Bell size={18} />
           {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-[10px] font-bold text-white">
+            <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
-        </button>
+        </Button>
 
         {open && <NotificationDropdown onClose={() => setOpen(false)} />}
       </div>

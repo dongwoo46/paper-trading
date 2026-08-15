@@ -1,17 +1,29 @@
 import React from "react";
 import { RefreshCw, Activity } from "lucide-react";
 import type { LucideProps } from "lucide-react";
+import { cn } from "../lib/utils";
+import { Alert } from "./shadcn/alert";
+import { Badge } from "./shadcn/badge";
+import {
+  Card as ShadcnCard,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "./shadcn/card";
 
 type IconComponent = React.ComponentType<LucideProps>;
 
 // --- Base UI Components ---
 
 export const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <article
-    className={`bg-bg-card border border-border-primary rounded-[16px] p-6 transition-all duration-300 relative flex flex-col hover:-translate-y-1 hover:border-brand-primary/50 hover:shadow-lg animate-fade-in ${className}`}
+  <ShadcnCard
+    className={cn(
+      "relative animate-fade-in p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg",
+      className,
+    )}
   >
     {children}
-  </article>
+  </ShadcnCard>
 );
 
 export const SectionCard = ({
@@ -27,60 +39,47 @@ export const SectionCard = ({
   headerAction?: React.ReactNode;
   className?: string;
 }) => (
-  <section className={`bg-bg-card border border-border-primary rounded-[16px] flex flex-col overflow-hidden shadow-sm animate-fade-in ${className}`}>
-    <div className="px-6 py-5 border-b border-border-primary flex items-center justify-between flex-wrap gap-4 bg-bg-card">
+  <ShadcnCard className={cn("animate-fade-in gap-0 shadow-sm", className)}>
+    <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 border-b px-6 py-5">
       <div className="flex items-center gap-2.5">
-        {Icon && <Icon size={18} className="text-brand-primary" />}
-        <h3 className="text-[17px] font-semibold text-text-primary">{title}</h3>
+        {Icon && <Icon size={18} className="text-primary" />}
+        <CardTitle>{title}</CardTitle>
       </div>
       {headerAction && <div>{headerAction}</div>}
-    </div>
-    <div className="w-full overflow-x-auto pb-2">
+    </CardHeader>
+    <CardContent className="w-full overflow-x-auto px-0 pb-2">
       {children}
-    </div>
-  </section>
+    </CardContent>
+  </ShadcnCard>
 );
 
 export const GlassPanel = ({
   children,
   className = "",
-  style = {},
 }: {
   children: React.ReactNode;
   className?: string;
-  style?: React.CSSProperties;
 }) => (
-  <div
-    className={`bg-bg-input border border-border-primary rounded-[16px] animate-fade-in ${className}`}
-    style={style}
+  <ShadcnCard
+    className={cn("animate-fade-in gap-0 bg-muted p-0", className)}
   >
     {children}
-  </div>
+  </ShadcnCard>
 );
 
 export const Chip = ({
   children,
-  statusColor,
   className = "",
-  style = {},
 }: {
   children: React.ReactNode;
-  statusColor?: string;
   className?: string;
-  style?: React.CSSProperties;
 }) => (
-  <div
-    className={`bg-bg-input px-4 py-2 rounded-xl text-[13.5px] flex items-center gap-2 transition-all hover:bg-border-primary/50 ${className}`}
-    style={style}
+  <Badge
+    variant="secondary"
+    className={cn("h-auto px-4 py-2 text-sm transition-all hover:bg-muted", className)}
   >
-    {statusColor && (
-      <span
-        className="w-2 h-2 rounded-full shrink-0"
-        style={{ background: statusColor, boxShadow: `0 0 4px ${statusColor}` }}
-      />
-    )}
-    <div className="flex items-center gap-2 w-full text-text-primary">{children}</div>
-  </div>
+    <span className="flex w-full items-center gap-2 text-foreground">{children}</span>
+  </Badge>
 );
 
 // --- Layout & Feedback Components ---
@@ -94,13 +93,12 @@ export const StatusBar = ({
   loading: boolean;
   icon?: IconComponent;
 }) => (
-  <div className="fixed bottom-8 right-8 bg-bg-card border border-border-primary px-6 py-3.5 rounded-[16px] shadow-lg text-sm font-semibold flex items-center gap-3 z-[100] animate-slide-in-right">
+  <Alert className="fixed right-8 bottom-8 z-100 flex w-auto items-center gap-3 px-6 py-3.5 font-semibold shadow-lg animate-slide-in-right">
     {loading ? (
-      <RefreshCw size={16} className="animate-spin-slow text-text-muted" />
+      <RefreshCw size={16} className="animate-spin-slow text-muted-foreground" />
     ) : (
-      <Icon size={16} className="text-brand-primary" />
+      <Icon size={16} className="text-primary" />
     )}
-    <span className="text-text-primary">{message}</span>
-  </div>
+    <span>{message}</span>
+  </Alert>
 );
-

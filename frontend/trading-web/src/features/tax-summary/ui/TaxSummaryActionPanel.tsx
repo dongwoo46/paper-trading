@@ -5,10 +5,11 @@ interface TaxSummaryActionPanelProps {
 
 export function TaxSummaryActionPanel({ isDisabled, onRecalculate }: TaxSummaryActionPanelProps) {
   return (
-    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
-      <button onClick={onRecalculate} disabled={isDisabled}>
+    <div className="mb-4 flex justify-end">
+      <Button onClick={onRecalculate} disabled={isDisabled}>
         세금 재계산
-      </button>
+      </Button>
     </div>
   );
 }
+import { Button } from "@/shared/ui/shadcn/button";

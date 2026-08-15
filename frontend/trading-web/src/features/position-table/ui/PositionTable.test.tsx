@@ -58,14 +58,13 @@ describe('PositionTable', () => {
     expect(dashes.length).toBeGreaterThan(0)
   })
 
-  it('applies green color for positive returnRate', () => {
+  it('marks positive returnRate with the positive market tone', () => {
     render(<PositionTable positions={[basePosition]} />)
-    // returnRate "6.67" → positive → color #10b981
     const rateCell = screen.getByText('6.67%')
-    expect(rateCell).toHaveStyle({ color: '#10b981' })
+    expect(rateCell).toHaveAttribute('data-tone', 'positive')
   })
 
-  it('applies red color for negative returnRate', () => {
+  it('marks negative returnRate with the negative market tone', () => {
     const negPosition: PositionResponse = {
       ...basePosition,
       unrealizedPnl: '-50.00',
@@ -73,6 +72,6 @@ describe('PositionTable', () => {
     }
     render(<PositionTable positions={[negPosition]} />)
     const rateCell = screen.getByText('-3.33%')
-    expect(rateCell).toHaveStyle({ color: '#ef4444' })
+    expect(rateCell).toHaveAttribute('data-tone', 'negative')
   })
 })
