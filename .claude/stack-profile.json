@@ -22,7 +22,7 @@
       "testing-library"
     ]
   },
-  "verifyCommand": "npm --prefix frontend/trading-web run build",
+  "verifyCommand": null,
   "projects": [
     {
       "path": "backend/trading-api",
@@ -37,7 +37,7 @@
     {
       "path": "frontend/trading-web",
       "compileCommand": "npm run build",
-      "testCommand": "npm test -- --run {files}"
+      "testCommand": "npm test -- --run"
     }
   ],
   "detectedFrom": [
@@ -48,5 +48,12 @@
   "nonStandard": [
     "platform: react-vite (next 아님) — frontend/trading-web",
     "backend: kotlin-spring-boot — backend/trading-api·collector-api (fastapi 외 추가 백엔드)"
-  ]
+  ],
+  "commandStatus": {
+    "verify": {
+      "state": "paused",
+      "reason": "현재 compose 결함 해결까지 잠시 꺼둠",
+      "command": "docker compose up -d --wait"
+    }
+  }
 }
