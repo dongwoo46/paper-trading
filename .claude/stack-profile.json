@@ -17,13 +17,28 @@
   "testLayout": "mirror",
   "testRunner": {
     "present": true,
-    "kinds": ["vitest", "testing-library"]
+    "kinds": [
+      "vitest",
+      "testing-library"
+    ]
   },
-  "verifyCommand": null,
+  "verifyCommand": "npm --prefix frontend/trading-web run build",
   "projects": [
-    { "path": "backend/trading-api", "compileCommand": "./gradlew compileKotlin" },
-    { "path": "backend/collector-api", "compileCommand": "./gradlew compileKotlin" },
-    { "path": "frontend/trading-web", "compileCommand": "npm run build" }
+    {
+      "path": "backend/trading-api",
+      "compileCommand": "./gradlew compileKotlin",
+      "testCommand": "./gradlew test"
+    },
+    {
+      "path": "backend/collector-api",
+      "compileCommand": "./gradlew compileKotlin",
+      "testCommand": "./gradlew test"
+    },
+    {
+      "path": "frontend/trading-web",
+      "compileCommand": "npm run build",
+      "testCommand": "npm test -- --run {files}"
+    }
   ],
   "detectedFrom": [
     "CLAUDE.md (멀티모듈이라 stack-detect 자동 감지 불가 → 사람 확인으로 기록, 2026-08-04)",
