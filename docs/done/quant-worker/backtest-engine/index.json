@@ -1,0 +1,252 @@
+{
+  "phase": "backtest-engine",
+  "project": "quant-worker",
+  "status": "completed",
+  "current_step": 7,
+  "total_steps": 7,
+  "branch": "feature/quant-worker-backtest-engine",
+  "worktree_path": ".worktrees/quant-worker-backtest-engine",
+  "parallel_groups": [],
+  "steps": [
+    {
+      "id": 1,
+      "agent": "quant-planner",
+      "name": "Backtesting engine design options and implementation plan",
+      "file": "step-1.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "Planner Pass B completed: spec.md and step-2.md through step-7.md generated from confirmed LEAN/JSON DSL decisions.",
+      "substeps": [
+        {
+          "name": "codebase context review",
+          "status": "completed"
+        },
+        {
+          "name": "decision options and user questions",
+          "status": "completed"
+        },
+        {
+          "name": "confirmed spec.md",
+          "status": "completed"
+        },
+        {
+          "name": "step files generation",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "agent": "quant-dev",
+      "name": "Backtest domain, DSL, persistence, and run API skeleton",
+      "file": "step-2.md",
+      "status": "completed",
+      "retry_count": 2,
+      "result": "Recovery Step 2 PASS: implemented DSL/domain, persistence, and async API skeleton; Python 3.11 targeted suite 27 passed, py_compile and diff checks passed, and KST-naive timestamps were verified.",
+      "substeps": [
+        {
+          "name": "DSL validation tests",
+          "status": "completed"
+        },
+        {
+          "name": "domain models and market policy",
+          "status": "completed"
+        },
+        {
+          "name": "backtest_runs migration and repository",
+          "status": "completed"
+        },
+        {
+          "name": "async run API skeleton",
+          "status": "completed"
+        },
+        {
+          "name": "KST-naive timestamp and Python 3.11 verification rework",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "agent": "quant-dev",
+      "name": "LEAN template, data export, and Docker runner",
+      "file": "step-3.md",
+      "status": "completed",
+      "retry_count": 3,
+      "result": "PASS after user-authorized rework: executable scalar DSL, versioned costs, DB/API profile round-trip, deterministic workspace, official LEAN runner contract, and behavioral adapter are verified by 154 Python 3.11 tests plus Ruff/py_compile/diff checks.",
+      "substeps": [
+        {
+          "name": "OHLCV exporter tests",
+          "status": "completed"
+        },
+        {
+          "name": "LEAN template workspace builder",
+          "status": "completed"
+        },
+        {
+          "name": "executable DSL scope confirmation",
+          "status": "completed"
+        },
+        {
+          "name": "transaction cost profile confirmation",
+          "status": "completed"
+        },
+        {
+          "name": "execution validation contract",
+          "status": "completed"
+        },
+        {
+          "name": "factor golden vectors and evaluator",
+          "status": "completed"
+        },
+        {
+          "name": "rule evaluator",
+          "status": "completed"
+        },
+        {
+          "name": "next-open execution and cost semantics",
+          "status": "completed"
+        },
+        {
+          "name": "cost profile persistence and artifact snapshot",
+          "status": "completed"
+        },
+        {
+          "name": "fixed LEAN template adapter",
+          "status": "completed"
+        },
+        {
+          "name": "Docker runner",
+          "status": "completed"
+        },
+        {
+          "name": "Step 3 final verification",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "agent": "quant-dev",
+      "name": "Async execution integration and result normalization",
+      "file": "step-4.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "PASS: async dispatch, execution state machine, official LEAN result normalization, confined artifact details/logs, and failure preservation verified by 177 Python 3.11 tests plus Ruff/py_compile/diff checks.",
+      "substeps": [
+        {
+          "name": "execution orchestrator",
+          "status": "completed"
+        },
+        {
+          "name": "LEAN result parser",
+          "status": "completed"
+        },
+        {
+          "name": "result and logs API integration",
+          "status": "completed"
+        },
+        {
+          "name": "Step 4 final verification",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "agent": "test-engineer",
+      "name": "Targeted QA verification",
+      "file": "step-5.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "PASS: independent Python 3.11 QA passed 177 tests, compile, new-scope Ruff, migration, scans, and diff checks; optional Docker smoke skipped because daemon socket access was denied.",
+      "substeps": [
+        {
+          "name": "targeted tests",
+          "status": "completed"
+        },
+        {
+          "name": "compile and diff checks",
+          "status": "completed"
+        },
+        {
+          "name": "optional Docker smoke",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "agent": "code-reviewer",
+      "name": "Code and quant review",
+      "file": "step-6.md",
+      "status": "completed",
+      "retry_count": 4,
+      "result": "PASS after TDD rework and independent code/spec re-review: exact next-open MOO costs, pre-fill buying power, single audit records, adapter boundaries, and cap/floor sizing are verified; 202 targeted tests plus Ruff/compile/diff checks passed.",
+      "substeps": [
+        {
+          "name": "git diff + scope analysis",
+          "status": "completed"
+        },
+        {
+          "name": "spec comparison",
+          "status": "completed"
+        },
+        {
+          "name": "checklist review",
+          "status": "completed"
+        },
+        {
+          "name": "result output",
+          "status": "completed"
+        },
+        {
+          "name": "must-fix #1, #2, #4, #5, and #6 TDD rework",
+          "status": "completed"
+        },
+        {
+          "name": "approved MOO execution contract documentation",
+          "status": "completed"
+        },
+        {
+          "name": "MOO execution RED tests",
+          "status": "completed"
+        },
+        {
+          "name": "MOO execution GREEN implementation",
+          "status": "completed"
+        },
+        {
+          "name": "code and quant re-review",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "agent": "orchestrator",
+      "name": "Cleanup summary and PR prep",
+      "file": "step-7.md",
+      "status": "completed",
+      "retry_count": 0,
+      "result": "Final verification, summary, TODO/state updates, and done-doc migration completed; branch is ready for PR.",
+      "substeps": [
+        {
+          "name": "final verification",
+          "status": "completed"
+        },
+        {
+          "name": "summary docs",
+          "status": "completed"
+        },
+        {
+          "name": "PR preparation",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "blockers": [],
+  "created": "2026-05-31",
+  "updated": "2026-08-16"
+}

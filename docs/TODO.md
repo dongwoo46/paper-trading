@@ -179,7 +179,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 보유 기간: 당일 ~ 수일
   - 출력: 전략 파라미터 명세 + 진입·청산 규칙 자연어 설명
 
-- [ ] 백테스팅 엔진 기본 구조 | project: quant-worker | phase: backtest-engine | priority: P1
+- [x] 백테스팅 엔진 기본 구조 | project: quant-worker | phase: backtest-engine | priority: P1 | done: 2026-08-16
   - Python 기반 벡터화 백테스팅 (vectorbt 또는 자체 구현)
   - 일봉 OHLCV + 수급 + 팩터 데이터 소비
   - 성과 지표: Sharpe / MDD / 연환산 수익률 / Calmar / 승률

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from src.application.daily_fetch_service import DailyFetchOptions, execute
 from src.application.daily_fetch_service import load_db_config_from_env
 from src.application.weekly_fetch_service import WeeklyFetchOptions, execute as execute_weekly
+from src.backtest.api import backtest_router
 from src.catalog.postgres_symbol_catalog import connect
 from src.jobs.batch_schedule import start_batch_scheduler, stop_batch_scheduler
 from src.jobs.investor_flow_schedule import start_investor_flow_scheduler, stop_investor_flow_scheduler
@@ -85,6 +86,7 @@ app = FastAPI(title="Collector Worker API", version="1.0.0", lifespan=lifespan)
 # Chart Analysis 라우터 등록
 from src.chart_analysis.interfaces.chart_analysis_router import chart_analysis_router  # noqa: E402
 app.include_router(chart_analysis_router)
+app.include_router(backtest_router)
 
 
 class _ColorFormatter(logging.Formatter):
