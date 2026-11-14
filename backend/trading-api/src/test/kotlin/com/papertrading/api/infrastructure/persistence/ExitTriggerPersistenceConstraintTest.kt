@@ -24,14 +24,26 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection
 import org.springframework.test.context.ActiveProfiles
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 import java.math.BigDecimal
 
 @DataJpaTest
+@Testcontainers
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(ExitTriggerPersistenceConstraintTest.QuerydslTestConfig::class)
 class ExitTriggerPersistenceConstraintTest {
+    companion object {
+        // 기본 localhost:5432 에 의존하면 DB 가 없는 CI 에서 컨텍스트 생성이 실패한다
+        @Container
+        @ServiceConnection
+        val postgres = PostgreSQLContainer("postgres:16-alpine")
+    }
+
     @Autowired
     lateinit var accountRepository: AccountRepository
 
