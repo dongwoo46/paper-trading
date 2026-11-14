@@ -1,0 +1,249 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:KisExecutionNoticeParser.kt$KisExecutionNoticeParser$fun parse(rawMessage: String, mode: String): KisExecutionNotice?</ID>
+    <ID>CyclomaticComplexMethod:PositionExitTrigger.kt$PositionExitTrigger$private fun validatePolicy( triggerPercent: BigDecimal?, triggerPrice: BigDecimal?, priceBasisPolicy: PriceBasisPolicy, )</ID>
+    <ID>CyclomaticComplexMethod:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$private fun processGroup(ticker: String, groupKey: TriggerGroupKey, price: BigDecimal, quoteAt: Instant)</ID>
+    <ID>EmptyFunctionBlock:TradingApiApplicationTests.kt$TradingApiApplicationTests${ }</ID>
+    <ID>LongMethod:ExecutionProcessor.kt$ExecutionProcessor$fun processFill( orderId: Long, fillPrice: BigDecimal, fillQty: BigDecimal, externalExecutionId: String, executedAt: Instant, )</ID>
+    <ID>LongMethod:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$private fun processGroup(ticker: String, groupKey: TriggerGroupKey, price: BigDecimal, quoteAt: Instant)</ID>
+    <ID>LongMethod:TaxSummaryCommandService.kt$TaxSummaryCommandService$@Transactional fun recalculate( accountId: Long, taxYear: TaxYear, force: Boolean, runType: TaxSummaryRunType = TaxSummaryRunType.MANUAL, ): TaxSummary</ID>
+    <ID>LongMethod:TradingJournalControllerIntegrationTest.kt$TradingJournalControllerIntegrationTest$@Test fun `create list detail update 흐름이 동작한다`()</ID>
+    <ID>LongParameterList:Account.kt$Account.Companion$( accountName: String, accountType: AccountType, tradingMode: TradingMode, initialDeposit: BigDecimal, baseCurrency: String = "KRW", externalAccountId: String? = null )</ID>
+    <ID>LongParameterList:AccountController.kt$AccountController$( @PathVariable id: Long, @RequestParam(required = false) type: TransactionType?, @RequestParam(required = false) from: LocalDate?, @RequestParam(required = false) to: LocalDate?, @RequestParam(defaultValue = "0") page: Int, @RequestParam(defaultValue = "20") size: Int )</ID>
+    <ID>LongParameterList:AccountLedger.kt$AccountLedger.Companion$( account: Account, transactionType: TransactionType, amount: BigDecimal, balanceAfter: BigDecimal, idempotencyKey: String, refOrderId: Long? = null, refExecutionId: Long? = null, description: String? = null )</ID>
+    <ID>LongParameterList:AutoExitOrderPlacementService.kt$AutoExitOrderPlacementService$( accountId: Long, ticker: String, marketType: MarketType, quantity: BigDecimal, orderGroupId: String, triggerAuditInputs: List&lt;AutoExitTriggerAuditInput&gt;, )</ID>
+    <ID>LongParameterList:DailyBalance.kt$DailyBalance.Companion$( account: Account, businessDate: LocalDate, cashBalance: BigDecimal, stockMarketValue: BigDecimal, totalAssetValue: BigDecimal, pnlAmount: BigDecimal, pnlRate: BigDecimal )</ID>
+    <ID>LongParameterList:Execution.kt$Execution.Companion$( order: Order, account: Account, ticker: String, executedQuantity: BigDecimal, executedPrice: BigDecimal, krwExecutedPrice: BigDecimal, externalExecutionId: String, executedAt: Instant, executionMode: TradingMode = account.tradingMode, fee: BigDecimal = BigDecimal.ZERO, currency: String = "KRW", fxRate: BigDecimal? = null )</ID>
+    <ID>LongParameterList:ExecutionProcessor.kt$ExecutionProcessor$( private val orderRepository: OrderRepository, private val accountRepository: AccountRepository, private val positionRepository: PositionRepository, private val executionRepository: ExecutionRepository, private val accountLedgerRepository: AccountLedgerRepository, private val feePolicyRepository: FeePolicyRepository, private val collectorSubscriptionPort: CollectorSubscriptionPort, private val settlementRepository: SettlementRepository, private val settlementExecutionRepository: SettlementExecutionRepository, private val eventPublisher: ApplicationEventPublisher, private val slackNotificationEventPublisher: SlackNotificationEventPublisher, )</ID>
+    <ID>LongParameterList:FeePolicy.kt$FeePolicy.Companion$( tradingMode: TradingMode, marketType: MarketType, feeRate: BigDecimal, minFee: BigDecimal, transactionTaxRate: BigDecimal, effectiveFrom: Instant, effectiveUntil: Instant? = null )</ID>
+    <ID>LongParameterList:FeePolicyTest.kt$FeePolicyTest$( tradingMode: TradingMode = TradingMode.LOCAL, marketType: MarketType = MarketType.KOSPI, feeRate: BigDecimal = BigDecimal("0.001500"), minFee: BigDecimal = BigDecimal("0.0000"), transactionTaxRate: BigDecimal = BigDecimal("0.0018"), effectiveFrom: Instant = Instant.parse("2024-01-01T00:00:00Z"), effectiveUntil: Instant? = null )</ID>
+    <ID>LongParameterList:Notification.kt$Notification.Companion$( eventType: NotificationEventType, sourceRef: String, title: String, message: String, account: Account? = null, refOrderId: Long? = null, refExecutionId: Long? = null, )</ID>
+    <ID>LongParameterList:Order.kt$Order.Companion$( account: Account, ticker: String, marketType: MarketType, orderType: OrderType, orderSide: OrderSide, orderCondition: OrderCondition, quantity: BigDecimal, limitPrice: BigDecimal? = null, lockedAmount: BigDecimal = BigDecimal.ZERO, idempotencyKey: String, orderGroupId: String? = null, expireAt: Instant? = null, strategyId: Long? = null, signalId: Long? = null )</ID>
+    <ID>LongParameterList:OrderAmendment.kt$OrderAmendment.Companion$( order: Order, amendmentType: String, beforeQuantity: BigDecimal? = null, afterQuantity: BigDecimal? = null, beforeLimitPrice: BigDecimal? = null, afterLimitPrice: BigDecimal? = null, reason: String? = null )</ID>
+    <ID>LongParameterList:OrderAmendment.kt$OrderAmendment.Companion$( order: Order, beforeQuantity: BigDecimal? = null, afterQuantity: BigDecimal? = null, beforeLimitPrice: BigDecimal? = null, afterLimitPrice: BigDecimal? = null, reason: String? = null )</ID>
+    <ID>LongParameterList:OrderCommandService.kt$OrderCommandService$( accountId: Long, ticker: String, marketType: com.papertrading.api.domain.enums.MarketType, quantity: BigDecimal, orderGroupId: String, triggerAuditInputs: List&lt;AutoExitTriggerAuditInput&gt;, )</ID>
+    <ID>LongParameterList:OrderCommandService.kt$OrderCommandService$( private val accountRepository: AccountRepository, private val orderRepository: OrderRepository, private val positionRepository: PositionRepository, private val accountLedgerRepository: AccountLedgerRepository, private val marketQuotePort: MarketQuotePort, private val collectorSubscriptionPort: CollectorSubscriptionPort, private val localMatchingEngine: LocalMatchingEngine, private val kisPaperOrderExecutor: KisPaperOrderExecutor, private val kisLiveOrderExecutor: KisLiveOrderExecutor, )</ID>
+    <ID>LongParameterList:OrderSignal.kt$OrderSignal.Companion$( account: Account, ticker: String, signalSide: OrderSide, quantity: BigDecimal, idempotencyKey: String, strategyId: Long? = null, signalCategory: SignalCategory? = null, signalIndicator: SignalIndicator? = null, signalThreshold: BigDecimal? = null, signalActualValue: BigDecimal? = null, conditionSnapshot: String? = null, limitPrice: BigDecimal? = null )</ID>
+    <ID>LongParameterList:PortfolioSnapshot.kt$PortfolioSnapshot$( quantity: BigDecimal, avgBuyPrice: BigDecimal, closePrice: BigDecimal, marketValue: BigDecimal, weight: BigDecimal, unrealizedPnl: BigDecimal )</ID>
+    <ID>LongParameterList:PortfolioSnapshot.kt$PortfolioSnapshot.Companion$( account: Account, businessDate: LocalDate, ticker: String, quantity: BigDecimal, avgBuyPrice: BigDecimal, closePrice: BigDecimal, marketValue: BigDecimal, weight: BigDecimal, unrealizedPnl: BigDecimal )</ID>
+    <ID>LongParameterList:Position.kt$Position.Companion$( account: Account, ticker: String, marketType: MarketType, quantity: BigDecimal, avgBuyPrice: BigDecimal, lockedQuantity: BigDecimal = BigDecimal.ZERO, currentPrice: BigDecimal? = null, priceSource: PriceSource = PriceSource.UNKNOWN, )</ID>
+    <ID>LongParameterList:PositionExitTrigger.kt$PositionExitTrigger.Companion$( positionId: Long, accountId: Long, ticker: String, triggerType: TriggerType, triggerPercent: BigDecimal?, triggerPrice: BigDecimal?, priceBasisPolicy: PriceBasisPolicy, exitRatioPercent: BigDecimal? = null, )</ID>
+    <ID>LongParameterList:PositionExitTriggerControllerTest.kt$PositionExitTriggerControllerTest$( id: Long, triggerType: TriggerType, triggerPercent: BigDecimal?, triggerPrice: BigDecimal?, priceBasisPolicy: PriceBasisPolicy, exitRatioPercent: BigDecimal, state: TriggerState = TriggerState.ARMED, version: Long = 0L, )</ID>
+    <ID>LongParameterList:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$( accountId: Long, positionId: Long, triggerType: TriggerType, orderGroupId: String, quoteAt: Instant, reason: String, )</ID>
+    <ID>LongParameterList:Settlement.kt$Settlement.Companion$( order: Order, account: Account, execution: Execution, tax: BigDecimal = BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP), settledAt: Instant, fxRateAtSettlement: BigDecimal? = execution.fxRate, )</ID>
+    <ID>LongParameterList:SettlementEntitiesTest.kt$SettlementEntitiesTest$( order: Order, account: Account, ticker: String = "005930", qty: BigDecimal = BigDecimal("2"), price: BigDecimal = BigDecimal("70000"), fee: BigDecimal = BigDecimal("10.0000"), currency: String = "KRW", fxRate: BigDecimal? = null, )</ID>
+    <ID>LongParameterList:StrategyLog.kt$StrategyLog.Companion$( strategy: Strategy, account: Account, logLevel: String, message: String, context: String? = null, loggedAt: Instant = Instant.now() )</ID>
+    <ID>LongParameterList:StrategyPerformanceSnapshot.kt$StrategyPerformanceSnapshot.Companion$( periodStart: LocalDate, periodEnd: LocalDate, totalReturn: BigDecimal, maxDrawdown: BigDecimal?, winRate: BigDecimal?, totalTrades: Int )</ID>
+    <ID>LongParameterList:StrategyPerformanceSnapshot.kt$StrategyPerformanceSnapshot.Companion$( strategy: Strategy, periodStart: LocalDate, periodEnd: LocalDate, totalReturn: BigDecimal, sharpeRatio: BigDecimal?, maxDrawdown: BigDecimal?, winRate: BigDecimal?, totalTrades: Int )</ID>
+    <ID>LongParameterList:StrategyVersion.kt$StrategyVersion.Companion$( strategy: Strategy, versionNo: Int, rules: String, createdBy: String? = null, changeNote: String? = null, backtestRunId: UUID? = null )</ID>
+    <ID>LongParameterList:TradingJournal.kt$TradingJournal.Companion$( account: Account, journalType: String, title: String, content: String, orderId: Long? = null, ticker: String? = null, sentiment: String? = null )</ID>
+    <ID>LoopWithTooManyJumpStatements:LocalMatchingScheduler.kt$LocalMatchingScheduler$for</ID>
+    <ID>MagicNumber:Account.kt$Account$4</ID>
+    <ID>MagicNumber:Account.kt$Account.Companion$3</ID>
+    <ID>MagicNumber:AccountController.kt$AccountController$100</ID>
+    <ID>MagicNumber:AsyncConfig.kt$AsyncConfig$100</ID>
+    <ID>MagicNumber:AsyncConfig.kt$AsyncConfig$4</ID>
+    <ID>MagicNumber:CollectorApiProperties.kt$CollectorApiProperties$2000</ID>
+    <ID>MagicNumber:CollectorApiProperties.kt$CollectorApiProperties$3000</ID>
+    <ID>MagicNumber:DailyBalanceCommandService.kt$DailyBalanceCommandService$6</ID>
+    <ID>MagicNumber:ExecutionProcessor.kt$ExecutionProcessor$4</ID>
+    <ID>MagicNumber:ExecutionSseController.kt$ExecutionSseController$300_000L</ID>
+    <ID>MagicNumber:FeePolicy.kt$FeePolicy$4</ID>
+    <ID>MagicNumber:GlobalExceptionHandler.kt$GlobalExceptionHandler$400</ID>
+    <ID>MagicNumber:GlobalExceptionHandler.kt$GlobalExceptionHandler$404</ID>
+    <ID>MagicNumber:GlobalExceptionHandler.kt$GlobalExceptionHandler$500</ID>
+    <ID>MagicNumber:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$6</ID>
+    <ID>MagicNumber:KisExecutionNoticeParser.kt$KisExecutionNoticeParser$3</ID>
+    <ID>MagicNumber:KisExecutionNoticeParser.kt$KisExecutionNoticeParser$4</ID>
+    <ID>MagicNumber:KisOrderProperties.kt$KisOrderProperties$1_000</ID>
+    <ID>MagicNumber:KisOrderProperties.kt$KisOrderProperties$30_000</ID>
+    <ID>MagicNumber:KisOrderProperties.kt$KisOrderProperties$5</ID>
+    <ID>MagicNumber:KisTokenManager.kt$KisTokenManager$20</ID>
+    <ID>MagicNumber:KisTokenManager.kt$KisTokenManager$86400</ID>
+    <ID>MagicNumber:LedgerFilter.kt$LedgerFilter$20</ID>
+    <ID>MagicNumber:LivePositionSnapshot.kt$LivePositionSnapshot$4</ID>
+    <ID>MagicNumber:OrderCommandService.kt$OrderCommandService$4</ID>
+    <ID>MagicNumber:OrderCommandService.kt$OrderCommandService$60</ID>
+    <ID>MagicNumber:PortfolioSnapshotCommandService.kt$PortfolioSnapshotCommandService$6</ID>
+    <ID>MagicNumber:PortfolioSnapshotDto.kt$DailyBalanceResponse.Companion$6</ID>
+    <ID>MagicNumber:PortfolioSnapshotDto.kt$PortfolioSnapshotResponse.Companion$6</ID>
+    <ID>MagicNumber:Position.kt$Position$4</ID>
+    <ID>MagicNumber:PositionExitTrigger.kt$PositionExitTrigger$4</ID>
+    <ID>MagicNumber:PositionExitTriggerCommandService.kt$PositionExitTriggerCommandService$4</ID>
+    <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$16</ID>
+    <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$3</ID>
+    <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$8</ID>
+    <ID>MagicNumber:RestTemplateConfig.kt$RestTemplateConfig$10</ID>
+    <ID>MagicNumber:RestTemplateConfig.kt$RestTemplateConfig$5</ID>
+    <ID>MagicNumber:Settlement.kt$Settlement.Companion$4</ID>
+    <ID>MagicNumber:SnapshotJobRun.kt$SnapshotJobRun$500</ID>
+    <ID>MagicNumber:Strategy.kt$Strategy$200</ID>
+    <ID>MagicNumber:Strategy.kt$Strategy$5</ID>
+    <ID>MagicNumber:Strategy.kt$Strategy$500</ID>
+    <ID>MagicNumber:Strategy.kt$Strategy.Companion$200</ID>
+    <ID>MagicNumber:StrategyLog.kt$StrategyLog.Companion$5</ID>
+    <ID>MagicNumber:StrategyVersion.kt$StrategyVersion.Companion$100</ID>
+    <ID>MagicNumber:TaxComputationResult.kt$TaxComputationResult.Companion$4</ID>
+    <ID>MagicNumber:TaxSummary.kt$TaxSummary$4</ID>
+    <ID>MagicNumber:TaxSummary.kt$TaxSummary.Companion$4</ID>
+    <ID>MagicNumber:TaxSummaryCalculator.kt$TaxSummaryCalculator$4</ID>
+    <ID>MagicNumber:TaxSummaryCommandService.kt$TaxSummaryCommandService$4</ID>
+    <ID>MagicNumber:TradingJournalController.kt$TradingJournalController$100</ID>
+    <ID>MatchingDeclarationName:OrderRequest.kt$PlaceOrderRequest</ID>
+    <ID>MaxLineLength:Account.kt$Account$fun</ID>
+    <ID>MaxLineLength:AccountQueryServiceTest.kt$AccountQueryServiceTest$LedgerResult(1L, TransactionType.DEPOSIT, BigDecimal("100000"), BigDecimal("100000"), null, null, null, Instant.now())</ID>
+    <ID>MaxLineLength:DailyBalance.kt$DailyBalance$uniqueConstraints = [UniqueConstraint(name = "uk_daily_balances_account_date", columnNames = ["account_id", "business_date"])]</ID>
+    <ID>MaxLineLength:DailyBalanceCommandServiceTest.kt$DailyBalanceCommandServiceTest$every { dailyBalanceRepository.findByAccountIdAndBusinessDate(1L, LocalDate.of(2026, 5, 6)) } returns Optional.empty()</ID>
+    <ID>MaxLineLength:ExecutionProcessor.kt$ExecutionProcessor$currency = requireNotNull(account.baseCurrency) { "account.baseCurrency is null: accountId=$accountId" }</ID>
+    <ID>MaxLineLength:ExecutionProcessor.kt$ExecutionProcessor$private</ID>
+    <ID>MaxLineLength:ExecutionProcessorTest.kt$ExecutionProcessorTest$/** Spec Test 1C: verify publishEvent(ExecutionFilledEvent) called after fill() with correct ticker, side, executionId */</ID>
+    <ID>MaxLineLength:ExecutionSseEventTest.kt$ExecutionSseEventTest$/** Spec: from_BigDecimal_fields_are_plain_strings — quantity "10.00" must serialize as "10.00", no scientific notation */</ID>
+    <ID>MaxLineLength:GlobalExceptionHandler.kt$GlobalExceptionHandler$(ex.message ?: "").contains("포지션") || (ex.message ?: "").contains("position") -&gt; "POSITION_NOT_FOUND"</ID>
+    <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$KisAuthorizationException("KIS authorization failed", KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))</ID>
+    <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$KisRemoteCallException("KIS remote call failed", KisApiException(mapKisErrorCode(rtCd, message), rtCd, message))</ID>
+    <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$private</ID>
+    <ID>MaxLineLength:KisAccountBalanceControllerIntegrationTest.kt$KisAccountBalanceControllerIntegrationTest$given(kisAccountQueryService.getBalance(1L, KisAccountMode.PAPER)).willThrow(KisAuthorizationException("unauthorized"))</ID>
+    <ID>MaxLineLength:KisApiException.kt$normalized.contains("auth") || normalized.contains("token") || normalized.contains("인증") -&gt; KisErrorCode.KIS_AUTH_FAILED</ID>
+    <ID>MaxLineLength:KisApiException.kt$normalized.contains("duplicate") || normalized.contains("already") || normalized.contains("중복") -&gt; KisErrorCode.KIS_DUPLICATE_OR_ALREADY_PROCESSED</ID>
+    <ID>MaxLineLength:KisApiException.kt$normalized.contains("rate") || normalized.contains("limit") || normalized.contains("초과") -&gt; KisErrorCode.KIS_RATE_LIMITED</ID>
+    <ID>MaxLineLength:KisExecutionNoticeParserTest.kt$KisExecutionNoticeParserTest$rawMessage = """{"tr_id":"H0STCNI0","ODNO":"20000001","CCLD_NO":"009","PDNO":"000660","SLL_BUY_DVSN_CD":"01","CCLD_QTY":"2","CCLD_UNPR":"101500","CCLD_DTTM":"20260501100130000"}"""</ID>
+    <ID>MaxLineLength:KisExecutionNoticeParserTest.kt$KisExecutionNoticeParserTest$rawMessage = "0|H0STCNI9|001|ODNO=10000001^CCLD_NO=00003^PDNO=005930^SLL_BUY_DVSN_CD=02^CCLD_QTY=3.5^CCLD_UNPR=70000.25^CCLD_DTTM=20260501093015000^CANO=12345678^ACNT_PRDT_CD=01"</ID>
+    <ID>MaxLineLength:KisExecutionNoticeService.kt$KisExecutionNoticeService$"duplicate KIS execution notice ignored: mode=${notice.mode}, externalOrderId=${notice.externalOrderId}, externalExecutionId=${notice.externalExecutionId}"</ID>
+    <ID>MaxLineLength:KisExecutionNoticeService.kt$KisExecutionNoticeService$"executedPrice=${notice.executedPrice}, executedQty=${notice.executedQty}, executedAt=${notice.executedAt}"</ID>
+    <ID>MaxLineLength:KisExecutionNoticeServiceTest.kt$KisExecutionNoticeServiceTest$every { executionRepository.findByExternalExecutionId("KIS_PAPER:12345678-01:10000001:00003") } returns Optional.empty()</ID>
+    <ID>MaxLineLength:KisExecutionNoticeServiceTest.kt$KisExecutionNoticeServiceTest$every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns Optional.of(mockk&lt;Execution&gt;(relaxed = true))</ID>
+    <ID>MaxLineLength:KisExecutionNoticeServiceTest.kt$KisExecutionNoticeServiceTest$executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)</ID>
+    <ID>MaxLineLength:KisExecutionNoticeServiceTest.kt$KisExecutionNoticeServiceTest$fun</ID>
+    <ID>MaxLineLength:KisExecutionWebSocketManager.kt$KisExecutionWebSocketManager$log.error { "KIS WebSocket reconnect attempts exhausted: mode=$mode, attempts=${properties.wsReconnectMaxAttempts}" }</ID>
+    <ID>MaxLineLength:KisExecutionWebSocketManager.kt$KisExecutionWebSocketManager$log.warn { "KIS WebSocket auth error: mode=$mode, code=${message.code}, message=${sanitizeControlMessage(message.message)}" }</ID>
+    <ID>MaxLineLength:KisExecutionWebSocketManager.kt$KisExecutionWebSocketManager$log.warn { "KIS WebSocket error: mode=$mode, code=${message.code}, message=${sanitizeControlMessage(message.message)}" }</ID>
+    <ID>MaxLineLength:KisExecutionWebSocketManager.kt$KisExecutionWebSocketManager$message.replace(Regex("(?i)(approval_key|access_token|appsecret|app_secret|secretkey|authorization)=\\S+"), "$1=&lt;redacted&gt;")</ID>
+    <ID>MaxLineLength:KisOrderRestClient.kt$KisOrderRestClient$isFullyFilled = (item["PSBL_QTY"]?.toString()?.toBigDecimalOrNull() ?: BigDecimal.ONE) == BigDecimal.ZERO</ID>
+    <ID>MaxLineLength:Order.kt$Order$uniqueConstraints = [UniqueConstraint(name = "uk_orders_account_idempotency", columnNames = ["account_id", "idempotency_key"])]</ID>
+    <ID>MaxLineLength:OrderCommandServiceTest.kt$OrderCommandServiceTest$val quote = QuoteSnapshot("005930", TradingMode.LOCAL, BigDecimal("72000"), BigDecimal("72100"), BigDecimal("71900"), Instant.now())</ID>
+    <ID>MaxLineLength:OrderControllerIntegrationTest.kt$OrderControllerIntegrationTest$val quote = QuoteSnapshot("005930", TradingMode.LOCAL, BigDecimal("70000"), BigDecimal("70100"), BigDecimal("69900"), Instant.now())</ID>
+    <ID>MaxLineLength:PortfolioSnapshotQueryServiceTest.kt$PortfolioSnapshotQueryServiceTest$private</ID>
+    <ID>MaxLineLength:Position.kt$Position$@Check(constraints = "quantity &gt;= 0 AND locked_quantity &gt;= 0 AND orderable_quantity &gt;= 0 AND quantity &gt;= locked_quantity")</ID>
+    <ID>MaxLineLength:Position.kt$Position$uniqueConstraints = [UniqueConstraint(name = "uk_positions_account_ticker", columnNames = ["account_id", "ticker"])]</ID>
+    <ID>MaxLineLength:PositionCommandService.kt$PositionCommandService$"포지션 실시간 평가 캐시 갱신: ticker=$normalizedTicker, tradingMode=$tradingMode, price=$price, count=${snapshots.size}"</ID>
+    <ID>MaxLineLength:PositionCommandServiceTest.kt$PositionCommandServiceTest$positionCommandService.updateCurrentPriceByTicker("005930", BigDecimal("75000"), PriceSource.REDIS_LIVE, TradingMode.LOCAL)</ID>
+    <ID>MaxLineLength:PositionCommandServiceTest.kt$PositionCommandServiceTest$positionCommandService.updateCurrentPriceByTicker("NOTEXIST", BigDecimal("10000"), PriceSource.REDIS_LIVE, TradingMode.LOCAL)</ID>
+    <ID>MaxLineLength:PositionCommandServiceTest.kt$PositionCommandServiceTest$val dbPosition = positionRepository.findByAccountIdAndQuantityGreaterThan(account.id!!, BigDecimal.ZERO).single()</ID>
+    <ID>MaxLineLength:PositionExitTriggerCommandService.kt$PositionExitTriggerCommandService$?:</ID>
+    <ID>MaxLineLength:PositionExitTriggerEvaluator.kt$PositionExitTriggerEvaluator$fun</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$// Duplicate-key may indicate a concurrent success. Confirm deterministic order existence before success.</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$message = "auto-exit order creation failed. accountId=$accountId, positionId=$positionId, triggerType=${triggerType.name}, orderGroupId=$orderGroupId, quoteAt=$quoteAt, reason=$reason"</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestratorTest.kt$PositionExitTriggerOrchestratorTest$every { autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) }</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestratorTest.kt$PositionExitTriggerOrchestratorTest$every { autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) } returns mockk&lt;Order&gt;()</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestratorTest.kt$PositionExitTriggerOrchestratorTest$every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.STOP_LOSS) } returns listOf(first, second)</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestratorTest.kt$PositionExitTriggerOrchestratorTest$every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.STOP_LOSS) } returns listOf(stopLoss)</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestratorTest.kt$PositionExitTriggerOrchestratorTest$every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.STOP_LOSS) } returns listOf(trigger)</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestratorTest.kt$PositionExitTriggerOrchestratorTest$every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.TAKE_PROFIT) } returns listOf(takeProfit)</ID>
+    <ID>MaxLineLength:PositionExitTriggerOrchestratorTest.kt$PositionExitTriggerOrchestratorTest$every { triggerRepository.findByTickerAndState("005930", TriggerState.ARMED) } returns listOf(stopLoss, takeProfit)</ID>
+    <ID>MaxLineLength:PositionQueryServiceTest.kt$PositionQueryServiceTest$positionCommandService.updateCurrentPriceByTicker("005930", BigDecimal("65000"), PriceSource.REDIS_LIVE, TradingMode.LOCAL)</ID>
+    <ID>MaxLineLength:PositionQueryServiceTest.kt$PositionQueryServiceTest$positionCommandService.updateCurrentPriceByTicker("005930", BigDecimal("75000"), PriceSource.REDIS_LIVE, TradingMode.LOCAL)</ID>
+    <ID>MaxLineLength:SettlementEntitiesTest.kt$SettlementEntitiesTest$val exec = execution(order = ord, account = acc, qty = BigDecimal("2"), price = BigDecimal("70000"), fee = BigDecimal("10.0000"))</ID>
+    <ID>MaxLineLength:SettlementExecution.kt$SettlementExecution$uniqueConstraints = [UniqueConstraint(name = "uk_settlement_executions", columnNames = ["settlement_id", "execution_id"])]</ID>
+    <ID>MaxLineLength:SettlementTaxReadRepositoryImpl.kt$SettlementTaxReadRepositoryImpl$override</ID>
+    <ID>MaxLineLength:SlackNotificationEventHandler.kt$SlackNotificationEventHandler$log.warn { "Slack send failed on first attempt — leaving PENDING for scheduler retry: sourceRef=$sourceRef" }</ID>
+    <ID>MaxLineLength:SlackNotificationEventPublisher.kt$SlackNotificationEventPublisher$fun</ID>
+    <ID>MaxLineLength:SlackNotificationSchedulerTest.kt$SlackNotificationSchedulerTest$every { txService.findPendingForRetry(props.maxRetries) } returns listOf(failingNotification, successNotification)</ID>
+    <ID>MaxLineLength:SnapshotJobService.kt$SnapshotJobService$val latestRun = snapshotJobRunRepository.findTopByAccountIdAndBusinessDateOrderByStartedAtDesc(accountId, businessDate)</ID>
+    <ID>MaxLineLength:SnapshotJobServiceAtomicRollbackIntegrationTest.kt$SnapshotJobServiceAtomicRollbackIntegrationTest$val snapshotsAfter = portfolioSnapshotRepository.findByAccountIdAndBusinessDateOrderByTickerAsc(account.id!!, businessDate)</ID>
+    <ID>MaxLineLength:SnapshotJobServiceTest.kt$SnapshotJobServiceTest$every { snapshotJobRunRepository.findTopByAccountIdAndBusinessDateOrderByStartedAtDesc(1L, LocalDate.of(2026, 5, 1)) } returns null</ID>
+    <ID>MaxLineLength:SnapshotJobServiceTest.kt$SnapshotJobServiceTest$every { snapshotJobRunRepository.findTopByAccountIdAndBusinessDateOrderByStartedAtDesc(1L, LocalDate.of(2026, 5, 1)) } returns successRun</ID>
+    <ID>MaxLineLength:StrategyVersion.kt$StrategyVersion$uniqueConstraints = [UniqueConstraint(name = "uk_strategy_versions_strategy_version", columnNames = ["strategy_id", "version_no"])]</ID>
+    <ID>MaxLineLength:TaxSummary.kt$TaxSummary$uniqueConstraints = [UniqueConstraint(name = "uk_tax_summaries_account_year", columnNames = ["account_id", "tax_year"])]</ID>
+    <ID>MaxLineLength:TaxSummaryCommandService.kt$TaxSummaryCommandService$throw TaxSummaryAlreadyRunningException("이미 실행 중인 세금 요약 작업이 있습니다. accountId=$accountId taxYear=${taxYear.value}")</ID>
+    <ID>MaxLineLength:TaxSummaryQueryService.kt$TaxSummaryQueryService$.</ID>
+    <ID>MaxLineLength:TaxSummaryQueryService.kt$TaxSummaryQueryService$throw InvalidTaxYearRangeException("fromYear는 toYear보다 클 수 없습니다. fromYear=${fromYear.value} toYear=${toYear.value}")</ID>
+    <ID>MaxLineLength:TaxSummaryRepository.kt$TaxSummaryRepository$fun findByAccountIdAndTaxYearBetweenOrderByTaxYearDesc(accountId: Long, fromYear: Int, toYear: Int): List&lt;TaxSummary&gt;</ID>
+    <ID>NewLineAtEndOfFile:AccountCommands.kt$com.papertrading.api.application.account.command.AccountCommands.kt</ID>
+    <ID>NewLineAtEndOfFile:AccountLedgerRepositoryCustom.kt$com.papertrading.api.infrastructure.persistence.AccountLedgerRepositoryCustom.kt</ID>
+    <ID>NewLineAtEndOfFile:AccountLedgerRepositoryImpl.kt$com.papertrading.api.infrastructure.persistence.AccountLedgerRepositoryImpl.kt</ID>
+    <ID>NewLineAtEndOfFile:AccountRequest.kt$com.papertrading.api.presentation.dto.account.AccountRequest.kt</ID>
+    <ID>NewLineAtEndOfFile:ApiErrorResponse.kt$com.papertrading.api.presentation.exception.ApiErrorResponse.kt</ID>
+    <ID>NewLineAtEndOfFile:CollectorApiProperties.kt$com.papertrading.api.infrastructure.client.CollectorApiProperties.kt</ID>
+    <ID>NewLineAtEndOfFile:ExecutionFilledEvent.kt$com.papertrading.api.domain.event.ExecutionFilledEvent.kt</ID>
+    <ID>NewLineAtEndOfFile:FeePolicy.kt$com.papertrading.api.domain.entity.feepolicy.FeePolicy.kt</ID>
+    <ID>NewLineAtEndOfFile:FeePolicyTest.kt$com.papertrading.api.domain.entity.feepolicy.FeePolicyTest.kt</ID>
+    <ID>NewLineAtEndOfFile:LedgerFilter.kt$com.papertrading.api.application.account.query.LedgerFilter.kt</ID>
+    <ID>NewLineAtEndOfFile:NotificationRepositoryCustom.kt$com.papertrading.api.infrastructure.persistence.NotificationRepositoryCustom.kt</ID>
+    <ID>NewLineAtEndOfFile:NotificationRepositoryImpl.kt$com.papertrading.api.infrastructure.persistence.NotificationRepositoryImpl.kt</ID>
+    <ID>NewLineAtEndOfFile:NotificationTest.kt$com.papertrading.api.domain.entity.notification.NotificationTest.kt</ID>
+    <ID>NewLineAtEndOfFile:OrderAmendment.kt$com.papertrading.api.domain.entity.order.OrderAmendment.kt</ID>
+    <ID>NewLineAtEndOfFile:OrderSignal.kt$com.papertrading.api.domain.entity.order.OrderSignal.kt</ID>
+    <ID>NewLineAtEndOfFile:PortfolioSnapshotDto.kt$com.papertrading.api.presentation.dto.portfolio.PortfolioSnapshotDto.kt</ID>
+    <ID>NewLineAtEndOfFile:QueryDslConfig.kt$com.papertrading.api.infrastructure.config.QueryDslConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:RestTemplateConfig.kt$com.papertrading.api.infrastructure.config.RestTemplateConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:SlackNotificationRequestedEvent.kt$com.papertrading.api.application.notification.SlackNotificationRequestedEvent.kt</ID>
+    <ID>NewLineAtEndOfFile:TestEntityUtils.kt$com.papertrading.api.support.TestEntityUtils.kt</ID>
+    <ID>NewLineAtEndOfFile:TradingApiApplicationTests.kt$com.papertrading.api.TradingApiApplicationTests.kt</ID>
+    <ID>NewLineAtEndOfFile:TradingJournalTest.kt$com.papertrading.api.domain.entity.portfolio.TradingJournalTest.kt</ID>
+    <ID>ProtectedMemberInFinalClass:Account.kt$Account$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:AccountExitTriggerDefault.kt$AccountExitTriggerDefault$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:AccountLedger.kt$AccountLedger$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:DailyBalance.kt$DailyBalance$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:Execution.kt$Execution$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:FeePolicy.kt$FeePolicy$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:Notification.kt$Notification$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:Order.kt$Order$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:OrderAmendment.kt$OrderAmendment$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:OrderSignal.kt$OrderSignal$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:PortfolioSnapshot.kt$PortfolioSnapshot$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:Position.kt$Position$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:PositionExitTrigger.kt$PositionExitTrigger$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:RiskEvent.kt$RiskEvent$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:RiskPolicy.kt$RiskPolicy$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:Settlement.kt$Settlement$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:SettlementExecution.kt$SettlementExecution$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:SnapshotJobRun.kt$SnapshotJobRun$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:Strategy.kt$Strategy$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:StrategyDerivation.kt$StrategyDerivation$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:StrategyLog.kt$StrategyLog$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:StrategyPerformanceSnapshot.kt$StrategyPerformanceSnapshot$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:StrategyVersion.kt$StrategyVersion$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:TaxSummary.kt$TaxSummary$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:TaxSummaryRun.kt$TaxSummaryRun$protected constructor()</ID>
+    <ID>ProtectedMemberInFinalClass:TradingJournal.kt$TradingJournal$protected constructor()</ID>
+    <ID>ReturnCount:ExecutionProcessor.kt$ExecutionProcessor$fun processFill( orderId: Long, fillPrice: BigDecimal, fillQty: BigDecimal, externalExecutionId: String, executedAt: Instant, )</ID>
+    <ID>ReturnCount:KisExecutionNoticeParser.kt$KisExecutionNoticeParser$private fun parseFields(rawMessage: String): Map&lt;String, String&gt;?</ID>
+    <ID>ReturnCount:KisOrderRestClient.kt$KisOrderRestClient$fun inquireFills(order: Order, mode: String): List&lt;FillResult&gt;</ID>
+    <ID>ReturnCount:NotificationPersistenceTxService.kt$NotificationPersistenceTxService$@Transactional(propagation = Propagation.REQUIRES_NEW) fun markDelivering(notification: Notification): Notification?</ID>
+    <ID>ReturnCount:OrderCommandService.kt$OrderCommandService$@Transactional fun placeOrder(accountId: Long, command: PlaceOrderCommand): Order</ID>
+    <ID>ReturnCount:OrderCommandService.kt$OrderCommandService$private fun cancelIfUnfillableIocFok( accountId: Long, orderId: Long, command: PlaceOrderCommand, order: Order, tradingMode: TradingMode, ): Boolean</ID>
+    <ID>ReturnCount:PositionExitTriggerEvaluator.kt$PositionExitTriggerEvaluator$fun evaluate(position: Position, trigger: PositionExitTrigger, quotePrice: BigDecimal, now: Instant): TriggerDecision?</ID>
+    <ID>ReturnCount:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$private fun processGroup(ticker: String, groupKey: TriggerGroupKey, price: BigDecimal, quoteAt: Instant)</ID>
+    <ID>ReturnCount:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$private fun tryCreateGroupedAutoExitOrderWithRetry( position: Position, quantity: BigDecimal, orderGroupId: String, decisions: List&lt;TriggerDecision&gt;, ): Boolean</ID>
+    <ID>ReturnCount:RedisMarketQuoteAdapter.kt$RedisMarketQuoteAdapter$override fun getQuote(tradingMode: TradingMode, ticker: String): QuoteSnapshot?</ID>
+    <ID>SpreadOperator:TradingApiApplication.kt$(*args)</ID>
+    <ID>SwallowedException:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$ex: CannotAcquireLockException</ID>
+    <ID>SwallowedException:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$ex: PessimisticLockingFailureException</ID>
+    <ID>SwallowedException:TaxSummaryCommandService.kt$TaxSummaryCommandService$ex: DataIntegrityViolationException</ID>
+    <ID>ThrowsCount:PositionExitTrigger.kt$PositionExitTrigger$private fun validatePolicy( triggerPercent: BigDecimal?, triggerPrice: BigDecimal?, priceBasisPolicy: PriceBasisPolicy, )</ID>
+    <ID>ThrowsCount:SnapshotJobService.kt$SnapshotJobService$@Transactional fun generateDailySnapshots( accountId: Long, businessDate: LocalDate, ): Int</ID>
+    <ID>ThrowsCount:TaxSummaryCommandService.kt$TaxSummaryCommandService$@Transactional fun recalculate( accountId: Long, taxYear: TaxYear, force: Boolean, runType: TaxSummaryRunType = TaxSummaryRunType.MANUAL, ): TaxSummary</ID>
+    <ID>TooGenericExceptionCaught:ExecutionSseRegistry.kt$ExecutionSseRegistry$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:SlackNotificationScheduler.kt$SlackNotificationScheduler$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:SlackNotificationScheduler.kt$SlackNotificationScheduler$saveEx: Exception</ID>
+    <ID>TooGenericExceptionCaught:SlackWebhookNotifier.kt$SlackWebhookNotifier$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:SnapshotJobService.kt$SnapshotJobService$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:TaxSummaryCommandService.kt$TaxSummaryCommandService$ex: Exception</ID>
+    <ID>TooManyFunctions:Account.kt$Account : BaseAuditEntity</ID>
+    <ID>TooManyFunctions:KisExecutionWebSocketManager.kt$KisExecutionWebSocketManager</ID>
+    <ID>TooManyFunctions:KisOrderRestClient.kt$KisOrderRestClient</ID>
+    <ID>TooManyFunctions:OrderCommandService.kt$OrderCommandService</ID>
+    <ID>TooManyFunctions:PositionExitTrigger.kt$PositionExitTrigger : BaseAuditEntity</ID>
+    <ID>TooManyFunctions:Strategy.kt$Strategy : BaseAuditEntity</ID>
+    <ID>UnusedParameter:GlobalExceptionHandler.kt$GlobalExceptionHandler$ex: Exception</ID>
+    <ID>UnusedParameter:GlobalExceptionHandler.kt$GlobalExceptionHandler$ex: MethodArgumentNotValidException</ID>
+    <ID>UnusedParameter:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$marketValue: BigDecimal</ID>
+    <ID>UnusedPrivateMember:PositionControllerIntegrationTest.kt$PositionControllerIntegrationTest$private fun createAccountViaApi(): Long</ID>
+    <ID>UnusedPrivateProperty:KisLiveOrderExecutor.kt$KisLiveOrderExecutor$private val orderRepository: OrderRepository</ID>
+    <ID>UnusedPrivateProperty:KisOrderRestClient.kt$KisOrderRestClient$private val log = KotlinLogging.logger {}</ID>
+    <ID>UnusedPrivateProperty:OrderControllerIntegrationTest.kt$OrderControllerIntegrationTest$val beforeAvailable = objectMapper.readTree(beforeCancel.response.contentAsString)["availableDeposit"].asLong()</ID>
+  </CurrentIssues>
+</SmellBaseline>
