@@ -91,8 +91,15 @@ describe("D11 (c) 시험 전용 폴더 import 없음", () => {
 })
 
 describe("D11 (d) 부동소수점 변환 없음", () => {
-  // 허용 목록은 비어 있다. 차트 좌표 함수(DEC-03)가 생기는 step 에서 사람 확인 뒤에만 채운다.
-  const ALLOWED_FILES: string[] = []
+  // 허용 목록 = 안전 정수 변환(id·개수 전용)과 차트 좌표 변환 두 파일(development-plan §6 4행, 설계 승인 2026-11-15, DEC-03), 확대는 사람 확인 뒤에만
+  const ALLOWED_FILES = [
+    "src/shared/lib/safe-integer.ts",
+    "src/shared/lib/chart-coordinate.ts",
+  ]
+
+  it("허용 목록 파일이 실제로 있다(이름이 바뀌어 허용이 허공에 뜨지 않게)", () => {
+    expect(ALLOWED_FILES.filter((file) => !appSourceFiles.includes(file))).toEqual([])
+  })
 
   it("앱 소스에 parseFloat·Number(·parseInt(·Math. 가 0건이다", () => {
     const hits = appSourceFiles
