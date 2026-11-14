@@ -20,6 +20,13 @@ open class ConflictException(
     cause: Throwable? = null,
 ) : ApiDomainException(errorCode, HttpStatus.CONFLICT, message, cause)
 
+/** 범주 I — 계획됐으나 아직 만들지 않은 기능 (501) */
+open class NotImplementedException(
+    errorCode: String,
+    message: String,
+    cause: Throwable? = null,
+) : ApiDomainException(errorCode, HttpStatus.NOT_IMPLEMENTED, message, cause)
+
 class AccountNotFoundException(accountId: Long) :
     NotFoundException("ACCOUNT_NOT_FOUND", "계좌를 찾을 수 없습니다. id=$accountId")
 

@@ -362,7 +362,8 @@ class Account protected constructor() : BaseAuditEntity() {
             val isValid = when (accountType) {
                 AccountType.STOCK -> tradingMode == TradingMode.LOCAL ||
                     tradingMode == TradingMode.KIS_PAPER ||
-                    tradingMode == TradingMode.KIS_LIVE
+                    tradingMode == TradingMode.KIS_LIVE ||
+                    tradingMode == TradingMode.TOSS_LIVE
                 AccountType.CRYPTO -> tradingMode == TradingMode.LOCAL || tradingMode == TradingMode.UPBIT_LIVE
             }
             require(isValid) { "계좌 타입과 거래 모드 조합이 올바르지 않습니다." }

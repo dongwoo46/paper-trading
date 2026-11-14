@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import java.math.BigDecimal
 
 class AccountTest {
@@ -106,6 +108,67 @@ class AccountTest {
                 tradingMode = TradingMode.KIS_LIVE,
                 initialDeposit = BigDecimal("1000.0000")
             )
+        }
+    }
+
+    @Test
+    fun 주식_계좌는_TOSS_LIVE_모드로_생성할_수_있다() {
+        val account = Account.create(
+            accountName = "toss-account",
+            accountType = AccountType.STOCK,
+            tradingMode = TradingMode.TOSS_LIVE,
+            initialDeposit = BigDecimal("1000.0000")
+        )
+
+        assertEquals(TradingMode.TOSS_LIVE, account.tradingMode)
+        assertEquals(AccountType.STOCK, account.accountType)
+    }
+
+    @Test
+    fun 암호화폐_계좌는_TOSS_LIVE_모드로_생성할_수_없다() {
+        assertThrows(IllegalArgumentException::class.java) {
+            Account.create(
+                accountName = "crypto-toss",
+                accountType = AccountType.CRYPTO,
+                tradingMode = TradingMode.TOSS_LIVE,
+                initialDeposit = BigDecimal("1000.0000")
+            )
+        }
+    }
+
+    // 새 TradingMode 를 추가하면 이 표에 허용 계좌 타입을 적어야 아래 키 집합 테스트가 통과한다
+    private val allowedAccountTypesByMode: Map<TradingMode, Set<AccountType>> = mapOf(
+        TradingMode.LOCAL to setOf(AccountType.STOCK, AccountType.CRYPTO),
+        TradingMode.KIS_PAPER to setOf(AccountType.STOCK),
+        TradingMode.KIS_LIVE to setOf(AccountType.STOCK),
+        TradingMode.TOSS_LIVE to setOf(AccountType.STOCK),
+        TradingMode.UPBIT_LIVE to setOf(AccountType.CRYPTO),
+    )
+
+    @Test
+    fun 모드별_허용_계좌타입_표의_키가_TradingMode_전체와_같다() {
+        assertEquals(TradingMode.entries.toSet(), allowedAccountTypesByMode.keys)
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(TradingMode::class)
+    fun 모드별로_허용된_계좌타입만_생성할_수_있다(mode: TradingMode) {
+        val allowedTypes = allowedAccountTypesByMode.getValue(mode)
+
+        for (type in AccountType.entries) {
+            val create = {
+                Account.create(
+                    accountName = "matrix",
+                    accountType = type,
+                    tradingMode = mode,
+                    initialDeposit = BigDecimal("1000.0000")
+                )
+            }
+            if (type in allowedTypes) {
+                assertEquals(mode, create().tradingMode, "허용되어야 함: $type + $mode")
+            } else {
+                assertThrows(IllegalArgumentException::class.java, { create() }, "거부되어야 함: $type + $mode")
+            }
         }
     }
 

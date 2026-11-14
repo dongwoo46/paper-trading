@@ -3,6 +3,7 @@ package com.papertrading.api.application.order
 import com.papertrading.api.application.order.command.CancelOrderCommand
 import com.papertrading.api.application.order.command.PlaceOrderCommand
 import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
 import com.papertrading.api.common.exception.OrderNotFoundException
 import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.common.exception.QuoteUnavailableException
@@ -56,6 +57,7 @@ class OrderCommandService(
             .orElseThrow { AccountNotFoundException(accountId) }
             .also { check(it.isActive) { "비활성화된 계좌입니다." } }
         val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null" }
+        rejectIfBrokerOrderNotSupported(tradingMode)
 
         lockSellQuantityIfNeeded(accountId, command)
         val lockedAmount = calculateLockedAmount(command, tradingMode)
@@ -168,11 +170,21 @@ class OrderCommandService(
         return false
     }
 
+    // 잠금·저장·구독 이전 선행 거부 (이후 거부 시 잠금·collector 호출 잔존)
+    private fun rejectIfBrokerOrderNotSupported(tradingMode: TradingMode) {
+        when (tradingMode) {
+            TradingMode.LOCAL, TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> Unit
+            TradingMode.TOSS_LIVE, TradingMode.UPBIT_LIVE -> throw BrokerOrderNotSupportedException(tradingMode.name)
+        }
+    }
+
+    // else 없는 전수 when (새 TradingMode 추가 시 컴파일 에러)
     private fun submitExternalOrderIfNeeded(tradingMode: TradingMode, order: Order) {
         when (tradingMode) {
+            TradingMode.LOCAL -> Unit // 내부 매칭 엔진 체결
             TradingMode.KIS_PAPER -> kisPaperOrderExecutor.submit(order)
             TradingMode.KIS_LIVE -> kisLiveOrderExecutor.submit(order)
-            else -> {}
+            TradingMode.TOSS_LIVE, TradingMode.UPBIT_LIVE -> throw BrokerOrderNotSupportedException(tradingMode.name)
         }
     }
 

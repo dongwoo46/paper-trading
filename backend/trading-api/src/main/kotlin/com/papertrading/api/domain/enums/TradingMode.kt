@@ -4,5 +4,6 @@ enum class TradingMode {
     LOCAL,
     KIS_PAPER,
     KIS_LIVE,
-    UPBIT_LIVE
+    UPBIT_LIVE,
+    TOSS_LIVE
 }

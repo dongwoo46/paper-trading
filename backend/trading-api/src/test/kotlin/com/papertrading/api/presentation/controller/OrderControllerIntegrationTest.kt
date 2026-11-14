@@ -2,10 +2,17 @@ package com.papertrading.api.presentation.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.papertrading.api.application.order.LocalMatchingEngine
+import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.application.common.result.QuoteSnapshot
 import com.papertrading.api.infrastructure.kis.KisOrderRestClient
+import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
+import com.papertrading.api.infrastructure.persistence.AccountRepository
+import com.papertrading.api.infrastructure.persistence.OrderRepository
+import com.papertrading.api.infrastructure.persistence.PositionRepository
+import org.mockito.Mockito
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -41,6 +48,10 @@ class OrderControllerIntegrationTest {
     @Autowired lateinit var objectMapper: ObjectMapper
     @Autowired lateinit var localMatchingEngine: LocalMatchingEngine
     @Autowired lateinit var redisTemplate: StringRedisTemplate
+    @Autowired lateinit var accountRepository: AccountRepository
+    @Autowired lateinit var orderRepository: OrderRepository
+    @Autowired lateinit var accountLedgerRepository: AccountLedgerRepository
+    @Autowired lateinit var positionRepository: PositionRepository
 
     // KIS 외부 API 호출 차단 (실제 KIS와 통신하면 안 됨)
     @MockitoBean lateinit var kisOrderRestClient: KisOrderRestClient
@@ -234,5 +245,118 @@ class OrderControllerIntegrationTest {
         val firstId = objectMapper.readTree(first.response.contentAsString)["orderId"].asLong()
         val secondId = objectMapper.readTree(second.response.contentAsString)["orderId"].asLong()
         assertEquals(firstId, secondId)
+    }
+
+    // ---- TOSS_LIVE, UPBIT_LIVE: 브로커 주문 연동이 없어 501 로 거부, 주문·원장·잠금 불변 ----
+
+    private fun createBrokerAccount(accountType: String, tradingMode: String): Long {
+        val result = mockMvc.post("/api/v1/accounts") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(mapOf(
+                "accountName" to "브로커 $tradingMode", "accountType" to accountType,
+                "tradingMode" to tradingMode, "initialDeposit" to 10_000_000,
+            ))
+        }.andExpect { status { isCreated() } }.andReturn()
+        return objectMapper.readTree(result.response.contentAsString)["id"].asLong()
+    }
+
+    private fun orderBody(
+        orderType: String,
+        orderSide: String,
+        orderCondition: String = "DAY",
+        quantity: Int = 5,
+    ): String = objectMapper.writeValueAsString(buildMap<String, Any> {
+        put("ticker", "005930")
+        put("marketType", "KOSPI")
+        put("orderType", orderType)
+        put("orderSide", orderSide)
+        put("orderCondition", orderCondition)
+        put("quantity", quantity)
+        if (orderType == "LIMIT") put("limitPrice", 70000)
+        put("idempotencyKey", UUID.randomUUID().toString())
+    })
+
+    private data class AccountFootprint(
+        val orderCount: Int,
+        val ledgerCount: Int,
+        val availableDeposit: BigDecimal,
+        val lockedDeposit: BigDecimal,
+        val positionLockedQuantity: BigDecimal?,
+    )
+
+    private fun footprint(accountId: Long): AccountFootprint {
+        val account = accountRepository.findById(accountId).orElseThrow()
+        return AccountFootprint(
+            orderCount = orderRepository.findByAccountIdOrderByCreatedAtDesc(accountId).size,
+            ledgerCount = accountLedgerRepository.findByAccountIdOrderByCreatedAtDesc(accountId).size,
+            availableDeposit = account.availableDeposit,
+            lockedDeposit = account.lockedDeposit,
+            positionLockedQuantity = positionRepository.findByAccountIdAndTicker(accountId, "005930")
+                .map { it.lockedQuantity }.orElse(null),
+        )
+    }
+
+    private fun assertOrderRejectedWithoutChange(accountId: Long, body: String) {
+        val before = footprint(accountId)
+
+        mockMvc.post("/api/v1/accounts/$accountId/orders") {
+            contentType = MediaType.APPLICATION_JSON
+            content = body
+        }.andExpect {
+            status { isNotImplemented() }
+            jsonPath("$.status") { value(501) }
+            jsonPath("$.code") { value("BROKER_ORDER_NOT_SUPPORTED") }
+        }
+
+        val after = footprint(accountId)
+        assertEquals(before.orderCount, after.orderCount)
+        assertEquals(before.ledgerCount, after.ledgerCount)
+        assertEquals(0, before.availableDeposit.compareTo(after.availableDeposit))
+        assertEquals(0, before.lockedDeposit.compareTo(after.lockedDeposit))
+        assertEquals(0, BigDecimal.ZERO.compareTo(after.lockedDeposit))
+        assertEquals(before.positionLockedQuantity, after.positionLockedQuantity)
+        Mockito.verifyNoInteractions(collectorSubscriptionPort)
+    }
+
+    @Test
+    fun `TOSS_LIVE 지정가 매수 주문은 501 BROKER_ORDER_NOT_SUPPORTED, 주문·원장·잠금 불변`() {
+        val accountId = createBrokerAccount("STOCK", "TOSS_LIVE")
+
+        assertOrderRejectedWithoutChange(accountId, orderBody("LIMIT", "BUY"))
+    }
+
+    @Test
+    fun `TOSS_LIVE 시장가 매수 주문은 시세가 없어도 501 로 거부`() {
+        val accountId = createBrokerAccount("STOCK", "TOSS_LIVE")
+
+        assertOrderRejectedWithoutChange(accountId, orderBody("MARKET", "BUY"))
+    }
+
+    @Test
+    fun `TOSS_LIVE IOC 주문은 취소 주문을 남기지 않고 501 로 거부`() {
+        val accountId = createBrokerAccount("STOCK", "TOSS_LIVE")
+
+        assertOrderRejectedWithoutChange(accountId, orderBody("LIMIT", "BUY", orderCondition = "IOC"))
+    }
+
+    @Test
+    fun `TOSS_LIVE 매도 주문은 포지션 수량을 잠그지 않고 501 로 거부`() {
+        val accountId = createBrokerAccount("STOCK", "TOSS_LIVE")
+        val account = accountRepository.findById(accountId).orElseThrow()
+        positionRepository.save(
+            Position.createWithHolding(
+                account = account, ticker = "005930", marketType = MarketType.KOSPI,
+                quantity = BigDecimal("10"), avgBuyPrice = BigDecimal("60000"),
+            )
+        )
+
+        assertOrderRejectedWithoutChange(accountId, orderBody("LIMIT", "SELL"))
+    }
+
+    @Test
+    fun `UPBIT_LIVE 지정가 매수 주문도 501 BROKER_ORDER_NOT_SUPPORTED, 주문·원장·잠금 불변`() {
+        val accountId = createBrokerAccount("CRYPTO", "UPBIT_LIVE")
+
+        assertOrderRejectedWithoutChange(accountId, orderBody("LIMIT", "BUY"))
     }
 }

@@ -6,6 +6,7 @@ import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.event.ExecutionFilledEvent
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
 import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Execution
@@ -102,6 +103,7 @@ class ExecutionProcessor(
             .orElseThrow { AccountNotFoundException(accountId) }
 
         val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null: accountId=$accountId" }
+        rejectIfBrokerFillNotSupported(tradingMode)
         val marketType = requireNotNull(order.marketType) { "order.marketType is null: orderId=$orderId" }
         val ticker = requireNotNull(order.ticker) { "order.ticker is null: orderId=$orderId" }
 
@@ -166,9 +168,9 @@ class ExecutionProcessor(
                 TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> {
                     // KIS 모드: 체결 상태 동기화만 수행한다.
                 }
-                else -> {
-                    account.receiveSellProceeds(netProceeds)
-                }
+                // 진입부 거부 모드 (else 없는 전수 when 용 방어 분기)
+                TradingMode.TOSS_LIVE, TradingMode.UPBIT_LIVE ->
+                    throw BrokerOrderNotSupportedException(tradingMode.name)
             }
 
             accountLedgerRepository.save(
@@ -228,6 +230,14 @@ class ExecutionProcessor(
             message = "Execution filled: ticker=$ticker, side=$side, qty=$fillQty, price=$fillPrice",
             occurredAt = executedAt,
         )
+    }
+
+    // 체결 저장·포지션·원장 변경 이전 진입부 거부 (롤백 비의존)
+    private fun rejectIfBrokerFillNotSupported(tradingMode: TradingMode) {
+        when (tradingMode) {
+            TradingMode.LOCAL, TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> Unit
+            TradingMode.TOSS_LIVE, TradingMode.UPBIT_LIVE -> throw BrokerOrderNotSupportedException(tradingMode.name)
+        }
     }
 
     /** LIMIT 매수에서 실제 체결가가 잠금 금액보다 낮을 때 차액을 해제 */
