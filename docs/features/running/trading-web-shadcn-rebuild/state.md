@@ -28,7 +28,7 @@
 
 1. ~~옛 `trading-web-visual-redesign` state 에 대체 표기~~ (2026-11-15 완료)
 2. 재기획 산출물 커밋(사용자 지시 2026-11-15).
-3. tech-planning: 0·1단계 화면 구현 계획, API 응답 모양 대조(FLAG-08), 기존 trading-web 삭제 시점(삭제 직전 사람 재확인).
+3. ~~tech-planning~~ (2026-11-15 `development-plan.md` in-review, DEC-02~09 사용자 결정 반영·명세 갱신 완료) → 사람이 tech-plan 승인 → Maker 가 step-scaffold → step-1 착수 직전 옛 trading-web 삭제 사람 재확인(DEC-01).
 
 ## 3-1. 변경 이력
 
@@ -43,6 +43,8 @@
 | 2026-11-15 | 기획 승인: v3 «추천안대로 승인», FLAG-03 운영자 이름, FLAG-04 금액은 서버만, FLAG-11 받지 않음, FLAG-12 차트 없음, FLAG-13 메모 넣음 | 사용자 팝업 답 |
 | 2026-11-15 | 옛 visual-redesign state 에 대체 표기 | FLAG-02 반영 |
 | 2026-11-15 | feature-planning 점검 반영: 딱지 `물어봄→스펙` 정리, 낡은 표기 정리, FLAG-14(초기 상태)·15(대사 확인 처리자) 추가 | 스킬 없이 고친 명세 점검(인계 §4), 사용자 승인 |
+| 2026-11-15 | `development-plan.md` draft 작성: FLAG-08 대조(§4-1), 삭제 시점 D2(삭제+골격 한 커밋), 화면·영역별 가능성(🔴 2곳), 사람 결정 DEC-01~09 | tech-planning |
+| 2026-11-15 | DEC-02~09 추천안 A 반영: feature-spec(RULE-03 좌표 예외·RULE-12 축소·EDGE-10 숨김·§4·§5·§7·§11), v3(§3~§10, §11 «API 대기» 신설), open-questions(FLAG-08 닫음, FLAG-16~21 추가), development-plan(§0·§1 🔴→🟡·§2 D9·D11·D12·D17·§3·§5·§6·§8-2 결정 열) | 사용자 팝업 답(코디네이터 전달) |
 
 ## 4. 막힘·이슈
 
