@@ -56,6 +56,12 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// 로컬 -Darchunit.* 옵션의 시험 JVM 전달(동결 저장소 의도 갱신용)
+	System.properties.each { key, value ->
+		if (key.toString().startsWith('archunit.')) {
+			systemProperty key.toString(), value
+		}
+	}
 }
 
 // 기존 위반은 baseline 에 묶고 새 위반만 check 에서 실패시킨다. baseline 갱신은 ktlintGenerateBaseline 으로만 한다.

@@ -1,8 +1,11 @@
 package com.papertrading.api.architecture
 
+import com.tngtech.archunit.base.DescribedPredicate
 import com.tngtech.archunit.base.DescribedPredicate.not
+import com.tngtech.archunit.core.domain.JavaClass
 import com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo
 import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage
+import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.junit.AnalyzeClasses
 import com.tngtech.archunit.junit.ArchTest
@@ -13,15 +16,13 @@ import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices
 import com.tngtech.archunit.library.freeze.FreezingArchRule
 import org.springframework.stereotype.Service
 
-/**
- * trading-api 계층·포트 규칙 (rules/backend-api.md PTB1, PTB7~PTB9).
- * 계층: presentation → application → domain, infrastructure 는 안쪽 포트를 구현만 한다.
- * 사람 결정 2026-11-15(PR #48 리뷰): 엄격 적용, 공유 포트는 application/common/port.
- *  - presentation → domain 은 enum·값 타입만 (domain.entity 금지)
- *  - infrastructure → application 은 ..port.. 만
- *  - common 은 domain 처럼 Spring·JPA 에 의존하지 않는다
- * 기존 위반은 src/test/resources/archunit_store 에 동결돼 있고, 새 위반만 실패한다.
- */
+// infrastructure 클래스가 구현하는 인터페이스 = 출력 포트 판정
+private val implementedByInfrastructure: DescribedPredicate<JavaClass> =
+    DescribedPredicate.describe("are implemented by infrastructure classes") { javaClass ->
+        javaClass.allSubclasses.any { it.packageName.startsWith("com.papertrading.api.infrastructure") }
+    }
+
+/** trading-api 계층·포트 규칙(PTB1·PTB7~PTB9), 기존 위반 archunit_store 동결·새 위반만 실패, 갱신 방법은 archunit.properties */
 @AnalyzeClasses(
     packages = ["com.papertrading.api"],
     importOptions = [ImportOption.DoNotIncludeTests::class],
@@ -36,7 +37,7 @@ class ArchitectureRulesTest {
                 .resideInAPackage("com.papertrading.api.domain..")
                 .should()
                 .dependOnClassesThat()
-                .resideInAnyPackage("jakarta.persistence..", "org.springframework.."),
+                .resideInAnyPackage("jakarta.persistence..", "org.hibernate..", "org.springframework.."),
         )
 
     @ArchTest
@@ -72,7 +73,7 @@ class ArchitectureRulesTest {
 
     @ArchTest
     @JvmField
-    val applicationUsesOnlyServiceAndTransactionalFromSpring: ArchRule =
+    val applicationUsesOnlyAllowedSpringTypes: ArchRule =
         FreezingArchRule.freeze(
             noClasses()
                 .that()
@@ -81,7 +82,15 @@ class ArchitectureRulesTest {
                 .dependOnClassesThat(
                     resideInAPackage("org.springframework..")
                         .and(not(equivalentTo(Service::class.java)))
-                        .and(not(resideInAPackage("org.springframework.transaction.annotation.."))),
+                        .and(
+                            not(
+                                resideInAnyPackage(
+                                    "org.springframework.transaction.annotation..",
+                                    "org.springframework.transaction.event..",
+                                    "org.springframework.context.event..",
+                                ),
+                            ),
+                        ),
                 ),
         )
 
@@ -111,14 +120,22 @@ class ArchitectureRulesTest {
 
     @ArchTest
     @JvmField
-    val presentationDoesNotDependOnDomainEntities: ArchRule =
+    val presentationDependsOnDomainOnlyThroughEnumsAndEvents: ArchRule =
         FreezingArchRule.freeze(
             noClasses()
                 .that()
                 .resideInAPackage("com.papertrading.api.presentation..")
                 .should()
-                .dependOnClassesThat()
-                .resideInAPackage("com.papertrading.api.domain.entity.."),
+                .dependOnClassesThat(
+                    resideInAPackage("com.papertrading.api.domain..").and(
+                        not(
+                            resideInAnyPackage(
+                                "com.papertrading.api.domain.enums..",
+                                "com.papertrading.api.domain.event..",
+                            ),
+                        ),
+                    ),
+                ),
         )
 
     @ArchTest
@@ -149,17 +166,48 @@ class ArchitectureRulesTest {
 
     @ArchTest
     @JvmField
+    val commonDoesNotDependOnLayers: ArchRule =
+        FreezingArchRule.freeze(
+            noClasses()
+                .that()
+                .resideInAPackage("com.papertrading.api.common..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
+                    "com.papertrading.api.domain..",
+                    "com.papertrading.api.application..",
+                    "com.papertrading.api.infrastructure..",
+                    "com.papertrading.api.presentation..",
+                ),
+        )
+
+    @ArchTest
+    @JvmField
     val outputPortsResideInApplicationPortPackage: ArchRule =
         FreezingArchRule.freeze(
             classes()
                 .that()
                 .areInterfaces()
                 .and()
-                .haveSimpleNameEndingWith("Port")
+                .resideInAnyPackage("com.papertrading.api.domain..", "com.papertrading.api.application..")
+                .and(implementedByInfrastructure)
+                .should()
+                .resideInAPackage("com.papertrading.api.application.*.port"),
+        )
+
+    @ArchTest
+    @JvmField
+    val everyClassResidesInRootOrLayerPackage: ArchRule =
+        FreezingArchRule.freeze(
+            classes()
                 .should()
                 .resideInAnyPackage(
-                    "com.papertrading.api.application.*.port",
-                    "com.papertrading.api.application.common.port",
+                    "com.papertrading.api",
+                    "com.papertrading.api.presentation..",
+                    "com.papertrading.api.application..",
+                    "com.papertrading.api.domain..",
+                    "com.papertrading.api.infrastructure..",
+                    "com.papertrading.api.common..",
                 ),
         )
 
