@@ -16,6 +16,10 @@ import org.springframework.stereotype.Service
 /**
  * trading-api 계층·포트 규칙 (rules/backend-api.md PTB1, PTB7~PTB9).
  * 계층: presentation → application → domain, infrastructure 는 안쪽 포트를 구현만 한다.
+ * 사람 결정 2026-11-15(PR #48 리뷰): 엄격 적용, 공유 포트는 application/common/port.
+ *  - presentation → domain 은 enum·값 타입만 (domain.entity 금지)
+ *  - infrastructure → application 은 ..port.. 만
+ *  - common 은 domain 처럼 Spring·JPA 에 의존하지 않는다
  * 기존 위반은 src/test/resources/archunit_store 에 동결돼 있고, 새 위반만 실패한다.
  */
 @AnalyzeClasses(
@@ -107,6 +111,44 @@ class ArchitectureRulesTest {
 
     @ArchTest
     @JvmField
+    val presentationDoesNotDependOnDomainEntities: ArchRule =
+        FreezingArchRule.freeze(
+            noClasses()
+                .that()
+                .resideInAPackage("com.papertrading.api.presentation..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.papertrading.api.domain.entity.."),
+        )
+
+    @ArchTest
+    @JvmField
+    val infrastructureDependsOnApplicationOnlyThroughPorts: ArchRule =
+        FreezingArchRule.freeze(
+            noClasses()
+                .that()
+                .resideInAPackage("com.papertrading.api.infrastructure..")
+                .should()
+                .dependOnClassesThat(
+                    resideInAPackage("com.papertrading.api.application..")
+                        .and(not(resideInAPackage("..port.."))),
+                ),
+        )
+
+    @ArchTest
+    @JvmField
+    val commonDoesNotDependOnJpaOrSpring: ArchRule =
+        FreezingArchRule.freeze(
+            noClasses()
+                .that()
+                .resideInAPackage("com.papertrading.api.common..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage("jakarta.persistence..", "org.springframework.."),
+        )
+
+    @ArchTest
+    @JvmField
     val outputPortsResideInApplicationPortPackage: ArchRule =
         FreezingArchRule.freeze(
             classes()
@@ -115,7 +157,10 @@ class ArchitectureRulesTest {
                 .and()
                 .haveSimpleNameEndingWith("Port")
                 .should()
-                .resideInAPackage("com.papertrading.api.application.*.port"),
+                .resideInAnyPackage(
+                    "com.papertrading.api.application.*.port",
+                    "com.papertrading.api.application.common.port",
+                ),
         )
 
     @ArchTest
