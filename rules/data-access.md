@@ -1,7 +1,7 @@
 # Data access — Spring 트랜잭션·JPA 함정 (paper-trading)
 <!-- devkit:pointer
 path: ^backend/(trading-api|collector-api)/src/main/.+\.kt$
-signal: @Transactional|@TransactionalEventListener|JpaRepository|@Query|@Modifying|@Lock|@Version|EntityManager|fetch join|@EntityGraph|\.save\(|\.saveAll\(|JPAQueryFactory|^import .*\.Q[A-Z]\w+|\.fetchJoin\(\)|\.offset\(
+signal: @Transactional|@TransactionalEventListener|JpaRepository|@Query|@Modifying|@Lock|@Version|EntityManager|fetch join|@EntityGraph|\.save\(|\.saveAll\(|JPAQueryFactory|import com\.papertrading\.api\.domain\.entity\.\w+\.Q[A-Z]\w+|\.fetchJoin\(\)|\.offset\(
 why: Spring 트랜잭션·JPA·Querydsl 조회와 쓰기를 다루는 Kotlin 코드
 -->
 <!-- devkit:form v2 -->
@@ -12,8 +12,8 @@ why: Spring 트랜잭션·JPA·Querydsl 조회와 쓰기를 다루는 Kotlin 코
 ## 트랜잭션 경계
 
 <!-- gt:PTD1 -->
-- `@Transactional` 은 프록시를 거쳐 호출되는 public 메서드(다른 빈이 부르는 메서드, Spring 이 부르는 `@EventListener`·`@Scheduled` 메서드)에만 건다. 같은 클래스 안에서 부르는 메서드나 private 메서드에 걸린 것은 경계로 치지 않는다.
-  Why: Spring 트랜잭션은 프록시가 건다. 같은 클래스 안 호출(self-invocation)은 프록시를 안 거쳐 어노테이션이 있어도 트랜잭션이 없고, 오류도 안 난다. — enforce: review
+- `@Transactional` 은 프록시를 거쳐 호출되는 public 유스케이스 메서드(다른 빈이 부르는 메서드)에만 건다. 스케줄러·Redis 리스너 같은 외부 진입점에는 걸지 않고 그 진입점이 유스케이스를 불러 경계를 유스케이스에 둔다(`backend-api.md` PTB9). 같은 클래스 안에서 부르는 메서드나 private 메서드에 걸린 것은 경계로 치지 않는다.
+  Why: Spring 트랜잭션은 프록시가 건다. 같은 클래스 안 호출(self-invocation)은 프록시를 안 거쳐 어노테이션이 있어도 트랜잭션이 없고, 오류도 안 난다. 진입점마다 경계를 따로 걸면 같은 유스케이스가 경로에 따라 트랜잭션 범위가 달라진다. — enforce: review
 <!-- gt:PTD2 -->
 - 열린 트랜잭션 안(`@Transactional` 메서드, 트랜잭션 안에서 도는 리스너, 그 둘이 부르는 어노테이션 없는 메서드 포함)에서 KIS·외부 HTTP(`WebClient`·`RestClient`)·Redis 발행을 부르지 않는다. 외부 호출은 트랜잭션 밖 유스케이스에서 하고, 결과 반영은 새 트랜잭션으로 한다.
   Why: 팀 규칙 DA1·DA9 의 Spring 형태. 외부 지연이 DB 커넥션과 락을 붙잡아 무관한 요청까지 막는다. 트랜잭션 안에서 부르는 어노테이션 없는 메서드도 같은 트랜잭션에 묶이므로 대상에 넣는다. — enforce: review
@@ -27,7 +27,7 @@ why: Spring 트랜잭션·JPA·Querydsl 조회와 쓰기를 다루는 Kotlin 코
 ## 커밋 뒤 처리
 
 <!-- gt:PTD4 -->
-- 본 쓰기와 함께 성공·실패해야 하는 DB 쓰기는 트랜잭션 안에서 도는 리스너(`@EventListener`, `@TransactionalEventListener(phase = BEFORE_COMMIT)`)에 두고 커밋하지 않는다(팀 규칙 DA6·CS11). `AFTER_COMMIT` 리스너는 커밋 뒤 부수효과(팀 규칙 DA7)만 맡는다. 그 리스너가 한 외부 부수효과의 결과를 기록해야 할 때만 `@Transactional(propagation = REQUIRES_NEW)` 새 짧은 트랜잭션으로 그 결과만 쓰고(팀 규칙 DA1·DA9 3단계) 원본 id 로 중복을 거른다. 본 쓰기와 같은 DB 의 부수 쓰기는 `AFTER_COMMIT` 에 두지 않는다.
+- 본 쓰기와 함께 성공·실패해야 하는 DB 쓰기는 트랜잭션 안에서 도는 리스너(`@EventListener`, `@TransactionalEventListener(phase = BEFORE_COMMIT)`, application 에 둔다 — `backend-api.md` PTB7·PTB9)에 두고 커밋하지 않는다(팀 규칙 DA6·CS11). `AFTER_COMMIT` 리스너는 커밋 뒤 부수효과(팀 규칙 DA7)만 맡는다. 그 리스너가 한 외부 부수효과의 결과를 기록해야 할 때만 `@Transactional(propagation = REQUIRES_NEW)` 새 짧은 트랜잭션으로 그 결과만 쓰고(팀 규칙 DA1·DA9 3단계) 원본 id 로 중복을 거른다. 본 쓰기와 같은 DB 의 부수 쓰기는 `AFTER_COMMIT` 에 두지 않는다.
   Why: AFTER_COMMIT 시점의 원래 트랜잭션은 이미 커밋돼 새 트랜잭션 없이 쓰면 오류 없이 아무것도 저장되지 않는다. 본 쓰기와 원자적이어야 하는 쓰기를 거기 두면 DA6 이 막는 «본 쓰기 실패와 별개로 살아남는 부수 쓰기»가 반대로 «본 쓰기 성공 뒤 사라지는 쓰기»가 된다. REQUIRES_NEW 를 쓰기 종류 제한 없이 열면 DA6·CS11 이 허용하지 않는 커밋하는 동일 DB 핸들러가 생기므로, 새 트랜잭션은 외부 호출 결과 기록(DA1·DA9 3단계)에만 허용한다. — enforce: review
 
 ## 조회
@@ -38,3 +38,4 @@ why: Spring 트랜잭션·JPA·Querydsl 조회와 쓰기를 다루는 Kotlin 코
 
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r5.md -->
+<!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r6.md -->

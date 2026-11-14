@@ -6,7 +6,7 @@ why: 원장·체결·잔고·정산이나 외부(KIS) 호출 결과를 다루는
 -->
 <!-- devkit:form v2 -->
 
-> 이 레포 전용 사본. 이 문서 조항 가운데 PTF1~PTF5 는 스택 무관이라 devkit 팀 규칙 제안으로도 올렸고(PTF1~PTF3 은 제안 financial-integrity-eda-followup-2026-11-15, PTF4·PTF5 는 BiocomKR/devkit#2471 2차), 그 제안이 머지되면 PTF1~PTF5 는 지운다. PTF6(예수금 홀드를 요청 경로에서)은 어느 제안에도 없는 이 레포 조항이라 남긴다. 멱등 쓰기·소비자 중복 제거의 원칙은 팀 규칙 `failure-handling.md`·`data-access.md` DA9 가 SSoT.
+> 이 레포 전용 사본. 이 문서 조항 가운데 PTF1~PTF5 는 스택 무관이라 devkit 팀 규칙 제안으로도 올렸고(PTF1~PTF3 은 제안 financial-integrity-eda-followup-2026-11-15, PTF4·PTF5 는 BiocomKR/devkit#2471 2차), 그 제안이 머지되면 PTF1~PTF5 는 지운다. 다만 PTF5 의 이산 날짜·연도 닫힌 구간 예외는 제안 판본에 없으면 지우지 않고 남긴다. PTF6(예수금 홀드를 요청 경로에서)은 어느 제안에도 없는 이 레포 조항이라 남긴다. 멱등 쓰기·소비자 중복 제거의 원칙은 팀 규칙 `failure-handling.md`·`data-access.md` DA9 가 SSoT.
 > devkit 은 이 레포의 Kotlin 파일에 팀 규칙을 자동으로 전달하지 않는다(rule-pointer 실측 2026-11-15: `always:dev-team` 만 나온다). 그래서 주문·결제성 쓰기를 만지는 Kotlin 작업·리뷰는 팀 `failure-handling.md` FH1(생성 요청은 `Idempotency-Key` 나 자연 키 upsert)과 `async-external.md` LA11(원격 호출 연결·읽기 타임아웃 명시)을 직접 열어 따른다. devkit 쪽 Kotlin 신호 추가는 devkit 에 제안으로 올린다.
 
 ## 원장
@@ -45,3 +45,4 @@ why: 원장·체결·잔고·정산이나 외부(KIS) 호출 결과를 다루는
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r3.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r5.md -->
+<!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r6.md -->
