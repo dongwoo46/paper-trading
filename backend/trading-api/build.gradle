@@ -64,23 +64,71 @@ tasks.named('test') {
 	}
 }
 
-// 기존 위반은 baseline 에 묶고 새 위반만 check 에서 실패시킨다. baseline 갱신은 ktlintGenerateBaseline 으로만 한다.
+// 기존 위반 baseline 고정·새 위반만 check 실패, baseline 갱신은 ktlintGenerateBaseline 한정
 ktlint {
 	version = '1.8.0'
 	baseline = file('config/ktlint/baseline.xml')
 }
 
-// 기존 위반은 baseline 에 묶는다. baseline 갱신은 detektBaseline 으로만 한다.
+// 기존 위반 baseline 고정, baseline 갱신은 detektBaseline 한정
 detekt {
 	buildUponDefaultConfig = true
 	baseline = file('config/detekt/baseline.xml')
 }
 
-// detekt 설정의 Kotlin 의존성 2.0.21 고정: detekt 1.23.8 은 Kotlin 2.0.21 빌드, 2.1.20 실행 거부(프로젝트 Kotlin 은 2.1.20 유지)
+// detekt 설정 Kotlin 2.0.21 고정: detekt 1.23.8 은 Kotlin 2.0.21 빌드·2.1.20 실행 거부(프로젝트 Kotlin 2.1.20 유지)
 configurations.matching { it.name == 'detekt' }.configureEach {
 	resolutionStrategy.eachDependency {
 		if (requested.group == 'org.jetbrains.kotlin') {
 			useVersion('2.0.21')
 		}
 	}
+}
+
+// ktlint 설정 Kotlin 2.2.21 고정: ktlint 1.8.0 은 Kotlin 2.2.21 빌드, Spring 의존성 관리가 2.1.20 으로 내려 조용히 어긋남(프로젝트 Kotlin 2.1.20 유지)
+configurations.matching { it.name == 'ktlint' }.configureEach {
+	resolutionStrategy.eachDependency {
+		if (requested.group == 'org.jetbrains.kotlin') {
+			useVersion('2.2.21')
+		}
+	}
+}
+
+// 린트 baseline 항목 수 증가 차단: 기준 ref(기본 HEAD, CI 는 -PlintBaselineRef=origin/<base>)보다 늘면 실패, baseline 재생성의 새 위반 흡수 방지
+tasks.register('verifyLintBaselinesNotGrown') {
+	group = 'verification'
+	description = 'ktlint·detekt baseline 항목 수가 기준 ref 보다 늘면 실패'
+	def ref = providers.gradleProperty('lintBaselineRef').getOrElse('HEAD')
+	def dir = projectDir
+	def targets = [
+		'config/ktlint/baseline.xml': ~/<error /,
+		'config/detekt/baseline.xml': ~/<ID>/,
+	]
+	doLast {
+		def git = { String... args ->
+			def process = new ProcessBuilder(['git'] + args.toList()).directory(dir).redirectErrorStream(true).start()
+			def output = process.inputStream.getText('UTF-8')
+			[process.waitFor(), output]
+		}
+		if (git('rev-parse', '--verify', '--quiet', "${ref}^{commit}")[0] != 0) {
+			throw new GradleException("lintBaselineRef 를 해석할 수 없음: ${ref}")
+		}
+		targets.each { path, pattern ->
+			def (code, committed) = git('show', "${ref}:./${path}")
+			if (code != 0) {
+				logger.lifecycle("${path}: ${ref} 에 없음(신규 도입), 비교 생략")
+				return
+			}
+			def before = (committed =~ pattern).count
+			def after = (new File(dir, path).getText('UTF-8') =~ pattern).count
+			logger.lifecycle("${path}: ${ref} ${before}건 -> 현재 ${after}건")
+			if (after > before) {
+				throw new GradleException("${path} 항목이 ${before}건에서 ${after}건으로 늘어남: baseline 재생성으로 새 위반을 흡수하지 말고 위반을 고칠 것")
+			}
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn 'verifyLintBaselinesNotGrown'
 }
