@@ -1,0 +1,63 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew compileTestKotlin)",
+      "Bash(./gradlew test *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-bash-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-build.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/post-test-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/track-failure.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/compile-dirty.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/on-stop.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
