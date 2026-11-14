@@ -1,0 +1,5 @@
+Class <com.papertrading.api.application.portfolio.tax.SettlementTaxReadRepository> does not reside in a package 'com.papertrading.api.application.*.port' in (SettlementTaxReadRepository.kt:0)
+Class <com.papertrading.api.domain.port.CollectorSubscriptionPort> does not reside in a package 'com.papertrading.api.application.*.port' in (CollectorSubscriptionPort.kt:0)
+Class <com.papertrading.api.domain.port.LivePositionCachePort> does not reside in a package 'com.papertrading.api.application.*.port' in (LivePositionCachePort.kt:0)
+Class <com.papertrading.api.domain.port.MarketQuotePort> does not reside in a package 'com.papertrading.api.application.*.port' in (MarketQuotePort.kt:0)
+Class <com.papertrading.api.domain.port.NotificationSender> does not reside in a package 'com.papertrading.api.application.*.port' in (NotificationSender.kt:0)

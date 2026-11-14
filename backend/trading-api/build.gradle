@@ -5,6 +5,8 @@ plugins {
 	id 'org.jetbrains.kotlin.kapt' version '2.1.20'
 	id 'org.springframework.boot' version '3.5.13'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.jlleitschuh.gradle.ktlint' version '14.2.0'
+	id 'io.gitlab.arturbosch.detekt' version '1.23.8'
 }
 
 group = 'com.papertrading'
@@ -47,10 +49,107 @@ dependencies {
 	testImplementation 'org.testcontainers:postgresql'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'io.mockk:mockk:1.13.10'
+	testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// 로컬 -Darchunit.* 옵션의 시험 JVM 전달(동결 저장소 의도 갱신용)
+	System.properties.each { key, value ->
+		if (key.toString().startsWith('archunit.')) {
+			systemProperty key.toString(), value
+		}
+	}
+}
+
+// 기존 위반 baseline 고정·새 위반만 check 실패, baseline 갱신은 ktlintGenerateBaseline 한정
+ktlint {
+	version = '1.8.0'
+	baseline = file('config/ktlint/baseline.xml')
+}
+
+// 기존 위반 baseline 고정, baseline 갱신은 detektBaseline 한정
+detekt {
+	buildUponDefaultConfig = true
+	baseline = file('config/detekt/baseline.xml')
+}
+
+// detekt 설정 Kotlin 2.0.21 고정: detekt 1.23.8 은 Kotlin 2.0.21 빌드·2.1.20 실행 거부(프로젝트 Kotlin 2.1.20 유지)
+configurations.matching { it.name == 'detekt' }.configureEach {
+	resolutionStrategy.eachDependency {
+		if (requested.group == 'org.jetbrains.kotlin') {
+			useVersion('2.0.21')
+		}
+	}
+}
+
+// ktlint 설정 Kotlin 2.2.21 고정: ktlint 1.8.0 은 Kotlin 2.2.21 빌드, Spring 의존성 관리가 2.1.20 으로 내려 조용히 어긋남(프로젝트 Kotlin 2.1.20 유지)
+configurations.matching { it.name == 'ktlint' }.configureEach {
+	resolutionStrategy.eachDependency {
+		if (requested.group == 'org.jetbrains.kotlin') {
+			useVersion('2.2.21')
+		}
+	}
+}
+
+// 린트 baseline 증가 차단: 기준 ref(기본 HEAD, CI 는 -PlintBaselineRef=origin/<base>)보다 항목이 늘면 실패, baseline 재생성의 새 위반 흡수 방지
+// 총 개수가 아니라 항목 단위로 비교: 옛 위반 1건을 고치고 새 위반 1건을 넣은 뒤 재생성해도 개수는 같아 통과하는 우회 차단
+tasks.register('verifyLintBaselinesNotGrown') {
+	group = 'verification'
+	description = 'ktlint·detekt baseline 에 기준 ref 보다 늘어난 항목이 있으면 실패'
+	def ref = providers.gradleProperty('lintBaselineRef').getOrElse('HEAD')
+	def dir = projectDir
+	// 검사 대상 경로는 ktlint·detekt 설정에서 읽음(경로 이중 정의 방지)
+	def ktlintPath = dir.toPath().relativize(ktlint.baseline.get().asFile.toPath()).toString()
+	def detektPath = dir.toPath().relativize(detekt.baseline.toPath()).toString()
+	// ktlint: (파일, 규칙)별 개수가 늘면 증가, 줄·열 이동은 무시
+	def ktlintGrown = { String before, String after ->
+		def count = { String xml ->
+			def counts = [:].withDefault { 0 }
+			new XmlSlurper().parseText(xml).file.each { f ->
+				f.error.each { e -> counts["${f.@name.text()} ${e.@source.text()}".toString()]++ }
+			}
+			counts
+		}
+		def base = count(before)
+		count(after).findAll { key, n -> n > base[key] }.collect { key, n -> "${key}: ${base[key]}건 -> ${n}건".toString() }
+	}
+	// detekt: 기준 ref 에 없는 ID(서명 ID 라 한 줄이 한 위반)가 있으면 증가
+	def detektGrown = { String before, String after ->
+		def ids = { String xml -> new XmlSlurper().parseText(xml).'**'.findAll { it.name() == 'ID' }.collect { it.text().trim() } as Set }
+		(ids(after) - ids(before)).collect { it.toString() }
+	}
+	def targets = [
+		[path: ktlintPath, grown: ktlintGrown],
+		[path: detektPath, grown: detektGrown],
+	]
+	doLast {
+		def git = { String... args ->
+			def process = new ProcessBuilder(['git'] + args.toList()).directory(dir).redirectErrorStream(true).start()
+			def output = process.inputStream.getText('UTF-8')
+			[process.waitFor(), output]
+		}
+		if (git('rev-parse', '--verify', '--quiet', "${ref}^{commit}")[0] != 0) {
+			throw new GradleException("lintBaselineRef 를 해석할 수 없음: ${ref}")
+		}
+		targets.each { target ->
+			def path = target.path
+			def (code, committed) = git('show', "${ref}:./${path}")
+			if (code != 0) {
+				logger.lifecycle("${path}: ${ref} 에 없음(신규 도입), 비교 생략")
+				return
+			}
+			def grown = target.grown(committed, new File(dir, path).getText('UTF-8'))
+			logger.lifecycle("${path}: ${ref} 대비 늘어난 항목 ${grown.size()}건")
+			if (!grown.isEmpty()) {
+				throw new GradleException("${path} 에 ${ref} 보다 늘어난 항목 ${grown.size()}건: baseline 재생성으로 새 위반을 흡수하지 말고 위반을 고칠 것\n  " + grown.take(20).join('\n  '))
+			}
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn 'verifyLintBaselinesNotGrown'
 }
