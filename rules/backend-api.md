@@ -24,6 +24,9 @@ why: JPA 엔티티(애그리거트)나 금액 계산을 다루는 Kotlin 코드
 <!-- gt:PTB5 -->
 - 도메인 모델은 private 생성자와 팩토리, 또는 `init { require(...) }` 로 생성 시점에 불변식을 검증해 잘못된 인스턴스가 존재할 수 없게 한다.
   Why: 검증을 서비스에 두면 그 서비스를 거치지 않는 호출자(다른 유스케이스, 어댑터의 변환, 테스트 픽스처)가 건너뛴다. 팀 규칙 DD13(원시 타입 집착 금지)의 값 객체도 이 방식으로 만든다. — enforce: review
+<!-- gt:PTB6 -->
+- 도메인 모델은 내부 컬렉션을 `MutableList`·`MutableMap` 으로 밖에 내주지 않고 읽기 전용 타입이나 복사본으로 내주며, 가변 컬렉션을 담은 `data class` 의 `copy()` 를 상태 분리 수단으로 쓰지 않는다.
+  Why: 밖으로 나간 가변 컬렉션은 호출자가 애그리거트 메서드(PTB2)를 거치지 않고 내용을 바꿀 수 있고, `copy()` 는 얕은 복사라 원본과 사본이 같은 컬렉션을 공유해 한쪽 변경이 다른 쪽 불변식을 깬다(LINE 공개 리뷰 기준). — enforce: review
 
 ## 금액
 
@@ -32,3 +35,4 @@ why: JPA 엔티티(애그리거트)나 금액 계산을 다루는 Kotlin 코드
   Why: Kotlin `==` 는 `equals` 라 scale 까지 비교해 `1.0 != 1.00` 이 되고, `Double` 생성자는 이진 오차를 그대로 싣고, scale 없는 나눗셈은 무한소수에서 예외를 던진다. 셋 다 컴파일은 통과하고 금액이 조용히 틀린다. — enforce: review
 
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd.md -->
+<!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r3.md -->
