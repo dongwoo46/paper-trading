@@ -3,7 +3,6 @@ package com.papertrading.api.architecture
 import com.tngtech.archunit.base.DescribedPredicate
 import com.tngtech.archunit.base.DescribedPredicate.not
 import com.tngtech.archunit.core.domain.JavaClass
-import com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo
 import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage
 import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage
 import com.tngtech.archunit.core.importer.ImportOption
@@ -14,7 +13,6 @@ import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices
 import com.tngtech.archunit.library.freeze.FreezingArchRule
-import org.springframework.stereotype.Service
 
 // infrastructure 클래스가 구현하는 인터페이스 = 출력 포트 판정
 private val implementedByInfrastructure: DescribedPredicate<JavaClass> =
@@ -74,25 +72,7 @@ class ArchitectureRulesTest {
     @ArchTest
     @JvmField
     val applicationUsesOnlyAllowedSpringTypes: ArchRule =
-        FreezingArchRule.freeze(
-            noClasses()
-                .that()
-                .resideInAPackage("com.papertrading.api.application..")
-                .should()
-                .dependOnClassesThat(
-                    resideInAPackage("org.springframework..")
-                        .and(not(equivalentTo(Service::class.java)))
-                        .and(
-                            not(
-                                resideInAnyPackage(
-                                    "org.springframework.transaction.annotation..",
-                                    "org.springframework.transaction.event..",
-                                    "org.springframework.context.event..",
-                                ),
-                            ),
-                        ),
-                ),
-        )
+        FreezingArchRule.freeze(applicationUsesOnlyAllowedSpringTypesRule())
 
     @ArchTest
     @JvmField
