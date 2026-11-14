@@ -41,6 +41,7 @@ class KisAccessTokenClientTest {
     @Test
     fun `Redis 토큰 없으면 캐시 미스 — rateLimiter acquireApproval 호출`() {
         every { tokenRedisStore.findValidToken("paper") } returns null
+        every { tokenDbStore.findValid("paper") } returns null
         every { properties.appKeyFor("paper") } returns "key"
         every { properties.appSecretFor("paper") } returns "secret"
         every { properties.tokenUrlFor("paper") } returns "https://example.com/token"
