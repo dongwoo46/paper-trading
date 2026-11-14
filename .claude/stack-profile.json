@@ -27,17 +27,50 @@
     {
       "path": "backend/trading-api",
       "compileCommand": "./gradlew compileKotlin",
-      "testCommand": "./gradlew test"
+      "testCommand": "./gradlew test",
+      "commandStatus": {
+        "compile": {
+          "phases": [
+            "commit"
+          ]
+        },
+        "test": {
+          "phases": [],
+          "phasesReason": "전체 테스트는 CI(full-test.yml)에서 돌림"
+        }
+      }
     },
     {
       "path": "backend/collector-api",
       "compileCommand": "./gradlew compileKotlin",
-      "testCommand": "./gradlew test"
+      "testCommand": "./gradlew test",
+      "commandStatus": {
+        "compile": {
+          "phases": [
+            "commit"
+          ]
+        },
+        "test": {
+          "phases": [],
+          "phasesReason": "전체 테스트는 CI(full-test.yml)에서 돌림"
+        }
+      }
     },
     {
       "path": "frontend/trading-web",
       "compileCommand": "npm run build",
-      "testCommand": "npm test -- --run"
+      "testCommand": "npm test -- --run",
+      "commandStatus": {
+        "compile": {
+          "phases": [
+            "commit"
+          ]
+        },
+        "test": {
+          "phases": [],
+          "phasesReason": "전체 테스트는 CI(full-test.yml)에서 돌림"
+        }
+      }
     }
   ],
   "detectedFrom": [
@@ -55,5 +88,6 @@
       "reason": "현재 compose 결함 해결까지 잠시 꺼둠",
       "command": "docker compose up -d --wait"
     }
-  }
+  },
+  "profileContract": 1
 }

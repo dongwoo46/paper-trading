@@ -50,9 +50,6 @@ Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (ma
 - CRITICAL: Work in small increments: implement → test → lint → commit
 - CRITICAL: Write all commit messages in Korean.
 - CRITICAL: Only read explicitly specified files. Expand only when necessary. No broad exploration
-- CRITICAL: Slash command workflows MUST delegate execution to Agent tool subagents — never via Skill tool inline
-  - Correct: `Agent(description="...", prompt="...")`
-  - Forbidden: `Skill("build", ...)` or `Skill("plan", ...)` inline execution
 - Only modify code relevant to the task. Do not touch unrelated files. If unavoidable, state the reason
 - Write the minimum code that solves the problem. Do not implement for imagined future requirements.
 - If refactoring, large-scale changes, or improvements beyond the task scope are needed, propose them to the user and wait for approval before proceeding.
@@ -95,22 +92,6 @@ A task is complete only if:
 - Parallelize only when write scopes do not overlap and tasks are truly independent.
 - Do not spawn extra planners/reviewers if plan/design has not changed.
 - Always summarize build/test outputs before handing control back.
-
----
-
-## Agents
-
-- /orchestrate: route phases and step execution
-- /plan: service feature planning (API, schema, step files)
-- /plan-quant: quant planning (factors, backtest design, risk metrics)
-- /build: application implementation (TDD, DDD)
-- /build-quant: quant strategy implementation
-- /review: code/security/quant review and must-fix feedback
-- /test: QA verification, scoped tests, coverage checks
-
-Mode: `auto` (automatic) / `manual` (approve each step) — switchable anytime, record in docs/state.md
-
-Workflow: /orchestrate → state.md → index.json → step-{n}.md → Agent tool subagent → record results
 
 ---
 
