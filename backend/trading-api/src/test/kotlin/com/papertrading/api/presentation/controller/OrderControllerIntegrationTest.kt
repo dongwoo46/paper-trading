@@ -48,9 +48,13 @@ class OrderControllerIntegrationTest {
     @Autowired lateinit var objectMapper: ObjectMapper
     @Autowired lateinit var localMatchingEngine: LocalMatchingEngine
     @Autowired lateinit var redisTemplate: StringRedisTemplate
+
     @Autowired lateinit var accountRepository: AccountRepository
+
     @Autowired lateinit var orderRepository: OrderRepository
+
     @Autowired lateinit var accountLedgerRepository: AccountLedgerRepository
+
     @Autowired lateinit var positionRepository: PositionRepository
 
     // KIS 외부 API 호출 차단 (실제 KIS와 통신하면 안 됨)
@@ -252,10 +256,15 @@ class OrderControllerIntegrationTest {
     private fun createBrokerAccount(accountType: String, tradingMode: String): Long {
         val result = mockMvc.post("/api/v1/accounts") {
             contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(mapOf(
-                "accountName" to "브로커 $tradingMode", "accountType" to accountType,
-                "tradingMode" to tradingMode, "initialDeposit" to 10_000_000,
-            ))
+            content =
+                objectMapper.writeValueAsString(
+                    mapOf(
+                        "accountName" to "브로커 $tradingMode",
+                        "accountType" to accountType,
+                        "tradingMode" to tradingMode,
+                        "initialDeposit" to 10_000_000,
+                    ),
+                )
         }.andExpect { status { isCreated() } }.andReturn()
         return objectMapper.readTree(result.response.contentAsString)["id"].asLong()
     }
@@ -265,16 +274,20 @@ class OrderControllerIntegrationTest {
         orderSide: String,
         orderCondition: String = "DAY",
         quantity: Int = 5,
-    ): String = objectMapper.writeValueAsString(buildMap<String, Any> {
-        put("ticker", "005930")
-        put("marketType", "KOSPI")
-        put("orderType", orderType)
-        put("orderSide", orderSide)
-        put("orderCondition", orderCondition)
-        put("quantity", quantity)
-        if (orderType == "LIMIT") put("limitPrice", 70000)
-        put("idempotencyKey", UUID.randomUUID().toString())
-    })
+    ): String {
+        val body =
+            buildMap<String, Any> {
+                put("ticker", "005930")
+                put("marketType", "KOSPI")
+                put("orderType", orderType)
+                put("orderSide", orderSide)
+                put("orderCondition", orderCondition)
+                put("quantity", quantity)
+                if (orderType == "LIMIT") put("limitPrice", 70000)
+                put("idempotencyKey", UUID.randomUUID().toString())
+            }
+        return objectMapper.writeValueAsString(body)
+    }
 
     private data class AccountFootprint(
         val orderCount: Int,
@@ -345,9 +358,12 @@ class OrderControllerIntegrationTest {
         val account = accountRepository.findById(accountId).orElseThrow()
         positionRepository.save(
             Position.createWithHolding(
-                account = account, ticker = "005930", marketType = MarketType.KOSPI,
-                quantity = BigDecimal("10"), avgBuyPrice = BigDecimal("60000"),
-            )
+                account = account,
+                ticker = "005930",
+                marketType = MarketType.KOSPI,
+                quantity = BigDecimal("10"),
+                avgBuyPrice = BigDecimal("60000"),
+            ),
         )
 
         assertOrderRejectedWithoutChange(accountId, orderBody("LIMIT", "SELL"))

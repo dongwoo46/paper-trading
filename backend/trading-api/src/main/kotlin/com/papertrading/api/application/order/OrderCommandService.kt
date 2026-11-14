@@ -181,9 +181,13 @@ class OrderCommandService(
     // else 없는 전수 when (새 TradingMode 추가 시 컴파일 에러)
     private fun submitExternalOrderIfNeeded(tradingMode: TradingMode, order: Order) {
         when (tradingMode) {
-            TradingMode.LOCAL -> Unit // 내부 매칭 엔진 체결
+            // 내부 매칭 엔진 체결
+            TradingMode.LOCAL -> Unit
+
             TradingMode.KIS_PAPER -> kisPaperOrderExecutor.submit(order)
+
             TradingMode.KIS_LIVE -> kisLiveOrderExecutor.submit(order)
+
             TradingMode.TOSS_LIVE, TradingMode.UPBIT_LIVE -> throw BrokerOrderNotSupportedException(tradingMode.name)
         }
     }

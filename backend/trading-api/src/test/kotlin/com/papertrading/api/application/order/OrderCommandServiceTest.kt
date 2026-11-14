@@ -429,13 +429,15 @@ class OrderCommandServiceTest {
 
         // 거부 모드는 표에서 파생해 한 곳에서만 관리
         @JvmStatic
-        fun brokerOrderUnsupportedModes(): List<TradingMode> =
-            EXPECTED_ORDER_ROUTING.filterValues { it == OrderRouting.REJECTED }.keys.toList()
+        fun brokerOrderUnsupportedModes(): List<TradingMode> {
+            val rejected = EXPECTED_ORDER_ROUTING.filterValues { it == OrderRouting.REJECTED }
+            return rejected.keys.toList()
+        }
 
         @JvmStatic
-        fun brokerOrderUnsupportedModesWithIocFok(): List<Arguments> =
-            brokerOrderUnsupportedModes().flatMap { mode ->
-                listOf(OrderCondition.IOC, OrderCondition.FOK).map { Arguments.of(mode, it) }
-            }
+        fun brokerOrderUnsupportedModesWithIocFok(): List<Arguments> {
+            val conditions = listOf(OrderCondition.IOC, OrderCondition.FOK)
+            return brokerOrderUnsupportedModes().flatMap { mode -> conditions.map { Arguments.of(mode, it) } }
+        }
     }
 }

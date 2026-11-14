@@ -280,10 +280,12 @@ class ExecutionProcessorTest {
                 fill()
                 assertEquals(0, initialDeposit.add(BigDecimal("350000")).compareTo(account.availableDeposit), "$mode")
             }
+
             SellFillOutcome.SYNC_ONLY -> {
                 fill()
                 assertEquals(initialDeposit, account.availableDeposit, "$mode")
             }
+
             SellFillOutcome.REJECTED -> {
                 assertThrows<BrokerOrderNotSupportedException>("$mode") { fill() }
                 assertEquals(initialDeposit, account.availableDeposit, "$mode")
@@ -303,8 +305,10 @@ class ExecutionProcessorTest {
 
         // 거부 모드는 표에서 파생해 한 곳에서만 관리
         @JvmStatic
-        fun brokerOrderUnsupportedModes(): List<TradingMode> =
-            EXPECTED_SELL_FILL_OUTCOME.filterValues { it == SellFillOutcome.REJECTED }.keys.toList()
+        fun brokerOrderUnsupportedModes(): List<TradingMode> {
+            val rejected = EXPECTED_SELL_FILL_OUTCOME.filterValues { it == SellFillOutcome.REJECTED }
+            return rejected.keys.toList()
+        }
     }
 
     /** Spec Test 1C: verify publishEvent(ExecutionFilledEvent) called after fill() with correct ticker, side, executionId */

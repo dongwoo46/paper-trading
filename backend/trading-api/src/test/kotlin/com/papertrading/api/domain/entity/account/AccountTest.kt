@@ -117,7 +117,7 @@ class AccountTest {
             accountName = "toss-account",
             accountType = AccountType.STOCK,
             tradingMode = TradingMode.TOSS_LIVE,
-            initialDeposit = BigDecimal("1000.0000")
+            initialDeposit = BigDecimal("1000.0000"),
         )
 
         assertEquals(TradingMode.TOSS_LIVE, account.tradingMode)
@@ -131,7 +131,7 @@ class AccountTest {
                 accountName = "crypto-toss",
                 accountType = AccountType.CRYPTO,
                 tradingMode = TradingMode.TOSS_LIVE,
-                initialDeposit = BigDecimal("1000.0000")
+                initialDeposit = BigDecimal("1000.0000"),
             )
         }
     }
@@ -161,7 +161,7 @@ class AccountTest {
                     accountName = "matrix",
                     accountType = type,
                     tradingMode = mode,
-                    initialDeposit = BigDecimal("1000.0000")
+                    initialDeposit = BigDecimal("1000.0000"),
                 )
             }
             if (type in allowedTypes) {
