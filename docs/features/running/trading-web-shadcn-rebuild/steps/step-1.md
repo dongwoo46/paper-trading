@@ -74,8 +74,8 @@
 3. `git rm -r frontend/trading-web` → 추적 파일 0.
 4. D1: `npx shadcn@4.23.0 init -t vite -b base -p nova` (`--help` 확인 결과 `base-nova` 라는 preset 이름은 없고, base `base` + preset `nova` 가 `style: base-nova` 가 됨). 생성기가 만든 중첩 `.git` 은 지움.
 5. D12·D13: vitest 4.1.12·jsdom 28.1.0 정확 고정. 생성 결과 TS 6.0.3·ESLint 10.15·typescript-eslint 8.72.2(peer 범위 안)라 변경 없음. 설치된 334개 패키지 중 엔진 범위가 Node 20.19.0 을 못 맞는 것은 `cn@0.5.2`(`>=22`) 1개 — Node 20.19.0 으로 build·lint·test 를 실제로 돌려 통과 확인(npm ci 때 경고만 날 수 있음).
-6. D7·D10: `src/{app,pages,shared}` 최소 뼈대(빈 화면 1개), `components.json` 별칭을 `src/shared/*` 로, `proxy.config.ts`(server·preview 같은 표).
-7. D11·D15 소스 검사 시험 `src/test/guards/`(규칙 함수 단위 시험 + 실제 소스 검사), 프록시 표 시험.
+6. D7·D10: `src/{app,pages,shared}` 최소 뼈대(빈 화면 1개), `components.json` 별칭을 `src/shared/*` 로, `proxy.config.ts`(server·preview 같은 표. 접두사는 trading-api·collector-api 컨트롤러의 클래스·메서드 매핑 전수에서 뽑음 — trading-api 7개·collector-api 12개).
+7. D11·D15 소스 검사 시험 `src/test/guards/`(규칙 함수 단위 시험 + 실제 소스 검사), 프록시 표 시험(표끼리 대조 + 백엔드 컨트롤러 소스를 읽어 표가 모든 경로를 덮는지 대조).
 8. D16 tone 토큰 `--tone-rise/fall/buy/sell`(임시 값), D17 `CLAUDE.md`·`CODEX.md`·`docs/UI_GUIDE.md`·`README.md` 새로 작성.
 9. DEC-08: CI trading-web 잡에 `npm run build`·`npm run lint` 단계 추가(Node 20 유지).
 

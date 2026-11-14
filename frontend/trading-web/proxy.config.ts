@@ -23,6 +23,10 @@ export const TRADING_API_PREFIXES = [
   "/api/v1",
   "/api/accounts",
   "/api/kis/account",
+  "/api/positions",
+  "/api/trading-journals",
+  "/api/operations",
+  "/api/tax-summaries",
 ] as const
 
 export const COLLECTOR_API_PREFIXES = [
@@ -37,6 +41,7 @@ export const COLLECTOR_API_PREFIXES = [
   "/api/symbols",
   "/api/market",
   "/api/internal/kis",
+  "/api/internal/subscriptions",
 ] as const
 
 /** quant-worker 는 접두사를 떼고 보낸다(`/api-quant/collect/daily` → `/collect/daily`). */
