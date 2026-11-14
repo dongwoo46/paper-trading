@@ -26,12 +26,20 @@ devkit 0.95.0 `rules/dev-team` 의 원문과 조항마다 대조했다. 판정 �
 | PTD5 | 해당 팀 조항 없음 | 충돌 없음 |
 | PTA1 | LA1 | 같은 방향 |
 | PTA2 | 제안 중인 EV2 | 같은 방향 |
+| PTB5 생성 시 불변식(2차 추가) | DD10, DD13 | 같은 방향(값 객체·애그리거트 생성 방식) |
+| PTT1 실제 엔진 시험(2차 추가) | 팀 tests.md | 팀 규칙에 시험 엔진 조항 없음. 단위 시험은 포트 가짜를 쓰도록 예외로 남겨 «가짜는 경계에서만» 원칙과 부딪치지 않음 |
+| PTF1 원장 추가 전용(2차 추가) | 팀 규칙에 없음, CLAUDE.md 감사 추적 | 충돌 없음. devkit 제안으로도 올림 |
+| PTF2 대사(2차 추가) | 팀 규칙에 없음 | 충돌 없음. devkit 제안으로도 올림 |
+| PTF3 불확정 응답(2차 추가) | DA9 | DA9 의 결과 반영 단계를 강화(좁히기). devkit 제안으로도 올림 |
+
+2차 추가 근거: 국내 테크 기업 공개 기술 블로그 조사(토스, 우아한형제들, 카카오페이, 강남언니 등). 요약본 기반이라 인용의 글자 대조는 하지 않았다.
 
 ## 공식 근거 대조
 
 근거 문서: devkit `docs/research/ai-doc-official-guidance.md` §1~§4, §7.
 
-- 이유(rationale) 보존: 조항 11개 모두 `Why:` 줄을 둔다(파일별 4·5·2개, 조항 수와 같음). §1 「explaining the why behind constraints」와 devkit 실측(근거를 지운 판본 준수 90% → 10%)을 따랐다.
+- 2차 추가(PTB5, PTT1, PTF1~PTF3) 뒤 조항은 16개, 다섯 파일이며 아래 판정은 2차 추가분에도 같게 적용했다(Why 줄 16개, 강조 0, 분량 합계 약 140줄).
+- 이유(rationale) 보존: 1차 조항 11개 모두 `Why:` 줄을 둔다(파일별 4·5·2개, 조항 수와 같음). §1 「explaining the why behind constraints」와 devkit 실측(근거를 지운 판본 준수 90% → 10%)을 따랐다.
 - 강조 서식: 세 파일에 굵게, IMPORTANT, CRITICAL, MUST 가 0개다(grep 확인). §2 「piling on emphasis mostly makes Claude over-apply the rule」에 맞춰 강조 없이 평문 명령형으로 썼다.
 - 골격(헤딩·불릿): 파일마다 관심사별 헤딩 아래 `gt:` 앵커와 불릿 한 줄 조항으로 썼다(form v2). §3 「group related instructions under markdown headers and bullets」를 따랐다.
 - 분량 판정: 세 파일 23·31·38줄, 합계 92줄로 200줄 상한 아래다. §4 의 「Does Claude really need this explanation?」 판별로, 모델이 이미 아는 일반 설명(트랜잭션 정의 등)은 넣지 않고 컴파일은 통과하지만 조용히 틀리는 함정만 남겼다. 내용을 줄였다기보다 처음부터 함정만 골랐다.
