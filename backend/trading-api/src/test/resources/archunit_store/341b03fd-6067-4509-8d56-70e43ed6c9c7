@@ -1,0 +1,1 @@
+Method <com.papertrading.api.domain.port.MarketQuotePort.getQuote(com.papertrading.api.domain.enums.TradingMode, java.lang.String)> has return type <com.papertrading.api.application.common.result.QuoteSnapshot> in (MarketQuotePort.kt:0)
