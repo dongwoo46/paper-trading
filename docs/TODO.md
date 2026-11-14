@@ -25,6 +25,15 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ---
 
+## CI 전체 테스트 복구
+
+- [ ] CI(full-test)에서 깨진 기존 테스트 수정 | project: trading-api, collector-api | phase: fix-broken-tests | priority: P1
+  - 증상: PR #45 에서 CI 를 켠 뒤 collector-api `KisAccessTokenClientTest` ("Redis 토큰 없으면 캐시 미스 — rateLimiter acquireApproval 호출") 1건 실패, trading-api 도 실패
+  - 조사 항목: trading-api 실패 테스트 목록 확인, 두 실패의 원인이 코드 결함인지 CI 환경(Redis·DB 의존) 차이인지 분리
+  - 목표: `.github/workflows/full-test.yml` 3개 잡(trading-api, collector-api, trading-web) 모두 초록
+
+---
+
 ## quant-ai / quant-research 아키텍처 정리 ⚠️ 최우선
 
 ### P0 — 서비스 역할 재정립 (현재 구조 잘못됨)
