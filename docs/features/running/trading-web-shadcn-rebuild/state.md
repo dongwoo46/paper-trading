@@ -7,7 +7,7 @@
 | 기능 | `trading-web-shadcn-rebuild` |
 | 브랜치 | `feature/trading-web-shadcn-rebuild` |
 | 갱신일 | 2026-11-15 |
-| 전체 상태 | step-1(교체 골격) 완료 — 다음은 step-2(경계 계층) |
+| 전체 상태 | step-2(경계 계층) 완료 — 다음은 step-3(공통 셸) |
 
 ## 1. 현재 위치
 
@@ -18,7 +18,7 @@
 | step | 제목 | 상태 | 파일 | 비고 |
 |---|---|---|---|---|
 | 1 | 교체 골격 | 완료 | steps/step-1.md | 옛 앱 삭제 + shadcn base-nova 골격 한 커밋. build·lint·test 통과 |
-| 2 | 경계 계층 | 대기 |  | API 클라이언트·금융 값 유틸, 시험 먼저 |
+| 2 | 경계 계층 | 완료 | steps/step-2.md | 무손실 파싱·디코더·오류 정규화·금융 값 유틸 6종. build·lint·test 통과(Node 20.19.0 포함) |
 | 3 | 공통 셸 | 대기 |  |  |
 | 4 | 원장 화면 | 대기 |  | 계좌·포지션, 주문 |
 | 5 | 조회 화면 | 대기 |  | 거래 내역, 포트폴리오, 홈 |
@@ -58,6 +58,7 @@
 | 2026-11-15 | `development-plan.md` draft 작성: FLAG-08 대조(§4-1), 삭제 시점 D2(삭제+골격 한 커밋), 화면·영역별 가능성(🔴 2곳), 사람 결정 DEC-01~09 | tech-planning |
 | 2026-11-15 | DEC-02~09 추천안 A 반영: feature-spec(RULE-03 좌표 예외·RULE-12 축소·EDGE-10 숨김·§4·§5·§7·§11), v3(§3~§10, §11 «API 대기» 신설), open-questions(FLAG-08 닫음, FLAG-16~21 추가), development-plan(§0·§1 🔴→🟡·§2 D9·D11·D12·D17·§3·§5·§6·§8-2 결정 열) | 사용자 팝업 답(코디네이터 전달) |
 | 2026-11-15 | DEC-01 사용자 승인(삭제·골격 진행). step-1 중 D15(a) 일치 1건(`.gitignore`)으로 멈춤 → 사용자 결정: (a) 검사 범위를 `src/` 로 한정(예외 목록 없음, `.gitignore` 유지), (b) CSS 변수 `generatorStandardNames` 42개 분리·금지 65개 승인. step-1 완료 | 생성기 산출물 `.gitignore` 가 옛 파일과 같은 blob, 계획 D15 문구는 «새 src» |
+| 2026-11-15 | step-2(경계 계층) 완료. 안전 정수 변환을 `src/shared/lib/safe-integer.ts` 에 두고 float 허용 목록을 이 파일 + `chart-coordinate.ts` 로 확정. 계획 밖 가정 5건은 steps/step-2.md §8 | development-plan §5 2단계, 설계 승인 2026-11-15 |
 
 ## 4. 막힘·이슈
 
