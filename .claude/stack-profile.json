@@ -55,5 +55,6 @@
       "reason": "현재 compose 결함 해결까지 잠시 꺼둠",
       "command": "docker compose up -d --wait"
     }
-  }
+  },
+  "profileContract": 1
 }
