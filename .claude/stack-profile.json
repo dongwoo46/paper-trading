@@ -27,17 +27,38 @@
     {
       "path": "backend/trading-api",
       "compileCommand": "./gradlew compileKotlin",
-      "testCommand": "./gradlew test"
+      "testCommand": "./gradlew test",
+      "commandStatus": {
+        "compile": {
+          "phases": [
+            "commit"
+          ]
+        }
+      }
     },
     {
       "path": "backend/collector-api",
       "compileCommand": "./gradlew compileKotlin",
-      "testCommand": "./gradlew test"
+      "testCommand": "./gradlew test",
+      "commandStatus": {
+        "compile": {
+          "phases": [
+            "commit"
+          ]
+        }
+      }
     },
     {
       "path": "frontend/trading-web",
       "compileCommand": "npm run build",
-      "testCommand": "npm test -- --run"
+      "testCommand": "npm test -- --run",
+      "commandStatus": {
+        "compile": {
+          "phases": [
+            "commit"
+          ]
+        }
+      }
     }
   ],
   "detectedFrom": [
