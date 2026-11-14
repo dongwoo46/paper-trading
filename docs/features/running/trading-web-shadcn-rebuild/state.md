@@ -7,17 +7,17 @@
 | 기능 | `trading-web-shadcn-rebuild` |
 | 브랜치 | `feature/trading-web-shadcn-rebuild` |
 | 갱신일 | 2026-11-15 |
-| 전체 상태 | 기획 재승인(2026-11-15), 구현 계획 작성 완료 — 다음은 tech-plan 승인(사람) |
+| 전체 상태 | step-1(교체 골격) 완료 — 다음은 step-2(경계 계층) |
 
 ## 1. 현재 위치
 
-제품 재기획과 화면 지도 v3를 확정했고, tech-planning 으로 `development-plan.md` 를 썼다. 실제 API 대조(FLAG-08) 결과 없는 영역은 사용자 결정(DEC-02~09)으로 빼거나 줄였고 명세에 반영해 기획을 재승인했다. 로드맵 7단계를 아래에 두었다. 구현 코드는 없다.
+제품 재기획과 화면 지도 v3를 확정했고, tech-planning 으로 `development-plan.md` 를 썼다. 실제 API 대조(FLAG-08) 결과 없는 영역은 사용자 결정(DEC-02~09)으로 빼거나 줄였고 명세에 반영해 기획을 재승인했다. 로드맵 7단계를 아래에 두었다. step-1 로 옛 앱을 지우고 shadcn base-nova 골격으로 교체했다(화면·API 클라이언트는 아직 없음).
 
 ## 2. 로드맵
 
 | step | 제목 | 상태 | 파일 | 비고 |
 |---|---|---|---|---|
-| 1 | 교체 골격 | 대기 | steps/step-1.md | 착수 직전 옛 앱 삭제 사람 재확인(DEC-01) |
+| 1 | 교체 골격 | 완료 | steps/step-1.md | 옛 앱 삭제 + shadcn base-nova 골격 한 커밋. build·lint·test 통과 |
 | 2 | 경계 계층 | 대기 |  | API 클라이언트·금융 값 유틸, 시험 먼저 |
 | 3 | 공통 셸 | 대기 |  |  |
 | 4 | 원장 화면 | 대기 |  | 계좌·포지션, 주문 |
@@ -57,6 +57,7 @@
 | 2026-11-15 | feature-planning 점검 반영: 딱지 `물어봄→스펙` 정리, 낡은 표기 정리, FLAG-14(초기 상태)·15(대사 확인 처리자) 추가 | 스킬 없이 고친 명세 점검(인계 §4), 사용자 승인 |
 | 2026-11-15 | `development-plan.md` draft 작성: FLAG-08 대조(§4-1), 삭제 시점 D2(삭제+골격 한 커밋), 화면·영역별 가능성(🔴 2곳), 사람 결정 DEC-01~09 | tech-planning |
 | 2026-11-15 | DEC-02~09 추천안 A 반영: feature-spec(RULE-03 좌표 예외·RULE-12 축소·EDGE-10 숨김·§4·§5·§7·§11), v3(§3~§10, §11 «API 대기» 신설), open-questions(FLAG-08 닫음, FLAG-16~21 추가), development-plan(§0·§1 🔴→🟡·§2 D9·D11·D12·D17·§3·§5·§6·§8-2 결정 열) | 사용자 팝업 답(코디네이터 전달) |
+| 2026-11-15 | DEC-01 사용자 승인(삭제·골격 진행). step-1 중 D15(a) 일치 1건(`.gitignore`)으로 멈춤 → 사용자 결정: (a) 검사 범위를 `src/` 로 한정(예외 목록 없음, `.gitignore` 유지), (b) CSS 변수 `generatorStandardNames` 42개 분리·금지 65개 승인. step-1 완료 | 생성기 산출물 `.gitignore` 가 옛 파일과 같은 blob, 계획 D15 문구는 «새 src» |
 
 ## 4. 막힘·이슈
 

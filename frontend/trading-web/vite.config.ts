@@ -1,43 +1,27 @@
-/// <reference types="vitest" />
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { fileURLToPath } from 'node:url'
+import { resolve } from "node:path"
+import tailwindcss from "@tailwindcss/vite"
+import react from "@vitejs/plugin-react"
+import { loadEnv } from "vite"
+import { defineConfig } from "vitest/config"
+
+import { buildProxyTable } from "./proxy.config.ts"
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [tailwindcss(), react()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
-  server: {
-    proxy: {
-      '/api/': {
-        target: 'http://127.0.0.1:8080',
-        changeOrigin: true,
-      },
-      '/api-ai': {
-        target: 'http://127.0.0.1:8083',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api-ai/, ''),
-      },
-      '/api-collector': {
-        target: 'http://127.0.0.1:8082',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api-collector/, ''),
-      },
-      '/api-research': {
-        target: 'http://127.0.0.1:8084',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api-research/, ''),
+export default defineConfig(({ mode }) => {
+  const proxy = buildProxyTable(loadEnv(mode, process.cwd(), "VITE_"))
+
+  return {
+    plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: {
+        "@": resolve(import.meta.dirname, "./src"),
       },
     },
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./vitest.setup.ts'],
-  },
+    server: { proxy },
+    preview: { proxy },
+    test: {
+      environment: "jsdom",
+      include: ["src/**/*.test.{ts,tsx}"],
+    },
+  }
 })
