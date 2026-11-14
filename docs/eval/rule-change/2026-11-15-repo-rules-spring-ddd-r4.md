@@ -4,7 +4,7 @@
 
 사람 결정(2026-11-15 팝업): 클린 아키텍처(포트·어댑터), 출력 포트는 `application/<컨텍스트>/port`, application 의 Spring 은 `@Service`·`@Transactional` 만 허용.
 
-실측 근거(2026-11-15, origin/main e2904c8, `backend/trading-api/src/main/kotlin/com/papertrading/api` 아래 `^import` 줄 집계): application→infrastructure 28파일, domain→jakarta.persistence 28파일, domain→application 1파일, infrastructure→presentation 2파일, presentation→infrastructure 1파일. 포트는 `domain/port` 5개, `application/*/port` 3개.
+실측 근거(2026-11-15, origin/main e2904c8, `backend/trading-api/src/main/kotlin/com/papertrading/api` 아래 `^import` 줄 집계): application→infrastructure 28파일, domain→jakarta.persistence 28파일, domain→application 1파일, infrastructure→presentation 2파일, presentation→infrastructure 1파일. 포트 패키지의 파일은 `domain/port` 5개, `application/*/port` 3개이고(인터페이스로는 4개·2개 — `LivePositionSnapshot`·`SlackNotificationRuntimeConfig` 는 data class, r5 정정), 파일 수와 인터페이스 수를 섞지 않는다.
 
 ## 공식 근거 대조
 

@@ -7,6 +7,7 @@ why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트를
 <!-- devkit:form v2 -->
 
 > 이 레포 전용 규칙 — devkit 팀 규칙 `backend-api.md`(DD4~DD14)를 이 레포의 Kotlin·Spring·JPA 에서 지키는 방법만 적는다. 원칙 자체는 팀 규칙이 SSoT 이고 여기서 다시 쓰지 않는다.
+> devkit 은 이 레포의 Kotlin 파일에 팀 규칙을 자동으로 전달하지 않는다(rule-pointer 실측 2026-11-15: `always:dev-team` 만 나온다). 그래서 이 레포 Kotlin 작업·리뷰는 팀 `backend-api.md` 의 DD9~DD14(PTB1·PTB2·PTB3·PTB5·PTB7~PTB9 가 이 레포 형태로 적음)와, 이 문서가 다시 쓰지 않는 DD7(컨텍스트 사이는 명시 계약으로만)·AE5·AE8(예외→HTTP 응답은 전역 핸들러 한 곳, 예외 원문을 응답에 싣지 않음)을 직접 열어 따른다. devkit 쪽 Kotlin 신호 추가는 devkit 에 제안으로 올린다.
 > 금액 규칙의 상위 원칙은 루트 `CLAUDE.md` «Financial Safety»(금액에 부동소수점 금지, Kotlin 은 BigDecimal).
 
 ## 도메인 모델과 영속 모델
@@ -25,27 +26,28 @@ why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트를
 - 도메인 모델은 private 생성자와 팩토리, 또는 `init { require(...) }` 로 생성 시점에 불변식을 검증해 잘못된 인스턴스가 존재할 수 없게 한다.
   Why: 검증을 서비스에 두면 그 서비스를 거치지 않는 호출자(다른 유스케이스, 어댑터의 변환, 테스트 픽스처)가 건너뛴다. 팀 규칙 DD13(원시 타입 집착 금지)의 값 객체도 이 방식으로 만든다. — enforce: review
 <!-- gt:PTB6 -->
-- 도메인 모델은 내부 컬렉션을 `MutableList`·`MutableMap` 으로 밖에 내주지 않고 읽기 전용 타입이나 복사본으로 내주며, 가변 컬렉션을 담은 `data class` 의 `copy()` 를 상태 분리 수단으로 쓰지 않는다.
-  Why: 밖으로 나간 가변 컬렉션은 호출자가 애그리거트 메서드(PTB2)를 거치지 않고 내용을 바꿀 수 있고, `copy()` 는 얕은 복사라 원본과 사본이 같은 컬렉션을 공유해 한쪽 변경이 다른 쪽 불변식을 깬다(LINE 공개 리뷰 기준). — enforce: review
+- 도메인 모델은 내부 컬렉션을 복사본(`toList()`·`toMap()`)으로 내주고 `MutableList`·`MutableMap` 으로 밖에 내주지 않으며, 가변 컬렉션을 담은 `data class` 의 `copy()` 를 상태 분리 수단으로 쓰지 않는다.
+  Why: 밖으로 나간 가변 컬렉션은 호출자가 애그리거트 메서드(PTB2)를 거치지 않고 내용을 바꿀 수 있고, `copy()` 는 얕은 복사라 원본과 사본이 같은 컬렉션을 공유해 한쪽 변경이 다른 쪽 불변식을 깬다(LINE 공개 리뷰 기준). Kotlin 읽기 전용 `List`·`Map` 타입은 같은 가변 컬렉션의 뷰라 캐스팅이나 Java 호출자가 고칠 수 있어, 타입만 좁히지 말고 복사본으로 내준다. — enforce: review
 
 ## 계층과 포트 (trading-api)
 
 <!-- gt:PTB7 -->
-- trading-api 의 계층 의존은 `presentation → application → domain` 한 방향이고, `infrastructure` 는 application 포트를 구현하며 domain 을 쓸 수 있다. 금지 방향은 domain → application·infrastructure·presentation, application → infrastructure·presentation, presentation → infrastructure, infrastructure → presentation 이다.
-  Why: 팀 규칙 backend-api 잠금 원칙(의존은 안쪽으로)과 DD14(계층 건너뛰기 금지)를 이 레포 패키지 이름으로 적은 지도다. 지도가 없으면 DD14 위반을 판정할 기준이 없다(실측 2026-11-15: application→infrastructure 28파일, infrastructure→presentation 2파일). 사람 결정 2026-11-15: 클린 아키텍처(포트·어댑터). — enforce: archunit · review
+- trading-api 의 계층 지도는 아래 방향만 허용하고 나머지는 모두 금지한다. 허용: presentation → application, presentation → domain(enum·값 타입만), application → domain, infrastructure → domain, infrastructure → application 의 `port` 패키지(포트와 그 시그니처 타입)만, 모든 계층 → common. 금지: domain → application·infrastructure·presentation, application → infrastructure·presentation, presentation → infrastructure, infrastructure → presentation, infrastructure → application 의 `port` 밖(유스케이스·서비스 호출 포함), common → 어느 계층이든 import. `common` 은 domain 과 같이 `org.springframework` 를 import 하지 않는다(예외가 HTTP 상태를 알아야 하면 그 매핑은 presentation 의 예외 핸들러로 옮긴다). presentation 은 엔티티·애그리거트를 요청·응답에 쓰지 않고 application 의 result·query 타입이나 presentation DTO 를 쓴다. 스케줄러·Redis 리스너처럼 유스케이스를 호출하는 진입점은 infrastructure 가 아니라 presentation 쪽에 둔다.
+  Why: 팀 규칙 backend-api 잠금 원칙(의존은 안쪽으로)과 DD14(계층 건너뛰기 금지)를 이 레포 패키지 이름으로 적은 지도다. 지도에 빠진 방향은 판정 기준이 없어 PTB1 을 우회한다: common 의 예외가 `org.springframework.http.HttpStatus` 를 import 하고(`ApiDomainException`·`CommonApiExceptions`) domain 2파일이 그 예외를 써서 «domain 은 Spring 금지»가 새고, presentation 이 엔티티를 직접 응답에 쓰면 지연 로딩·내부 필드가 API 계약이 된다(사람 결정 2026-11-15: 엄격하게 적는다). 실측 2026-11-15: application→infrastructure 28파일, infrastructure→presentation 2파일, presentation→domain 14파일(엔티티 import 5파일), infrastructure→application 18파일 중 `port` 밖 import 14파일(스케줄러·리스너·웹소켓 5파일이 유스케이스 서비스를 직접 호출). 기존 위반은 ArchUnit 동결 목록으로 두고 새 위반만 막는다. 사람 결정 2026-11-15: 클린 아키텍처(포트·어댑터). — enforce: archunit · review
 <!-- gt:PTB8 -->
-- 출력 포트(리포지토리, 외부 API, 캐시, 메시지 발행 인터페이스)는 그것을 쓰는 유스케이스 쪽 `application/<컨텍스트>/port` 에 인터페이스로 두고, 구현은 `infrastructure` 어댑터가 한다. 유스케이스는 Spring Data 리포지토리나 외부 클라이언트 클래스를 직접 주입받지 않는다.
-  Why: 유스케이스가 어댑터 클래스를 직접 쓰면 PTB7 방향이 깨지고, 단위 시험이 DB·외부 API 없이 돌지 못한다. 포트가 `domain/port` 와 `application/*/port` 두 곳에 흩어진 상태를 한 곳으로 정한다(사람 결정 2026-11-15). — enforce: archunit · review
+- 출력 포트(리포지토리, 외부 API, 캐시, 메시지 발행 인터페이스)는 그것을 쓰는 유스케이스 쪽 `application/<컨텍스트>/port` 에 인터페이스로 두되, 여러 컨텍스트가 같이 쓰는 포트는 `application/common/port` 에 두고, 포트가 주고받는 요청·결과 타입도 같은 `port` 패키지에 둔다. 구현은 `infrastructure` 어댑터가 한다. 유스케이스는 Spring Data 리포지토리나 외부 클라이언트 클래스를 직접 주입받지 않는다.
+  Why: 유스케이스가 어댑터 클래스를 직접 쓰면 PTB7 방향이 깨지고, 단위 시험이 DB·외부 API 없이 돌지 못한다. 포트가 `domain/port` 와 `application/*/port` 두 곳에 흩어진 상태를 한 곳으로 정한다. 여러 컨텍스트가 쓰는 포트(예: `MarketQuotePort` 는 order·portfolio·position 세 컨텍스트가 쓴다)는 «쓰는 유스케이스 쪽»만으로 자리가 정해지지 않아 공유 자리를 따로 정했고, 포트 시그니처 타입을 `port` 패키지에 두는 것은 infrastructure 가 PTB7 에서 `port` 패키지만 import 하도록 하기 위해서다(사람 결정 2026-11-15). — enforce: archunit · review
 <!-- gt:PTB9 -->
-- application 계층이 쓰는 Spring 은 `@Service` 와 `org.springframework.transaction.annotation`(`@Transactional`) 둘뿐이다. 그 밖의 Spring 타입(예: `DataIntegrityViolationException`)이 필요하면 어댑터가 애플리케이션 예외나 포트 결과로 바꿔 넘긴다.
-  Why: 트랜잭션 경계는 유스케이스에 둔다(사람 결정 2026-11-15). 영속 예외를 유스케이스가 직접 잡으면 JPA 구현 세부가 업무 분기로 새어 팀 규칙 DD9 가 무너진다. — enforce: archunit · review
+- application 계층이 쓰는 Spring 은 `@Service` 와 `org.springframework.transaction.annotation`(`@Transactional`) 둘뿐이다. 그 밖의 Spring 타입(예: `DataIntegrityViolationException`)이 필요하면 어댑터가 애플리케이션 예외나 포트 결과로 바꿔 넘기고, 영속 예외(`@Version` 충돌, 제약 위반)는 어댑터가 쓰기 뒤 `saveAndFlush`·`flush` 로 어댑터 안에서 일으켜 바꾼다(`data-access.md` PTD3). 유스케이스는 바뀐 애플리케이션 예외만 잡는다.
+  Why: 트랜잭션 경계는 유스케이스에 둔다(사람 결정 2026-11-15). 영속 예외를 유스케이스가 직접 잡으면 JPA 구현 세부가 업무 분기로 새어 팀 규칙 DD9 가 무너진다. `@Version` 충돌과 지연 제약 위반은 flush 를 어댑터 안에서 하지 않으면 커밋 시점에 유스케이스의 `@Transactional` 프록시에서 Spring 타입으로 터져 어댑터가 바꿀 기회가 없으므로 flush 위치까지 함께 정한다. 현재 `SnapshotJobService`·`TaxSummaryCommandService`·`PositionExitTriggerOrchestrator` 3파일이 application 에서 `DataIntegrityViolationException` 을 직접 잡는다(기존 위반). — enforce: archunit · review
 
 ## 금액
 
 <!-- gt:PTB4 -->
-- `BigDecimal` 은 `compareTo` 로 비교하고(`==`·`equals` 금지), 문자열이나 정수로 만들며(`BigDecimal("0.1")`, `BigDecimal(0.1)` 금지), 나눗셈과 반올림에는 scale 과 `RoundingMode` 를 명시한다.
-  Why: Kotlin `==` 는 `equals` 라 scale 까지 비교해 `1.0 != 1.00` 이 되고, `Double` 생성자는 이진 오차를 그대로 싣고, scale 없는 나눗셈은 무한소수에서 예외를 던진다. 셋 다 컴파일은 통과하고 금액이 조용히 틀린다. — enforce: review
+- `BigDecimal` 은 `compareTo` 로 비교하고(`==`·`equals` 금지), 문자열이나 정수로 만들며(`BigDecimal("0.1")`, `BigDecimal(0.1)` 금지), 나눗셈은 Kotlin `/` 연산자를 쓰지 않고 `divide(x, scale, RoundingMode)`(지표 계산처럼 유효숫자로 재면 `divide(x, MathContext)`)로 scale 이나 정밀도와 반올림을 명시한다. `BigDecimal` 을 담은 `data class` 값 객체(PTB5 의 금액 값 객체 등)는 `init` 에서 scale 을 정규화하거나 `equals` 를 `compareTo` 기반으로 둔다.
+  Why: Kotlin `==` 는 `equals` 라 scale 까지 비교해 `1.0 != 1.00` 이 되고, `Double` 생성자는 이진 오차를 그대로 싣고, Kotlin `/` 는 `divide(other, RoundingMode.HALF_EVEN)` 이라 예외 없이 피제수의 scale 로 반올림한다(`BigDecimal("10") / BigDecimal("4")` 는 2). scale 없는 `.divide(x)` 는 무한소수에서 예외를 던지니 이쪽은 시끄럽게 실패하지만 `/` 는 조용히 틀린다. `data class` 의 `==`·`Set`·`Map` 키도 scale 까지 비교해 같은 금액이 서로 다른 값이 된다. 컴파일은 통과하고 금액이 조용히 틀린다. — enforce: review
 
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r3.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r4.md -->
+<!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r5.md -->

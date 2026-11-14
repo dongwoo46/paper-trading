@@ -19,26 +19,25 @@ devkit 0.95.0 `rules/dev-team` 의 원문과 조항마다 대조했다. 판정 �
 | PTB1 도메인/영속 분리 | DD9 | 같은 방향. 초안(엔티티를 애그리거트로 씀)은 DD9 와 반대라 사람 결정으로 분리 쪽으로 고쳤다. 단순 CRUD 예외는 팀 규칙 «No over-engineering» 인용이지 새 예외가 아니다 |
 | PTB2 private set | DD10, DD11 | 같은 방향(Kotlin 형태) |
 | PTB3 id 참조 | DD12, 제안 중인 DD15(BiocomKR/devkit#2471) | 같은 방향. DD15 머지 시 지운다고 조항에 적음 |
-| PTB4 BigDecimal | 루트 CLAUDE.md Financial Safety | 같은 방향 |
-| PTD1, PTD2 | DA1, DA9 | 같은 방향 |
-| PTD3 | DA10 | 같은 방향 |
-| PTD4 리스너 역할 | DA6, DA7 | 초안(커밋 뒤 리스너에서 REQUIRES_NEW 로 쓰기)이 DA6 문장과 반대로 읽혀 고쳤다. 원자적 쓰기는 트랜잭션 안 리스너(DA6), 커밋 뒤 리스너는 DA7 부수효과로 나눔 |
-| PTD5 | 해당 팀 조항 없음 | 충돌 없음 |
+| PTB4 BigDecimal | 루트 CLAUDE.md Financial Safety | 같은 방향. r5: Kotlin `/`(HALF_EVEN, 피제수 scale)와 값 객체 scale 정규화를 더해 좁힘 |
+| PTD1, PTD2 | DA1, DA9 | 같은 방향. r5: PTD2 대상을 DA1 문면(열린 트랜잭션 안)에 맞춰 트랜잭션 안 리스너·그 둘이 부르는 어노테이션 없는 메서드까지 넓혔고, PTD1 은 프록시로 호출되는 리스너·`@Scheduled` 를 포함한다고 적음 |
+| PTD3 | DA10 | 같은 방향. r5: 영속 예외를 어댑터 안 flush 로 일으켜 바꾸고 재시도는 유스케이스 바깥 경계로 적어 PTB9 와 맞춤(DA10 은 재시도 위치를 말하지 않아 충돌 없음) |
+| PTD4 리스너 역할 | DA6, DA7, CS11, DA1, DA9 | 초안(커밋 뒤 리스너에서 REQUIRES_NEW 로 쓰기)이 DA6 문장과 반대로 읽혀 고쳤다. 원자적 쓰기는 트랜잭션 안 리스너(DA6·CS11), 커밋 뒤 리스너는 DA7 부수효과로 나눔. r5: 그래도 «AFTER_COMMIT 에서 DB 를 쓰면 REQUIRES_NEW» 가 쓰기 종류를 한정하지 않아 DA6·CS11 이 막는 커밋하는 동일 DB 핸들러를 열어 줬다(독립 리뷰의 약화 지적). 새 트랜잭션을 그 리스너가 한 외부 부수효과의 결과 기록(DA1·DA9 3단계)에만 허용하고 같은 DB 부수 쓰기는 트랜잭션 안(DA6·CS11)이라고 좁혀 팀 문면과 일치시킴 |
+| PTD5 | 맞닿는 팀 조항 DA23(앱 메모리로 끌어와 처리하지 않기) | 충돌 없음. 컬렉션 fetch join + 페이징은 DA23 이 막는 «DB 밖에서 자르기»의 한 형태이고, `@Modifying` flush·clear 는 팀 조항 없음. r5: `PositionRepository.kt:32` 가 이미 `flushAutomatically = true, clearAutomatically = true` 를 써서 규칙을 그 형태에 맞춤 |
 | PTA1 | LA1 | 같은 방향 |
-| PTA2 | 제안 중인 EV2 | 같은 방향 |
+| PTA2 | 제안 중인 EV2, LA21, LA22 | 같은 방향. r5: LA22 는 유실을 허용하는 작업을 인정하므로 «시세 메시지 유실 허용»은 약화가 아니다. 그 메시지가 매칭·청산을 촉발해 복구 대상이기도 한 모순은 «메시지는 유실 허용, 촉발되는 매칭·청산은 주기 재대조로 복구»로 갈랐고(사람 결정), 실행기 상한은 LA21 과 맞춤 |
 | PTB5 생성 시 불변식(2차 추가) | DD10, DD13 | 같은 방향(값 객체·애그리거트 생성 방식) |
-| PTT1 실제 엔진 시험(2차 추가) | 팀 tests.md | 팀 규칙에 시험 엔진 조항 없음. 단위 시험은 포트 가짜를 쓰도록 예외로 남겨 «가짜는 경계에서만» 원칙과 부딪치지 않음 |
+| PTT1 실제 엔진 시험(2차 추가) | 팀 tests.md TT7 | TT7 은 프로세스 안(도메인·유스케이스·우리 DB 포함)에는 진짜나 가짜를 쓰고 프로세스 밖만 대역으로 바꾸라는 조항이다. PTT1 은 어댑터 자체의 쿼리·락·TTL 시험에서 가짜를 막는 더 엄격한 좁히기이고, 예외(도메인·유스케이스 단위 시험은 포트 가짜)가 TT7 과 같은 방향이라 모순 없음. r5: Testcontainers 사용 사실은 trading-api 만 맞아 모듈 범위를 적음 |
 | PTF1 원장 추가 전용(2차 추가) | 팀 규칙에 없음, CLAUDE.md 감사 추적 | 충돌 없음. devkit 제안으로도 올림 |
 | PTF2 대사(2차 추가) | 팀 규칙에 없음 | 충돌 없음. devkit 제안으로도 올림 |
 | PTF3 불확정 응답(2차 추가) | DA9 | DA9 의 결과 반영 단계를 강화(좁히기). devkit 제안으로도 올림 |
-
 | PTF4 계산 스냅샷(3차) | 팀 규칙에 없음 | 충돌 없음. devkit 제안 #2471 2차에 포함 |
-| PTF5 반열림 구간(3차) | 팀 time.md 에 해당 조항 없음 | 충돌 없음(KST naive 원칙과 독립). devkit 제안 #2471 2차에 포함 |
+| PTF5 반열림 구간(3차) | 팀 time.md 에 해당 조항 없음 | 충돌 없음(KST naive 원칙과 독립). devkit 제안 #2471 2차에 포함. r5: 대상을 연속 시각(`Instant`·`LocalDateTime`)으로 좁히고 이산 `LocalDate`·연도 구간은 양끝 포함이 맞다고 적음(`DailyBalanceRepositoryImpl.kt:17`, `TaxSummaryRepositoryImpl.kt:28`, 파생 `...Between` 포함) |
 | PTF6 예수금 홀드 요청 경로(3차) | DA10, CS11 | 같은 방향. 큐는 알림에만 써서 CS11(부수효과 통로)과 맞음 |
-| PTB6 컬렉션 노출, copy 얕은 복사(3차) | DD10 | 같은 방향(Kotlin 형태) |
-| PTB7 계층 지도(4차) | backend-api 잠금 원칙(의존은 안쪽으로), DD14 | 같은 방향. DD14 가 말하는 «계층»을 이 레포 패키지 이름으로 정한 것. «No over-engineering»(계층 수를 복잡도에 맞춤)과는 돈·상태 컨텍스트가 있는 trading-api 에만 적용해 부딪치지 않음 |
-| PTB8 출력 포트 위치(4차) | DD9 | 같은 방향(유스케이스가 ORM·외부 SDK 를 직접 참조하지 않게 하는 구조) |
-| PTB9 application 의 Spring 허용 범위(4차) | DD9 | 같은 방향. 팀 규칙은 프레임워크를 «바깥 세부»로 두되 금지 목록은 ORM·HTTP·SDK 라, 트랜잭션 어노테이션 허용은 모순 아님(사람 결정) |
+| PTB6 컬렉션 노출, copy 얕은 복사(3차) | DD10 | 같은 방향(Kotlin 형태). r5: 읽기 전용 타입은 같은 컬렉션의 뷰라 복사본(`toList()`)을 우선으로 고침 |
+| PTB7 계층 지도(4차) | backend-api 잠금 원칙(의존은 안쪽으로), DD14, DD9 | 같은 방향. DD14 가 말하는 «계층»을 이 레포 패키지 이름으로 정한 것. «No over-engineering»(계층 수를 복잡도에 맞춤)과는 돈·상태 컨텍스트가 있는 trading-api 에만 적용해 부딪치지 않음. r5: 허용·금지 방향을 빠짐없이 열거(presentation→domain 은 enum·값 타입만, infrastructure→application 은 `port` 패키지만, common 은 domain 과 같이 Spring 금지)해 판정 기준을 채움(사람 결정 «엄격»). 팀 문면보다 엄격한 쪽이라 약화 아님 |
+| PTB8 출력 포트 위치(4차) | DD9 | 같은 방향(유스케이스가 ORM·외부 SDK 를 직접 참조하지 않게 하는 구조). r5: 여러 컨텍스트가 쓰는 포트는 `application/common/port`(사람 결정) |
+| PTB9 application 의 Spring 허용 범위(4차) | DD9, 잠금 원칙(프레임워크는 바깥의 교체 가능한 세부) | 같은 방향. DD9 금지 목록은 ORM·HTTP·SDK 라 트랜잭션 어노테이션 허용은 모순 아님(사람 결정). 잠금 원칙의 «프레임워크는 바깥 세부»보다는 `@Service`·`@Transactional` 을 허용하는 만큼 느슨하나, 현재 application 의 Spring 사용(Component 4, ApplicationEventPublisher 2, Page·Pageable 등)을 줄이는 방향이다. 잠금 원칙은 사람만 고치므로 이 허용 범위는 사람 결정으로 둠. r5: 영속 예외를 어댑터 안 flush 로 바꾼다고 적어 PTD3 와 맞춤 |
 
 2차 추가 근거: 국내 테크 기업 공개 기술 블로그 조사(토스, 우아한형제들, 카카오페이, 강남언니 등). 요약본 기반이라 인용의 글자 대조는 하지 않았다.
 
@@ -46,7 +45,7 @@ devkit 0.95.0 `rules/dev-team` 의 원문과 조항마다 대조했다. 판정 �
 
 근거 문서: devkit `docs/research/ai-doc-official-guidance.md` §1~§4, §7.
 
-- 2차 추가(PTB5, PTT1, PTF1~PTF3) 뒤 조항은 16개, 다섯 파일이며 아래 판정은 2차 추가분에도 같게 적용했다(Why 줄 16개, 강조 0, 분량 합계 약 140줄).
+- 2차 추가(PTB5, PTT1, PTF1~PTF3) 뒤 조항은 16개, 다섯 파일이며(3차 이후 조항 수는 r3·r4·r5 문서의 판정을 따른다) 아래 판정은 2차 추가분에도 같게 적용했다(Why 줄 16개, 강조 0, 분량 합계 약 140줄).
 - 이유(rationale) 보존: 1차 조항 11개 모두 `Why:` 줄을 둔다(파일별 4·5·2개, 조항 수와 같음). §1 「explaining the why behind constraints」와 devkit 실측(근거를 지운 판본 준수 90% → 10%)을 따랐다.
 - 강조 서식: 세 파일에 굵게, IMPORTANT, CRITICAL, MUST 가 0개다(grep 확인). §2 「piling on emphasis mostly makes Claude over-apply the rule」에 맞춰 강조 없이 평문 명령형으로 썼다.
 - 골격(헤딩·불릿): 파일마다 관심사별 헤딩 아래 `gt:` 앵커와 불릿 한 줄 조항으로 썼다(form v2). §3 「group related instructions under markdown headers and bullets」를 따랐다.

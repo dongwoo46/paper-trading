@@ -6,7 +6,8 @@ why: 원장·체결·잔고·정산이나 외부(KIS) 호출 결과를 다루는
 -->
 <!-- devkit:form v2 -->
 
-> 이 레포 전용 사본. 세 조항은 스택 무관이라 devkit 팀 규칙 제안으로도 올렸고(제안 financial-integrity-eda-followup-2026-11-15), 그 제안이 머지되면 이 사본은 지운다. 멱등 쓰기·소비자 중복 제거의 원칙은 팀 규칙 `failure-handling.md`·`data-access.md` DA9 가 SSoT.
+> 이 레포 전용 사본. 이 문서 조항 가운데 PTF1~PTF5 는 스택 무관이라 devkit 팀 규칙 제안으로도 올렸고(PTF1~PTF3 은 제안 financial-integrity-eda-followup-2026-11-15, PTF4·PTF5 는 BiocomKR/devkit#2471 2차), 그 제안이 머지되면 PTF1~PTF5 는 지운다. PTF6(예수금 홀드를 요청 경로에서)은 어느 제안에도 없는 이 레포 조항이라 남긴다. 멱등 쓰기·소비자 중복 제거의 원칙은 팀 규칙 `failure-handling.md`·`data-access.md` DA9 가 SSoT.
+> devkit 은 이 레포의 Kotlin 파일에 팀 규칙을 자동으로 전달하지 않는다(rule-pointer 실측 2026-11-15: `always:dev-team` 만 나온다). 그래서 주문·결제성 쓰기를 만지는 Kotlin 작업·리뷰는 팀 `failure-handling.md` FH1(생성 요청은 `Idempotency-Key` 나 자연 키 upsert)과 `async-external.md` LA11(원격 호출 연결·읽기 타임아웃 명시)을 직접 열어 따른다. devkit 쪽 Kotlin 신호 추가는 devkit 에 제안으로 올린다.
 
 ## 원장
 
@@ -32,8 +33,8 @@ why: 원장·체결·잔고·정산이나 외부(KIS) 호출 결과를 다루는
 - 수수료, 세금, 이자처럼 계산한 금액을 저장하는 행에는 그때 쓴 요율과 정책 버전을 함께 저장하고, 나중의 재계산과 감사는 저장된 요율을 읽는다(현재 설정을 다시 읽지 않는다).
   Why: 요율은 바뀐다. 과거 체결을 오늘 요율로 다시 계산하면 이력이 조용히 바뀌고 대사(PTF2)가 거짓 불일치를 낸다(토스 공개 사례). — enforce: review
 <!-- gt:PTF5 -->
-- 시간 구간은 반열림 `[start, end)` 으로 다룬다. 조회는 `>= start AND < end` 로 쓰고 `BETWEEN` 을 쓰지 않으며, 다음 구간은 앞 구간의 end 에서 시작한다.
-  Why: `BETWEEN` 은 양끝을 포함해 경계 시각의 체결이 두 구간(일봉, 정산일)에 겹쳐 세지고, 끝을 23:59:59 로 잡으면 그 사이의 행을 잃는다(우아한형제들 공개 사례). — enforce: review
+- 연속 시각(`Instant`·`LocalDateTime`) 구간은 반열림 `[start, end)` 으로 다룬다. 조회는 `>= start AND < end` 로 쓰고 `BETWEEN`·Querydsl `.between(`·Spring Data 파생 메서드 `...Between` 을 쓰지 않으며, 다음 구간은 앞 구간의 end 에서 시작한다. 이산 날짜·연도(`LocalDate`·`Int` 연도) 구간은 양끝을 포함하는 닫힌 구간이 맞고, 이 조항 대상이 아니다.
+  Why: `BETWEEN` 은 양끝을 포함해 경계 시각의 체결이 두 구간(일봉, 정산일)에 겹쳐 세지고, 끝을 23:59:59 로 잡으면 그 사이의 행을 잃는다(우아한형제들 공개 사례). 날짜는 하루 단위라 «끝 날짜 포함»이 정의이므로, 이산 날짜 API(`DailyBalanceRepositoryImpl` 의 `businessDate.between(from, to)`, `TaxSummaryRepositoryImpl` 의 `taxYear.between`)를 글자 그대로 `< to` 로 바꾸면 마지막 날이 빠진다. 파생 메서드의 `...Between` 은 `BETWEEN` 글자가 없어 리뷰에서 놓치기 쉬워 대상으로 적는다. — enforce: review
 
 ## 예수금 홀드
 
@@ -43,3 +44,4 @@ why: 원장·체결·잔고·정산이나 외부(KIS) 호출 결과를 다루는
 
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r3.md -->
+<!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r5.md -->
