@@ -7,10 +7,10 @@ import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.junit.AnalyzeClasses
 import com.tngtech.archunit.junit.ArchTest
 import com.tngtech.archunit.lang.ArchRule
-import com.tngtech.archunit.library.freeze.FreezingArchRule
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices
+import com.tngtech.archunit.library.freeze.FreezingArchRule
 import org.springframework.stereotype.Service
 
 /**
@@ -28,8 +28,11 @@ class ArchitectureRulesTest {
     val domainDoesNotDependOnJpaOrSpring: ArchRule =
         FreezingArchRule.freeze(
             noClasses()
-                .that().resideInAPackage("com.papertrading.api.domain..")
-                .should().dependOnClassesThat().resideInAnyPackage("jakarta.persistence..", "org.springframework.."),
+                .that()
+                .resideInAPackage("com.papertrading.api.domain..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage("jakarta.persistence..", "org.springframework.."),
         )
 
     @ArchTest
@@ -37,8 +40,11 @@ class ArchitectureRulesTest {
     val domainDoesNotDependOnOuterLayers: ArchRule =
         FreezingArchRule.freeze(
             noClasses()
-                .that().resideInAPackage("com.papertrading.api.domain..")
-                .should().dependOnClassesThat().resideInAnyPackage(
+                .that()
+                .resideInAPackage("com.papertrading.api.domain..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
                     "com.papertrading.api.application..",
                     "com.papertrading.api.infrastructure..",
                     "com.papertrading.api.presentation..",
@@ -50,8 +56,11 @@ class ArchitectureRulesTest {
     val applicationDoesNotDependOnInfrastructureOrPresentation: ArchRule =
         FreezingArchRule.freeze(
             noClasses()
-                .that().resideInAPackage("com.papertrading.api.application..")
-                .should().dependOnClassesThat().resideInAnyPackage(
+                .that()
+                .resideInAPackage("com.papertrading.api.application..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
                     "com.papertrading.api.infrastructure..",
                     "com.papertrading.api.presentation..",
                 ),
@@ -62,8 +71,10 @@ class ArchitectureRulesTest {
     val applicationUsesOnlyServiceAndTransactionalFromSpring: ArchRule =
         FreezingArchRule.freeze(
             noClasses()
-                .that().resideInAPackage("com.papertrading.api.application..")
-                .should().dependOnClassesThat(
+                .that()
+                .resideInAPackage("com.papertrading.api.application..")
+                .should()
+                .dependOnClassesThat(
                     resideInAPackage("org.springframework..")
                         .and(not(equivalentTo(Service::class.java)))
                         .and(not(resideInAPackage("org.springframework.transaction.annotation.."))),
@@ -75,8 +86,11 @@ class ArchitectureRulesTest {
     val presentationDoesNotDependOnInfrastructure: ArchRule =
         FreezingArchRule.freeze(
             noClasses()
-                .that().resideInAPackage("com.papertrading.api.presentation..")
-                .should().dependOnClassesThat().resideInAPackage("com.papertrading.api.infrastructure.."),
+                .that()
+                .resideInAPackage("com.papertrading.api.presentation..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.papertrading.api.infrastructure.."),
         )
 
     @ArchTest
@@ -84,8 +98,11 @@ class ArchitectureRulesTest {
     val infrastructureDoesNotDependOnPresentation: ArchRule =
         FreezingArchRule.freeze(
             noClasses()
-                .that().resideInAPackage("com.papertrading.api.infrastructure..")
-                .should().dependOnClassesThat().resideInAPackage("com.papertrading.api.presentation.."),
+                .that()
+                .resideInAPackage("com.papertrading.api.infrastructure..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.papertrading.api.presentation.."),
         )
 
     @ArchTest
@@ -93,8 +110,12 @@ class ArchitectureRulesTest {
     val outputPortsResideInApplicationPortPackage: ArchRule =
         FreezingArchRule.freeze(
             classes()
-                .that().areInterfaces().and().haveSimpleNameEndingWith("Port")
-                .should().resideInAPackage("com.papertrading.api.application.*.port"),
+                .that()
+                .areInterfaces()
+                .and()
+                .haveSimpleNameEndingWith("Port")
+                .should()
+                .resideInAPackage("com.papertrading.api.application.*.port"),
         )
 
     @ArchTest
@@ -103,6 +124,7 @@ class ArchitectureRulesTest {
         FreezingArchRule.freeze(
             slices()
                 .matching("com.papertrading.api.application.(*)..")
-                .should().beFreeOfCycles(),
+                .should()
+                .beFreeOfCycles(),
         )
 }
