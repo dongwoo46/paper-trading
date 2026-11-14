@@ -1,8 +1,8 @@
 # Backend API — Kotlin·Spring 도메인 모델과 금액 (paper-trading)
 <!-- devkit:pointer
 path: ^backend/(trading-api|collector-api)/src/main/.+\.kt$
-signal: @Entity|BigDecimal|class \w+\s*(protected )?constructor|private set|@ManyToOne|@OneToMany|@OneToOne
-why: JPA 엔티티(애그리거트)나 금액 계산을 다루는 Kotlin 코드
+signal: @Entity|BigDecimal|class \w+\s*(protected )?constructor|private set|@ManyToOne|@OneToMany|@OneToOne|^import com\.papertrading\.api\.(application|infrastructure|presentation)\.|@Service|@Transactional|interface \w+Port\b
+why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트를 다루는 Kotlin 코드
 -->
 <!-- devkit:form v2 -->
 
@@ -28,6 +28,18 @@ why: JPA 엔티티(애그리거트)나 금액 계산을 다루는 Kotlin 코드
 - 도메인 모델은 내부 컬렉션을 `MutableList`·`MutableMap` 으로 밖에 내주지 않고 읽기 전용 타입이나 복사본으로 내주며, 가변 컬렉션을 담은 `data class` 의 `copy()` 를 상태 분리 수단으로 쓰지 않는다.
   Why: 밖으로 나간 가변 컬렉션은 호출자가 애그리거트 메서드(PTB2)를 거치지 않고 내용을 바꿀 수 있고, `copy()` 는 얕은 복사라 원본과 사본이 같은 컬렉션을 공유해 한쪽 변경이 다른 쪽 불변식을 깬다(LINE 공개 리뷰 기준). — enforce: review
 
+## 계층과 포트 (trading-api)
+
+<!-- gt:PTB7 -->
+- trading-api 의 계층 의존은 `presentation → application → domain` 한 방향이고, `infrastructure` 는 application 포트를 구현하며 domain 을 쓸 수 있다. 금지 방향은 domain → application·infrastructure·presentation, application → infrastructure·presentation, presentation → infrastructure, infrastructure → presentation 이다.
+  Why: 팀 규칙 backend-api 잠금 원칙(의존은 안쪽으로)과 DD14(계층 건너뛰기 금지)를 이 레포 패키지 이름으로 적은 지도다. 지도가 없으면 DD14 위반을 판정할 기준이 없다(실측 2026-11-15: application→infrastructure 28파일, infrastructure→presentation 2파일). 사람 결정 2026-11-15: 클린 아키텍처(포트·어댑터). — enforce: archunit · review
+<!-- gt:PTB8 -->
+- 출력 포트(리포지토리, 외부 API, 캐시, 메시지 발행 인터페이스)는 그것을 쓰는 유스케이스 쪽 `application/<컨텍스트>/port` 에 인터페이스로 두고, 구현은 `infrastructure` 어댑터가 한다. 유스케이스는 Spring Data 리포지토리나 외부 클라이언트 클래스를 직접 주입받지 않는다.
+  Why: 유스케이스가 어댑터 클래스를 직접 쓰면 PTB7 방향이 깨지고, 단위 시험이 DB·외부 API 없이 돌지 못한다. 포트가 `domain/port` 와 `application/*/port` 두 곳에 흩어진 상태를 한 곳으로 정한다(사람 결정 2026-11-15). — enforce: archunit · review
+<!-- gt:PTB9 -->
+- application 계층이 쓰는 Spring 은 `@Service` 와 `org.springframework.transaction.annotation`(`@Transactional`) 둘뿐이다. 그 밖의 Spring 타입(예: `DataIntegrityViolationException`)이 필요하면 어댑터가 애플리케이션 예외나 포트 결과로 바꿔 넘긴다.
+  Why: 트랜잭션 경계는 유스케이스에 둔다(사람 결정 2026-11-15). 영속 예외를 유스케이스가 직접 잡으면 JPA 구현 세부가 업무 분기로 새어 팀 규칙 DD9 가 무너진다. — enforce: archunit · review
+
 ## 금액
 
 <!-- gt:PTB4 -->
@@ -36,3 +48,4 @@ why: JPA 엔티티(애그리거트)나 금액 계산을 다루는 Kotlin 코드
 
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r3.md -->
+<!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r4.md -->
