@@ -100,7 +100,15 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] trading-api 돈·상태 결함 바로잡기 (체결 금액·잠금 해제·취소·멱등·수수료) | project: trading-api | phase: trading-api-money-state | priority: P1
   - 상태: 계획 승인(2026-11-15), PR-A1 착수. 계획 `docs/features/running/trading-api-money-state/development-plan.md`, 진행 `state.md`
   - 범위: PR-A1 체결 금액·최종 해제(#8 #127 #108) → A2 취소 해제(#253) → A3 KIS 접수 주문 취소 차단 → A4 멱등 → A5 수수료 → A6 조건부 보정. B·C·D 갈래는 이 항목 밖
-  - 오류 분류 정리(AE19)는 별도 항목으로 미룸(DEC-07), 원장 밖 관찰 O1~O3 은 DEC-08 로 다음 묶음
+  - 원장 밖 관찰 O1~O3 은 DEC-08 로 다음 묶음. 아래 두 항목은 이 기능에서 미룬 별도 항목
+
+- [ ] 금액 열 자리수 확장 (소수 수량 나눠 체결 시 끝수 합이 잠금 초과) | project: trading-api | phase: trading-api-amount-column-scale | priority: P2
+  - 증상: 잠금·체결 금액이 저장 열 소수 4자리로 잘려, 소수 수량을 나눠 체결하면 끝수 합이 잠금을 0.0001 넘어 마지막 체결이 실패할 수 있음(PR-A1 합동 리뷰 P-05, 기존 결함)
+  - 범위: orders·계좌·원장·정산 금액 열의 scale 정책과 마이그레이션 결정(스키마 변경이라 사람 결정 필요). 정산 행 setScale(4) 도 함께 점검
+
+- [ ] trading-api 주문 오류 분류 정리 (AE19, DEC-07) | project: trading-api | phase: trading-api-order-errors | priority: P2
+  - 손댄 파일 Order.kt·OrderCommandService.kt 의 check·require 400 을 분류표대로(남의 주문 404, 취소 불가 상태 409, 수량 부족 409 등), #591 포지션 없음 조용히 건너뜀 포함
+  - 커밋 기록: `API-Errors-Deferred: backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/order/Order.kt — 오류 분류 정리는 별도 항목`
 
 ### P0 — 포지션 청산 트리거 모델 리팩터링 ⚠️ 최우선
 

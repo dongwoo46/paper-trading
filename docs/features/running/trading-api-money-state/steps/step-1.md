@@ -21,8 +21,8 @@
 | Title | PR-A1 execution amount contract and final lock release |
 | Feature | trading-api-money-state |
 | Based on | development-plan.md sections 1-1 (#8 #127 #108 #551 #552), 2 (D-01 D-02 fill side), 5 item 1 |
-| Status | todo / in progress / done / blocked |
-| Owner |  |
+| Status | in progress |
+| Owner | Maker (Claude) |
 
 ---
 
@@ -58,10 +58,10 @@
 
 ## 4. Completion criteria  (plan)
 
-- [ ] Red tests fail for the ledger reason before the fix and pass after
-- [ ] gradlew test ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=main all green
-- [ ] ArchitectureRulesTest green and archunit_store diff 0
-- [ ] root-cause-check passes on the staged chain
+- [x] Red tests fail for the ledger reason before the fix and pass after
+- [x] gradlew test ktlintCheck detekt verifyLintBaselinesNotGrown all green (baseline ref e510634, not main — see section 8)
+- [x] ArchitectureRulesTest green; archunit_store diff is one deleted line (human-approved, see section 8), not zero
+- [x] root-cause-check passes on the staged chains (root-cause.md, root-cause-a1-review.md)
 
 ---
 
@@ -71,7 +71,10 @@
 
 > Fill it by spelling out the §2 approach as the actual work (concretely, what was done).
 
--
+- 2980dfa lint-clean of Order, ExecutionProcessor, OrderTest, ExecutionProcessorTest (ktlint run on those four paths only; detekt local items fixed).
+- 1dd52a5 red tests with the ledger numbers (3 red, regression green); 474e066 fix D-01 and D-02 plus root-cause.md; 8ee77a3 baseline regeneration.
+- Joint review round 1 (review/panel.md): 44a830c red edge tests (11 red), 50f382d fix (no in-memory rounding, overfill rejected, two warn logs, KDoc), cf00dac baseline position update.
+- Docs: plan section 8-1 and 6 updated, TODO items for P-05 and AE19, review files and explainer html.
 
 ---
 
@@ -79,14 +82,17 @@
 
 | What | How it was checked | Result |
 |---|---|---|
-|  | test / screenshot / API contract / manual |  |
+| Red before fix (ledger numbers) | 1dd52a5 run: OrderTest average, ExecutionProcessorTest two-fill cases | 3 red, "잠금 예수금이 부족합니다." as in the ledger |
+| Red before review fix | 44a830c run of OrderTest and ExecutionProcessorTest | 11 red, then green after 50f382d |
+| Full gate | `./gradlew test ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=e510634 --rerun-tasks` | BUILD SUCCESSFUL at cf00dac (7m40s); baselines grown 0 vs e510634 for ktlint and detekt |
+| Frozen store | `git diff` of archunit_store | one line deleted, none added |
 
 ---
 
 ## 7. Result  (record)
 
-- Done:
-- Changed files / PR:
+- Done: PR-A1 code, tests, root-cause chains and review round 1 fixes. The done mark is the human's.
+- Changed files / PR: Order.kt, ExecutionProcessor.kt, OrderTest.kt, ExecutionProcessorTest.kt, config baselines, one archunit_store line. PR not opened yet.
 
 ---
 
@@ -96,4 +102,9 @@
 
 | Problem | How it was handled |
 |---|---|
-|  | new step / change an existing step / open-questions flag / ignore |
+| Deviation 1: ArchitectureRulesTest failed with StoreUpdateFailedException after deleting releaseLockedExcess (a fixed frozen violation cannot leave the read-only store) | human approved deleting that one stored line (2026-11-15); no update option used; plan section 6 expectation changed to "only the fixed line deleted" |
+| Deviation 2: a fourth AccountLedgerRepository.save call in processFill would be a new frozen violation | execution ledger save merged into one call site (count 3 kept); review judged it legitimate |
+| Deviation 3: baseline ref e510634 instead of main | local main (0f57687) predates the baseline files, so the comparison is skipped ("신규 도입"); e510634 is the branch base and has them |
+| Review blockers P-01~P-03: A1 fix added 4-digit in-memory rounding | human decision: no in-memory rounding (plan section 8-1); fixed in 50f382d with red tests first |
+| P-05: storage column 4-digit remainder can exceed the lock | TODO item for a column scale change (schema decision); not fixed here |
+| P-14: service tests mock repositories | left to the C track (ports), plan section 9 |

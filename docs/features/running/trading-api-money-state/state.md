@@ -14,8 +14,8 @@
 |---|---|
 | Feature | trading-api-money-state |
 | Based on | development-plan.md |
-| Updated |  |
-| Overall status | not started / in progress / done / blocked |
+| Updated | 2026-11-15 |
+| Overall status | in progress |
 
 > Step, status and ownership (session, branch, worktree) are collected in the status table of [progress.md](./progress.md) — this file's job is the step roadmap detail.
 
@@ -25,7 +25,7 @@
 
 > One line on where things are now. Example: "step-3 in progress (step-1 and step-2 done)"
 
-step-1 in progress: lint, red-test and fix commits done; lint baseline regeneration is the last commit.
+step-1 in progress: PR-A1 implemented and committed, joint review round 1 (panel.md) fixed except P-05 and P-14, which are deferred; waiting for the human to mark step-1 done and open the PR.
 
 ---
 
@@ -37,7 +37,7 @@ step-1 in progress: lint, red-test and fix commits done; lint baseline regenerat
 
 | Step | Title | Status | File | Note |
 |---|---|---|---|---|
-| 1 | PR-A1 execution amount contract and final lock release | in progress | steps/step-1.md | lint, red tests, fix committed; baseline regeneration next |
+| 1 | PR-A1 execution amount contract and final lock release | in progress | steps/step-1.md | review round 1 fixed (P-01~P-04 P-06~P-13); P-05 in TODO, P-14 left to C track; done mark is the human's |
 | 2 | PR-A2 cancel-side lock release | todo | steps/step-2.md |  |
 | 3 | PR-A3 block user cancel of broker-submitted orders | todo | steps/step-3.md |  |
 | 4 | PR-A4 idempotency key reuse and concurrent same key | todo | steps/step-4.md |  |
@@ -55,6 +55,8 @@ step-1 in progress: lint, red-test and fix commits done; lint baseline regenerat
 | Date | Change | Reason |
 |---|---|---|
 | (example) 6/7 | step-2.5 added | step-2 found a missing field in the API response |
+| 2026-11-15 | step-1 completion criteria deviate: baseline ref e510634 instead of main, archunit_store 1 line deleted, ledger save merged | local main is stale and has no baseline files; the frozen store cannot shrink without the human-approved deletion (plan §8-1) |
+| 2026-11-15 | step-1 scope grew: in-memory rounding removed, overfill rejected, two warn logs | joint review blockers P-01~P-03 and human decision on rounding (plan §8-1) |
 
 ---
 

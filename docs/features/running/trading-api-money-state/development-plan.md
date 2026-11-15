@@ -203,7 +203,7 @@ PR 안 커밋 순서(공통): 1. 린트 정리 — 손댈 파일만, 동작 불�
 | 같은 키 동시 요청 (#249) | integration (Testcontainers) | 위와 같음 | 시험 트랜잭션이 계좌 행을 잡은 채 두 스레드가 같은 키로 placeOrder → `pg_stat_activity` 에서 락 대기 2건 확인 뒤 풀기 → 둘 다 같은 id, orders 행 1, BUY_LOCK 원장 1. 지금 코드는 하나가 DataIntegrityViolationException 으로 빨강 |
 | 정책은 체결 시각 (#126) | unit | ExecutionProcessorTest | `findActivePolicy(mode, market, executedAt)` → P1, 다른 시각 → P2 로 stub: 수수료 = P1.calculateFee |
 | 수수료 = 도메인 (#245) | unit | 같음 | 요율 0.000015, 1@70001: fee compareTo policy.calculateFee(70001) |
-| 계층 동결 | unit (ArchUnit) | `./gradlew test --tests '*ArchitectureRulesTest'` | 초록, 동결 저장소 diff 0 |
+| 계층 동결 | unit (ArchUnit) | `./gradlew test --tests '*ArchitectureRulesTest'` | 초록, 동결 저장소 diff = 사라진 위반 줄 삭제만(추가 0) |
 | 전체 게이트 | 전체 | `cd backend/trading-api && ./gradlew test ktlintCheck detekt verifyLintBaselinesNotGrown` (PR 전체 비교는 `-PlintBaselineRef=main` — 기본 ref HEAD 는 커밋 뒤 늘 통과) | 모두 초록, 손댄 파일 기준선 항목 수 감소(baseline.xml diff 로 확인) |
 | KIS_PAPER 부분 체결 실측 | manual (선택, 사람) | 모의계좌에서 부분 체결 주문 | 최종 체결 반영·잠금 0 |
 
@@ -254,6 +254,9 @@ PR 안 커밋 순서(공통): 1. 린트 정리 — 손댈 파일만, 동작 불�
 **사람 결정 (2026-11-15, 팝업):** 계획 승인 «승인, A1부터». DEC-01 = 1(도메인 UP 유지) · DEC-02 = 1(409, 본문 전부 비교) · DEC-03 = 1(B 첫 PR) · DEC-04a = 1(사용자 취소만 501) · DEC-05~08 = 각 1안. DEC-04b 는 B 착수 때 확정.
 **DEC-01 변경 (2026-11-15, 사람 «돈은 반올림같은거하면안되는데?» 뒤 팝업):** 1안 철회 → 3안(실제 증권사 수수료·세금 원 미만 처리 규칙을 출처와 조사한 뒤 결정). PR-A5 의 #245 는 그때까지 대기, #126(정책 조회 시각)은 영향 없음.
 **DEC-01 확정 (2026-11-15, 조사 뒤 팝업 «건별 절사, 잠정»):** 수수료는 체결 1건마다 `RoundingMode.DOWN`(원 미만 절사), FeePolicy.calculateFee 한 곳. 근거: 삼성증권 수수료 안내 «원미만 절사»(https://samsungpop.com/v2/today-invest/series/firststep-2072), 국고금 관리법 제47조②(국세 과세표준 1원 미만 끝수 미계산, 위키소스 2016판 — 현행 미확인). 미확인: KIS 원 미만 규칙, 건별·일별 단위, 거래세 세액 끝수. PR-A5 는 이 규칙과 미확인 사항을 레포 규칙 문서에 잠정 규칙으로 적고 FeePolicyTest 를 DOWN 으로 바꿈(의도 변경 — 근거 이 줄).
+**동결 저장소 1줄 삭제 승인 (2026-11-15, 팝업 «그 한 줄만 삭제»):** `archunit_store/bb05cc60-ae2b-4a57-8f2e-cec4890e2499` 164번 줄(`releaseLockedExcess` → `AccountLedgerRepository.save`) 한 줄만 손으로 삭제 허용. 고쳐서 사라진 위반 1건이고 줄 추가는 없으며 갱신 옵션은 쓰지 않음. 근거: ArchUnit 은 해결된 위반을 저장소에서 지우지 못하면 `StoreUpdateFailedException` 으로 실패(합동 리뷰가 바이트코드로 확인). 이 결정으로 §6 «계층 동결» 기대값이 «diff 0» 에서 «사라진 위반 줄 삭제만»으로 바뀜.
+**원장 저장 합침 (PR-A1, 합동 리뷰 정당 판정):** 동결 저장소가 `processFill` 의 `AccountLedgerRepository.save` 호출을 3건으로 세므로(4건이면 새 위반, 2건이면 해결 위반) 체결 원장(매수·매도) 저장을 한 곳으로 합쳐 호출 수 3 유지. 매도에서 원장 저장이 정산 저장 뒤로 가나 같은 트랜잭션이고 원장 금액·`balanceAfter` 값은 그대로. 이후 PR 이 `processFill` 에 저장 호출을 더하려면 이 제약을 따른다.
+**메모리 반올림 제거 (2026-11-15, 팝업, 사람 원칙 «돈은 반올림같은거하면안되는데»):** §2 AS-01(체결 금액 scale 4 HALF_UP)과 D-01 의 «이번 체결 금액(수량×체결가, scale 4 HALF_UP)» 을 철회한다. 이번 체결 금액·누적 금액은 반올림 없이 수량×체결가이고, 평균가만 누적 금액 ÷ 누적 수량의 4자리 HALF_UP(나눗셈 자리수 명시). 매도 순대금 반올림도 없앴다. 수수료 반올림은 DEC-01(PR-A5), 저장 열 소수 4자리 끝수(리뷰 P-05)는 TODO 별도 항목.
 
 ---
 
