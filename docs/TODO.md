@@ -95,6 +95,13 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ## trading-api
 
+### P1 — 돈·상태 결함 바로잡기 (감사 원장 A 갈래)
+
+- [ ] trading-api 돈·상태 결함 바로잡기 (체결 금액·잠금 해제·취소·멱등·수수료) | project: trading-api | phase: trading-api-money-state | priority: P1
+  - 상태: 계획 승인(2026-11-15), PR-A1 착수. 계획 `docs/features/running/trading-api-money-state/development-plan.md`, 진행 `state.md`
+  - 범위: PR-A1 체결 금액·최종 해제(#8 #127 #108) → A2 취소 해제(#253) → A3 KIS 접수 주문 취소 차단 → A4 멱등 → A5 수수료 → A6 조건부 보정. B·C·D 갈래는 이 항목 밖
+  - 오류 분류 정리(AE19)는 별도 항목으로 미룸(DEC-07), 원장 밖 관찰 O1~O3 은 DEC-08 로 다음 묶음
+
 ### P0 — 포지션 청산 트리거 모델 리팩터링 ⚠️ 최우선
 
 - [x] PositionExitTrigger 단일 조건 모델 리팩터링 | project: trading-api | phase: position-exit-trigger-model-refactor | priority: P0 | done: 2026-05-19
