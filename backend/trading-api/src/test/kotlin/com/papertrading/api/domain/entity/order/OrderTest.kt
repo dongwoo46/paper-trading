@@ -21,7 +21,7 @@ class OrderTest {
     // --- create ---
 
     @Test
-    fun create_지정가_매수_주문을_생성하면_초기_상태는_PENDING이다() {
+    fun `create_지정가_매수_주문을_생성하면_초기_상태는_PENDING이다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
 
         assertEquals(OrderStatus.PENDING, order.orderStatus)
@@ -34,7 +34,7 @@ class OrderTest {
     }
 
     @Test
-    fun create_종목코드가_소문자이면_대문자로_정규화된다() {
+    fun `create_종목코드가_소문자이면_대문자로_정규화된다`() {
         val order = Order.create(
             account = createAccount(),
             ticker = "aapl",
@@ -44,14 +44,14 @@ class OrderTest {
             orderCondition = OrderCondition.GTC,
             quantity = BigDecimal("5"),
             limitPrice = BigDecimal("200.0000"),
-            idempotencyKey = "key-aapl"
+            idempotencyKey = "key-aapl",
         )
 
         assertEquals("AAPL", order.ticker)
     }
 
     @Test
-    fun create_수량이_0이하면_예외를_던진다() {
+    fun `create_수량이_0이하면_예외를_던진다`() {
         assertThrows(IllegalArgumentException::class.java) {
             Order.create(
                 account = createAccount(),
@@ -61,13 +61,13 @@ class OrderTest {
                 orderSide = OrderSide.BUY,
                 orderCondition = OrderCondition.GTC,
                 quantity = BigDecimal.ZERO,
-                idempotencyKey = "key-invalid"
+                idempotencyKey = "key-invalid",
             )
         }
     }
 
     @Test
-    fun create_지정가_주문에_가격이_없으면_예외를_던진다() {
+    fun `create_지정가_주문에_가격이_없으면_예외를_던진다`() {
         assertThrows(IllegalArgumentException::class.java) {
             Order.create(
                 account = createAccount(),
@@ -78,13 +78,13 @@ class OrderTest {
                 orderCondition = OrderCondition.GTC,
                 quantity = BigDecimal("10"),
                 limitPrice = null,
-                idempotencyKey = "key-no-price"
+                idempotencyKey = "key-no-price",
             )
         }
     }
 
     @Test
-    fun create_idempotencyKey가_빈값이면_예외를_던진다() {
+    fun `create_idempotencyKey가_빈값이면_예외를_던진다`() {
         assertThrows(IllegalArgumentException::class.java) {
             Order.create(
                 account = createAccount(),
@@ -94,7 +94,7 @@ class OrderTest {
                 orderSide = OrderSide.BUY,
                 orderCondition = OrderCondition.GTC,
                 quantity = BigDecimal("10"),
-                idempotencyKey = "  "
+                idempotencyKey = "  ",
             )
         }
     }
@@ -102,13 +102,13 @@ class OrderTest {
     // --- applyExecution ---
 
     @Test
-    fun applyExecution_단일_전량_체결시_FILLED로_전환된다() {
+    fun `applyExecution_단일_전량_체결시_FILLED로_전환된다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
 
         order.applyExecution(
             executedQty = BigDecimal("10"),
             newAvgPrice = BigDecimal("70000"),
-            executedFee = BigDecimal("350")
+            executedFee = BigDecimal("350"),
         )
 
         assertEquals(OrderStatus.FILLED, order.orderStatus)
@@ -118,13 +118,13 @@ class OrderTest {
     }
 
     @Test
-    fun applyExecution_부분_체결시_PARTIAL로_전환된다() {
+    fun `applyExecution_부분_체결시_PARTIAL로_전환된다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
 
         order.applyExecution(
             executedQty = BigDecimal("4"),
             newAvgPrice = BigDecimal("70000"),
-            executedFee = BigDecimal("140")
+            executedFee = BigDecimal("140"),
         )
 
         assertEquals(OrderStatus.PARTIAL, order.orderStatus)
@@ -132,7 +132,7 @@ class OrderTest {
     }
 
     @Test
-    fun applyExecution_부분체결_후_잔량_체결되면_FILLED로_전환된다() {
+    fun `applyExecution_부분체결_후_잔량_체결되면_FILLED로_전환된다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
         order.applyExecution(BigDecimal("4"), BigDecimal("70000"), BigDecimal("140"))
 
@@ -143,7 +143,7 @@ class OrderTest {
     }
 
     @Test
-    fun applyExecution_totalAmount는_누적_체결금액이다() {
+    fun `applyExecution_totalAmount는_누적_체결금액이다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
         order.applyExecution(BigDecimal("4"), BigDecimal("69000"), BigDecimal("140"))
 
@@ -154,7 +154,7 @@ class OrderTest {
     }
 
     @Test
-    fun applyExecution_CANCELLED_상태에서는_예외를_던진다() {
+    fun `applyExecution_CANCELLED_상태에서는_예외를_던진다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
         order.cancel()
 
@@ -164,7 +164,7 @@ class OrderTest {
     }
 
     @Test
-    fun applyExecution_FILLED_상태에서는_예외를_던진다() {
+    fun `applyExecution_FILLED_상태에서는_예외를_던진다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("5"), price = BigDecimal("70000"))
         order.applyExecution(BigDecimal("5"), BigDecimal("70000"), BigDecimal("175"))
 
@@ -176,7 +176,7 @@ class OrderTest {
     // --- cancel ---
 
     @Test
-    fun cancel_PENDING_주문을_취소하면_CANCELLED로_전환된다() {
+    fun `cancel_PENDING_주문을_취소하면_CANCELLED로_전환된다`() {
         val order = createLimitBuyOrder()
 
         order.cancel()
@@ -185,7 +185,7 @@ class OrderTest {
     }
 
     @Test
-    fun cancel_PARTIAL_주문을_취소하면_CANCELLED로_전환된다() {
+    fun `cancel_PARTIAL_주문을_취소하면_CANCELLED로_전환된다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
         order.applyExecution(BigDecimal("3"), BigDecimal("70000"), BigDecimal("105"))
 
@@ -195,7 +195,7 @@ class OrderTest {
     }
 
     @Test
-    fun cancel_FILLED_주문은_취소_불가하다() {
+    fun `cancel_FILLED_주문은_취소_불가하다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("5"), price = BigDecimal("70000"))
         order.applyExecution(BigDecimal("5"), BigDecimal("70000"), BigDecimal("175"))
 
@@ -205,7 +205,7 @@ class OrderTest {
     }
 
     @Test
-    fun cancel_이미_취소된_주문은_재취소_불가하다() {
+    fun `cancel_이미_취소된_주문은_재취소_불가하다`() {
         val order = createLimitBuyOrder()
         order.cancel()
 
@@ -217,7 +217,7 @@ class OrderTest {
     // --- isCancellable ---
 
     @Test
-    fun isCancellable_PENDING과_PARTIAL만_true를_반환한다() {
+    fun `isCancellable_PENDING과_PARTIAL만_true를_반환한다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
 
         assertTrue(order.isCancellable())
@@ -232,7 +232,7 @@ class OrderTest {
     // --- assignExternalOrderId ---
 
     @Test
-    fun assignExternalOrderId_처음_설정하면_저장된다() {
+    fun `assignExternalOrderId_처음_설정하면_저장된다`() {
         val order = createLimitBuyOrder()
 
         order.assignExternalOrderId("KIS-ORD-12345")
@@ -241,7 +241,7 @@ class OrderTest {
     }
 
     @Test
-    fun assignExternalOrderId_이미_설정된_경우_예외를_던진다() {
+    fun `assignExternalOrderId_이미_설정된_경우_예외를_던진다`() {
         val order = createLimitBuyOrder()
         order.assignExternalOrderId("KIS-ORD-12345")
 
@@ -255,22 +255,22 @@ class OrderTest {
     // --- remainingLockedAmount ---
 
     @Test
-    fun remainingLockedAmount_체결이_없으면_전액이_잔여잠금이다() {
+    fun `remainingLockedAmount_체결이_없으면_전액이_잔여잠금이다`() {
         val order = createLimitBuyOrder(
             qty = BigDecimal("10"),
             price = BigDecimal("70000"),
-            lockedAmount = BigDecimal("700000")
+            lockedAmount = BigDecimal("700000"),
         )
 
         assertEquals(0, order.remainingLockedAmount().compareTo(BigDecimal("700000")))
     }
 
     @Test
-    fun remainingLockedAmount_체결가가_지정가보다_낮으면_차액이_남는다() {
+    fun `remainingLockedAmount_체결가가_지정가보다_낮으면_차액이_남는다`() {
         val order = createLimitBuyOrder(
             qty = BigDecimal("10"),
             price = BigDecimal("70000"),
-            lockedAmount = BigDecimal("700000")
+            lockedAmount = BigDecimal("700000"),
         )
         // 실제 체결가 68000 * 10 = 680000 → 잔여 = 700000 - 680000 = 20000
         order.applyExecution(BigDecimal("10"), BigDecimal("68000"), BigDecimal("340"))
@@ -279,7 +279,7 @@ class OrderTest {
     }
 
     @Test
-    fun remainingLockedAmount_매도주문은_잠금이_없어_0이다() {
+    fun `remainingLockedAmount_매도주문은_잠금이_없어_0이다`() {
         val order = Order.create(
             account = createAccount(),
             ticker = "005930",
@@ -290,7 +290,7 @@ class OrderTest {
             quantity = BigDecimal("10"),
             limitPrice = BigDecimal("70000"),
             lockedAmount = BigDecimal.ZERO,
-            idempotencyKey = "sell-key-001"
+            idempotencyKey = "sell-key-001",
         )
 
         assertEquals(0, order.remainingLockedAmount().compareTo(BigDecimal.ZERO))
@@ -301,7 +301,7 @@ class OrderTest {
     private fun createLimitBuyOrder(
         qty: BigDecimal = BigDecimal("10"),
         price: BigDecimal = BigDecimal("70000"),
-        lockedAmount: BigDecimal = BigDecimal("700000")
+        lockedAmount: BigDecimal = BigDecimal("700000"),
     ): Order = Order.create(
         account = createAccount(),
         ticker = "005930",
@@ -312,16 +312,18 @@ class OrderTest {
         quantity = qty,
         limitPrice = price,
         lockedAmount = lockedAmount,
-        idempotencyKey = "test-key-${System.nanoTime()}"
+        idempotencyKey = "test-key-${System.nanoTime()}",
     )
 
     private fun createAccount(): Account = Account.create(
         accountName = "test-account",
         accountType = AccountType.STOCK,
         tradingMode = TradingMode.LOCAL,
-        initialDeposit = BigDecimal("10000000")
+        initialDeposit = BigDecimal("10000000"),
     )
 
-    private fun assertZero(value: BigDecimal) =
+    // devkit:test-change 서식 정리(린트 DEC-06, 사람 승인 계획 2026-11-15) — 단언 내용 불변
+    private fun assertZero(value: BigDecimal) {
         assertEquals(0, value.compareTo(BigDecimal.ZERO), "Expected zero but was $value")
+    }
 }

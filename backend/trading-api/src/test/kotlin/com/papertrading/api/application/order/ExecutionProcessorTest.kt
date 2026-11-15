@@ -1,6 +1,12 @@
 package com.papertrading.api.application.order
 
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.feepolicy.FeePolicy
+import com.papertrading.api.domain.entity.order.Execution
+import com.papertrading.api.domain.entity.order.Order
+import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.entity.settlement.Settlement
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
@@ -8,12 +14,7 @@ import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.entity.account.Account
-import com.papertrading.api.support.withId
-import com.papertrading.api.domain.entity.order.Execution
-import com.papertrading.api.domain.entity.feepolicy.FeePolicy
-import com.papertrading.api.domain.entity.order.Order
-import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.event.ExecutionFilledEvent
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
@@ -23,8 +24,7 @@ import com.papertrading.api.infrastructure.persistence.OrderRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementExecutionRepository
 import com.papertrading.api.infrastructure.persistence.SettlementRepository
-import com.papertrading.api.domain.entity.settlement.Settlement
-import com.papertrading.api.domain.event.ExecutionFilledEvent
+import com.papertrading.api.support.withId
 import io.mockk.every
 import io.mockk.just
 import io.mockk.justRun
@@ -70,13 +70,15 @@ class ExecutionProcessorTest {
         slackNotificationEventPublisher = slackNotificationEventPublisher,
     )
 
-    private fun account(tradingMode: TradingMode, deposit: BigDecimal = BigDecimal("1000000")): Account =
-        Account.create(
-            accountName = "test",
-            accountType = AccountType.STOCK,
-            tradingMode = tradingMode,
-            initialDeposit = deposit,
-        ).withId(1L)
+    private fun account(
+        tradingMode: TradingMode,
+        deposit: BigDecimal = BigDecimal("1000000"),
+    ): Account = Account.create(
+        accountName = "test",
+        accountType = AccountType.STOCK,
+        tradingMode = tradingMode,
+        initialDeposit = deposit,
+    ).withId(1L)
 
     private fun sellOrder(account: Account, qty: BigDecimal = BigDecimal("5")): Order = Order.create(
         account = account,
@@ -137,7 +139,7 @@ class ExecutionProcessorTest {
         assertEquals(
             0,
             initialDeposit.add(expectedNetProceeds).compareTo(account.availableDeposit),
-            "availableDeposit should be ${initialDeposit.add(expectedNetProceeds)} but was ${account.availableDeposit}"
+            "availableDeposit should be ${initialDeposit.add(expectedNetProceeds)} but was ${account.availableDeposit}",
         )
 
         assertEquals(0, BigDecimal.ZERO.compareTo(settlementSlot.captured.tax))
@@ -189,7 +191,7 @@ class ExecutionProcessorTest {
         verify(exactly = 1) { settlementRepository.save(any()) }
     }
 
-    /** Spec Test 1C: verify publishEvent(ExecutionFilledEvent) called after fill() with correct ticker, side, executionId */
+    /** Spec Test 1C: fill() 뒤 ExecutionFilledEvent 발행(ticker, side, executionId 일치) */
     @Test
     fun `fill publishes ExecutionFilledEvent with correct ticker, side, and executionId`() {
         val account = account(TradingMode.LOCAL)
@@ -216,4 +218,3 @@ class ExecutionProcessorTest {
         assertEquals(OrderSide.SELL, publishedEvent.side)
     }
 }
-

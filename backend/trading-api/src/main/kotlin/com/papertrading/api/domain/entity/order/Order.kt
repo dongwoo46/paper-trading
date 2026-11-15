@@ -1,12 +1,12 @@
 package com.papertrading.api.domain.entity.order
 
 import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.base.BaseAuditEntity
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
-import com.papertrading.api.domain.entity.base.BaseAuditEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -32,7 +32,9 @@ import java.time.Instant
 @Entity
 @Table(
     name = "orders",
-    uniqueConstraints = [UniqueConstraint(name = "uk_orders_account_idempotency", columnNames = ["account_id", "idempotency_key"])]
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_orders_account_idempotency", columnNames = ["account_id", "idempotency_key"]),
+    ],
 )
 class Order protected constructor() : BaseAuditEntity() {
 
@@ -155,13 +157,17 @@ class Order protected constructor() : BaseAuditEntity() {
     }
 
     /** 취소 시 계좌에 반환할 잠금 해제 금액 (초기 잠금 - 실체결 금액) */
-    fun remainingLockedAmount(): BigDecimal =
-        lockedAmount.subtract(totalAmount ?: BigDecimal.ZERO).coerceAtLeast(BigDecimal.ZERO)
+    fun remainingLockedAmount(): BigDecimal {
+        val remaining = lockedAmount.subtract(totalAmount ?: BigDecimal.ZERO)
+        return remaining.coerceAtLeast(BigDecimal.ZERO)
+    }
 
-    fun isCancellable(): Boolean =
-        orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PARTIAL
+    fun isCancellable(): Boolean = orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PARTIAL
 
     companion object {
+        /** 금액·평균가 소수 자리수 (orders 금액 열 scale 4) */
+        const val AMOUNT_SCALE = 4
+
         fun create(
             account: Account,
             ticker: String,
