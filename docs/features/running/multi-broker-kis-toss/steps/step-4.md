@@ -21,7 +21,7 @@
 | Title | 토스 토큰 기반 |
 | Feature | multi-broker-kis-toss |
 | Based on | development-plan §5 1단계 3번(토큰 기반, 스키마 없이 가능), §2 D10(토큰 저장)·D11(발급 직렬화)·D12(무효화 부분)·D15(J·K 범주 예외)·D17(설정과 비활성), §3 해당 행, §4 설정 키, §6 암호기·토큰 동시 발급과 저장·락·비활성·비밀값 로그 누출 행, feature-spec RULE-05·RULE-06 |
-| Status | in progress |
+| Status | done |
 | Owner |  |
 
 ---
@@ -103,12 +103,13 @@
 | 변이 실험 | 락 안 재확인 제거 | 재확인 시험 1건 실패 후 복구 |
 | 린트 | `./gradlew compileKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` | exit 0, 기준선 증가 0건 |
 | 범위 | `git status` | `infrastructure/kis/**`·collector-api·trading-web 변경 0 |
+| 전체 스위트 | 커밋 `da617e5` 푸시 뒤 CI `full-test` 실행 43688563304 | success (trading-api, collector-api, trading-web) |
 
 ---
 
 ## 7. Result  (record)
 
-- Done: §4 완료 기준 4개를 시험·린트로 충족(완료 선언은 사람 몫, Status 는 in progress 로 둠). 커밋 전
+- Done: §4 완료 기준 4개를 시험·린트·CI 전체 스위트로 충족, 커밋 `da617e5`. 사람이 2026-11-15 «step 4 CI 확인과 done 처리»를 확인해 done. 리뷰 후속 9건은 open-questions FLAG-15로 step 5 전에 고침
 - Changed files / PR: 아래 경로는 `backend/trading-api/` 기준
   - main 신설: `common/exception/{ServiceUnavailableException,TossTokenUnavailableException,TossIntegrationDisabledException}.kt`, `infrastructure/security/{AesGcmTokenCipher,TokenCipherException}.kt`, `infrastructure/redis/RedisDistributedLock.kt`, `infrastructure/toss/{TossProperties,TossTokenManager,TossTokenIssuer,TossIssuedToken}.kt`
   - main 수정: `presentation/exception/GlobalExceptionHandler.kt`(J 핸들러, import, `@Suppress`), `src/main/resources/application.yaml`(`trading.toss.*`)
