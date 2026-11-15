@@ -1,5 +1,9 @@
 package com.papertrading.api.application.order
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.account.AccountLedger
@@ -36,7 +40,10 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import java.math.BigDecimal
 import java.time.Instant
@@ -97,23 +104,27 @@ class ExecutionProcessorTest {
         idempotencyKey = "sell-key-1",
     ).withId(10L)
 
-    private fun buyOrder(account: Account): Order = Order.create(
+    private fun buyOrder(account: Account, qty: String, limitPrice: String, locked: String): Order = Order.create(
         account = account,
         ticker = "005930",
         marketType = MarketType.KOSPI,
         orderType = OrderType.LIMIT,
         orderSide = OrderSide.BUY,
         orderCondition = OrderCondition.DAY,
-        quantity = BigDecimal("10"),
-        limitPrice = BigDecimal("70000"),
-        lockedAmount = BigDecimal("700000"),
+        quantity = BigDecimal(qty),
+        limitPrice = BigDecimal(limitPrice),
+        lockedAmount = BigDecimal(locked),
         idempotencyKey = "buy-key-1",
     ).withId(10L)
 
-    /** 주문 접수 때 700000 잠금이 걸린 KIS_PAPER 매수 계좌·주문과, 저장된 원장 수집 목록 */
-    private fun setupBuyFills(): Triple<Account, Order, MutableList<AccountLedger>> {
+    /** 주문 접수 때 잠금이 걸린 KIS_PAPER 매수 계좌·주문(기본 10@70000, 잠금 700000)과, 저장된 원장 수집 목록 */
+    private fun setupBuyFills(
+        qty: String = "10",
+        limitPrice: String = "70000",
+        locked: String = "700000",
+    ): Triple<Account, Order, MutableList<AccountLedger>> {
         val account = account(TradingMode.KIS_PAPER)
-        val order = buyOrder(account)
+        val order = buyOrder(account, qty, limitPrice, locked)
         account.lockDeposit(order.lockedAmount)
         val ledgers = mutableListOf<AccountLedger>()
         var executionSeq = 100L
@@ -138,6 +149,18 @@ class ExecutionProcessorTest {
             externalExecutionId = externalId,
             executedAt = Instant.parse("2026-11-15T01:00:00Z"),
         )
+    }
+
+    private fun warnLogsOf(block: () -> Unit): List<String> {
+        val logger = LoggerFactory.getLogger(ExecutionProcessor::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().also { it.start() }
+        logger.addAppender(appender)
+        try {
+            block()
+        } finally {
+            logger.detachAppender(appender)
+        }
+        return appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage }
     }
 
     private fun assertSameAmount(expected: String, actual: BigDecimal, name: String) {
@@ -288,6 +311,103 @@ class ExecutionProcessorTest {
         val unlocks = ledgers.filter { it.transactionType == TransactionType.BUY_UNLOCK }
         assertEquals(1, unlocks.size)
         assertSameAmount("20000", unlocks.single().amount, "BUY_UNLOCK amount")
+    }
+
+    @Test
+    fun `KIS_PAPER 매수 소수 수량 단일 체결도 잠금 계산식 그대로 체결되고 잠금 0이다`() {
+        val (account, order, _) = setupBuyFills(qty = "0.3", limitPrice = "100.0005", locked = "30.00015")
+
+        fillBuy("100.0005", "0.3", "ext-1")
+
+        assertEquals(OrderStatus.FILLED, order.orderStatus)
+        assertSameAmount("0", account.lockedDeposit, "lockedDeposit")
+    }
+
+    @Test
+    fun `KIS_PAPER 매수 극소 수량 체결도 체결 금액이 0이 되지 않아 체결되고 잠금 0이다`() {
+        val (account, order, _) = setupBuyFills(qty = "0.00000001", limitPrice = "1234.5678", locked = "0.0001")
+
+        fillBuy("1234.5678", "0.00000001", "ext-1")
+
+        assertEquals(OrderStatus.FILLED, order.orderStatus)
+        assertSameAmount("0", account.lockedDeposit, "lockedDeposit")
+    }
+
+    @Test
+    fun `KIS_PAPER 매수 소수 수량 단일 체결의 주문 평균가는 체결가와 같다`() {
+        val (_, order, _) = setupBuyFills(qty = "0.12345678", limitPrice = "72000", locked = "9000")
+
+        fillBuy("70000.1234", "0.12345678", "ext-1")
+
+        assertSameAmount("70000.1234", order.avgFilledPrice!!, "avgFilledPrice")
+    }
+
+    @Test
+    fun `KIS_PAPER 매수 남은 수량보다 많이 체결하면 거부하고 저장 0이며 다른 주문 잠금을 안 쓴다`() {
+        val (account, order, ledgers) = setupBuyFills()
+        account.lockDeposit(BigDecimal("200000"))
+        fillBuy("70000", "4", "ext-1")
+        val ledgerCountBefore = ledgers.size
+
+        assertThrows(IllegalArgumentException::class.java) { fillBuy("70000", "7", "ext-2") }
+
+        assertEquals(ledgerCountBefore, ledgers.size)
+        verify(exactly = 1) { executionRepository.save(any()) }
+        assertSameAmount("4", order.filledQuantity, "filledQuantity")
+        assertSameAmount("620000", account.lockedDeposit, "lockedDeposit")
+    }
+
+    @Test
+    fun `LOCAL 매도 소수 수량은 원장 매도 금액과 예수금 입금을 반올림 없이 기록한다`() {
+        val account = account(TradingMode.LOCAL)
+        val order = sellOrder(account, qty = BigDecimal("0.3"))
+        setupCommonMocks(account, order)
+        val ledgers = mutableListOf<AccountLedger>()
+        every { executionRepository.save(any()) } answers { firstArg<Execution>().withId(100L) }
+        every { accountLedgerRepository.save(any()) } answers { firstArg<AccountLedger>().also { ledgers.add(it) } }
+
+        processor.fillLocal(10L, BigDecimal("100.0005"), BigDecimal("0.3"))
+
+        // 100.0005 * 0.3 = 30.00015
+        val sell = ledgers.single { it.transactionType == TransactionType.SELL_EXECUTE }
+        assertSameAmount("30.00015", sell.amount, "SELL_EXECUTE amount")
+        assertSameAmount("1000030.00015", account.availableDeposit, "availableDeposit")
+    }
+
+    @Test
+    fun `이미 끝난 주문에 새 체결이 오면 저장 없이 무시하고 경고 로그를 남긴다`() {
+        val (_, order, ledgers) = setupBuyFills()
+        fillBuy("70000", "10", "ext-1")
+        val ledgerCountBefore = ledgers.size
+
+        val warns = warnLogsOf { fillBuy("70000", "1", "ext-extra") }
+
+        assertEquals(ledgerCountBefore, ledgers.size)
+        assertSameAmount("10", order.filledQuantity, "filledQuantity")
+        assertTrue(
+            warns.any { "orderId=10" in it && "ext-extra" in it && "FILLED" in it },
+            "경고 로그에 주문 id·체결 id·상태가 있어야 함: $warns",
+        )
+    }
+
+    @Test
+    fun `잠금보다 체결 금액이 커서 해제액을 0으로 깎으면 경고 로그를 남긴다`() {
+        val (account, _, ledgers) = setupBuyFills()
+        account.lockDeposit(BigDecimal("200000"))
+
+        val warns = warnLogsOf { fillBuy("71000", "10", "ext-1") }
+
+        assertEquals(0, ledgers.count { it.transactionType == TransactionType.BUY_UNLOCK })
+        assertTrue(warns.any { "orderId=10" in it && "잠금" in it }, "경고 로그에 주문 id·잠금 초과가 있어야 함: $warns")
+    }
+
+    @Test
+    fun `잠금 안에서 체결이 끝나면 경고 로그를 남기지 않는다`() {
+        val (_, _, _) = setupBuyFills()
+
+        val warns = warnLogsOf { fillBuy("70000", "10", "ext-1") }
+
+        assertEquals(emptyList<String>(), warns)
     }
 
     /** Spec Test 1C: fill() 뒤 ExecutionFilledEvent 발행(ticker, side, executionId 일치) */

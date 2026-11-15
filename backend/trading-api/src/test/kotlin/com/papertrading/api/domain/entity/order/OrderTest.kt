@@ -166,6 +166,91 @@ class OrderTest {
     }
 
     @Test
+    fun `applyExecution_소수_수량_단일_체결_평균가는_체결가와_같다`() {
+        val order = createLimitBuyOrder(
+            qty = BigDecimal("0.12345678"),
+            price = BigDecimal("70000.1234"),
+            lockedAmount = BigDecimal("8641.989834566652"),
+        )
+
+        order.applyExecution(BigDecimal("0.12345678"), BigDecimal("70000.1234"), BigDecimal.ZERO)
+
+        assertEquals(0, order.avgFilledPrice!!.compareTo(BigDecimal("70000.1234")))
+    }
+
+    @Test
+    fun `applyExecution_이번_체결_금액은_반올림_없이_수량_곱_체결가다`() {
+        val order = createLimitBuyOrder(
+            qty = BigDecimal("0.12345678"),
+            price = BigDecimal("70000.1234"),
+            lockedAmount = BigDecimal("8641.989834566652"),
+        )
+
+        val executedAmount = order.applyExecution(BigDecimal("0.12345678"), BigDecimal("70000.1234"), BigDecimal.ZERO)
+
+        // 0.12345678 * 70000.1234 = 8641.989834566652
+        assertEquals(0, executedAmount.compareTo(BigDecimal("8641.989834566652")))
+        assertEquals(0, order.totalAmount!!.compareTo(BigDecimal("8641.989834566652")))
+    }
+
+    @Test
+    fun `applyExecution_극소_수량_체결도_이번_체결_금액이_0보다_크다`() {
+        val order = createLimitBuyOrder(
+            qty = BigDecimal("0.00000001"),
+            price = BigDecimal("1234.5678"),
+            lockedAmount = BigDecimal("0.0001"),
+        )
+
+        val executedAmount = order.applyExecution(BigDecimal("0.00000001"), BigDecimal("1234.5678"), BigDecimal.ZERO)
+
+        assertEquals(1, executedAmount.signum(), "이번 체결 금액: $executedAmount")
+    }
+
+    @Test
+    fun `applyExecution_남은_수량보다_많이_체결하면_IllegalArgumentException이고_누적이_안_바뀐다`() {
+        val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
+        order.applyExecution(BigDecimal("4"), BigDecimal("70000"), BigDecimal.ZERO)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            order.applyExecution(BigDecimal("7"), BigDecimal("70000"), BigDecimal.ZERO)
+        }
+
+        assertEquals(0, order.filledQuantity.compareTo(BigDecimal("4")))
+        assertEquals(0, order.totalAmount!!.compareTo(BigDecimal("280000")))
+        assertEquals(OrderStatus.PARTIAL, order.orderStatus)
+    }
+
+    @Test
+    fun `applyExecution_수량이_0_이하이면_IllegalArgumentException이고_상태가_안_바뀐다`() {
+        val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
+
+        listOf(BigDecimal.ZERO, BigDecimal("-1")).forEach { invalidQty ->
+            assertThrows(IllegalArgumentException::class.java) {
+                order.applyExecution(invalidQty, BigDecimal("70000"), BigDecimal.ZERO)
+            }
+        }
+
+        assertZero(order.filledQuantity)
+        assertNull(order.totalAmount)
+        assertEquals(OrderStatus.PENDING, order.orderStatus)
+    }
+
+    @Test
+    fun `applyExecution_가격이_0_이하이면_IllegalArgumentException이고_상태가_안_바뀐다`() {
+        val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
+
+        listOf(BigDecimal.ZERO, BigDecimal("-70000")).forEach { invalidPrice ->
+            assertThrows(IllegalArgumentException::class.java) {
+                order.applyExecution(BigDecimal("1"), invalidPrice, BigDecimal.ZERO)
+            }
+        }
+
+        assertZero(order.filledQuantity)
+        assertNull(order.totalAmount)
+        assertEquals(OrderStatus.PENDING, order.orderStatus)
+    }
+
+    @Test
     fun `applyExecution_CANCELLED_상태에서는_예외를_던진다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
         order.cancel()
