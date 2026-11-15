@@ -278,7 +278,7 @@
         <error line="108" column="39" source="standard:trailing-comma-on-declaration-site" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/domain/entity/order/Order.kt">
-        <error line="192" column="35" source="standard:trailing-comma-on-declaration-site" />
+        <error line="199" column="35" source="standard:trailing-comma-on-declaration-site" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/domain/entity/order/OrderAmendment.kt">
         <error line="65" column="35" source="standard:trailing-comma-on-declaration-site" />
