@@ -21,8 +21,8 @@
 | Title | 2단계 기준선과 특성화 시험 |
 | Feature | multi-broker-kis-toss |
 | Based on | development-plan.md §5 2단계 1번, §10 D21, DEC-05 A, RULE-10 |
-| Status | todo / in progress / done / blocked |
-| Owner |  |
+| Status | done |
+| Owner | Claude(maker 구현, 메인 검증) |
 
 ---
 
