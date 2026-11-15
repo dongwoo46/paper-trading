@@ -1,233 +1,143 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
-@theme {
-  /* Background colors */
-  --color-bg-main: #f9fafb;
-  --color-bg-sidebar: #ffffff;
-  --color-bg-panel: #ffffff;
-  --color-bg-card: #ffffff;
-  --color-bg-input: #f2f4f6;
-
-  /* Brand colors */
-  --color-brand-primary: #3182f6;
-  --color-brand-secondary: #e8f3ff;
-  --color-brand-accent: #10b981;
-
-  /* Text colors */
-  --color-text-primary: #191f28;
-  --color-text-secondary: #4e5968;
-  --color-text-muted: #8b95a1;
-
-  /* Status colors */
-  --color-status-success: #f04452; /* Toss uses red for up/success */
-  --color-status-error: #3182f6; /* Toss uses blue for down/error */
-  --color-status-warning: #f59e0b;
-  --color-status-info: #3182f6;
-
-  /* Trading semantics */
-  --color-order-buy: var(--color-brand-primary);
-  --color-order-sell: var(--color-status-success);
-  --color-market-positive: var(--color-brand-accent);
-  --color-market-negative: var(--color-status-success);
-  --color-market-warning: var(--color-status-warning);
-  --color-chart-up: var(--chart-up);
-  --color-chart-down: var(--chart-down);
-  --color-chart-ma5: var(--chart-ma5);
-  --color-chart-ma20: var(--chart-ma20);
-  --color-chart-ma60: var(--chart-ma60);
-  --color-chart-ma120: var(--chart-ma120);
-  --color-chart-band: var(--chart-band);
-  --color-chart-rsi: var(--chart-rsi);
-  --color-chart-cross: var(--chart-cross);
-
-  /* Border */
-  --color-border-primary: #e5e8eb;
-  --color-border-hover: rgba(49, 130, 246, 0.5);
-
-  /* Sidebar width as spacing */
-  --spacing-sidebar: 280px;
-  --spacing-topbar: 72px;
-
-  /* Border radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-
-  /* Fonts */
-  --font-sans: "Pretendard Variable", "SUIT Variable", "Noto Sans KR", system-ui, -apple-system, sans-serif;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+    --color-tone-rise: var(--tone-rise);
+    --color-tone-fall: var(--tone-fall);
+    --color-tone-buy: var(--tone-buy);
+    --color-tone-sell: var(--tone-sell);
 }
 
-/* CSS variables for legacy usage (lightweight-charts, SVG strokes 등) */
 :root {
-  --border-color: #e5e8eb;
-  --border-hover: rgba(49, 130, 246, 0.5);
-  --brand-primary: #3182f6;
-  --brand-primary-glow: rgba(49, 130, 246, 0.15);
-  --text-primary: #191f28;
-  --text-secondary: #4e5968;
-  --text-muted: #8b95a1;
-  --bg-main: #f9fafb;
-  --bg-sidebar: #ffffff;
-  --bg-card: #ffffff;
-  --bg-input: #f2f4f6;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --grad-primary: #3182f6;
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --status-success: #f04452;
-  --status-error: #3182f6;
-  --status-warning: #f59e0b;
-  --status-info: #3182f6;
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+    /* D16 tone 토큰 — 값은 임시(디자인 작업에서 정함). 상승·하락(손익)과 매수·매도는 별도 토큰(RULE-05). */
+    --tone-rise: oklch(0.577 0.245 27.325);
+    --tone-fall: oklch(0.546 0.245 262.881);
+    --tone-buy: oklch(0.646 0.222 41.116);
+    --tone-sell: oklch(0.588 0.158 241.966);
+}
 
-  /* Canvas/SVG chart palette — resolved by the chart adapter at runtime */
-  --chart-background: #ffffff;
-  --chart-foreground: #4e5968;
-  --chart-grid: rgba(25, 31, 40, 0.08);
-  --chart-border: rgba(25, 31, 40, 0.18);
-  --chart-up: #10b981;
-  --chart-down: #f04452;
-  --chart-ma5: #ca8a04;
-  --chart-ma20: #3182f6;
-  --chart-ma60: #f97316;
-  --chart-ma120: #9333ea;
-  --chart-band: #6366f1;
-  --chart-band-middle: #818cf8;
-  --chart-rsi: #f59e0b;
-  --chart-cross: #06b6d4;
-
-  /* shadcn semantic token bridge */
-  --radius: var(--radius-md);
-  --background: var(--bg-main);
-  --foreground: var(--text-primary);
-  --card: var(--bg-card);
-  --card-foreground: var(--text-primary);
-  --popover: var(--bg-card);
-  --popover-foreground: var(--text-primary);
-  --primary: var(--brand-primary);
-  --primary-foreground: var(--bg-card);
-  --secondary: var(--bg-input);
-  --secondary-foreground: var(--text-primary);
-  --muted: var(--bg-input);
-  --muted-foreground: var(--text-muted);
-  --accent: var(--color-brand-secondary);
-  --accent-foreground: var(--brand-primary);
-  --destructive: var(--status-success);
-  --border: var(--border-color);
-  --input: var(--border-color);
-  --ring: var(--brand-primary);
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+    --tone-rise: oklch(0.704 0.191 22.216);
+    --tone-fall: oklch(0.707 0.165 254.624);
+    --tone-buy: oklch(0.75 0.183 55.934);
+    --tone-sell: oklch(0.746 0.16 232.661);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-
+    }
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.15) transparent;
-}
-
-::selection {
-  background: rgba(49, 130, 246, 0.2);
-  color: #3182f6;
-}
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
-
-body {
-  font-family: var(--font-sans);
-  background-color: var(--bg-main);
-  color: var(--text-primary);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  min-height: 100vh;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-input, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-@keyframes slideInRight {
-  from { transform: translateX(100px); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes toast-slide-in {
-  from { transform: translateX(110%); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
-}
-
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-.animate-spin-slow { animation: spin 1s linear infinite; }
-.animate-slide-in-right { animation: slideInRight 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
-.animate-toast-in { animation: toast-slide-in 0.25s ease-out forwards; }
-
-@media (prefers-reduced-motion: reduce) {
+    }
   html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+    @apply font-sans;
+    }
 }

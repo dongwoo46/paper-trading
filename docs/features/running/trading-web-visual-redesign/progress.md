@@ -5,10 +5,10 @@
 | 항목 | 값 |
 |---|---|
 | 상태 | 🟡 진행중 |
-| 단계 | Step 6 — 전체 검증·리뷰·PR 마감 |
+| 단계 | 6/6 |
 | 브랜치 | `feature/trading-web-visual-redesign` |
 | worktree | `/Users/dongwoo/Desktop/paper-trading/.worktrees/trading-web-visual-redesign` |
-| 갱신 | 2026-08-16 |
+| 갱신 | 2026-11-14T17:34:51.370Z |
 
 > 종결(`완료`·`중단`)은 사람이 선언한다. 현재는 browser visual evidence가 없어 완료로 올리지 않는다.
 
