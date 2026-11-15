@@ -1,7 +1,20 @@
 package com.papertrading.api.domain.entity.account
 
+import com.papertrading.api.common.exception.AccountAlreadyActiveException
+import com.papertrading.api.common.exception.AccountAlreadyInactiveException
+import com.papertrading.api.common.exception.ApiDomainException
 import com.papertrading.api.common.exception.BadRequestException
 import com.papertrading.api.common.exception.ConflictException
+import com.papertrading.api.common.exception.InsufficientAvailableDepositException
+import com.papertrading.api.common.exception.InternalErrorException
+import com.papertrading.api.common.exception.InvalidAccountModeCombinationException
+import com.papertrading.api.common.exception.InvalidAccountNameException
+import com.papertrading.api.common.exception.InvalidAmountException
+import com.papertrading.api.common.exception.InvalidBaseCurrencyException
+import com.papertrading.api.common.exception.InvalidInitialDepositException
+import com.papertrading.api.common.exception.InvalidRiskPolicyException
+import com.papertrading.api.common.exception.LedgerAmountInvalidException
+import com.papertrading.api.common.exception.LockedDepositInsufficientException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.enums.TransactionType
@@ -10,12 +23,36 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import java.math.BigDecimal
 
+// devkit:test-change DEC-02(2026-11-15) — IllegalArgument·IllegalState 단언을 범주 예외 타입·code 단언으로 구체화
 class AccountTest {
+
+    // 범주 예외 판정, HTTP 상태는 A·F 범주 기반 클래스만 보유하고 K 범주(상태 null)는 GlobalExceptionHandlerTest 가 500 매핑을 검증
+    private inline fun <reified T : RuntimeException> assertRejected(
+        errorCode: String,
+        status: Int?,
+        block: () -> Unit,
+    ) {
+        when (val ex = assertThrows<T> { block() }) {
+            is ApiDomainException -> {
+                assertEquals(errorCode, ex.errorCode)
+                assertEquals(status, ex.status.value())
+            }
+
+            is InternalErrorException -> {
+                assertEquals(errorCode, ex.errorCode)
+                assertEquals(null, status)
+            }
+
+            else -> fail("범주 예외가 아님: $ex")
+        }
+    }
 
     @Test
     fun 계좌를_생성하면_초기_예수금이_가용예수금과_동일하다() {
@@ -61,7 +98,7 @@ class AccountTest {
         account.lockDeposit(BigDecimal("90000.0000"))
 
         // when then
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InsufficientAvailableDepositException>("INSUFFICIENT_AVAILABLE_DEPOSIT", 409) {
             account.withdraw(BigDecimal("20000.0000"))
         }
 
@@ -76,10 +113,10 @@ class AccountTest {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
 
         // when then
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidAmountException>("INVALID_AMOUNT", 400) {
             account.addDeposit(BigDecimal.ZERO)
         }
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidAmountException>("INVALID_AMOUNT", 400) {
             account.addDeposit(BigDecimal("-1"))
         }
     }
@@ -90,10 +127,10 @@ class AccountTest {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
 
         // when then
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidAmountException>("INVALID_AMOUNT", 400) {
             account.withdraw(BigDecimal.ZERO)
         }
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidAmountException>("INVALID_AMOUNT", 400) {
             account.withdraw(BigDecimal("-1"))
         }
     }
@@ -101,7 +138,7 @@ class AccountTest {
     @Test
     fun 계좌타입과_거래모드_조합이_잘못되면_생성에_실패한다() {
         // when then
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidAccountModeCombinationException>("INVALID_ACCOUNT_TYPE_TRADING_MODE", 400) {
             Account.create(
                 accountName = "crypto-account",
                 accountType = AccountType.CRYPTO,
@@ -126,7 +163,7 @@ class AccountTest {
 
     @Test
     fun 암호화폐_계좌는_TOSS_LIVE_모드로_생성할_수_없다() {
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidAccountModeCombinationException>("INVALID_ACCOUNT_TYPE_TRADING_MODE", 400) {
             Account.create(
                 accountName = "crypto-toss",
                 accountType = AccountType.CRYPTO,
@@ -167,7 +204,9 @@ class AccountTest {
             if (type in allowedTypes) {
                 assertEquals(mode, create().tradingMode, "허용되어야 함: $type + $mode")
             } else {
-                assertThrows(IllegalArgumentException::class.java, { create() }, "거부되어야 함: $type + $mode")
+                assertRejected<InvalidAccountModeCombinationException>("INVALID_ACCOUNT_TYPE_TRADING_MODE", 400) {
+                    create()
+                }
             }
         }
     }
@@ -224,7 +263,7 @@ class AccountTest {
     fun activate_이미_활성화된_계좌면_예외를_던진다() {
         val account = createAccount(initialDeposit = BigDecimal.ZERO)
 
-        assertThrows(IllegalStateException::class.java) {
+        assertRejected<AccountAlreadyActiveException>("ACCOUNT_ALREADY_ACTIVE", 409) {
             account.activate()
         }
     }
@@ -270,12 +309,21 @@ class AccountTest {
     fun createRiskPolicy_maxPositionRatio가_0_1_범위를_벗어나면_예외를_던진다() {
         val account = createAccount(initialDeposit = BigDecimal.ZERO)
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidRiskPolicyException>("INVALID_RISK_POLICY", 400) {
             account.createRiskPolicy(
                 maxPositionRatio = BigDecimal("1.1"),
                 maxDailyLoss = null,
                 maxOrderAmount = null
             )
+        }
+    }
+
+    @Test
+    fun createRiskPolicy_maxOrderAmount가_0이면_예외를_던진다() {
+        val account = createAccount(initialDeposit = BigDecimal.ZERO)
+
+        assertRejected<InvalidRiskPolicyException>("INVALID_RISK_POLICY", 400) {
+            account.createRiskPolicy(null, null, BigDecimal.ZERO)
         }
     }
 
@@ -294,7 +342,7 @@ class AccountTest {
     fun createRiskPolicy_maxDailyLoss가_0이면_예외를_던진다() {
         val account = createAccount(initialDeposit = BigDecimal.ZERO)
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidRiskPolicyException>("INVALID_RISK_POLICY", 400) {
             account.createRiskPolicy(null, BigDecimal.ZERO, null)
         }
     }
@@ -387,7 +435,7 @@ class AccountTest {
     fun recordWithdrawal_가용예수금_부족하면_예외를_던지고_상태를_변경하지_않는다() {
         val account = createAccount(initialDeposit = BigDecimal("10000.0000"))
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InsufficientAvailableDepositException>("INSUFFICIENT_AVAILABLE_DEPOSIT", 409) {
             account.recordWithdrawal(BigDecimal("20000.0000"), "idem-003")
         }
 
@@ -399,14 +447,14 @@ class AccountTest {
         val account = createAccount(initialDeposit = BigDecimal.ZERO)
         account.deactivate()
 
-        assertThrows(IllegalStateException::class.java) {
+        assertRejected<AccountAlreadyInactiveException>("ACCOUNT_ALREADY_INACTIVE", 409) {
             account.deactivate()
         }
     }
 
     @Test
     fun create_계좌명이_빈_문자열이면_예외를_던진다() {
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidAccountNameException>("INVALID_ACCOUNT_NAME", 400) {
             Account.create(
                 accountName = "  ",
                 accountType = AccountType.STOCK,
@@ -418,12 +466,25 @@ class AccountTest {
 
     @Test
     fun create_초기예수금이_음수면_예외를_던진다() {
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidInitialDepositException>("INVALID_INITIAL_DEPOSIT", 400) {
             Account.create(
                 accountName = "test",
                 accountType = AccountType.STOCK,
                 tradingMode = TradingMode.LOCAL,
                 initialDeposit = BigDecimal("-1")
+            )
+        }
+    }
+
+    @Test
+    fun create_기준통화가_3자리가_아니면_예외를_던진다() {
+        assertRejected<InvalidBaseCurrencyException>("INVALID_BASE_CURRENCY", 400) {
+            Account.create(
+                accountName = "test",
+                accountType = AccountType.STOCK,
+                tradingMode = TradingMode.LOCAL,
+                initialDeposit = BigDecimal.ZERO,
+                baseCurrency = "KRWW",
             )
         }
     }
@@ -455,7 +516,7 @@ class AccountTest {
     fun lockDeposit_금액이_0이면_예외를_던진다() {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<LedgerAmountInvalidException>("LEDGER_AMOUNT_INVALID", null) {
             account.lockDeposit(BigDecimal.ZERO)
         }
     }
@@ -464,7 +525,7 @@ class AccountTest {
     fun lockDeposit_가용예수금_초과하면_예외를_던지고_상태를_변경하지_않는다() {
         val account = createAccount(initialDeposit = BigDecimal("10000.0000"))
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InsufficientAvailableDepositException>("INSUFFICIENT_AVAILABLE_DEPOSIT", 409) {
             account.lockDeposit(BigDecimal("20000.0000"))
         }
 
@@ -490,7 +551,7 @@ class AccountTest {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
         account.lockDeposit(BigDecimal("30000.0000"))
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<LedgerAmountInvalidException>("LEDGER_AMOUNT_INVALID", null) {
             account.unlockDeposit(BigDecimal.ZERO)
         }
     }
@@ -500,7 +561,7 @@ class AccountTest {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
         account.lockDeposit(BigDecimal("30000.0000"))
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<LockedDepositInsufficientException>("LOCKED_DEPOSIT_INSUFFICIENT", null) {
             account.unlockDeposit(BigDecimal("40000.0000"))
         }
 
@@ -526,7 +587,7 @@ class AccountTest {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
         account.lockDeposit(BigDecimal("30000.0000"))
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<LedgerAmountInvalidException>("LEDGER_AMOUNT_INVALID", null) {
             account.confirmBuy(BigDecimal.ZERO)
         }
     }
@@ -536,7 +597,7 @@ class AccountTest {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
         account.lockDeposit(BigDecimal("30000.0000"))
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<LockedDepositInsufficientException>("LOCKED_DEPOSIT_INSUFFICIENT", null) {
             account.confirmBuy(BigDecimal("40000.0000"))
         }
 
@@ -560,7 +621,7 @@ class AccountTest {
     fun receiveSellProceeds_금액이_0이면_예외를_던진다() {
         val account = createAccount(initialDeposit = BigDecimal("100000.0000"))
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<LedgerAmountInvalidException>("LEDGER_AMOUNT_INVALID", null) {
             account.receiveSellProceeds(BigDecimal.ZERO)
         }
     }
@@ -580,7 +641,7 @@ class AccountTest {
     fun rename_빈_문자열이면_예외를_던진다() {
         val account = createAccount(initialDeposit = BigDecimal.ZERO)
 
-        assertThrows(IllegalArgumentException::class.java) {
+        assertRejected<InvalidAccountNameException>("INVALID_ACCOUNT_NAME", 400) {
             account.rename("  ")
         }
     }

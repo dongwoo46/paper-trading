@@ -1,6 +1,9 @@
 package com.papertrading.api.presentation.exception
 
 import com.papertrading.api.common.exception.ApiDomainException
+import com.papertrading.api.common.exception.InternalErrorException
+import com.papertrading.api.common.exception.NotImplementedException
+import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -10,11 +13,32 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+    private val log = KotlinLogging.logger {}
+
     @ExceptionHandler(ApiDomainException::class)
     fun handleApiDomain(ex: ApiDomainException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(ex.status).body(
             ApiErrorResponse(ex.status.value(), ex.errorCode, ex.message ?: defaultMessage(ex.errorCode))
         )
+
+    // 범주 I(501), common 예외는 Spring 을 몰라 범주→HTTP 상태 매핑을 여기서만 한다
+    @ExceptionHandler(NotImplementedException::class)
+    fun handleNotImplemented(ex: NotImplementedException): ResponseEntity<ApiErrorResponse> {
+        val status = HttpStatus.NOT_IMPLEMENTED
+        return ResponseEntity.status(status).body(
+            ApiErrorResponse(status.value(), ex.errorCode, ex.message ?: "아직 지원하지 않는 기능입니다."),
+        )
+    }
+
+    // 범주 K(500), 내부 메시지는 응답에 싣지 않고 로그에 스택과 함께 남김
+    @ExceptionHandler(InternalErrorException::class)
+    fun handleInternalError(ex: InternalErrorException): ResponseEntity<ApiErrorResponse> {
+        log.error(ex) { "내부 오류: code=${ex.errorCode}, message=${ex.message}" }
+        val status = HttpStatus.INTERNAL_SERVER_ERROR
+        return ResponseEntity.status(status).body(
+            ApiErrorResponse(status.value(), ex.errorCode, "서버 오류가 발생했습니다."),
+        )
+    }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ResponseEntity<ApiErrorResponse> =

@@ -2,10 +2,16 @@ package com.papertrading.api.application.order
 
 import com.papertrading.api.application.order.command.CancelOrderCommand
 import com.papertrading.api.application.order.command.PlaceOrderCommand
+import com.papertrading.api.common.exception.AccountInactiveException
 import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
+import com.papertrading.api.common.exception.ExpireAtRequiredException
+import com.papertrading.api.common.exception.InsufficientOrderableQuantityException
+import com.papertrading.api.common.exception.LimitPriceRequiredException
+import com.papertrading.api.common.exception.OrderNotCancelableException
 import com.papertrading.api.common.exception.OrderNotFoundException
 import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.common.exception.QuoteStaleException
 import com.papertrading.api.common.exception.QuoteUnavailableException
 import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
@@ -55,7 +61,7 @@ class OrderCommandService(
         validatePlaceOrderCommand(command)
         val account = accountRepository.findByIdWithLock(accountId)
             .orElseThrow { AccountNotFoundException(accountId) }
-            .also { check(it.isActive) { "비활성화된 계좌입니다." } }
+            .also { if (!it.isActive) throw AccountInactiveException() }
         val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null" }
         rejectIfBrokerOrderNotSupported(tradingMode)
 
@@ -75,11 +81,11 @@ class OrderCommandService(
     }
 
     private fun validatePlaceOrderCommand(command: PlaceOrderCommand) {
-        if (command.orderType == OrderType.LIMIT) {
-            requireNotNull(command.limitPrice) { "지정가 주문은 limitPrice가 필요합니다." }
+        if (command.orderType == OrderType.LIMIT && command.limitPrice == null) {
+            throw LimitPriceRequiredException()
         }
-        if (command.orderCondition == OrderCondition.GTD) {
-            requireNotNull(command.expireAt) { "GTD 주문은 expireAt이 필요합니다." }
+        if (command.orderCondition == OrderCondition.GTD && command.expireAt == null) {
+            throw ExpireAtRequiredException()
         }
     }
 
@@ -88,8 +94,8 @@ class OrderCommandService(
 
         val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, command.ticker)
             .orElseThrow { PositionNotFoundException(ticker = command.ticker) }
-        check(position.orderableQuantity >= command.quantity) {
-            "주문 가능 수량 부족. available=${position.orderableQuantity}, requested=${command.quantity}"
+        if (position.orderableQuantity < command.quantity) {
+            throw InsufficientOrderableQuantityException(position.orderableQuantity, command.quantity)
         }
         position.lockQuantity(command.quantity)
     }
@@ -102,8 +108,8 @@ class OrderCommandService(
             OrderType.MARKET -> {
                 val quote = marketQuotePort.getQuote(tradingMode, command.ticker)
                     ?: throw QuoteUnavailableException(command.ticker)
-                check(Duration.between(quote.updatedAt, Instant.now()).seconds <= 60) {
-                    "시세가 오래되었습니다. (stale) ticker=${command.ticker}"
+                if (Duration.between(quote.updatedAt, Instant.now()).seconds > 60) {
+                    throw QuoteStaleException(command.ticker)
                 }
                 quote.price
             }
@@ -256,9 +262,10 @@ class OrderCommandService(
         val order = orderRepository.findByIdWithOptimisticLock(orderId)
             .orElseThrow { OrderNotFoundException(orderId) }
 
-        check(order.account?.id == accountId) { "해당 계좌의 주문이 아닙니다." }
-        check(order.orderStatus in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) {
-            "취소 불가 상태입니다. status=${order.orderStatus}"
+        // 다른 계좌의 주문은 없는 주문과 같은 404 로 숨김 (OrderQueryService 와 같은 처리)
+        if (order.account?.id != accountId) throw OrderNotFoundException(orderId)
+        if (order.orderStatus !in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) {
+            throw OrderNotCancelableException(order.orderStatus.name)
         }
 
         order.cancel()

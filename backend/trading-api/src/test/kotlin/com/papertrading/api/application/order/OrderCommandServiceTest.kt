@@ -1,8 +1,18 @@
 package com.papertrading.api.application.order
 
+import com.papertrading.api.application.order.command.CancelOrderCommand
 import com.papertrading.api.application.order.command.PlaceOrderCommand
+import com.papertrading.api.common.exception.AccountInactiveException
+import com.papertrading.api.common.exception.ApiDomainException
 import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
+import com.papertrading.api.common.exception.ExpireAtRequiredException
+import com.papertrading.api.common.exception.InsufficientAvailableDepositException
+import com.papertrading.api.common.exception.InsufficientOrderableQuantityException
+import com.papertrading.api.common.exception.LimitPriceRequiredException
+import com.papertrading.api.common.exception.OrderNotCancelableException
+import com.papertrading.api.common.exception.OrderNotFoundException
 import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.common.exception.QuoteStaleException
 import com.papertrading.api.common.exception.QuoteUnavailableException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
@@ -35,11 +45,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.MethodSource
-import org.springframework.http.HttpStatus
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.Optional
 
+// devkit:test-change DEC-02·D15(2026-11-15) — HTTP 상태 단언은 핸들러·통합 시험으로 이동
 class OrderCommandServiceTest {
 
     private val accountRepository = mockk<AccountRepository>()
@@ -230,6 +240,128 @@ class OrderCommandServiceTest {
         verify(exactly = 0) { kisPaperOrderExecutor.submit(any()) }
     }
 
+    // ---- 에러 정렬(DEC-02): 400 으로 뭉치던 check, require 를 범주와 code 로 분리 ----
+
+    private fun assertApiError(ex: ApiDomainException, errorCode: String, status: Int) {
+        assertEquals(errorCode, ex.errorCode)
+        assertEquals(status, ex.status.value())
+    }
+
+    @Test
+    fun `비활성 계좌 주문 — 409 ACCOUNT_INACTIVE`() {
+        val account = localAccount().also { it.deactivate() }
+        stubAccountLookup(account, "key-inactive")
+
+        val ex = assertThrows<AccountInactiveException> {
+            service.placeOrder(1L, command(OrderType.LIMIT, OrderSide.BUY, idempotencyKey = "key-inactive"))
+        }
+
+        assertApiError(ex, "ACCOUNT_INACTIVE", 409)
+    }
+
+    @Test
+    fun `지정가 주문에 가격이 없으면 400 LIMIT_PRICE_REQUIRED`() {
+        every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-no-price") } returns null
+
+        val ex = assertThrows<LimitPriceRequiredException> {
+            service.placeOrder(
+                1L,
+                command(OrderType.LIMIT, OrderSide.BUY, idempotencyKey = "key-no-price").copy(limitPrice = null),
+            )
+        }
+
+        assertApiError(ex, "LIMIT_PRICE_REQUIRED", 400)
+    }
+
+    @Test
+    fun `GTD 주문에 만료 시각이 없으면 400 EXPIRE_AT_REQUIRED`() {
+        every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-no-expire") } returns null
+
+        val ex = assertThrows<ExpireAtRequiredException> {
+            service.placeOrder(
+                1L,
+                command(OrderType.LIMIT, OrderSide.BUY, OrderCondition.GTD, "key-no-expire"),
+            )
+        }
+
+        assertApiError(ex, "EXPIRE_AT_REQUIRED", 400)
+    }
+
+    @Test
+    fun `매도 가능 수량이 부족하면 409 INSUFFICIENT_ORDERABLE_QUANTITY`() {
+        val account = localAccount()
+        val position = Position.create(account, "005930", MarketType.KOSPI)
+            .also { it.applyBuy(BigDecimal("2"), BigDecimal("70000")) }
+        stubAccountLookup(account, "key-short-qty")
+        every { positionRepository.findByAccountIdAndTickerWithLock(1L, "005930") } returns Optional.of(position)
+
+        val ex = assertThrows<InsufficientOrderableQuantityException> {
+            service.placeOrder(1L, command(OrderType.LIMIT, OrderSide.SELL, idempotencyKey = "key-short-qty"))
+        }
+
+        assertApiError(ex, "INSUFFICIENT_ORDERABLE_QUANTITY", 409)
+        assertEquals(0, BigDecimal("2").compareTo(position.orderableQuantity))
+    }
+
+    @Test
+    fun `시장가 매수 — 시세가 60초를 넘게 오래되면 409 QUOTE_STALE`() {
+        val account = localAccount()
+        val staleQuote = QuoteSnapshot(
+            ticker = "005930",
+            tradingMode = TradingMode.LOCAL,
+            price = BigDecimal("72000"),
+            askp1 = BigDecimal("72100"),
+            bidp1 = BigDecimal("71900"),
+            updatedAt = Instant.now().minusSeconds(120),
+        )
+        stubAccountLookup(account, "key-stale")
+        every { marketQuotePort.getQuote(TradingMode.LOCAL, "005930") } returns staleQuote
+
+        val ex = assertThrows<QuoteStaleException> {
+            service.placeOrder(1L, command(OrderType.MARKET, OrderSide.BUY, idempotencyKey = "key-stale"))
+        }
+
+        assertApiError(ex, "QUOTE_STALE", 409)
+    }
+
+    @Test
+    fun `매수 주문의 가용 예수금이 부족하면 409 INSUFFICIENT_AVAILABLE_DEPOSIT`() {
+        val account = localAccount(deposit = BigDecimal("1000"))
+        stubAccountLookup(account, "key-short-deposit")
+        every { orderRepository.save(any()) } answers { firstArg<Order>().withId(10L) }
+
+        val ex = assertThrows<InsufficientAvailableDepositException> {
+            service.placeOrder(1L, command(OrderType.LIMIT, OrderSide.BUY, idempotencyKey = "key-short-deposit"))
+        }
+
+        assertApiError(ex, "INSUFFICIENT_AVAILABLE_DEPOSIT", 409)
+    }
+
+    @Test
+    fun `다른 계좌의 주문 취소는 404 ORDER_NOT_FOUND 로 숨긴다`() {
+        val order = savedOrder(localAccount())
+        every { orderRepository.findByIdWithOptimisticLock(10L) } returns Optional.of(order)
+
+        val ex = assertThrows<OrderNotFoundException> {
+            service.cancelOrder(2L, 10L, CancelOrderCommand())
+        }
+
+        assertApiError(ex, "ORDER_NOT_FOUND", 404)
+        assertEquals(OrderStatus.PENDING, order.orderStatus)
+    }
+
+    @Test
+    fun `취소 불가 상태의 주문 취소는 409 ORDER_NOT_CANCELABLE`() {
+        val order = savedOrder(localAccount()).also { it.cancel() }
+        every { orderRepository.findByIdWithOptimisticLock(10L) } returns Optional.of(order)
+
+        val ex = assertThrows<OrderNotCancelableException> {
+            service.cancelOrder(1L, 10L, CancelOrderCommand())
+        }
+
+        assertApiError(ex, "ORDER_NOT_CANCELABLE", 409)
+    }
+
     // ---- 브로커 주문 연동이 없는 모드는 자금 잠금 전에 501 로 거부 (대상 모드는 하단 표에서 파생) ----
 
     private fun accountFor(tradingMode: TradingMode): Account = Account.create(
@@ -257,10 +389,10 @@ class OrderCommandServiceTest {
         expireAt = null, idempotencyKey = idempotencyKey,
     )
 
+    // 501 상태는 예외가 아니라 GlobalExceptionHandler 가 정하므로 GlobalExceptionHandlerTest 와 주문 통합 시험이 단언
     private fun assertRejectedAsBrokerOrderNotSupported(block: () -> Unit) {
         val ex = assertThrows<BrokerOrderNotSupportedException> { block() }
         assertEquals("BROKER_ORDER_NOT_SUPPORTED", ex.errorCode)
-        assertEquals(HttpStatus.NOT_IMPLEMENTED, ex.status)
     }
 
     private fun verifyNoOrderSideEffects() {

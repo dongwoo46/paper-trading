@@ -45,6 +45,8 @@
 | 07 | 정책 | USD 보유분 합산 | ASSUME | 통화별로 따로 응답하고 원화 환산 합산은 하지 않음 | 환산 기준 시점이 정해지지 않음 | 중간 | 사용자 | open | |
 | 08 | api | 토스 시세 수신 위치 | ASSUME | 1단계 REST 시세는 trading-api가 직접 조회. 3단계 웹소켓은 collector-api로 | 기존 데이터 흐름 (collector → Redis → trading-api) | 중간 | 개발 | open | |
 | 10 | api | 새 토스 API의 금액·수량 JSON 형태 | ASK | `BigDecimal`을 JSON 숫자로 내면 프런트(JavaScript)에서 큰 수와 소수 자릿수가 깎임. trading-web 재제작 세션은 «금액·수량은 문자열» 규칙 | trading-web 재제작 세션 문의(2026-11-15) | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · 문자열로. 새 토스 API(`broker-balance`, `/api/toss/**`)에만 적용, 기존 API는 그대로 · 6단계 step 문서에 반영 |
+| 11 | api | `GlobalExceptionHandler`의 `IllegalArgumentException`·`IllegalStateException` → 400 묶음 매핑 | ASK | step 3에서 핸들러를 건드렸으나 이 매핑을 바꾸면 안 건드린 파일(주문·포지션 등)의 응답이 전부 바뀜(AE19 대 범위) | step 3 명세 리뷰 S3S-01 | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · `API-Errors-Deferred`로 명시적으로 미룸(DEC-02의 예외). 2단계 KIS 정렬 때 AE20 목록과 함께 다룸 |
+| 12 | api | 새 A·F 하위 예외의 기반 클래스 | ASK | 새 400·409 하위 예외가 동결 기반(`BadRequestException`·`ConflictException`, 상위 `ApiDomainException`이 `HttpStatus` 보유)을 상속하면 common이 HTTP 상태를 정하는 구조가 유지됨. ArchUnit은 상속 간접 의존을 못 봄 | step 3 명세 리뷰 S3S-02 | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · 현재 구조로 확정. D15의 «Spring 무의존·핸들러 매핑»은 새 범주(I·J·K) 기반에만 적용, 기존 범주의 새 하위 예외는 동결 기반 상속. 기반 이동은 기존 예외 정리 때 한꺼번에 |
 | 09 | 상태 | 3단계(실주문) tier | ASSUME | 3단계 착수 전 tier를 수동, 확장승인으로 올리길 추천. 그 전까지 프로젝트 기본값 | 샌드박스 없음, 실거래 | 높음 | 사용자 | open | |
 
 ---

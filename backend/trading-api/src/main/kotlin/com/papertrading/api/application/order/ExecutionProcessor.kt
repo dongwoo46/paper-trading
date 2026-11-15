@@ -8,6 +8,7 @@ import com.papertrading.api.application.notification.SlackNotificationEventPubli
 import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
 import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.common.exception.SellExecutionApplyFailedException
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.position.Position
@@ -153,9 +154,7 @@ class ExecutionProcessor(
                 .orElseThrow { PositionNotFoundException(ticker = ticker) }
             val positionId = requireNotNull(position.id) { "position.id is null: accountId=$accountId, ticker=$ticker" }
             val updatedRows = positionRepository.applySellExecutionAtomically(positionId, fillQty)
-            check(updatedRows == 1) {
-                "원자적 매도 반영 실패: positionId=$positionId, qty=$fillQty"
-            }
+            ensureSellApplied(updatedRows, positionId, fillQty)
 
             val grossProceeds = fillPrice.multiply(fillQty).setScale(4, RoundingMode.HALF_UP)
             val netProceeds = grossProceeds.subtract(fee).setScale(4, RoundingMode.HALF_UP)
@@ -230,6 +229,11 @@ class ExecutionProcessor(
             message = "Execution filled: ticker=$ticker, side=$side, qty=$fillQty, price=$fillPrice",
             occurredAt = executedAt,
         )
+    }
+
+    // 조건부 UPDATE 가 정확히 1행을 못 바꾸면 잠금 수량 장부 어긋남 (체결 저장 뒤 검사, 트랜잭션 롤백 의존)
+    private fun ensureSellApplied(updatedRows: Int, positionId: Long, fillQty: BigDecimal) {
+        if (updatedRows != 1) throw SellExecutionApplyFailedException(positionId, fillQty)
     }
 
     // 체결 저장·포지션·원장 변경 이전 진입부 거부 (롤백 비의존)

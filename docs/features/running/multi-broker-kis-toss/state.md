@@ -37,7 +37,7 @@
 |---|---|---|---|---|
 | 1 | 기준선 기록 | done | steps/step-1.md | 393개 통과, 실패 0 (`e2904c8`) |
 | 2 | 모드 추가와 주문 안전장치 | done | steps/step-2.md | 438개 통과, 합동 리뷰 막는 지적 0 (후속 9 수정, 2 넘김) |
-| 3 | 건드린 파일 에러 응답 정렬 | todo | steps/step-3.md |  |
+| 3 | 건드린 파일 에러 응답 정렬 | in progress | steps/step-3.md | 관련 시험 154건 통과, 합동 리뷰 막는 지적 0(`review/step3-panel.md`) |
 | 4 | 토스 토큰 기반 | todo | steps/step-4.md |  |
 | 5 | 스키마 확정과 토스 전송 계층 | todo | steps/step-5.md |  |
 | 6 | 잔고 공통 포트와 토스 어댑터 | todo | steps/step-6.md |  |
@@ -56,6 +56,7 @@
 | (example) 6/7 | step-2.5 added | step-2 found a missing field in the API response |
 | 2026-11-15 | 예외 범주 J(503)·K(500)는 처음 쓰는 단계로 미룸 | 2단계는 I(501)만 필요(미사용 코드 금지) |
 | 2026-11-15 | 2단계 재리뷰(`review/rereview-1.md`)와 QA 증거(`review/test-evidence.md`) 완료, 보류 해제 | 9건 모두 고침, 막는 지적 0. 후속 P-06·P-07·R2-01은 이유와 함께 deferred 처분 |
+| 2026-11-15 | main(PR #48·#49) 합류, 린트 정리 커밋 `a43538a`. 계획서 D15와 §3 수정: 새 범주 예외는 common 에서 Spring 무의존, HTTP 매핑은 GlobalExceptionHandler. step 3 범위에 NotImplementedException 이동 추가 | 새 레포 규칙(common 은 Spring 금지)과 ArchUnit 동결이 D15와 충돌. 사람 결정 «새 예외만 핸들러 매핑». 설계 재승인 필요 |
 
 ---
 
@@ -63,4 +64,4 @@
 
 | Issue | Step | Decision or person needed |
 |---|---|---|
-|  |  |  |
+| 리뷰·QA 보류: 린트 정리 커밋 `a43538a`(서식·파일 이름만, 동작 변경 없음, 바뀐 시험 107건 통과)는 같은 파일을 고치는 step 3 합동 리뷰에 포함 | 3 | 사용자 결정 2026-11-15 |

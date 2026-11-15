@@ -167,7 +167,7 @@ class AccountControllerIntegrationTest {
     }
 
     @Test
-    fun `가용_예수금_초과_출금시_400을_반환한다`() {
+    fun `가용_예수금_초과_출금시_409_INSUFFICIENT_AVAILABLE_DEPOSIT을_반환한다`() {
         val createRequest = mapOf(
             "accountName" to "부족테스트",
             "accountType" to "STOCK",
@@ -187,8 +187,9 @@ class AccountControllerIntegrationTest {
                 mapOf("amount" to 99999999, "idempotencyKey" to UUID.randomUUID().toString())
             )
         }.andExpect {
-            status { isBadRequest() }
-            jsonPath("$.code") { value("BAD_REQUEST") }
+            status { isConflict() }
+            jsonPath("$.status") { value(409) }
+            jsonPath("$.code") { value("INSUFFICIENT_AVAILABLE_DEPOSIT") }
         }
     }
 
@@ -209,6 +210,29 @@ class AccountControllerIntegrationTest {
 
         mockMvc.delete("/api/v1/accounts/$accountId").andExpect {
             status { isNoContent() }
+        }
+    }
+
+    @Test
+    fun `이미_비활성화된_계좌를_다시_비활성화하면_409_ACCOUNT_ALREADY_INACTIVE를_반환한다`() {
+        val createResult = mockMvc.post("/api/v1/accounts") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                mapOf(
+                    "accountName" to "이중삭제테스트",
+                    "accountType" to "STOCK",
+                    "tradingMode" to "LOCAL",
+                    "initialDeposit" to 0,
+                ),
+            )
+        }.andReturn()
+        val accountId = objectMapper.readTree(createResult.response.contentAsString)["id"].asLong()
+        mockMvc.delete("/api/v1/accounts/$accountId").andExpect { status { isNoContent() } }
+
+        mockMvc.delete("/api/v1/accounts/$accountId").andExpect {
+            status { isConflict() }
+            jsonPath("$.status") { value(409) }
+            jsonPath("$.code") { value("ACCOUNT_ALREADY_INACTIVE") }
         }
     }
 }

@@ -2,6 +2,7 @@ package com.papertrading.api.application.order
 
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
+import com.papertrading.api.common.exception.SellExecutionApplyFailedException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
@@ -193,6 +194,24 @@ class ExecutionProcessorTest {
 
         assertEquals(initialDeposit, account.availableDeposit)
         verify(exactly = 1) { settlementRepository.save(any()) }
+    }
+
+    @Test
+    fun `SELL 포지션 원자 반영이 조건을 못 맞추면 K 범주 SELL_EXECUTION_APPLY_FAILED, 입금과 정산 없음`() {
+        val account = account(TradingMode.LOCAL)
+        val order = sellOrder(account, qty = BigDecimal("5"))
+        setupCommonMocks(account, order)
+        every { executionRepository.save(any()) } answers { firstArg<Execution>().withId(300L) }
+        every { positionRepository.applySellExecutionAtomically(any(), any()) } returns 0
+        val initialDeposit = account.availableDeposit
+
+        val ex = assertThrows<SellExecutionApplyFailedException> {
+            processor.fillLocal(10L, BigDecimal("70000"), BigDecimal("5"))
+        }
+
+        assertEquals("SELL_EXECUTION_APPLY_FAILED", ex.errorCode)
+        assertEquals(initialDeposit, account.availableDeposit)
+        verify(exactly = 0) { settlementRepository.save(any()) }
     }
 
     private fun buyOrder(account: Account, qty: BigDecimal = BigDecimal("5")): Order = Order.create(

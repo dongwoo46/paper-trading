@@ -1,8 +1,19 @@
 package com.papertrading.api.domain.entity.account
 
+import com.papertrading.api.common.exception.AccountAlreadyActiveException
+import com.papertrading.api.common.exception.AccountAlreadyInactiveException
 import com.papertrading.api.common.exception.BadRequestException
 import com.papertrading.api.common.exception.ConflictException
 import com.papertrading.api.common.exception.EntityMappingException
+import com.papertrading.api.common.exception.InsufficientAvailableDepositException
+import com.papertrading.api.common.exception.InvalidAccountModeCombinationException
+import com.papertrading.api.common.exception.InvalidAccountNameException
+import com.papertrading.api.common.exception.InvalidAmountException
+import com.papertrading.api.common.exception.InvalidBaseCurrencyException
+import com.papertrading.api.common.exception.InvalidInitialDepositException
+import com.papertrading.api.common.exception.InvalidRiskPolicyException
+import com.papertrading.api.common.exception.LedgerAmountInvalidException
+import com.papertrading.api.common.exception.LockedDepositInsufficientException
 import com.papertrading.api.domain.entity.base.BaseAuditEntity
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
@@ -71,7 +82,7 @@ class Account protected constructor() : BaseAuditEntity() {
         private set
 
     fun addDeposit(amount: BigDecimal) {
-        require(amount > BigDecimal.ZERO) { "입금 금액은 0보다 커야 합니다." }
+        if (amount <= BigDecimal.ZERO) throw InvalidAmountException("입금 금액은 0보다 커야 합니다.")
         deposit = deposit.add(amount)
         availableDeposit = availableDeposit.add(amount)
     }
@@ -99,8 +110,8 @@ class Account protected constructor() : BaseAuditEntity() {
     }
 
     fun withdraw(amount: BigDecimal) {
-        require(amount > BigDecimal.ZERO) { "출금 금액은 0보다 커야 합니다." }
-        require(availableDeposit >= amount) { "가용 예수금이 부족합니다." }
+        if (amount <= BigDecimal.ZERO) throw InvalidAmountException("출금 금액은 0보다 커야 합니다.")
+        if (availableDeposit < amount) throw InsufficientAvailableDepositException()
         deposit = deposit.subtract(amount)
         availableDeposit = availableDeposit.subtract(amount)
     }
@@ -118,8 +129,8 @@ class Account protected constructor() : BaseAuditEntity() {
     }
 
     fun lockDeposit(amount: BigDecimal) {
-        require(amount > BigDecimal.ZERO) { "잠금 금액은 0보다 커야 합니다." }
-        require(availableDeposit >= amount) { "가용 예수금이 부족합니다." }
+        if (amount <= BigDecimal.ZERO) throw LedgerAmountInvalidException("잠금 금액은 0보다 커야 합니다.")
+        if (availableDeposit < amount) throw InsufficientAvailableDepositException()
         availableDeposit = availableDeposit.subtract(amount)
         lockedDeposit = lockedDeposit.add(amount)
     }
@@ -137,8 +148,8 @@ class Account protected constructor() : BaseAuditEntity() {
     }
 
     fun unlockDeposit(amount: BigDecimal) {
-        require(amount > BigDecimal.ZERO) { "해제 금액은 0보다 커야 합니다." }
-        require(lockedDeposit >= amount) { "잠금 예수금이 부족합니다." }
+        if (amount <= BigDecimal.ZERO) throw LedgerAmountInvalidException("해제 금액은 0보다 커야 합니다.")
+        if (lockedDeposit < amount) throw LockedDepositInsufficientException()
         lockedDeposit = lockedDeposit.subtract(amount)
         availableDeposit = availableDeposit.add(amount)
     }
@@ -156,8 +167,8 @@ class Account protected constructor() : BaseAuditEntity() {
     }
 
     fun confirmBuy(amount: BigDecimal) {
-        require(amount > BigDecimal.ZERO) { "매수 확정 금액은 0보다 커야 합니다." }
-        require(lockedDeposit >= amount) { "잠금 예수금이 부족합니다." }
+        if (amount <= BigDecimal.ZERO) throw LedgerAmountInvalidException("매수 확정 금액은 0보다 커야 합니다.")
+        if (lockedDeposit < amount) throw LockedDepositInsufficientException()
         lockedDeposit = lockedDeposit.subtract(amount)
         deposit = deposit.subtract(amount)
     }
@@ -176,7 +187,7 @@ class Account protected constructor() : BaseAuditEntity() {
     }
 
     fun receiveSellProceeds(amount: BigDecimal) {
-        require(amount > BigDecimal.ZERO) { "매도 대금은 0보다 커야 합니다." }
+        if (amount <= BigDecimal.ZERO) throw LedgerAmountInvalidException("매도 대금은 0보다 커야 합니다.")
         deposit = deposit.add(amount)
         availableDeposit = availableDeposit.add(amount)
     }
@@ -217,7 +228,7 @@ class Account protected constructor() : BaseAuditEntity() {
     }
 
     fun rename(newName: String) {
-        require(newName.isNotBlank()) { "계좌명은 비어 있을 수 없습니다." }
+        if (newName.isBlank()) throw InvalidAccountNameException()
         accountName = newName
     }
 
@@ -226,12 +237,12 @@ class Account protected constructor() : BaseAuditEntity() {
     }
 
     fun deactivate() {
-        check(isActive) { "이미 비활성화된 계좌입니다." }
+        if (!isActive) throw AccountAlreadyInactiveException()
         isActive = false
     }
 
     fun activate() {
-        check(!isActive) { "이미 활성화된 계좌입니다." }
+        if (isActive) throw AccountAlreadyActiveException()
         isActive = true
     }
 
@@ -250,21 +261,34 @@ class Account protected constructor() : BaseAuditEntity() {
         maxDailyLoss: BigDecimal?,
         maxOrderAmount: BigDecimal?
     ): RiskPolicy {
-        require(maxPositionRatio == null || maxPositionRatio in BigDecimal.ZERO..BigDecimal.ONE) {
-            "maxPositionRatio는 0~1 사이여야 합니다."
-        }
-        require(maxDailyLoss == null || maxDailyLoss > BigDecimal.ZERO) {
-            "maxDailyLoss는 0보다 커야 합니다."
-        }
-        require(maxOrderAmount == null || maxOrderAmount > BigDecimal.ZERO) {
-            "maxOrderAmount는 0보다 커야 합니다."
-        }
+        validateRiskPolicy(maxPositionRatio, maxDailyLoss, maxOrderAmount)
         return RiskPolicy.create(
             account = this,
             maxPositionRatio = maxPositionRatio,
             maxDailyLoss = maxDailyLoss,
             maxOrderAmount = maxOrderAmount
         )
+    }
+
+    // 위반 메시지를 고른 뒤 한 곳에서 던짐
+    private fun validateRiskPolicy(
+        maxPositionRatio: BigDecimal?,
+        maxDailyLoss: BigDecimal?,
+        maxOrderAmount: BigDecimal?,
+    ) {
+        val violation = when {
+            maxPositionRatio != null && maxPositionRatio !in BigDecimal.ZERO..BigDecimal.ONE ->
+                "maxPositionRatio는 0~1 사이여야 합니다."
+
+            maxDailyLoss != null && maxDailyLoss <= BigDecimal.ZERO ->
+                "maxDailyLoss는 0보다 커야 합니다."
+
+            maxOrderAmount != null && maxOrderAmount <= BigDecimal.ZERO ->
+                "maxOrderAmount는 0보다 커야 합니다."
+
+            else -> null
+        }
+        if (violation != null) throw InvalidRiskPolicyException(violation)
     }
 
     fun createExitTriggerDefault(
@@ -332,6 +356,8 @@ class Account protected constructor() : BaseAuditEntity() {
     }
 
     companion object {
+        private const val CURRENCY_CODE_LENGTH = 3
+
         fun create(
             accountName: String,
             accountType: AccountType,
@@ -340,9 +366,7 @@ class Account protected constructor() : BaseAuditEntity() {
             baseCurrency: String = "KRW",
             externalAccountId: String? = null
         ): Account {
-            require(accountName.isNotBlank()) { "계좌명은 비어 있을 수 없습니다." }
-            require(initialDeposit >= BigDecimal.ZERO) { "초기 예수금은 0 이상이어야 합니다." }
-            require(baseCurrency.length == 3) { "기준 통화는 3자리 코드여야 합니다." }
+            validateCreationInputs(accountName, initialDeposit, baseCurrency)
             validateTradingMode(accountType, tradingMode)
 
             return Account().apply {
@@ -358,6 +382,17 @@ class Account protected constructor() : BaseAuditEntity() {
             }
         }
 
+        // 위반 예외를 고른 뒤 한 곳에서 던짐
+        private fun validateCreationInputs(accountName: String, initialDeposit: BigDecimal, baseCurrency: String) {
+            val violation = when {
+                accountName.isBlank() -> InvalidAccountNameException()
+                initialDeposit < BigDecimal.ZERO -> InvalidInitialDepositException()
+                baseCurrency.length != CURRENCY_CODE_LENGTH -> InvalidBaseCurrencyException()
+                else -> null
+            }
+            if (violation != null) throw violation
+        }
+
         private fun validateTradingMode(accountType: AccountType, tradingMode: TradingMode) {
             val isValid = when (accountType) {
                 AccountType.STOCK -> tradingMode == TradingMode.LOCAL ||
@@ -366,7 +401,7 @@ class Account protected constructor() : BaseAuditEntity() {
                     tradingMode == TradingMode.TOSS_LIVE
                 AccountType.CRYPTO -> tradingMode == TradingMode.LOCAL || tradingMode == TradingMode.UPBIT_LIVE
             }
-            require(isValid) { "계좌 타입과 거래 모드 조합이 올바르지 않습니다." }
+            if (!isValid) throw InvalidAccountModeCombinationException(accountType.name, tradingMode.name)
         }
     }
 }

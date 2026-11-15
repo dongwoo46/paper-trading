@@ -162,7 +162,10 @@ class OrderControllerIntegrationTest {
                 "quantity" to 1,
                 "idempotencyKey" to UUID.randomUUID().toString(),
             ))
-        }.andExpect { status { isConflict() } }
+        }.andExpect {
+            status { isConflict() }
+            jsonPath("$.code") { value("QUOTE_UNAVAILABLE") }
+        }
     }
 
     @Test
@@ -181,7 +184,10 @@ class OrderControllerIntegrationTest {
                 "limitPrice" to 75000,
                 "idempotencyKey" to UUID.randomUUID().toString(),
             ))
-        }.andExpect { status { isNotFound() } }
+        }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value("POSITION_NOT_FOUND") }
+        }
     }
 
     @Test
@@ -249,6 +255,120 @@ class OrderControllerIntegrationTest {
         val firstId = objectMapper.readTree(first.response.contentAsString)["orderId"].asLong()
         val secondId = objectMapper.readTree(second.response.contentAsString)["orderId"].asLong()
         assertEquals(firstId, secondId)
+    }
+
+    // ---- 에러 정렬(DEC-02): 경로마다 범주 상태와 code 로 응답 ----
+
+    private fun orderRequest(
+        orderType: String = "LIMIT",
+        orderSide: String = "BUY",
+        orderCondition: String = "DAY",
+        quantity: Int = 1,
+        limitPrice: Int? = 60000,
+    ): Map<String, Any> = buildMap {
+        put("ticker", "005930")
+        put("marketType", "KOSPI")
+        put("orderType", orderType)
+        put("orderSide", orderSide)
+        put("orderCondition", orderCondition)
+        put("quantity", quantity)
+        if (limitPrice != null) put("limitPrice", limitPrice)
+        put("idempotencyKey", UUID.randomUUID().toString())
+    }
+
+    private fun expectOrderError(accountId: Long, body: Map<String, Any>, httpStatus: Int, code: String) {
+        mockMvc.post("/api/v1/accounts/$accountId/orders") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(body)
+        }.andExpect {
+            status { isEqualTo(httpStatus) }
+            jsonPath("$.status") { value(httpStatus) }
+            jsonPath("$.code") { value(code) }
+        }
+    }
+
+    @Test
+    fun `지정가 주문에 가격이 없으면 400 LIMIT_PRICE_REQUIRED`() {
+        val accountId = createAccountAndDeposit()
+
+        expectOrderError(accountId, orderRequest(limitPrice = null), 400, "LIMIT_PRICE_REQUIRED")
+    }
+
+    @Test
+    fun `GTD 주문에 만료 시각이 없으면 400 EXPIRE_AT_REQUIRED`() {
+        val accountId = createAccountAndDeposit()
+
+        expectOrderError(accountId, orderRequest(orderCondition = "GTD"), 400, "EXPIRE_AT_REQUIRED")
+    }
+
+    @Test
+    fun `가용 예수금보다 큰 매수 주문은 409 INSUFFICIENT_AVAILABLE_DEPOSIT`() {
+        val accountId = createAccountAndDeposit(deposit = 1_000)
+
+        expectOrderError(accountId, orderRequest(limitPrice = 70000), 409, "INSUFFICIENT_AVAILABLE_DEPOSIT")
+    }
+
+    @Test
+    fun `비활성화된 계좌의 주문은 409 ACCOUNT_INACTIVE`() {
+        val accountId = createAccountAndDeposit()
+        mockMvc.delete("/api/v1/accounts/$accountId").andExpect { status { isNoContent() } }
+
+        expectOrderError(accountId, orderRequest(), 409, "ACCOUNT_INACTIVE")
+    }
+
+    @Test
+    fun `보유 수량보다 많은 매도 주문은 409 INSUFFICIENT_ORDERABLE_QUANTITY`() {
+        val accountId = createAccountAndDeposit()
+        positionRepository.save(
+            Position.createWithHolding(
+                account = accountRepository.findById(accountId).orElseThrow(),
+                ticker = "005930",
+                marketType = MarketType.KOSPI,
+                quantity = BigDecimal("2"),
+                avgBuyPrice = BigDecimal("60000"),
+            ),
+        )
+
+        expectOrderError(
+            accountId,
+            orderRequest(orderSide = "SELL", quantity = 3, limitPrice = 75000),
+            409,
+            "INSUFFICIENT_ORDERABLE_QUANTITY",
+        )
+    }
+
+    private fun placePendingBuyOrder(accountId: Long): Long {
+        seedQuote("005930", "70000", "70100", "69900")
+        val result = mockMvc.post("/api/v1/accounts/$accountId/orders") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(orderRequest(limitPrice = 60000))
+        }.andExpect { status { isCreated() } }.andReturn()
+        return objectMapper.readTree(result.response.contentAsString)["orderId"].asLong()
+    }
+
+    @Test
+    fun `다른 계좌의 주문 취소는 404 ORDER_NOT_FOUND`() {
+        val ownerId = createAccountAndDeposit()
+        val otherId = createAccountAndDeposit()
+        val orderId = placePendingBuyOrder(ownerId)
+
+        mockMvc.delete("/api/v1/accounts/$otherId/orders/$orderId").andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value("ORDER_NOT_FOUND") }
+        }
+    }
+
+    @Test
+    fun `이미 취소된 주문을 다시 취소하면 409 ORDER_NOT_CANCELABLE`() {
+        val accountId = createAccountAndDeposit()
+        val orderId = placePendingBuyOrder(accountId)
+        mockMvc.delete("/api/v1/accounts/$accountId/orders/$orderId").andExpect { status { isNoContent() } }
+
+        mockMvc.delete("/api/v1/accounts/$accountId/orders/$orderId").andExpect {
+            status { isConflict() }
+            jsonPath("$.status") { value(409) }
+            jsonPath("$.code") { value("ORDER_NOT_CANCELABLE") }
+        }
     }
 
     // ---- TOSS_LIVE, UPBIT_LIVE: 브로커 주문 연동이 없어 501 로 거부, 주문·원장·잠금 불변 ----
