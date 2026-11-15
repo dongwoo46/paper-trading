@@ -22,6 +22,7 @@ class RedisMarketQuoteAdapter(
                 TradingMode.KIS_PAPER -> "quote:kis:paper:$normalizedTicker"
                 TradingMode.KIS_LIVE -> "quote:kis:live:$normalizedTicker"
                 TradingMode.UPBIT_LIVE -> "quote:upbit:live:$normalizedTicker"
+                TradingMode.TOSS_LIVE -> "quote:toss:live:$normalizedTicker"
                 TradingMode.LOCAL -> "quote:local:$normalizedTicker"
             }
         }

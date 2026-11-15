@@ -113,6 +113,11 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ### P1
 
+- [ ] KIS·토스증권 다중 브로커 연동 | project: trading-api, collector-api | phase: multi-broker-kis-toss | priority: P1
+  - ✅ 계좌별 브로커 지정(계좌 하나 = 브로커 하나), 토스는 `TOSS_LIVE` 실계좌 모드
+  - ✅ 순서: 1) 토스 읽기 전용(시세·잔고·보유 REST) 2) 공통 브로커 계층으로 KIS 전면 리팩터링 3) 토스 시세 웹소켓·실주문
+  - 조사 문서: `docs/research/2026-11-15-toss-open-api.md` · 기획: `docs/features/running/multi-broker-kis-toss/`
+
 - [ ] 전략 실행 모드 설계 결정 | project: trading-api | phase: strategy-execution-mode-design | priority: P1
   - ✅ 실행 모드 3개 지원 결정: `KIS_LIVE` / `KIS_PAPER` / `LOCAL`
   - ✅ 전략 단위 독립 제어, 글로벌 킬스위치 필요

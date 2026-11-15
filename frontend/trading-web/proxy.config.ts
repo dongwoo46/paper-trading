@@ -27,6 +27,7 @@ export const TRADING_API_PREFIXES = [
   "/api/trading-journals",
   "/api/operations",
   "/api/tax-summaries",
+  "/api/toss",
 ] as const
 
 export const COLLECTOR_API_PREFIXES = [

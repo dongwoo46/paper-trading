@@ -1,0 +1,96 @@
+# Open Questions — KIS·토스증권 다중 브로커 연동
+
+> 짝 spec: [feature-spec.md](./feature-spec.md). ASK = 멈추고 사람 확인 · ASSUME = 가정하고 진행하되 기록. 게이트는 impact.
+
+---
+
+## 0. 메타데이터
+
+| 항목 | 값 |
+|---|---|
+| 기능 | `multi-broker-kis-toss` |
+| 프로젝트 | trading-api, collector-api |
+| 작성자 | Claude (feature-planning) |
+| 날짜 | 2026-11-15 |
+| 짝 spec | feature-spec.md |
+
+---
+
+## 1. 규칙
+
+- ASK = 위험함 (비가역, 경계, 토대). 멈추고 사람 확인.
+- ASSUME = 사소함. 가정하고 진행하되 적어둔다.
+- 게이트는 impact. 확신이 높아도 고위험은 ASK.
+
+---
+
+## 2. 점검
+
+- [x] Core: 실거래 주문(비가역), 인증 토큰과 키(경계), 브로커 계층과 계좌 모델(토대)
+- [x] Project: 금융 안전(BigDecimal, 멱등성, 명시적 상태 전이), 비밀값 평문 금지
+- [x] Feature: 토큰 클라이언트당 1개, 허용 IP, 호출 한도, 샌드박스 없음, KRW와 USD 혼재
+
+---
+
+## 3. Flags
+
+| id | 카테고리 | 무엇 | mode | 가정 / 질문 | 근거 | impact | 담당 | 상태 | 결정 기록 |
+|----|---------|------|------|------------|------|--------|------|------|-----------|
+| 01 | 정책 | 토스 토큰 저장 위치와 방식 | ASK | 토큰이 클라이언트당 1개라 두 서비스가 공유해야 하는데, 공유 저장소(Redis)에 두면 평문 저장 금지 규칙과 부딪힘 | CLAUDE.md 보안, 토스 `token-revoked` | 높음 | 사용자 | confirmed | 사용자 · 2026-11-15 · 추천안 A(Redis 암호화 저장, 분산 락 발급) 채택 · feature-spec §6 RULE-07 |
+| 02 | 정책 | 1단계 `TOSS_LIVE` 계좌의 주문 처리 | ASK | 주문 분기가 `else -> {}`라 막지 않으면 주문이 외부로 안 나간 채 자금만 잠김 | `OrderCommandService.submitExternalOrderIfNeeded` | 높음 | 사용자 | confirmed | 사용자 · 2026-11-15 · 추천안 A(`else` 제거, 모든 모드 명시, 누락 테스트) 채택 · feature-spec §6 RULE-04, §5, §8 EDGE-08 |
+| 03 | api | 1단계의 공통 포트 범위 | ASK | 1단계를 토스 전용으로 만들면 2단계에서 다시 옮겨야 하고, 공통 포트를 먼저 두면 리팩터링 일부가 1단계로 들어옴 | 사용자 결정 «읽기 전용 먼저, 리팩터링은 뒤» | 높음 | 사용자 | confirmed | 사용자 · 2026-11-15 · 추천안 A(잔고 공통 포트 하나, 토스 어댑터만) 채택 · feature-spec §7 |
+| 04 | api | 내부 계좌와 토스 `accountSeq` 연결 | ASSUME | 계좌 등록 시 토스 `GET /accounts`로 받은 `accountSeq`를 내부 계좌에 저장 | KIS 계좌 연결과 같은 방식 | 중간 | 개발 | open | |
+| 05 | 화면 | 1단계 화면 범위 | ASSUME | 1단계는 백엔드 API만, trading-web 화면은 2단계 이후 | 읽기 전용 검증이 목적 | 낮음 | 개발 | open | |
+| 06 | api | 토스 응답 필드와 숫자 표기 | ASSUME | 실제 응답으로 확인하고 고정 fixture로 테스트. 숫자는 문자열이든 숫자든 `BigDecimal`로 직접 변환 | 개별 API 문서 미확보 | 중간 | 개발 | open | |
+| 07 | 정책 | USD 보유분 합산 | ASSUME | 통화별로 따로 응답하고 원화 환산 합산은 하지 않음 | 환산 기준 시점이 정해지지 않음 | 중간 | 사용자 | open | |
+| 08 | api | 토스 시세 수신 위치 | ASSUME | 1단계 REST 시세는 trading-api가 직접 조회. 3단계 웹소켓은 collector-api로 | 기존 데이터 흐름 (collector → Redis → trading-api) | 중간 | 개발 | open | |
+| 10 | api | 새 토스 API의 금액·수량 JSON 형태 | ASK | `BigDecimal`을 JSON 숫자로 내면 프런트(JavaScript)에서 큰 수와 소수 자릿수가 깎임. trading-web 재제작 세션은 «금액·수량은 문자열» 규칙 | trading-web 재제작 세션 문의(2026-11-15) | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · 문자열로. 새 토스 API(`broker-balance`, `/api/toss/**`)에만 적용, 기존 API는 그대로 · 6단계 step 문서에 반영 · 반영 위치: steps/step-6.md §1 |
+| 11 | api | `GlobalExceptionHandler`의 `IllegalArgumentException`·`IllegalStateException` → 400 묶음 매핑 | ASK | step 3에서 핸들러를 건드렸으나 이 매핑을 바꾸면 안 건드린 파일(주문·포지션 등)의 응답이 전부 바뀜(AE19 대 범위) | step 3 명세 리뷰 S3S-01 | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · `API-Errors-Deferred`로 명시적으로 미룸(DEC-02의 예외). 2단계 KIS 정렬 때 AE20 목록과 함께 다룸 · 반영 위치: 7111818(step 3) |
+| 12 | api | 새 A·F 하위 예외의 기반 클래스 | ASK | 새 400·409 하위 예외가 동결 기반(`BadRequestException`·`ConflictException`, 상위 `ApiDomainException`이 `HttpStatus` 보유)을 상속하면 common이 HTTP 상태를 정하는 구조가 유지됨. ArchUnit은 상속 간접 의존을 못 봄 | step 3 명세 리뷰 S3S-02 | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · 현재 구조로 확정. D15의 «Spring 무의존·핸들러 매핑»은 새 범주(I·J·K) 기반에만 적용, 기존 범주의 새 하위 예외는 동결 기반 상속. 기반 이동은 기존 예외 정리 때 한꺼번에 · 반영 위치: 7111818(step 3) |
+| 13 | 설정 | 토큰 선택 설정 기본값(계획서에 수치 없음) | ASK | step 4 구현이 갱신 여유 60초, 락 TTL 20초, 락 대기 15초로 정함. 모두 환경변수로 덮을 수 있음 | development-plan D11(락 TTL은 연결 5초+읽기 10초보다 길게), step-4 §8 | 낮음 | 사용자 | confirmed | 사용자 · 2026-11-15 · 이대로 둠. 실제 응답을 본 step 5에서 다시 맞출 수 있음 · 반영 위치: da617e5(step 4) |
+| 14 | api | `TossTokenManager` 빈 등록 시점 | ASK | 실제 발급기가 없어 step 4에서 빈으로 등록하면 앱 기동이 깨짐 | step-4 §8 | 낮음 | 사용자 | confirmed | 사용자 · 2026-11-15 · step 5로 넘김. 계획서는 고치지 않고 step 5 문서 범위에 적음 · 반영 위치: steps/step-5.md §1 |
+| 15 | 설계 | step 4 리뷰 후속 9건 처리(`review/step4-code-review.md`) | ASK | C-01·C-08은 D10, C-02·C-03은 D11 문구 변경이라 설계 재승인 필요 | step 4 코드 리뷰 1회차 | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · 9건 전부 step 5 전에 고침(C-05·C-06·C-08은 처음에 미룸을 골랐다가 같은 날 고침으로 바꿈). D10·D11 문구 수정, 설계 재승인 · 반영 위치: 7ce7a70(설계), 4988edb(코드) |
+| 16 | 설계 | step 4 재리뷰 후속 R1-01(수명 61~119초 토큰 TTL 비단조, 재발급 반복)·R1-02(대기+발급 전체 상한 없음, 장애 때 스레드 최대 약 30초) (`review/step4-rereview-1.md`) | ASK | R1-02는 D11에 요청 하나의 전체 상한 값을 사람이 정해야 함 | step 4 재리뷰 2회차 | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · step 5 범위에 넣음. 실제 expires_in·발급 소요를 본 뒤 값을 정해 함께 고침. 나머지 후속 6건(R1-03~R1-08)은 findings 원장 · 사용자 · 2026-11-15(2차) · 키 준비 전에 정함: R1-01은 식 `max(expires_in − 여유, max(expires_in / 2, 1))`(D10), R1-02는 새 설정 `token-request-deadline-millis` 기본 20초, 남은 시간이 발급 최악 15초보다 짧으면 발급 안 하고 503(D11). 기각: 발급 전용 짧은 타임아웃(빈 추가, D11 락 TTL 근거 변경), 현행 유지(최악 30초). 설계 재승인 필요 · 반영 위치: development-plan §2 D10·D11, §4 |
+| 18 | api | 공식 명세의 오류 형식과 D15 code 대응 | ASSUME | 토큰 발급은 OAuth2 형식(`error` 문자열): 400 `invalid_request`·401 `invalid_client` → `TOSS_AUTH_FAILED`(재시도 없음), 403 `access_denied` → `TOSS_IP_NOT_ALLOWED`. 그 밖 API 401 `invalid-token`은 `expired-token`·`token-revoked`와 같이 1회 재시도, `login-user-not-found`는 재시도 없이 `TOSS_AUTH_FAILED`. 403 `edge-blocked`·`forbidden`은 `TOSS_AUTH_FAILED`. 500 `maintenance` → `TOSS_MAINTENANCE`, 500 `internal-error`와 그 밖 5xx → `TOSS_UNAVAILABLE` | 공식 명세 `openapi.json` 1.2.28 `OAuth2ErrorResponse`·`components.responses`, 개요 문서 에러 코드 표(2026-11-15 확인) | 중간 | 개발 | open | |
+| 17 | 설계 | 공식 OpenAPI 명세 발견에 따른 스키마 확정 방식(D18)과 현금 칸(DEC-04) | ASK | 공식 `openapi.json` 1.2.28에 개별 스키마가 있음. holdings에 현금 없음, 예수금 API 없음, `buying-power.cashBuyingPower`만 있음 | 조사 문서 «개별 API 스키마»(2026-11-15) | 높음 | 사용자 | confirmed | 사용자 · 2026-11-15 · D18: 명세가 원본, 실호출은 숫자 표기·expires_in 대조용. DEC-04: `cashBalance` null, `cashBuyingPower` 별도 칸(D7). 설계 재승인 필요 · 반영 위치: development-plan §2 D7·D18(ad2c033) |
+| 09 | 상태 | 3단계(실주문) tier | ASSUME | 3단계 착수 전 tier를 수동, 확장승인으로 올리길 추천. 그 전까지 프로젝트 기본값 | 샌드박스 없음, 실거래 | 높음 | 사용자 | open | |
+
+---
+
+## 4. ASK 추천안
+
+### FLAG-01 — 토스 토큰을 어디에 어떻게 저장하나
+
+| 방법 | 내용 | 장점 | 단점 |
+|---|---|---|---|
+| A ⭐ | Redis에 암호화해 저장하고 발급은 분산 락으로 한 곳만. trading-api와 collector-api가 같은 토큰을 읽음 | 토큰 충돌 해결, 평문 금지 준수, 재시작해도 재발급 불필요 | 암호화 키 관리가 하나 더 생김 |
+| B | trading-api만 메모리에 토큰을 두고, collector-api는 trading-api 내부 API로 토큰을 받음 | 저장소에 토큰이 남지 않음 | 서비스 사이 결합, trading-api 재시작 시 재발급 |
+| C | KIS와 같이 Redis에 평문 저장 | 구현이 가장 쉬움, 기존 패턴과 같음 | CLAUDE.md 보안 규칙 위반 |
+
+**강력 추천: A** — 이유: 토큰 1개 제약과 평문 금지를 둘 다 지키는 유일한 안이다. KIS 토큰도 평문 저장이라 2단계 리팩터링 때 같은 방식으로 옮길 수 있다.
+
+### FLAG-02 — 1단계 `TOSS_LIVE` 계좌의 주문을 어떻게 막나
+
+| 방법 | 내용 | 장점 | 단점 |
+|---|---|---|---|
+| A ⭐ | 주문 분기의 `else -> {}`를 없애고 모든 모드를 명시. `TOSS_LIVE`는 1단계에서 「아직 지원 안 함」 에러로 거부. 모드별 분기 누락을 막는 테스트 추가 | 이후 모드 추가 때도 누락이 컴파일이나 테스트에서 드러남 | 기존 주문 코드에 손이 감 (작은 변경) |
+| B | `TOSS_LIVE` 계좌는 1단계에서 아예 만들 수 없게 막고, 잔고 조회는 계좌 없이 설정의 `accountSeq`로 | 주문 경로를 안 건드림 | 계좌별 브로커 지정이라는 목표와 어긋나고 2단계에 다시 바꿔야 함 |
+| C | 주문 API 앞단에서 `TOSS_LIVE`만 검사해 거부 | 변경이 가장 작음 | 다른 경로(자동 청산 주문 등)는 여전히 `else -> {}`로 빠짐 |
+
+**강력 추천: A** — 이유: 문제의 뿌리가 `else -> {}`라서 그 자리를 막아야 자동 청산 같은 다른 주문 경로까지 안전하다.
+
+### FLAG-03 — 1단계에서 공통 포트를 먼저 둘지
+
+| 방법 | 내용 | 장점 | 단점 |
+|---|---|---|---|
+| A ⭐ | 1단계에서는 잔고 조회용 공통 포트 하나만 정의하고 토스 어댑터만 구현. KIS는 2단계에서 그 포트로 옮김 | 1단계 코드를 2단계에서 버리지 않음, KIS는 안 건드림 | 포트 모양을 KIS 없이 정해 2단계에 조정할 수 있음 |
+| B | 1단계는 토스 전용 서비스와 API로 만들고 2단계에서 모두 공통 포트로 옮김 | 1단계가 가장 단순 | 1단계 코드 상당 부분을 2단계에서 다시 씀 |
+| C | 1단계 전에 주문, 시세, 잔고, 체결 공통 포트를 전부 정의 | 처음부터 구조가 맞음 | 사용자가 정한 «읽기 전용 먼저» 순서와 어긋남 |
+
+**강력 추천: A** — 이유: 순서 결정을 지키면서 1단계 결과물이 2단계에 그대로 이어진다. 기존 `KisBalanceSnapshot` 모양을 출발점으로 삼으면 조정 폭도 작다.
+
+---
+
+## 5. 막힌 것
+
+1단계를 막는 ASK는 없다. FLAG-01, 02, 03은 2026-11-15 사용자 결정으로 닫혔다. FLAG-09(3단계 tier)는 3단계 착수 전에 다시 묻는다.
