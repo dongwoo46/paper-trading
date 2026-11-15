@@ -32,13 +32,13 @@ class GlobalExceptionHandler {
         )
     }
 
-    // 범주 J(503), 메시지는 우리가 정한 고정 문구만이고 토스 원문은 원인 예외와 로그에만 남김
+    // 범주 J(503), 응답 문구는 code 별 고정 문구만이고 예외 메시지(토스 원문 가능)는 로그에만 남김 (D15, C-09)
     @ExceptionHandler(ServiceUnavailableException::class)
     fun handleServiceUnavailable(ex: ServiceUnavailableException): ResponseEntity<ApiErrorResponse> {
         log.warn(ex) { "외부 서비스 사용 불가: code=${ex.errorCode}" }
         val status = HttpStatus.SERVICE_UNAVAILABLE
         return ResponseEntity.status(status).body(
-            ApiErrorResponse(status.value(), ex.errorCode, ex.message ?: "외부 서비스를 일시적으로 사용할 수 없습니다."),
+            ApiErrorResponse(status.value(), ex.errorCode, serviceUnavailableMessage(ex.errorCode)),
         )
     }
 
@@ -92,11 +92,19 @@ class GlobalExceptionHandler {
             )
         )
 
+    // 응답은 고정 500, 원인은 응답에 싣지 않고 로그에만 남김 (C-07)
     @ExceptionHandler(Exception::class)
-    fun handleException(ex: Exception): ResponseEntity<ApiErrorResponse> =
-        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-            ApiErrorResponse(500, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다.")
+    fun handleException(ex: Exception): ResponseEntity<ApiErrorResponse> {
+        log.error(ex) { "처리되지 않은 예외" }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            ApiErrorResponse(500, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다."),
         )
+    }
+
+    private fun serviceUnavailableMessage(errorCode: String): String = when (errorCode) {
+        "TOSS_TOKEN_UNAVAILABLE" -> "토스 액세스 토큰을 사용할 수 없습니다."
+        else -> "외부 서비스를 일시적으로 사용할 수 없습니다."
+    }
 
     private fun defaultMessage(errorCode: String): String = when (errorCode) {
         "ACCOUNT_NOT_FOUND" -> "계좌를 찾을 수 없습니다."

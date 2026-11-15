@@ -4,6 +4,7 @@ import com.papertrading.api.common.exception.TossIntegrationDisabledException
 import com.papertrading.api.common.exception.TossTokenUnavailableException
 import com.papertrading.api.infrastructure.redis.RedisDistributedLock
 import com.papertrading.api.infrastructure.security.AesGcmTokenCipher
+import com.papertrading.api.support.LogCapture
 import com.papertrading.api.support.SharedRedisContainer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -44,11 +45,17 @@ class TossTokenManagerTest {
         factory.destroy()
     }
 
-    private fun properties(skewSeconds: Long = 60, lockWaitMillis: Long = 30_000) = TossProperties().apply {
+    private fun properties(
+        skewSeconds: Long = 60,
+        lockWaitMillis: Long = 30_000,
+        key: String = encryptionKey,
+        previousKey: String = "",
+    ) = TossProperties().apply {
         baseUrl = "https://toss.example.invalid"
         clientId = "fake-client-id"
         clientSecret = "fake-client-secret"
-        tokenEncryptionKey = encryptionKey
+        tokenEncryptionKey = key
+        tokenPreviousEncryptionKey = previousKey
         tokenRefreshSkewSeconds = skewSeconds
         tokenLockWaitMillis = lockWaitMillis
     }
@@ -89,14 +96,15 @@ class TossTokenManagerTest {
         assertNull(redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "발급 뒤 락 해제")
     }
 
+    // devkit:test-change D10 C-08 — 암호문 형식에 키 식별자가 들어가 접두가 v1. 에서 v2. 로 바뀜
     @Test
-    fun `Redis 원값은 v1 로 시작하는 암호문이고 평문 토큰을 담지 않으며 AAD 는 키 이름이다`() {
+    fun `Redis 원값은 v2 로 시작하는 암호문이고 평문 토큰을 담지 않으며 AAD 는 키 이름이다`() {
         val manager = manager(FakeTossTokenIssuer())
 
         val token = manager.getToken()
 
         val raw = requireNotNull(rawToken())
-        assertTrue(raw.startsWith("v1."))
+        assertTrue(raw.startsWith("v2."))
         assertFalse(raw.contains(token))
         assertEquals(token, cipher.decrypt(raw, TossTokenManager.TOKEN_KEY))
     }
@@ -224,6 +232,39 @@ class TossTokenManagerTest {
     }
 
     @Test
+    fun `이전 키가 설정되면 옛 키로 저장된 토큰을 재발급 없이 읽고 무효화하고 새 저장은 현재 키로 한다`() {
+        val oldKeyBytes = ByteArray(32) { (it + 90).toByte() }
+        val oldKey = Base64.getEncoder().encodeToString(oldKeyBytes)
+        val oldIssuer = FakeTossTokenIssuer()
+        val oldInstance = manager(oldIssuer, properties(key = oldKey))
+        val token = oldInstance.getToken()
+        val rawBefore = requireNotNull(rawToken())
+        val newIssuer = FakeTossTokenIssuer()
+        val newInstance = manager(newIssuer, properties(previousKey = oldKey))
+
+        assertEquals(token, newInstance.getToken(), "옛 키 암호문을 읽음")
+        assertEquals(0, newIssuer.callCount)
+        assertEquals(rawBefore, rawToken(), "읽기만 하고 다시 쓰지 않음")
+
+        assertTrue(newInstance.invalidate(token))
+        assertNull(rawToken())
+        val reissued = newInstance.getToken()
+        assertEquals(1, newIssuer.callCount)
+        assertEquals(reissued, cipher.decrypt(requireNotNull(rawToken()), TossTokenManager.TOKEN_KEY), "현재 키로 저장")
+    }
+
+    @Test
+    fun `이전 키가 없으면 옛 키 암호문은 캐시 없음으로 보고 재발급한다`() {
+        val oldKey = Base64.getEncoder().encodeToString(ByteArray(32) { (it + 90).toByte() })
+        manager(FakeTossTokenIssuer(), properties(key = oldKey)).getToken()
+        val issuer = FakeTossTokenIssuer()
+
+        manager(issuer).getToken()
+
+        assertEquals(1, issuer.callCount)
+    }
+
+    @Test
     fun `형식이 깨진 캐시 값도 재발급으로 복구한다`() {
         redisTemplate.opsForValue().set(TossTokenManager.TOKEN_KEY, "평문-토큰-그대로")
         val issuer = FakeTossTokenIssuer()
@@ -244,21 +285,97 @@ class TossTokenManagerTest {
         assertNull(rawToken())
     }
 
+    // devkit:test-change D10 C-01 — TTL 이 0 이하여도 받은 토큰을 버리지 않고 expires_in 절반(최소 1초)으로 저장한다
     @Test
-    fun `expires_in 이 갱신 여유 이하이면 저장하지 않고 TOSS_TOKEN_UNAVAILABLE 로 실패한다`() {
-        listOf(60L, 30L, 0L).forEach { expiresIn ->
+    fun `expires_in 이 갱신 여유 이하이면 토큰을 버리지 않고 expires_in 의 절반 최소 1초 TTL 로 저장한다`() {
+        // expires_in 과 기대 TTL(초)
+        listOf(60L to 30L, 30L to 15L, 1L to 1L, 0L to 1L).forEach { (expiresIn, expectedTtl) ->
+            redisTemplate.delete(TossTokenManager.TOKEN_KEY)
             val manager = manager(FakeTossTokenIssuer(expiresInSeconds = expiresIn), properties(skewSeconds = 60))
 
-            val error = assertThrows(
-                TossTokenUnavailableException::class.java,
-                { manager.getToken() },
-                "expires_in=$expiresIn",
-            )
+            val token = manager.getToken()
 
-            assertEquals("TOSS_TOKEN_UNAVAILABLE", error.errorCode)
-            assertNull(rawToken(), "expires_in=$expiresIn")
+            assertEquals("fake-access-token-1", token, "expires_in=$expiresIn")
+            assertEquals(token, cipher.decrypt(requireNotNull(rawToken()), TossTokenManager.TOKEN_KEY))
+            val ttl = requireNotNull(redisTemplate.getExpire(TossTokenManager.TOKEN_KEY, TimeUnit.SECONDS))
+            assertTrue(ttl in (expectedTtl - 1)..expectedTtl, "expires_in=$expiresIn ttl=$ttl")
             assertNull(redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY))
         }
+    }
+
+    @Test
+    fun `수명이 짧은 토큰은 다음 getToken 이 캐시 적중으로 쓰고 재발급하지 않으며 warn 은 발급 때 1회다`() {
+        val issuer = FakeTossTokenIssuer(expiresInSeconds = 30)
+        val manager = manager(issuer, properties(skewSeconds = 60))
+
+        LogCapture().use { logs ->
+            val first = manager.getToken()
+            val second = manager.getToken()
+
+            assertEquals(first, second)
+            assertEquals(1, issuer.callCount, "재발급이 반복되면 직전 토큰이 폐기됨")
+            val warns = logs.linesOf("TossTokenManager").filter { it.contains(" WARN ") }
+            assertEquals(1, warns.size, warns.toString())
+        }
+    }
+
+    @Test
+    fun `대기 중 토큰도 락도 없으면 락을 다시 잡아 직접 발급한다`() {
+        val issuer = FakeTossTokenIssuer()
+        val holder = requireNotNull(lock.tryAcquire(TossTokenManager.LOCK_KEY, 60_000))
+        val clock = AtomicLong(0)
+        var polls = 0
+        val manager = manager(
+            issuer,
+            properties(lockWaitMillis = 5_000),
+            nowMillis = clock::get,
+            sleeper = { millis ->
+                polls++
+                clock.addAndGet(millis)
+                // 락 보유자의 발급이 실패해 락만 풀린 상황
+                if (polls == 2) lock.release(TossTokenManager.LOCK_KEY, holder)
+            },
+        )
+
+        val token = manager.getToken()
+
+        assertEquals("fake-access-token-1", token)
+        assertEquals(1, issuer.callCount)
+        assertTrue(polls < 5, "빈 락 앞에서 대기 한도(50회)까지 묶이지 않음: polls=$polls")
+        assertEquals(token, cipher.decrypt(requireNotNull(rawToken()), TossTokenManager.TOKEN_KEY))
+        assertNull(redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "직접 발급한 락 해제")
+    }
+
+    @Test
+    fun `발급 도중 락이 만료돼 다른 쪽이 새 토큰을 저장했으면 늦은 저장으로 덮어쓰지 않고 그 토큰을 쓴다`() {
+        val newer = "다른-인스턴스가-저장한-새-토큰"
+        var otherOwner: String? = null
+        val issuer = FakeTossTokenIssuer(onIssue = {
+            // 락 만료 뒤 다른 인스턴스가 락을 잡고 새 토큰을 저장한 상황
+            redisTemplate.delete(TossTokenManager.LOCK_KEY)
+            otherOwner = lock.tryAcquire(TossTokenManager.LOCK_KEY, 60_000)
+            redisTemplate.opsForValue().set(
+                TossTokenManager.TOKEN_KEY,
+                cipher.encrypt(newer, TossTokenManager.TOKEN_KEY),
+            )
+        })
+
+        val token = manager(issuer).getToken()
+
+        assertEquals(newer, token)
+        assertEquals(newer, cipher.decrypt(requireNotNull(rawToken()), TossTokenManager.TOKEN_KEY))
+        assertEquals(1, issuer.callCount)
+        assertEquals(otherOwner, redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "남의 락은 그대로")
+    }
+
+    @Test
+    fun `발급 도중 락을 잃고 캐시도 비어 있으면 저장하지 않고 TOSS_TOKEN_UNAVAILABLE 로 실패한다`() {
+        val issuer = FakeTossTokenIssuer(onIssue = { redisTemplate.delete(TossTokenManager.LOCK_KEY) })
+
+        val error = assertThrows(TossTokenUnavailableException::class.java) { manager(issuer).getToken() }
+
+        assertEquals("TOSS_TOKEN_UNAVAILABLE", error.errorCode)
+        assertNull(rawToken(), "락을 잃은 발급분은 저장하지 않음")
     }
 
     @Test

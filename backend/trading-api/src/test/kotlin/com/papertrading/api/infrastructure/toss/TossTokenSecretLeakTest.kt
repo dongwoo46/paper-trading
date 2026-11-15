@@ -89,8 +89,9 @@ class TossTokenSecretLeakTest {
         }
     }
 
+    // devkit:test-change D10 C-01 — 수명 짧은 토큰은 실패하지 않고 절반 TTL 로 저장, 그 경로의 로그에도 비밀값이 없어야 함
     @Test
-    fun `락 대기 초과와 수명 오류 경로의 로그와 예외 문구에 비밀값이 없다`() {
+    fun `락 대기 초과와 수명 짧은 토큰 경로의 로그와 예외 문구에 비밀값이 없다`() {
         val holder = requireNotNull(lock.tryAcquire(TossTokenManager.LOCK_KEY, 60_000))
         val clock = AtomicLong(0)
         LogCapture().use { logs ->
@@ -103,15 +104,55 @@ class TossTokenSecretLeakTest {
                 ).getToken()
             }
             lock.release(TossTokenManager.LOCK_KEY, holder)
-            val shortLived = assertThrows(TossTokenUnavailableException::class.java) {
-                manager(FakeTossTokenIssuer(expiresInSeconds = 10)).getToken()
+            manager(FakeTossTokenIssuer(expiresInSeconds = 10)).getToken()
+
+            assertNoSecrets(logs, listOf(requireNotNull(redisTemplate.opsForValue().get(TossTokenManager.TOKEN_KEY))))
+            listOf(fakeToken, fakeSecret, encryptionKey).forEach { secret ->
+                assertFalse(waitTimeout.message.orEmpty().contains(secret))
+            }
+        }
+    }
+
+    @Test
+    fun `이전 키로 복호화하는 경로의 로그에 토큰 이전 키 현재 키 암호문이 없다`() {
+        val oldKeyBytes = ByteArray(32) { (it + 90).toByte() }
+        val oldKey = Base64.getEncoder().encodeToString(oldKeyBytes)
+        val oldCiphertext = AesGcmTokenCipher(oldKeyBytes).encrypt(fakeToken, TossTokenManager.TOKEN_KEY)
+        redisTemplate.opsForValue().set(TossTokenManager.TOKEN_KEY, oldCiphertext)
+        val rotating = properties().apply { tokenPreviousEncryptionKey = oldKey }
+        LogCapture().use { logs ->
+            val manager = manager(FakeTossTokenIssuer(), rotating)
+
+            assertTrue(manager.getToken() == fakeToken)
+            manager.invalidate(fakeToken)
+
+            assertNoSecrets(logs, listOf(oldKey, oldCiphertext))
+        }
+    }
+
+    @Test
+    fun `대기 중 직접 발급과 락 상실 저장 거부 경로의 로그와 예외 문구에 비밀값이 없다`() {
+        val holder = requireNotNull(lock.tryAcquire(TossTokenManager.LOCK_KEY, 60_000))
+        val clock = AtomicLong(0)
+        LogCapture().use { logs ->
+            val direct = manager(
+                FakeTossTokenIssuer(),
+                properties(lockWaitMillis = 5_000),
+                nowMillis = clock::get,
+                sleeper = {
+                    clock.addAndGet(it)
+                    lock.release(TossTokenManager.LOCK_KEY, holder)
+                },
+            ).getToken()
+            redisTemplate.delete(TossTokenManager.TOKEN_KEY)
+            val lostLock = assertThrows(TossTokenUnavailableException::class.java) {
+                manager(FakeTossTokenIssuer(onIssue = { redisTemplate.delete(TossTokenManager.LOCK_KEY) })).getToken()
             }
 
+            assertTrue(direct == fakeToken)
             assertNoSecrets(logs)
-            listOf(waitTimeout, shortLived).forEach { error ->
-                listOf(fakeToken, fakeSecret, encryptionKey).forEach { secret ->
-                    assertFalse(error.message.orEmpty().contains(secret))
-                }
+            listOf(fakeToken, fakeSecret, encryptionKey).forEach { secret ->
+                assertFalse(lostLock.message.orEmpty().contains(secret))
             }
         }
     }

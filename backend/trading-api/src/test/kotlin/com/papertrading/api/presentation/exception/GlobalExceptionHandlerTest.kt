@@ -7,8 +7,10 @@ import com.papertrading.api.common.exception.NotImplementedException
 import com.papertrading.api.common.exception.ServiceUnavailableException
 import com.papertrading.api.common.exception.TossIntegrationDisabledException
 import com.papertrading.api.common.exception.TossTokenUnavailableException
+import com.papertrading.api.support.LogCapture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
@@ -60,8 +62,9 @@ class GlobalExceptionHandlerTest {
         assertEquals("LOCKED_DEPOSIT_INSUFFICIENT", response.body?.code)
     }
 
+    // devkit:test-change D15 C-09 — 처리기는 예외 메시지를 응답에 싣지 않고 code 별 고정 문구만 싣는다(원문은 로그에만)
     @Test
-    fun `범주 J 예외는 503 과 예외 code 와 메시지로 응답한다`() {
+    fun `범주 J 예외는 503 과 예외 code 로 응답하고 모르는 code 는 기본 고정 문구를 싣는다`() {
         val response = handler.handleServiceUnavailable(
             ServiceUnavailableException("SOME_UPSTREAM", "잠시 뒤 다시 시도해 주세요."),
         )
@@ -69,15 +72,47 @@ class GlobalExceptionHandlerTest {
         assertEquals(503, response.statusCode.value())
         assertEquals(503, response.body?.status)
         assertEquals("SOME_UPSTREAM", response.body?.code)
-        assertEquals("잠시 뒤 다시 시도해 주세요.", response.body?.message)
+        assertEquals("외부 서비스를 일시적으로 사용할 수 없습니다.", response.body?.message)
     }
 
+    // devkit:test-change D15 C-09 — TOSS_TOKEN_UNAVAILABLE 응답 문구는 사유 없는 고정 문구
     @Test
-    fun `범주 J 하위 예외 TOSS_TOKEN_UNAVAILABLE 도 503 으로 응답한다`() {
+    fun `범주 J 하위 예외 TOSS_TOKEN_UNAVAILABLE 도 503 과 고정 문구로 응답한다`() {
         val response = handler.handleServiceUnavailable(TossTokenUnavailableException("대기 한도 초과"))
 
         assertEquals(503, response.statusCode.value())
         assertEquals("TOSS_TOKEN_UNAVAILABLE", response.body?.code)
+        assertEquals("토스 액세스 토큰을 사용할 수 없습니다.", response.body?.message)
+    }
+
+    @Test
+    fun `범주 J 예외에 토스 원문이 실려도 응답에는 싣지 않고 로그에만 남긴다`() {
+        val raw = "토스-원문-RAW-BODY-에러"
+        LogCapture().use { logs ->
+            listOf(
+                handler.handleServiceUnavailable(TossTokenUnavailableException(raw)),
+                handler.handleServiceUnavailable(ServiceUnavailableException("TOSS_AUTH_FAILED", raw)),
+            ).forEach { response ->
+                assertFalse(response.body?.message.orEmpty().contains(raw))
+                assertFalse(response.body?.code.orEmpty().contains(raw))
+            }
+
+            assertEquals(2, logs.linesOf("GlobalExceptionHandler").count { it.contains(raw) })
+        }
+    }
+
+    @Test
+    fun `잡이 처리기는 500 고정 응답을 주고 원인 예외를 error 로그로 한 번 남긴다`() {
+        LogCapture().use { logs ->
+            val response = handler.handleException(RuntimeException("redis 연결 실패"))
+
+            assertEquals(500, response.statusCode.value())
+            assertEquals("INTERNAL_SERVER_ERROR", response.body?.code)
+            assertFalse(response.body?.message.orEmpty().contains("redis"))
+            val errors = logs.linesOf("GlobalExceptionHandler").filter { it.contains(" ERROR ") }
+            assertEquals(1, errors.size, errors.toString())
+            assertTrue(errors.single().contains("RuntimeException:redis 연결 실패"), errors.single())
+        }
     }
 
     @Test

@@ -6,12 +6,10 @@ import com.papertrading.api.infrastructure.security.AesGcmTokenCipher
 import com.papertrading.api.infrastructure.security.TokenCipherException
 import mu.KotlinLogging
 import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.data.redis.core.script.DefaultRedisScript
-import java.time.Duration
 
 /**
  * 토스 액세스 토큰 캐시·발급 직렬화·무효화 (토큰은 클라이언트당 1개만 유효 — RULE-06)
- * 순서: 캐시 확인 → 락 획득 → 캐시 재확인 → 발급 → 암호화 저장 → 락 해제, 락 없이 발급하는 경로 없음
+ * 순서: 캐시 확인 → 락 획득 → 캐시 재확인 → 발급 → 락을 쥔 채 암호화 저장 → 락 해제, 락 없이 발급하는 경로 없음
  * Redis 에는 AES-GCM 암호문만 저장(RULE-05), 토큰·암호화 키·client secret 은 로그에 남기지 않음
  * 스프링 빈 등록은 실제 발급기(TossTokenIssuer 구현)가 생기는 step 5
  */
@@ -26,8 +24,13 @@ class TossTokenManager(
 ) {
     private val log = KotlinLogging.logger {}
 
-    // 비활성 설정에서는 만들어지지 않도록 첫 사용 때 만듦
-    private val cipher: AesGcmTokenCipher by lazy { AesGcmTokenCipher.fromBase64Key(properties.tokenEncryptionKey) }
+    // 비활성 설정에서는 만들어지지 않도록 첫 사용 때 만들고 이후 보관
+    private val cipher: AesGcmTokenCipher by lazy {
+        AesGcmTokenCipher.fromBase64Key(
+            properties.tokenEncryptionKey,
+            properties.tokenPreviousEncryptionKey.takeIf { it.isNotBlank() },
+        )
+    }
 
     fun getToken(): String {
         properties.requireEnabled()
@@ -39,17 +42,27 @@ class TossTokenManager(
         properties.requireEnabled()
         val raw = redisTemplate.opsForValue().get(TOKEN_KEY) ?: return false
         // 암호문은 IV 가 매번 달라 평문 비교가 안 되므로 읽은 암호문 그대로를 비교해 삭제
-        return decryptOrNull(raw) == token &&
-            redisTemplate.execute(DELETE_IF_EQUALS_SCRIPT, listOf(TOKEN_KEY), raw) == 1L
+        return decryptOrNull(raw) == token && lock.deleteIfEquals(TOKEN_KEY, raw)
     }
 
+    // 락을 얻을 때까지 대기 한도 안에서 반복, 대기 중 토큰이 생기면 그 토큰을 쓰고 락이 비어도 토큰이 없으면 직접 발급 (C-02)
     private fun issueUnderLock(): String {
-        val owner = lock.tryAcquire(LOCK_KEY, properties.tokenLockTtlMillis) ?: return waitForToken()
-        return try {
-            readCached() ?: issueAndStore()
-        } finally {
-            lock.release(LOCK_KEY, owner)
+        val deadline = nowMillis() + properties.tokenLockWaitMillis
+        while (true) {
+            val owner = lock.tryAcquire(LOCK_KEY, properties.tokenLockTtlMillis)
+            if (owner != null) return issueHolding(owner)
+            if (nowMillis() >= deadline) break
+            sleeper(POLL_INTERVAL_MILLIS)
+            readCached()?.let { return it }
         }
+        log.warn { "토스 토큰 락 대기 한도 초과: waitMillis=${properties.tokenLockWaitMillis}" }
+        throw TossTokenUnavailableException("락 대기 한도 초과")
+    }
+
+    private fun issueHolding(owner: String): String = try {
+        readCached() ?: issueAndStore(owner)
+    } finally {
+        lock.release(LOCK_KEY, owner)
     }
 
     private fun readCached(): String? = redisTemplate.opsForValue().get(TOKEN_KEY)?.let(::decryptOrNull)
@@ -62,37 +75,32 @@ class TossTokenManager(
         null
     }
 
-    private fun issueAndStore(): String {
+    private fun issueAndStore(owner: String): String {
         val issued = issuer.issue()
-        val ttlSeconds = issued.expiresInSeconds - properties.tokenRefreshSkewSeconds
-        if (ttlSeconds <= 0) {
-            log.warn { "토스 토큰 수명이 갱신 여유 이하라 저장하지 않음: expiresIn=${issued.expiresInSeconds}s" }
-            throw TossTokenUnavailableException("토큰 수명(expires_in)이 갱신 여유 이하")
-        }
+        val ttlSeconds = storageTtlSeconds(issued.expiresInSeconds)
         val encrypted = cipher.encrypt(issued.accessToken, TOKEN_KEY)
-        redisTemplate.opsForValue().set(TOKEN_KEY, encrypted, Duration.ofSeconds(ttlSeconds))
+        // 락을 아직 쥔 경우에만 저장, 발급이 락 TTL 을 넘겨 락을 잃었으면 다른 쪽의 새 토큰을 덮어쓰지 않음 (C-03)
+        if (!lock.storeIfHeld(LOCK_KEY, owner, TOKEN_KEY, encrypted, ttlSeconds * MILLIS_PER_SECOND)) {
+            log.warn { "토스 토큰 저장 직전 락을 잃어 저장하지 않음" }
+            return readCached() ?: throw TossTokenUnavailableException("발급 도중 락 만료")
+        }
         log.info { "토스 토큰 발급·저장: ttl=${ttlSeconds}s" }
         return issued.accessToken
     }
 
-    // 락을 못 얻은 쪽은 발급하지 않고 대기 한도까지 토큰 키만 다시 읽음
-    private fun waitForToken(): String {
-        val deadline = nowMillis() + properties.tokenLockWaitMillis
-        while (nowMillis() < deadline) {
-            sleeper(POLL_INTERVAL_MILLIS)
-            readCached()?.let { return it }
-        }
-        log.warn { "토스 토큰 락 대기 한도 초과: waitMillis=${properties.tokenLockWaitMillis}" }
-        throw TossTokenUnavailableException("락 대기 한도 초과")
+    // expires_in − 갱신 여유, 0 이하이면 받은 토큰을 버리지 않고 expires_in 의 절반(최소 1초)으로 줄여 저장 (C-01)
+    private fun storageTtlSeconds(expiresInSeconds: Long): Long {
+        val ttlSeconds = expiresInSeconds - properties.tokenRefreshSkewSeconds
+        if (ttlSeconds > 0) return ttlSeconds
+        val reduced = maxOf(expiresInSeconds / 2, 1L)
+        log.warn { "토스 토큰 수명이 갱신 여유 이하라 수명의 절반으로 저장: expiresIn=${expiresInSeconds}s ttl=${reduced}s" }
+        return reduced
     }
 
     companion object {
         const val TOKEN_KEY = "toss:token"
         const val LOCK_KEY = "toss:token:lock"
         private const val POLL_INTERVAL_MILLIS = 100L
-        private val DELETE_IF_EQUALS_SCRIPT = DefaultRedisScript(
-            "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end",
-            Long::class.java,
-        )
+        private const val MILLIS_PER_SECOND = 1_000L
     }
 }

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -140,6 +141,79 @@ class TossPropertiesTest {
             assertEquals(22_000L, properties.tokenLockTtlMillis)
             assertEquals(33L, properties.tokenLockWaitMillis)
         }
+    }
+
+    @ParameterizedTest(name = "{0}={1} 는 범위 오류라 토스만 비활성이고 값은 어디에도 싣지 않는다")
+    @CsvSource(
+        "trading.toss.token-lock-ttl-millis, 15000, TOSS_TOKEN_LOCK_TTL_MILLIS(범위 오류)",
+        "trading.toss.token-lock-ttl-millis, 1000, TOSS_TOKEN_LOCK_TTL_MILLIS(범위 오류)",
+        "trading.toss.token-lock-ttl-millis, 0, TOSS_TOKEN_LOCK_TTL_MILLIS(범위 오류)",
+        "trading.toss.token-lock-ttl-millis, -1, TOSS_TOKEN_LOCK_TTL_MILLIS(범위 오류)",
+        "trading.toss.token-refresh-skew-seconds, -1, TOSS_TOKEN_REFRESH_SKEW_SECONDS(범위 오류)",
+        "trading.toss.token-lock-wait-millis, 0, TOSS_TOKEN_LOCK_WAIT_MILLIS(범위 오류)",
+        "trading.toss.token-lock-wait-millis, -5, TOSS_TOKEN_LOCK_WAIT_MILLIS(범위 오류)",
+    )
+    fun `선택 키가 범위를 벗어나면 토스만 비활성이고 컨텍스트는 기동한다`(property: String, value: String, expectedName: String) {
+        runner.withPropertyValues(*fullProperties(property to value)).run { context ->
+            assertNull(context.startupFailure)
+            val properties = context.getBean(TossProperties::class.java)
+
+            assertFalse(properties.integrationEnabled())
+            assertEquals(listOf(expectedName), properties.disabledKeyNames())
+            val error = assertThrows(TossIntegrationDisabledException::class.java) { properties.requireEnabled() }
+            assertTrue(error.message.orEmpty().contains(expectedName))
+            assertFalse(error.message.orEmpty().contains(" $value"), "범위 오류 값은 싣지 않음")
+        }
+    }
+
+    @ParameterizedTest(name = "{0}={1} 는 경계 안이라 활성이다")
+    @CsvSource(
+        "trading.toss.token-lock-ttl-millis, 15001",
+        "trading.toss.token-refresh-skew-seconds, 0",
+        "trading.toss.token-lock-wait-millis, 1",
+    )
+    fun `선택 키가 경계값 안이면 활성이다`(property: String, value: String) {
+        runner.withPropertyValues(*fullProperties(property to value)).run { context ->
+            assertTrue(context.getBean(TossProperties::class.java).integrationEnabled())
+        }
+    }
+
+    @Test
+    fun `이전 암호화 키는 선택이라 비어 있어도 활성이고 올바른 키를 주면 활성이다`() {
+        runner.withPropertyValues(*fullProperties()).run { context ->
+            val properties = context.getBean(TossProperties::class.java)
+            assertEquals("", properties.tokenPreviousEncryptionKey)
+            assertTrue(properties.integrationEnabled())
+        }
+        runner.withPropertyValues(*fullProperties("trading.toss.token-previous-encryption-key" to validEncryptionKey))
+            .run { context ->
+                assertTrue(context.getBean(TossProperties::class.java).integrationEnabled())
+            }
+    }
+
+    @ParameterizedTest(name = "이전 암호화 키 {0} 는 형식 오류로 비활성이고 값은 어디에도 싣지 않는다")
+    @CsvSource(
+        "base64 아님, not-base64-@@@",
+        "16바이트, AAAAAAAAAAAAAAAAAAAAAA==",
+    )
+    fun `이전 암호화 키 형식이 틀리면 비활성이고 키 값은 어디에도 싣지 않는다`(label: String, badKey: String) {
+        LogCapture().use { logs ->
+            runner.withPropertyValues(*fullProperties("trading.toss.token-previous-encryption-key" to badKey))
+                .run { context ->
+                    val properties = context.getBean(TossProperties::class.java)
+
+                    assertFalse(properties.integrationEnabled(), label)
+                    assertEquals(listOf("TOSS_TOKEN_PREVIOUS_ENCRYPTION_KEY(형식 오류)"), properties.disabledKeyNames())
+                    assertTrue(logs.lines().none { it.contains(badKey) })
+                }
+        }
+    }
+
+    @Test
+    fun `비활성 판정 목록은 한 번 계산해 보관하고 호출마다 새로 만들지 않는다`() {
+        val disabled = TossProperties()
+
+        assertSame(disabled.disabledKeyNames(), disabled.disabledKeyNames())
     }
 
     @Test
