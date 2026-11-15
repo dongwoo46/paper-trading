@@ -21,6 +21,7 @@ import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import jakarta.persistence.Version
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 
 /**
@@ -133,15 +134,21 @@ class Order protected constructor() : BaseAuditEntity() {
     @Column(name = "version", nullable = false)
     var version: Int = 0
 
-    fun applyExecution(executedQty: BigDecimal, newAvgPrice: BigDecimal, executedFee: BigDecimal) {
+    /** 이번 체결을 반영하고 이번 체결 금액(수량 × 체결가)을 돌려준다 */
+    fun applyExecution(executedQty: BigDecimal, executedPrice: BigDecimal, executedFee: BigDecimal): BigDecimal {
         check(orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PARTIAL) {
             "체결 적용 불가 상태입니다: $orderStatus"
         }
+        require(executedQty > BigDecimal.ZERO) { "체결 수량은 0보다 커야 합니다." }
+        require(executedPrice > BigDecimal.ZERO) { "체결 가격은 0보다 커야 합니다." }
+        val executedAmount = executedQty.multiply(executedPrice).setScale(AMOUNT_SCALE, RoundingMode.HALF_UP)
+        val newTotalAmount = (totalAmount ?: BigDecimal.ZERO).add(executedAmount)
         filledQuantity = filledQuantity.add(executedQty)
-        avgFilledPrice = newAvgPrice
-        totalAmount = (totalAmount ?: BigDecimal.ZERO).add(executedQty.multiply(newAvgPrice))
+        totalAmount = newTotalAmount
+        avgFilledPrice = newTotalAmount.divide(filledQuantity, AMOUNT_SCALE, RoundingMode.HALF_UP)
         fee = fee.add(executedFee)
         orderStatus = if (filledQuantity >= quantity) OrderStatus.FILLED else OrderStatus.PARTIAL
+        return executedAmount
     }
 
     fun cancel() {
@@ -156,7 +163,7 @@ class Order protected constructor() : BaseAuditEntity() {
         externalOrderId = externalId
     }
 
-    /** 취소 시 계좌에 반환할 잠금 해제 금액 (초기 잠금 - 실체결 금액) */
+    /** 체결 완료·취소 때 계좌에 돌려줄 잠금 잔액 (초기 잠금 - 누적 체결 금액, 0 하한) */
     fun remainingLockedAmount(): BigDecimal {
         val remaining = lockedAmount.subtract(totalAmount ?: BigDecimal.ZERO)
         return remaining.coerceAtLeast(BigDecimal.ZERO)

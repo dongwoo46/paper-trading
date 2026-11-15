@@ -107,13 +107,14 @@ class OrderTest {
 
         order.applyExecution(
             executedQty = BigDecimal("10"),
-            newAvgPrice = BigDecimal("70000"),
+            executedPrice = BigDecimal("70000"),
             executedFee = BigDecimal("350"),
         )
 
         assertEquals(OrderStatus.FILLED, order.orderStatus)
         assertEquals(BigDecimal("10"), order.filledQuantity)
-        assertEquals(BigDecimal("70000"), order.avgFilledPrice)
+        // devkit:test-change 평균가는 divide(4, HALF_UP) 산출이라 scale 4 — 계획 D-01·PTB4(compareTo), 사람 승인 계획 2026-11-15
+        assertEquals(0, order.avgFilledPrice!!.compareTo(BigDecimal("70000")))
         assertEquals(0, order.fee.compareTo(BigDecimal("350")))
     }
 
@@ -123,7 +124,7 @@ class OrderTest {
 
         order.applyExecution(
             executedQty = BigDecimal("4"),
-            newAvgPrice = BigDecimal("70000"),
+            executedPrice = BigDecimal("70000"),
             executedFee = BigDecimal("140"),
         )
 

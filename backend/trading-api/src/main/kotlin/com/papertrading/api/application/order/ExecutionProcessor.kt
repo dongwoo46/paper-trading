@@ -112,16 +112,7 @@ class ExecutionProcessor(
         val rawFee = fillPrice.multiply(fillQty).multiply(feeRate).setScale(Order.AMOUNT_SCALE, RoundingMode.HALF_UP)
         val fee = rawFee.max(minFee)
 
-        val prevQty = order.filledQuantity
-        val prevAvg = order.avgFilledPrice ?: BigDecimal.ZERO
-        val newAvgPrice = if (prevQty == BigDecimal.ZERO) {
-            fillPrice
-        } else {
-            prevAvg.multiply(prevQty).add(fillPrice.multiply(fillQty))
-                .divide(prevQty.add(fillQty), Order.AMOUNT_SCALE, RoundingMode.HALF_UP)
-        }
-
-        order.applyExecution(fillQty, newAvgPrice, fee)
+        val executedAmount = order.applyExecution(fillQty, fillPrice, fee)
 
         val execution = executionRepository.save(
             Execution.create(
@@ -140,16 +131,15 @@ class ExecutionProcessor(
         )
         val executionId = requireNotNull(execution.id) { "saved execution.id is null" }
 
+        // 체결 원장은 매수·매도 공통으로 한 곳에서 저장(동결된 ArchUnit 호출 수 유지)
+        val executionLedger: AccountLedger
         if (order.orderSide == OrderSide.BUY) {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, ticker)
                 .orElseGet { Position.create(account = account, ticker = ticker, marketType = marketType) }
             position.applyBuy(fillQty, fillPrice)
             positionRepository.save(position)
 
-            val cost = fillPrice.multiply(fillQty)
-            accountLedgerRepository.save(
-                account.recordBuyExecution(cost, orderId, executionId, "buy-exec-$executionId"),
-            )
+            executionLedger = account.recordBuyExecution(executedAmount, orderId, executionId, "buy-exec-$executionId")
         } else {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, ticker)
                 .orElseThrow { PositionNotFoundException(ticker = ticker) }
@@ -159,7 +149,7 @@ class ExecutionProcessor(
                 "원자적 매도 반영 실패: positionId=$positionId, qty=$fillQty"
             }
 
-            val grossProceeds = fillPrice.multiply(fillQty).setScale(Order.AMOUNT_SCALE, RoundingMode.HALF_UP)
+            val grossProceeds = executedAmount
             val netProceeds = grossProceeds.subtract(fee).setScale(Order.AMOUNT_SCALE, RoundingMode.HALF_UP)
 
             when (tradingMode) {
@@ -177,9 +167,7 @@ class ExecutionProcessor(
                 }
             }
 
-            accountLedgerRepository.save(
-                account.recordSellExecution(netProceeds, orderId, executionId, "sell-exec-$executionId"),
-            )
+            executionLedger = account.recordSellExecution(netProceeds, orderId, executionId, "sell-exec-$executionId")
 
             if (order.orderStatus == OrderStatus.FILLED && order.orderSide == OrderSide.SELL) {
                 val settlement = settlementRepository.save(
@@ -199,6 +187,7 @@ class ExecutionProcessor(
                 )
             }
         }
+        accountLedgerRepository.save(executionLedger)
 
         if (fee > BigDecimal.ZERO) {
             accountLedgerRepository.save(
@@ -207,7 +196,12 @@ class ExecutionProcessor(
         }
 
         if (order.orderStatus == OrderStatus.FILLED) {
-            releaseLockedExcess(orderId, order.lockedAmount, fillPrice, fillQty, account)
+            val remainingLock = order.remainingLockedAmount()
+            if (remainingLock > BigDecimal.ZERO) {
+                accountLedgerRepository.save(
+                    account.recordBuyUnlock(remainingLock, orderId, "unlock-excess-$orderId"),
+                )
+            }
             tryUnsubscribe(accountId, ticker, tradingMode.name)
         }
 
@@ -235,17 +229,6 @@ class ExecutionProcessor(
             executionId = executionId,
             message = "Execution filled: ticker=$ticker, side=$side, qty=$fillQty, price=$fillPrice",
             occurredAt = executedAt,
-        )
-    }
-
-    /** LIMIT 매수에서 실제 체결가가 잠금 금액보다 낮을 때 차액을 해제 */
-    private fun releaseLockedExcess(orderId: Long, lockedAmount: BigDecimal, fillPrice: BigDecimal, fillQty: BigDecimal, account: com.papertrading.api.domain.entity.account.Account) {
-        val actualCost = fillPrice.multiply(fillQty)
-        val excess = lockedAmount.subtract(actualCost)
-        if (excess <= BigDecimal.ZERO) return
-
-        accountLedgerRepository.save(
-            account.recordBuyUnlock(excess, orderId, "unlock-excess-$orderId"),
         )
     }
 

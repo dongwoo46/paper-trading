@@ -25,6 +25,8 @@
 
 > One line on where things are now. Example: "step-3 in progress (step-1 and step-2 done)"
 
+step-1 in progress: lint, red-test and fix commits done; lint baseline regeneration is the last commit.
+
 ---
 
 ## 2. Roadmap
@@ -35,7 +37,7 @@
 
 | Step | Title | Status | File | Note |
 |---|---|---|---|---|
-| 1 | PR-A1 execution amount contract and final lock release | todo | steps/step-1.md |  |
+| 1 | PR-A1 execution amount contract and final lock release | in progress | steps/step-1.md | lint, red tests, fix committed; baseline regeneration next |
 | 2 | PR-A2 cancel-side lock release | todo | steps/step-2.md |  |
 | 3 | PR-A3 block user cancel of broker-submitted orders | todo | steps/step-3.md |  |
 | 4 | PR-A4 idempotency key reuse and concurrent same key | todo | steps/step-4.md |  |
