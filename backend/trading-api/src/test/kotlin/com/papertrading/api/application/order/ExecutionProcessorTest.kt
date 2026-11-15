@@ -391,6 +391,18 @@ class ExecutionProcessorTest {
     }
 
     @Test
+    fun `이미 끝난 주문 경고 로그는 KIS 체결 id 의 계좌번호를 가려서 남긴다`() {
+        val (_, _, _) = setupBuyFills()
+        fillBuy("70000", "10", "KIS_LIVE:50000000-01:0000123:0001")
+
+        val warns = warnLogsOf { fillBuy("70000", "1", "KIS_LIVE:50000000-01:0000123:0002") }
+
+        assertTrue(warns.isNotEmpty(), "경고 로그가 있어야 함")
+        assertTrue(warns.none { "50000000" in it }, "계좌번호가 가려져야 함: $warns")
+        assertTrue(warns.any { "0000123:0002" in it }, "주문번호·체결번호는 남아야 함: $warns")
+    }
+
+    @Test
     fun `잠금보다 체결 금액이 커서 해제액을 0으로 깎으면 경고 로그를 남긴다`() {
         val (account, _, ledgers) = setupBuyFills()
         account.lockDeposit(BigDecimal("200000"))

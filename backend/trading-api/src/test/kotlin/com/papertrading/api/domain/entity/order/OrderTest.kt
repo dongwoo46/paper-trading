@@ -8,6 +8,7 @@ import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
+import com.papertrading.api.support.withId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -218,6 +219,21 @@ class OrderTest {
         assertEquals(0, order.filledQuantity.compareTo(BigDecimal("4")))
         assertEquals(0, order.totalAmount!!.compareTo(BigDecimal("280000")))
         assertEquals(OrderStatus.PARTIAL, order.orderStatus)
+    }
+
+    @Test
+    fun `applyExecution_초과_체결_거부_메시지에_주문_id_체결_수량_남은_수량이_있다`() {
+        val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000")).withId(77L)
+        order.applyExecution(BigDecimal("4"), BigDecimal("70000"), BigDecimal.ZERO)
+
+        val rejected = assertThrows(IllegalArgumentException::class.java) {
+            order.applyExecution(BigDecimal("7"), BigDecimal("70000"), BigDecimal.ZERO)
+        }
+
+        val message = rejected.message.orEmpty()
+        assertTrue("orderId=77" in message, message)
+        assertTrue("executedQty=7" in message, message)
+        assertTrue("remainingQty=6" in message, message)
     }
 
     @Test

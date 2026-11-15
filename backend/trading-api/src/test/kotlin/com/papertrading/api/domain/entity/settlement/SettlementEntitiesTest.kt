@@ -104,6 +104,32 @@ class SettlementEntitiesTest {
     }
 
     @Test
+    fun `createFromExecution은 소수 수량 정산 실현손익과 순손익을 반올림 없이 계산한다`() {
+        val acc = account()
+        val ord = order(acc)
+        val exec = execution(
+            order = ord,
+            account = acc,
+            qty = BigDecimal("0.3"),
+            price = BigDecimal("100.0005"),
+            fee = BigDecimal.ZERO,
+        )
+
+        val settlement = Settlement.createFromExecution(
+            order = ord,
+            account = acc,
+            execution = exec,
+            tax = BigDecimal.ZERO,
+            settledAt = Instant.parse("2026-05-08T01:00:00Z"),
+        )
+
+        // 0.3 * 100.0005 = 30.00015
+        assertEquals(0, BigDecimal("30.00015").compareTo(settlement.realizedPnl))
+        assertEquals(0, BigDecimal("30.00015").compareTo(settlement.netPnl))
+        assertEquals(0, BigDecimal("30.00015").compareTo(settlement.krwNetPnl))
+    }
+
+    @Test
     fun `createFromExecution은 외화일 때 fxRate를 이용해 krwNetPnl을 계산한다`() {
         val acc = account()
         val ord = order(acc)
@@ -130,4 +156,3 @@ class SettlementEntitiesTest {
         assertEquals(0, BigDecimal("257400.0000").compareTo(settlement.krwNetPnl))
     }
 }
-
