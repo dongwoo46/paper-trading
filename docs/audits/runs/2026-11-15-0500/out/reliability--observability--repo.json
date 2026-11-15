@@ -1,0 +1,91 @@
+{
+  "lens": "reliability/observability",
+  "instance": "reliability/observability#repo",
+  "scope": "repo",
+  "chunk": 0,
+  "agent": "reliability-auditor",
+  "startedAt": "",
+  "finishedAt": "2026-11-15T15:17:35",
+  "tools": [
+    {
+      "name": "detekt",
+      "ran": true,
+      "cmd": "cd backend/trading-api && ./gradlew detekt --console=plain",
+      "checked": 293,
+      "summary": "기준선 243건 · O10·O11 에 직접 해당하는 항목 없음. PrintStackTrace·Println 항목 0건. SwallowedException 3 · TooGenericExceptionCaught 7 은 failure-handling·O1 소관이라 이 인스턴스 판정에 쓰지 않음",
+      "source": "manifest",
+      "output": "tools/Tb661de0c.txt"
+    },
+    {
+      "name": "grep (상관 id·로깅 설정 — 레포 단위 부재 확인)",
+      "ran": true,
+      "cmd": "grep -rnE 'MDC|OncePerRequestFilter|X-Request-Id|X-Request-ID|traceparent|requestId|correlationId|traceId|micrometer-tracing|ObservationRegistry|HandlerInterceptor|logstash|logback' src/main build.gradle | head -40",
+      "checked": 1,
+      "summary": "단위 1 = src/main 트리 전체. grep -r 이 파일 수를 보고하지 않아 단위로 적음. 적중 4건이고 모두 Slack 테스트 메시지 requestId(상관 id 아님)",
+      "source": "own"
+    },
+    {
+      "name": "grep (logging·management 설정)",
+      "ran": true,
+      "cmd": "grep -rnE -i 'logging|structured|hibernate|show[-_]sql|bind|slow|format_sql|level|management|exposure|health|probes|statistics|logback|profiles|active' src/main/resources/ | head -40",
+      "checked": 1,
+      "summary": "src/main/resources 에는 application.yaml 과 db/ 뿐(ls 확인). logback*.xml 없음. 적중은 application.yaml:18-25 의 hibernate·show-sql·format_sql 뿐",
+      "source": "own"
+    }
+  ],
+  "covered": [
+    { "file": "(repo)", "checks": { "O10": "finding", "O11": "finding" } }
+  ],
+  "findings": [
+    {
+      "id": "O10",
+      "lens": "reliability/observability",
+      "file": "(repo)",
+      "line": 0,
+      "title": "요청 상관 id 필터·추적이 레포 어디에도 없고 진입점에서도 새로 만들지 않음",
+      "detail": "src/main 과 build.gradle 전체에서 MDC·OncePerRequestFilter·X-Request-Id·traceparent·micrometer-tracing·ObservationRegistry·HandlerInterceptor 가 0건이다. 유일한 requestId 는 Slack 테스트 메시지 응답용 UUID 로, MDC 에 넣지도 외부 호출에 싣지도 않는다. Redis 리스너(QuoteEventListener)·스케줄러(LocalMatchingScheduler·SlackNotificationScheduler)·KIS WebSocket 처리 진입에서도 상관 id 를 만들지 않는다. 외부 호출용 RestTemplate 은 인터셉터가 없다(ClientHttpRequestInterceptor 0건). CollectorSubscriptionAdapter 는 설정 빈을 쓰지 않고 맨 RestTemplate() 을 직접 만든다.",
+      "impact": "한 주문의 접수 → KIS 호출 → 체결 통보 → 원장 반영을 로그 줄로 이을 수 없다. 체결 유실이나 불확정 응답을 추적할 때 시각·주문 번호를 눈으로 맞춰야 해서 장애 원인 파악이 오래 걸린다.",
+      "evidence": "// build.gradle:33\nimplementation 'org.springframework.boot:spring-boot-starter-actuator'   // ← Actuator 만 있고 micrometer-tracing·MDC 필터는 레포 어디에도 없음 (grep 0건)\n// SlackNotificationService.kt:50\nval requestId = UUID.randomUUID().toString()   // ← Slack 테스트 응답용 id — MDC 에 넣지도 외부 호출에 싣지도 않음\n// QuoteEventListener.kt:28\n) : MessageListener {   // ← Redis 리스너 진입 — 상관 id 생성·MDC.put 0건\n// CollectorSubscriptionAdapter.kt:19\nprivate val restTemplate = RestTemplate()   // ← 인터셉터 없는 맨 RestTemplate — 상관 id 전달 지점 없음",
+      "severity": "med",
+      "confidence": "high",
+      "fix": "1. 요청 진입에 OncePerRequestFilter 를 두어 X-Request-Id 를 읽거나 새로 만들어 MDC 에 넣고 응답 헤더에도 싣는다. 2. Redis 리스너·@Scheduled·WebSocket 메시지 처리 진입에서 MDC 에 id 를 새로 넣고 finally 에서 제거한다. 3. RestTemplate 빈에 ClientHttpRequestInterceptor 를 달아 외부 호출(KIS·Slack·collector)에 id 를 싣는다. 4. CollectorSubscriptionAdapter 의 RestTemplate() 직접 생성은 설정 빈 주입으로 바꾼다. 또는 micrometer-tracing 을 도입한다.",
+      "example": "@Component\nclass RequestIdFilter : OncePerRequestFilter() {\n    override fun doFilterInternal(req: HttpServletRequest, res: HttpServletResponse, chain: FilterChain) {\n        val id = req.getHeader(\"X-Request-Id\") ?: UUID.randomUUID().toString()\n        MDC.put(\"requestId\", id)\n        res.setHeader(\"X-Request-Id\", id)\n        try { chain.doFilter(req, res) } finally { MDC.remove(\"requestId\") }\n    }\n}"
+    },
+    {
+      "id": "O11",
+      "lens": "reliability/observability",
+      "file": "(repo)",
+      "line": 20,
+      "title": "운영 로그 형식(JSON 구조 로그)·로그 수준·느린 쿼리 로그 설정이 없음",
+      "detail": "src/main/resources 에는 application.yaml 과 db/ 만 있고 logback*.xml 이 없다. application.yaml 에는 logging.* 블록(structured.format.console·level)도, 느린 쿼리 설정(hibernate LOG_QUERIES_SLOWER_THAN_MS)도, management.* 블록도 없다(grep 적중은 hibernate·show-sql·format_sql 뿐). docker-compose.yml 에서도 LOGGING·SPRING_PROFILES·SHOW_SQL·MANAGEMENT·JAVA_OPTS 환경변수 0건이다. SQL 바인딩 값 로그는 켜져 있지 않아 그 항목은 통과다.",
+      "impact": "수집기가 로그를 필드(수준·주문 id·종목)로 거르지 못하고 평문 줄로만 본다. 운영 로그 수준이 기본값(INFO)에 맡겨지고 느린 쿼리를 알려 주는 흔적도 없어, 매칭·정산 지연이 생겨도 DB 때문인지 알 수 없다.",
+      "evidence": "# application.yaml\n    show-sql: false              # ← 바인딩 로그는 꺼져 있어 이 항목은 통과\n        dialect: org.hibernate.dialect.PostgreSQLDialect\n        format_sql: true         # ← logging.structured.format.console · logging.level · 느린 쿼리 설정 · logback xml 이 레포 어디에도 없음",
+      "severity": "low",
+      "confidence": "med",
+      "fix": "application.yaml 에 JSON 구조 로그(Spring Boot 3.4 이상은 logging.structured.format.console, 그 미만은 logstash-logback-encoder), 운영 로그 수준(logging.level.root·패키지별), 느린 쿼리 임계(hibernate.session.events.log.LOG_QUERIES_SLOWER_THAN_MS)를 명시한다. org.hibernate.orm.jdbc.bind 는 TRACE 로 켜지 않는다(바인딩 값에 계좌 번호·금액이 남음).",
+      "example": "logging:\n  structured:\n    format:\n      console: ecs\n  level:\n    root: INFO\nspring:\n  jpa:\n    properties:\n      hibernate:\n        session.events.log.LOG_QUERIES_SLOWER_THAN_MS: 500"
+    }
+  ],
+  "ruleConflicts": [],
+  "notSeen": [
+    "backend/trading-api/Dockerfile — 경로에서 찾지 못함(grep 의 오류 출력을 숨겨 존재 여부는 확인하지 않음). 배포 환경변수로 logging.* 를 덮는지는 docker-compose.yml 의 키워드 grep(0건)까지만 봄",
+    "O10·O11 은 레포 전체 부재 판정이라 src/main 파일 본문을 줄 단위로 열지 않고 grep 적중·비적중으로 판정함 (QuoteEventListener·LocalMatchingScheduler·KisExecutionWebSocketManager 등 진입점 본문 미열람)",
+    "레포 규칙 rules/failure-handling.md · rules/async-external.md 본문은 열지 않음 — 렌즈 Standard 가 알려진 충돌 없음이라 ruleConflicts 는 비움",
+    "Spring Boot 버전은 확인하지 않음(구조 로그 기본 지원은 3.4 이상) — 수정안에 두 경로를 병기함"
+  ],
+  "disproved": [
+    {
+      "file": "backend/trading-api/src/main/resources/application.yaml",
+      "line": 20,
+      "claim": "SQL 바인딩 값 로그(org.hibernate.orm.jdbc.bind TRACE)가 운영 기본값으로 켜져 있다",
+      "why": "show-sql: false 이고 application.yaml 에 org.hibernate.orm.jdbc.bind 설정이 0건이라 켜져 있지 않음. O11 의 세 번째 조건은 통과"
+    },
+    {
+      "file": "backend/trading-api/src/main/kotlin/com/papertrading/api/application/notification/SlackNotificationService.kt",
+      "line": 50,
+      "claim": "요청 상관 id 를 새로 만드는 곳이 있다",
+      "why": "Slack 테스트 메시지 전송 결과를 컨트롤러 응답으로 돌려주는 id 일 뿐 MDC 에 넣지도 외부 호출에 싣지도 않아 O10 의 상관 id 가 아님"
+    }
+  ],
+  "notes": "이 인스턴스는 O10·O11 만 판정했다(O1~O9·O12 는 파일 단위 인스턴스 소관). Ta33e2da3(로그 호출 grep) per-target 행은 O1~O4·O7 모집단용이라 돌리지 않았고, MDC 부분은 위 own grep 으로 대신 확인했다. 도구 호출 예산 6회를 넘겨 9회를 썼다. scope.json 이 256KB 를 넘어 첫 Read 가 실패했고, 실행 폴더 사본 대신 플러그인 캐시의 렌즈 파일(파이썬판)을 먼저 열었다가 다시 열었으며, 레포 단위 부재 확인에 grep 2회가 더 필요했다."
+}

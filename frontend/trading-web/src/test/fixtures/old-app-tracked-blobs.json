@@ -1,0 +1,591 @@
+{
+  "note": "D15 고정 자료. 삭제 직전 옛 frontend/trading-web 추적 파일의 git blob 해시(git ls-files -s). 새 앱의 어떤 파일도 이 해시와 같으면 안 된다. 사람 확인 없이 고치지 않는다.",
+  "sourceCommit": "c0e18a69bef42f72a6b8c58928ca34696dc8b7de",
+  "count": 146,
+  "files": [
+    {
+      "blob": "a547bf36d8d11a4f89c59c144f24795749086dd1",
+      "path": "frontend/trading-web/.gitignore"
+    },
+    {
+      "blob": "768de1768420370c660163b5d4cac19158be12b0",
+      "path": "frontend/trading-web/CLAUDE.md"
+    },
+    {
+      "blob": "12a11f445f50bf4611d9c94d51b602d274af3e08",
+      "path": "frontend/trading-web/CODEX.md"
+    },
+    {
+      "blob": "d17367aec984e105cbab348ead72d2c36e6d656b",
+      "path": "frontend/trading-web/README.md"
+    },
+    {
+      "blob": "96696f4415fcd64db21e8a8acaa9f20ac4049afb",
+      "path": "frontend/trading-web/components.json"
+    },
+    {
+      "blob": "ff33bc4377b8db074a2a90523cb9a0f869a44b68",
+      "path": "frontend/trading-web/docs/ADR.md"
+    },
+    {
+      "blob": "037db13ee4c0dfc93db0e5e314eaa0daf8a5497a",
+      "path": "frontend/trading-web/docs/PRD.md"
+    },
+    {
+      "blob": "e5199c5a8672797640e8f971a26388f5366ae778",
+      "path": "frontend/trading-web/docs/UI_GUIDE.md"
+    },
+    {
+      "blob": "ed1e30b8c4f14275627d1c71d2fd07a296b391b4",
+      "path": "frontend/trading-web/eslint.config.js"
+    },
+    {
+      "blob": "d30602b5fe435ab2bd660364bc6453992b35dfb9",
+      "path": "frontend/trading-web/index.html"
+    },
+    {
+      "blob": "a9a1dcb9ed118c8bcfd2c3bda28982c1a2e09bbe",
+      "path": "frontend/trading-web/package-lock.json"
+    },
+    {
+      "blob": "3dd1fcca8124e8adddb78df04ff838487d211ae4",
+      "path": "frontend/trading-web/package.json"
+    },
+    {
+      "blob": "6893eb13237060adc0c968a690149a49faa2d7d3",
+      "path": "frontend/trading-web/public/favicon.svg"
+    },
+    {
+      "blob": "e9522193d9f796a9748e9ad8c952a5df73c87db9",
+      "path": "frontend/trading-web/public/icons.svg"
+    },
+    {
+      "blob": "888df758f5a28e3e8db406dc57b35c8c126a04d2",
+      "path": "frontend/trading-web/src/App.test.tsx"
+    },
+    {
+      "blob": "5224f141d1f3946988ab96b7f457a4fc8f2453f3",
+      "path": "frontend/trading-web/src/App.tsx"
+    },
+    {
+      "blob": "58cbfc7567f4c80a057868d6482d61ef4994ffec",
+      "path": "frontend/trading-web/src/app/styles/App.css"
+    },
+    {
+      "blob": "4cca496bf864da7b2f06dd0dcaddb8cd73edb62b",
+      "path": "frontend/trading-web/src/app/styles/index.css"
+    },
+    {
+      "blob": "91b8cdbb28f1b8aa90b8b3a05c714caf31f8509a",
+      "path": "frontend/trading-web/src/app/styles/motion-contract.test.ts"
+    },
+    {
+      "blob": "cc51a3d20ad4bc961b596a6adfd686685cd84bb0",
+      "path": "frontend/trading-web/src/assets/hero.png"
+    },
+    {
+      "blob": "6c87de9bb3358469122cc991d5cf578927246184",
+      "path": "frontend/trading-web/src/assets/react.svg"
+    },
+    {
+      "blob": "5101b674df391399da71c767aa5c976426c9dc7a",
+      "path": "frontend/trading-web/src/assets/vite.svg"
+    },
+    {
+      "blob": "efcd0cfde902a07d46b5d830cfd89473472cdf74",
+      "path": "frontend/trading-web/src/entities/account/api/accountApi.ts"
+    },
+    {
+      "blob": "8810273c03941d64cb5beedee43946a93a4adcd4",
+      "path": "frontend/trading-web/src/entities/account/model/types.ts"
+    },
+    {
+      "blob": "baaaff5ca2b058aab31149c7e35bdc28e6cbc168",
+      "path": "frontend/trading-web/src/entities/execution/model/types.ts"
+    },
+    {
+      "blob": "27fd1dca753922414ba49652e4d6e5e3de50454e",
+      "path": "frontend/trading-web/src/entities/order/api/orderApi.test.ts"
+    },
+    {
+      "blob": "24844f5ce5f9cffd1544545e4b8f68462b28970d",
+      "path": "frontend/trading-web/src/entities/order/api/orderApi.ts"
+    },
+    {
+      "blob": "776c24d6ef7ef802c8e7a6d3af9b365824906dc2",
+      "path": "frontend/trading-web/src/entities/order/model/types.test.ts"
+    },
+    {
+      "blob": "3c879b976e7f00414d48e9442ebaec544e5bb471",
+      "path": "frontend/trading-web/src/entities/order/model/types.ts"
+    },
+    {
+      "blob": "d2130a0d7a307305bc4ce97738df552c801e8cb5",
+      "path": "frontend/trading-web/src/entities/portfolio/model/types.ts"
+    },
+    {
+      "blob": "de6fbf9268a65c3eaeebdeef011faea44e5954dc",
+      "path": "frontend/trading-web/src/entities/symbol/model/types.ts"
+    },
+    {
+      "blob": "64270debc29c27e740989f2817011a34e7ca8e9d",
+      "path": "frontend/trading-web/src/entities/tax-summary/api/taxSummaryApi.ts"
+    },
+    {
+      "blob": "16559ee4abb2eb0927b5715503d8304c4a5d45a1",
+      "path": "frontend/trading-web/src/entities/tax-summary/model/types.test.ts"
+    },
+    {
+      "blob": "dcc7f18e9895bcb321ad8e195bb809a291c3b029",
+      "path": "frontend/trading-web/src/entities/tax-summary/model/types.ts"
+    },
+    {
+      "blob": "51587c3fefffc500c49a833adba8afe71580b808",
+      "path": "frontend/trading-web/src/entities/trading-journal/api/tradingJournalApi.test.ts"
+    },
+    {
+      "blob": "00db8690f4a12a2af00025f7f9610502f99f892d",
+      "path": "frontend/trading-web/src/entities/trading-journal/api/tradingJournalApi.ts"
+    },
+    {
+      "blob": "490e47a85ec2673743d25876532398aba401ccd8",
+      "path": "frontend/trading-web/src/entities/trading-journal/model/types.ts"
+    },
+    {
+      "blob": "edb5358e1c7ae1fabfa7a23faae5eafba5002080",
+      "path": "frontend/trading-web/src/features/account-overview/ui/AccountCard.test.tsx"
+    },
+    {
+      "blob": "20973cb70945c8ec24a9fa9a4fb8118fa48eb2f5",
+      "path": "frontend/trading-web/src/features/account-overview/ui/AccountCard.tsx"
+    },
+    {
+      "blob": "78f7dfe3b651704c951712a8c2138684cc0f91d3",
+      "path": "frontend/trading-web/src/features/catalog-management/ui/CatalogSelectionList.tsx"
+    },
+    {
+      "blob": "404bfae7f562d90a6b8fd4e21fc7c76e859e3658",
+      "path": "frontend/trading-web/src/features/catalog-management/ui/CatalogTable.tsx"
+    },
+    {
+      "blob": "81d11dfcb5179dbd651ae744ff90b8c9faed5626",
+      "path": "frontend/trading-web/src/features/catalog-management/ui/SymbolCatalogPanel.tsx"
+    },
+    {
+      "blob": "a90c35b846a842e273464ee9e9d3ca68fd92f684",
+      "path": "frontend/trading-web/src/features/chart-drawing/model/useChartDrawStore.ts"
+    },
+    {
+      "blob": "5dcf69285282d078cd8a3b95cf4bbbc5b856bbab",
+      "path": "frontend/trading-web/src/features/execution-toast/model/useToastStore.test.ts"
+    },
+    {
+      "blob": "dd931f03a75bea897435e743da9e894225dc7a9f",
+      "path": "frontend/trading-web/src/features/execution-toast/model/useToastStore.ts"
+    },
+    {
+      "blob": "165a9a92488b06b40dc7914e4ff3875b70933799",
+      "path": "frontend/trading-web/src/features/execution-toast/ui/ExecutionToastProvider.tsx"
+    },
+    {
+      "blob": "4d789f2396e3500a1c18064e573caa6c72c1fe01",
+      "path": "frontend/trading-web/src/features/fred-management/ui/FredPanel.tsx"
+    },
+    {
+      "blob": "03cc8721756d05f4b43fa055c7c85f62d12fbbe9",
+      "path": "frontend/trading-web/src/features/kis-management/ui/KisModeList.tsx"
+    },
+    {
+      "blob": "c3b0b8a743daf72ee1dbc39ebb5459ccfc106b17",
+      "path": "frontend/trading-web/src/features/kis-management/ui/KisPanel.test.tsx"
+    },
+    {
+      "blob": "3ae7b493c68c7892228a48b3d65e9a37c58c30ea",
+      "path": "frontend/trading-web/src/features/kis-management/ui/KisPanel.tsx"
+    },
+    {
+      "blob": "82425fc349601dff54ecd692e19598f078d5f105",
+      "path": "frontend/trading-web/src/features/kis-management/ui/KisSearchList.tsx"
+    },
+    {
+      "blob": "ced0bf90897ffb1f1ffe4eaa0260a282a129471b",
+      "path": "frontend/trading-web/src/features/order-form/ui/AccountSelector.tsx"
+    },
+    {
+      "blob": "c882cb6a4b58cd703f56f3b7e23fe2ac52917859",
+      "path": "frontend/trading-web/src/features/order-form/ui/OrderFormPanel.test.tsx"
+    },
+    {
+      "blob": "620b03f99280987666c97ff1a73c31dd38c94af3",
+      "path": "frontend/trading-web/src/features/order-form/ui/OrderFormPanel.tsx"
+    },
+    {
+      "blob": "76344dd51bfbab9496e7bffa9691ddb8101358d0",
+      "path": "frontend/trading-web/src/features/order-list/ui/OrderTable.test.tsx"
+    },
+    {
+      "blob": "5db05595a97c9f58c1d8bd457adeb556f89e52b6",
+      "path": "frontend/trading-web/src/features/order-list/ui/OrderTable.tsx"
+    },
+    {
+      "blob": "c69122ae08e10c316db55c5f55fc9bfecea6444f",
+      "path": "frontend/trading-web/src/features/order-list/ui/OrderTablePanel.test.tsx"
+    },
+    {
+      "blob": "db8e1b7fa337841cb56a684cdab64fadc2bcc4dc",
+      "path": "frontend/trading-web/src/features/order-list/ui/OrderTablePanel.tsx"
+    },
+    {
+      "blob": "f149e92fbf97e341eb52dccff3844f314b1f40c2",
+      "path": "frontend/trading-web/src/features/portfolio-chart/model/normalizeSeries.test.ts"
+    },
+    {
+      "blob": "051fa89a87c4d07cf0de982a9960f9ce581c9670",
+      "path": "frontend/trading-web/src/features/portfolio-chart/model/normalizeSeries.ts"
+    },
+    {
+      "blob": "737d4cdf269be2e0601b4c574d709d68cd741129",
+      "path": "frontend/trading-web/src/features/portfolio-chart/ui/PortfolioChartPanel.tsx"
+    },
+    {
+      "blob": "aeeb7b9e0f547fe7a6fbe567625f68fbe47925e5",
+      "path": "frontend/trading-web/src/features/position-table/ui/PositionTable.test.tsx"
+    },
+    {
+      "blob": "a93561817ebf20675c5478b4ffeef1103371ce2d",
+      "path": "frontend/trading-web/src/features/position-table/ui/PositionTable.tsx"
+    },
+    {
+      "blob": "2b3b628f634951b08ddd7710de6ec880ee9b2f41",
+      "path": "frontend/trading-web/src/features/tax-summary/ui/TaxSummaryActionPanel.tsx"
+    },
+    {
+      "blob": "9a7761d09b92c72e24ef78287317aab2428360ad",
+      "path": "frontend/trading-web/src/features/tax-summary/ui/TaxSummarySelectionPanel.tsx"
+    },
+    {
+      "blob": "08920f1c190c635c73d2827c36fa0d0c0bf29ace",
+      "path": "frontend/trading-web/src/features/tax-summary/ui/TaxSummarySummaryPanel.test.tsx"
+    },
+    {
+      "blob": "b2632b1161f3315acd95def28ab1f7cf95c871f0",
+      "path": "frontend/trading-web/src/features/tax-summary/ui/TaxSummarySummaryPanel.tsx"
+    },
+    {
+      "blob": "7fb289a95300b965c0ce332cf770e3d35fe06607",
+      "path": "frontend/trading-web/src/features/trading-journal/ui/TradingJournalDetailPanel.tsx"
+    },
+    {
+      "blob": "3b8715f2cd1b71ffadbe0dcbe16f1fa2037f840f",
+      "path": "frontend/trading-web/src/features/trading-journal/ui/TradingJournalFilterPanel.tsx"
+    },
+    {
+      "blob": "5036b8cc4327a2268b3c657931b0f1a3f8885ace",
+      "path": "frontend/trading-web/src/features/trading-journal/ui/TradingJournalListPanel.tsx"
+    },
+    {
+      "blob": "afa67a96289adb687ea9eb7aac95f19b73ff2fe6",
+      "path": "frontend/trading-web/src/features/unified-chart-indicators/model/indicators.test.ts"
+    },
+    {
+      "blob": "0ee28b78ebbb014af4b1dcdd9cc51bdd34877f03",
+      "path": "frontend/trading-web/src/features/unified-chart-indicators/model/indicators.ts"
+    },
+    {
+      "blob": "dcfae0f49809bbb5b1fdba52603de7f09a03c40c",
+      "path": "frontend/trading-web/src/features/unified-chart-indicators/model/useIndicatorStore.ts"
+    },
+    {
+      "blob": "c9878c8c8e700defa9235b12aeff3dfafbff7529",
+      "path": "frontend/trading-web/src/features/unified-chart-indicators/ui/IndicatorToggleBar.tsx"
+    },
+    {
+      "blob": "c0d954ea04a5b1498e0fdc710293b3ed642a5a15",
+      "path": "frontend/trading-web/src/features/upbit-management/ui/UpbitPanel.tsx"
+    },
+    {
+      "blob": "93bb35a37057336c6c1de1d674411363533117fd",
+      "path": "frontend/trading-web/src/main.tsx"
+    },
+    {
+      "blob": "008093d85dd5a507f3aa4388b3585d3ad3e37eef",
+      "path": "frontend/trading-web/src/pages/account/ui/AccountDashboardPage.test.tsx"
+    },
+    {
+      "blob": "b272e32734f68ffe726f517a0eba4c0e8e1cfc53",
+      "path": "frontend/trading-web/src/pages/account/ui/AccountDashboardPage.tsx"
+    },
+    {
+      "blob": "338eb832167b3f866803eb894d853b5a5c6ec4ad",
+      "path": "frontend/trading-web/src/pages/chart-analysis/ui/ChartAnalysisPage.tsx"
+    },
+    {
+      "blob": "923dde75d7e59df91d76ac4b76eac3fe01fcf848",
+      "path": "frontend/trading-web/src/pages/historical/ui/HistoricalPage.tsx"
+    },
+    {
+      "blob": "0128792d22d4f65ede7ef369fc070a5e5bfe475d",
+      "path": "frontend/trading-web/src/pages/home/ui/HomePage.test.tsx"
+    },
+    {
+      "blob": "4e973f2442a3580e41847b63b10ba9242d8e16d8",
+      "path": "frontend/trading-web/src/pages/home/ui/HomePage.tsx"
+    },
+    {
+      "blob": "68cee1692b5dfd7f0519232ac4a0a0a4481a4bed",
+      "path": "frontend/trading-web/src/pages/macro/ui/MacroPage.tsx"
+    },
+    {
+      "blob": "58cbfc7567f4c80a057868d6482d61ef4994ffec",
+      "path": "frontend/trading-web/src/pages/market-unified/ui/MarketUnifiedChartPage.css"
+    },
+    {
+      "blob": "04a8ce73c2709a309625af36bebfd3febfc603c0",
+      "path": "frontend/trading-web/src/pages/market-unified/ui/MarketUnifiedChartPage.tsx"
+    },
+    {
+      "blob": "59dd60e14f118ff9032123c955290819fbee400e",
+      "path": "frontend/trading-web/src/pages/order/ui/OrderPage.tsx"
+    },
+    {
+      "blob": "c0c1f97da96f0b7d4a44511d3ab37b3d92e8a97c",
+      "path": "frontend/trading-web/src/pages/page-header-contract.test.ts"
+    },
+    {
+      "blob": "f50286393736074ba0efb3b629a061d38970fbb1",
+      "path": "frontend/trading-web/src/pages/portfolio/ui/PortfolioChartPage.test.tsx"
+    },
+    {
+      "blob": "b45aeef6a8fa757bd83e90a02c9fa022b9dd7ad5",
+      "path": "frontend/trading-web/src/pages/portfolio/ui/PortfolioChartPage.tsx"
+    },
+    {
+      "blob": "47b5dda35a041ea6e734bbbe81450a9b218fe203",
+      "path": "frontend/trading-web/src/pages/realtime/ui/RealtimePage.tsx"
+    },
+    {
+      "blob": "2c764d27810ca49de447f05fdf43d337abe16909",
+      "path": "frontend/trading-web/src/pages/tax-summary/ui/TaxSummaryPage.test.tsx"
+    },
+    {
+      "blob": "0ce4ba9d4b6898c02ae5037e3c022a908c680bff",
+      "path": "frontend/trading-web/src/pages/tax-summary/ui/TaxSummaryPage.tsx"
+    },
+    {
+      "blob": "c89754dad28695ec78b4486fedb2ac58eb27e9e7",
+      "path": "frontend/trading-web/src/pages/trading-journal/ui/TradingJournalPage.test.tsx"
+    },
+    {
+      "blob": "6b798cca37011e3783b4db3d7c26b5ade8c011e2",
+      "path": "frontend/trading-web/src/pages/trading-journal/ui/TradingJournalPage.tsx"
+    },
+    {
+      "blob": "fa1e14cd78662997c3860e04ed1ae4ed9e7e0bf1",
+      "path": "frontend/trading-web/src/shared/api/chartAnalysisApi.ts"
+    },
+    {
+      "blob": "6bec1c0a88d0910b7205f9b8375db587265d20a5",
+      "path": "frontend/trading-web/src/shared/api/index.ts"
+    },
+    {
+      "blob": "e657db774b7767486f38273babc72b2cbc7b1323",
+      "path": "frontend/trading-web/src/shared/api/investorFlowApi.ts"
+    },
+    {
+      "blob": "d25b548672c50d789aabb36ff698ccae096c264c",
+      "path": "frontend/trading-web/src/shared/api/marketUnifiedApi.ts"
+    },
+    {
+      "blob": "aa9ea2562dd216912fb9e8ef7076f18cda95f1a8",
+      "path": "frontend/trading-web/src/shared/api/portfolioApi.test.ts"
+    },
+    {
+      "blob": "c5608bf43cef352d7a43916c591e3a0e8c97c3b1",
+      "path": "frontend/trading-web/src/shared/api/portfolioApi.ts"
+    },
+    {
+      "blob": "3b0fc864b3ca7c3997334901aab4ccb79784ecec",
+      "path": "frontend/trading-web/src/shared/api/subscriptionStatusApi.test.ts"
+    },
+    {
+      "blob": "48cbee412bb766a8f4ba977df64901746c06c8bc",
+      "path": "frontend/trading-web/src/shared/api/subscriptionStatusApi.ts"
+    },
+    {
+      "blob": "be3f2433d3dd14a7fa1f59f066ea644a1d107fca",
+      "path": "frontend/trading-web/src/shared/lib/sse/useExecutionSse.ts"
+    },
+    {
+      "blob": "fed2fe91e4d2321f997c0209881db87fe0d07ba9",
+      "path": "frontend/trading-web/src/shared/lib/utils.ts"
+    },
+    {
+      "blob": "b55c79a004bcdd850b3fc30a947e96e04f698e6d",
+      "path": "frontend/trading-web/src/shared/model/navigation.test.ts"
+    },
+    {
+      "blob": "6b2cb1aa6034ea752ff2b246c1776b37ddea1f10",
+      "path": "frontend/trading-web/src/shared/model/navigation.ts"
+    },
+    {
+      "blob": "d3a3d84fc6a09c066e0246c0cc6fb55c6cd97b8a",
+      "path": "frontend/trading-web/src/shared/model/useNotificationStore.ts"
+    },
+    {
+      "blob": "aca3fb7ad111525678610808c5863b52c7cb07c3",
+      "path": "frontend/trading-web/src/shared/ui/PageHeader.test.tsx"
+    },
+    {
+      "blob": "d4529ce8159aa07da9bf751163dd079b2b7d84f9",
+      "path": "frontend/trading-web/src/shared/ui/PageHeader.tsx"
+    },
+    {
+      "blob": "3879d4d0dac150a6ab3dfc78dbeaffe34d0d6e29",
+      "path": "frontend/trading-web/src/shared/ui/RouteErrorPage.test.tsx"
+    },
+    {
+      "blob": "07e4257bd8d7ea0eb49c904af1bc21f8d0b0bc13",
+      "path": "frontend/trading-web/src/shared/ui/RouteErrorPage.tsx"
+    },
+    {
+      "blob": "6d1819d9ee7852b5f186e806ff52eab043cfd8ea",
+      "path": "frontend/trading-web/src/shared/ui/Sidebar.test.tsx"
+    },
+    {
+      "blob": "f47aafa321e8a853d84b308f87ba66fcbe1475a9",
+      "path": "frontend/trading-web/src/shared/ui/Sidebar.tsx"
+    },
+    {
+      "blob": "e5e490c3a09854092a1d442be3fa356ffbd3bb65",
+      "path": "frontend/trading-web/src/shared/ui/Toast/ToastContainer.test.tsx"
+    },
+    {
+      "blob": "29a5524bbe02faa720f92121a4f242df64b1ef9f",
+      "path": "frontend/trading-web/src/shared/ui/Toast/ToastContainer.tsx"
+    },
+    {
+      "blob": "f6ec7d0347b4ee91a86dfd06da4de6c92aee82f1",
+      "path": "frontend/trading-web/src/shared/ui/Toast/ToastItem.test.tsx"
+    },
+    {
+      "blob": "8096505e1f2264edb6ff133949e951cc887bf8f2",
+      "path": "frontend/trading-web/src/shared/ui/Toast/ToastItem.tsx"
+    },
+    {
+      "blob": "c1816c91bf805051484d1d67580e1b2f436bbfc3",
+      "path": "frontend/trading-web/src/shared/ui/Toast/index.ts"
+    },
+    {
+      "blob": "58cbfc7567f4c80a057868d6482d61ef4994ffec",
+      "path": "frontend/trading-web/src/shared/ui/Toast/toast.css"
+    },
+    {
+      "blob": "772c10aabfc5be3c4decbc68e414c07e985c25fa",
+      "path": "frontend/trading-web/src/shared/ui/Toast/types.ts"
+    },
+    {
+      "blob": "cb4e56a0f3d1fe14e409a79b31b5dfc69f55c6aa",
+      "path": "frontend/trading-web/src/shared/ui/TopBar.test.tsx"
+    },
+    {
+      "blob": "a652412c01cfc3988c1bb64ab11765618a16b084",
+      "path": "frontend/trading-web/src/shared/ui/TopBar.tsx"
+    },
+    {
+      "blob": "3cb9086832b4270955d86d55ee4500ab01ac7107",
+      "path": "frontend/trading-web/src/shared/ui/index.tsx"
+    },
+    {
+      "blob": "eca3a079a2fa7bbf7a773a353a7a7828c32a6783",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/alert.tsx"
+    },
+    {
+      "blob": "ac92aebbaa00ed8ea53e29dce7305508d7c1f092",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/app-design-system.test.ts"
+    },
+    {
+      "blob": "42353321c51e856cccc394d9361f417dfba2ea4e",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/badge.tsx"
+    },
+    {
+      "blob": "899e67c9b17159478b72ec358eabacf27c9e18bf",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/button.tsx"
+    },
+    {
+      "blob": "75ee98b57e25b401a8144c6220383dfc688d9d8d",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/card.tsx"
+    },
+    {
+      "blob": "f244f9a4b445ef1b323c55612d6b32472296141c",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/checkbox.tsx"
+    },
+    {
+      "blob": "0dc8e13cd97048d71277b5473b2b2e7d3d19130d",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/design-system.test.tsx"
+    },
+    {
+      "blob": "5bf6ea2d748e0ff5b0cf9b0fa28405e9479bdb7d",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/dialog.tsx"
+    },
+    {
+      "blob": "148bf5d0c81508a5085431eff0c9852fac268878",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/input.tsx"
+    },
+    {
+      "blob": "2642802870551c0c362bcd4f824993266426545b",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/label.tsx"
+    },
+    {
+      "blob": "c069dbff9f9893d965eb8fe58bf3b7fd63df0472",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/native-select.tsx"
+    },
+    {
+      "blob": "985802c4fd449d35ef7becb84a367350430a5751",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/separator.tsx"
+    },
+    {
+      "blob": "e802a33f9f9eb32a0b1b7b5c806b42cbc78ad5c1",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/skeleton.tsx"
+    },
+    {
+      "blob": "89636071ec4ea787079bbba37c474fd7a75ec687",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/table.tsx"
+    },
+    {
+      "blob": "b844253e54849bd815533545c6cda190271abf52",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/tabs.tsx"
+    },
+    {
+      "blob": "21f419076e90f2ab514deb959381f11a94fde6e0",
+      "path": "frontend/trading-web/src/shared/ui/shadcn/textarea.tsx"
+    },
+    {
+      "blob": "aa3483202225db07eedfa79dfe4e51f311fedaf3",
+      "path": "frontend/trading-web/src/shared/utils/format.test.ts"
+    },
+    {
+      "blob": "8dc1a2eea10fccc8833671f453e35a1b1cbed046",
+      "path": "frontend/trading-web/src/shared/utils/format.ts"
+    },
+    {
+      "blob": "b2d0cb3ca85a46c699fc4a84b919929ee9579c6b",
+      "path": "frontend/trading-web/tsconfig.app.json"
+    },
+    {
+      "blob": "08d70bd123e5273c672e9ae50ffc4ed54b005d8e",
+      "path": "frontend/trading-web/tsconfig.json"
+    },
+    {
+      "blob": "b00caf968157d7e57a0c96590cfb9929d339134e",
+      "path": "frontend/trading-web/tsconfig.node.json"
+    },
+    {
+      "blob": "387e0bf5b1445e90501c8328a91503ec06dae0e6",
+      "path": "frontend/trading-web/vite.config.ts"
+    },
+    {
+      "blob": "7b0828bfa80fb3c4504510349e22dc4cf5bc0a7b",
+      "path": "frontend/trading-web/vitest.setup.ts"
+    }
+  ]
+}
