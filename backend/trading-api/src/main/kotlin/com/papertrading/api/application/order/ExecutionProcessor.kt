@@ -3,6 +3,7 @@ package com.papertrading.api.application.order
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.common.maskKisAccountNumber
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.order.Order
@@ -98,7 +99,8 @@ class ExecutionProcessor(
         val order = orderRepository.findByIdWithOptimisticLock(orderId).orElse(null) ?: return
         if (order.orderStatus !in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) {
             log.warn {
-                "종료된 주문에 새 체결 무시: orderId=$orderId, externalExecutionId=$externalExecutionId, " +
+                "종료된 주문에 새 체결 무시: orderId=$orderId, " +
+                    "externalExecutionId=${maskKisAccountNumber(externalExecutionId)}, " +
                     "status=${order.orderStatus}"
             }
             return

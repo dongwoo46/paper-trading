@@ -141,7 +141,10 @@ class Order protected constructor() : BaseAuditEntity() {
         }
         require(executedQty > BigDecimal.ZERO) { "체결 수량은 0보다 커야 합니다." }
         require(executedPrice > BigDecimal.ZERO) { "체결 가격은 0보다 커야 합니다." }
-        require(filledQuantity.add(executedQty) <= quantity) { "체결 수량이 주문 잔여 수량을 넘습니다." }
+        require(filledQuantity.add(executedQty) <= quantity) {
+            "체결 수량이 주문 잔여 수량을 넘습니다: orderId=$id, executedQty=$executedQty, " +
+                "remainingQty=${quantity.subtract(filledQuantity)}"
+        }
         val executedAmount = executedQty.multiply(executedPrice)
         val newTotalAmount = (totalAmount ?: BigDecimal.ZERO).add(executedAmount)
         filledQuantity = filledQuantity.add(executedQty)
