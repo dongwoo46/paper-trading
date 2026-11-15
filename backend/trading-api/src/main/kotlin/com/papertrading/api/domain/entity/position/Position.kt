@@ -73,7 +73,7 @@ class Position protected constructor() : BaseAuditEntity() {
     var avgBuyPrice: BigDecimal = BigDecimal.ZERO
         private set
 
-    @Column(name = "total_buy_amount", nullable = false, precision = 20, scale = 4)
+    @Column(name = "total_buy_amount", nullable = false, precision = 28, scale = 12)
     var totalBuyAmount: BigDecimal = BigDecimal.ZERO
         private set
 

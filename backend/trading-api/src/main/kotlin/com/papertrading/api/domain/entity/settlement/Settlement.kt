@@ -49,7 +49,7 @@ class Settlement protected constructor() : BaseTimeEntity() {
     lateinit var ticker: String
         private set
 
-    @Column(name = "realized_pnl", nullable = false, precision = 20, scale = 4)
+    @Column(name = "realized_pnl", nullable = false, precision = 28, scale = 12)
     var realizedPnl: BigDecimal = BigDecimal.ZERO
         private set
 
@@ -61,7 +61,7 @@ class Settlement protected constructor() : BaseTimeEntity() {
     var tax: BigDecimal = BigDecimal.ZERO
         private set
 
-    @Column(name = "net_pnl", nullable = false, precision = 20, scale = 4)
+    @Column(name = "net_pnl", nullable = false, precision = 28, scale = 12)
     var netPnl: BigDecimal = BigDecimal.ZERO
         private set
 
@@ -73,7 +73,7 @@ class Settlement protected constructor() : BaseTimeEntity() {
     var fxRateAtSettlement: BigDecimal? = null
         private set
 
-    @Column(name = "krw_net_pnl", nullable = false, precision = 20, scale = 4)
+    @Column(name = "krw_net_pnl", nullable = false, precision = 28, scale = 12)
     var krwNetPnl: BigDecimal = BigDecimal.ZERO
         private set
 
@@ -92,10 +92,10 @@ class Settlement protected constructor() : BaseTimeEntity() {
         ): Settlement {
             val executedPrice = execution.executedPrice
             val executedQty = execution.executedQuantity
-            val realizedPnl = executedPrice.multiply(executedQty).setScale(4, RoundingMode.HALF_UP)
+            val realizedPnl = executedPrice.multiply(executedQty)
             val fee = execution.fee.setScale(4, RoundingMode.HALF_UP)
             val normalizedTax = tax.setScale(4, RoundingMode.HALF_UP)
-            val netPnl = realizedPnl.subtract(fee).subtract(normalizedTax).setScale(4, RoundingMode.HALF_UP)
+            val netPnl = realizedPnl.subtract(fee).subtract(normalizedTax)
             val ticker = requireNotNull(execution.ticker) { "execution.ticker is null" }
             val currency = execution.currency
             val normalizedCurrency = currency.uppercase()

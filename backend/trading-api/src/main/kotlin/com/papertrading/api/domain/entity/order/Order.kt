@@ -93,7 +93,7 @@ class Order protected constructor() : BaseAuditEntity() {
     var avgFilledPrice: BigDecimal? = null
         private set
 
-    @Column(name = "total_amount", precision = 20, scale = 4)
+    @Column(name = "total_amount", precision = 28, scale = 12)
     var totalAmount: BigDecimal? = null
         private set
 
@@ -102,7 +102,7 @@ class Order protected constructor() : BaseAuditEntity() {
         private set
 
     // 매수 주문 접수 시 잠금된 예수금 — 취소/부분 체결 잔여분 해제 계산에 사용
-    @Column(name = "locked_amount", nullable = false, precision = 20, scale = 4)
+    @Column(name = "locked_amount", nullable = false, precision = 28, scale = 12)
     var lockedAmount: BigDecimal = BigDecimal.ZERO
         private set
 
