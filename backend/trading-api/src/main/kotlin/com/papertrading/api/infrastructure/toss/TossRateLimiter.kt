@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component
  * 토스 호출 한도 리미터 (프로세스 안, 그룹별 최소 간격 = 초당 한도의 역수), 호출 프로세스가 둘이 되는 3단계에서 Redis 공유로 대체
  * 슬롯을 락 안에서 예약하고 잠은 락 밖에서 자므로, 스레드가 여럿이어도 슬롯이 겹치지 않고 서로를 막지 않음
  * 예약 전 대기가 줄 대기 상한(rate-limit-max-queue-wait-millis)을 넘으면 슬롯을 잡지 않고 TOSS_RATE_LIMITED (C-01, S6-04)
- * 429 를 받으면 그 그룹의 멈춤 끝 시각을 now + Retry-After 로 올리고, 이미 슬롯을 예약해 자는 호출도 깬 뒤 그 시각까지 남은 만큼 더 잠 (C-05, S6-02)
+ * 429 를 받으면 그 그룹의 멈춤 끝 시각을 now + Retry-After 로 올리고, 이미 슬롯을 예약해 자는 호출은 깬 뒤 멈춤이 아직 안 끝났으면 슬롯을 다시 예약 (C-05, S6-02, S7-01)
+ * 다시 받은 슬롯은 멈춤 끝 뒤에서 간격대로 벌어지고 줄 대기 상한도 다시 거치므로 멈춤 끝에 호출이 몰리지 않음
  * 시계와 대기는 주입, 시험이 실제로 오래 잠들지 않게
  */
 @Component
@@ -23,16 +24,14 @@ class TossRateLimiter(
     // 예약이 정한 잠 시간과, 예약 때 이미 알던 멈춤 끝 시각(그 뒤에 늘어난 멈춤만 깬 뒤 더 자기 위해)
     private class Reservation(val waitMillis: Long, val knownPauseEndMillis: Long)
 
+    // 깬 뒤 멈춤이 늘어 아직 안 끝났으면 슬롯을 다시 예약, 멈춤 끝 뒤 간격대로 새 슬롯을 받고 줄 대기 상한도 다시 거침 (S7-01)
     fun acquire(group: TossRateLimitGroup) {
         val intervalMillis = minIntervalMillis(group)
-        val reservation = reserveSlot(group, intervalMillis)
-        var waitMillis = reservation.waitMillis
-        var knownPauseEnd = reservation.knownPauseEndMillis
-        while (waitMillis > 0) {
-            sleeper(waitMillis)
-            val pauseEnd = pauseEnd(group)
-            waitMillis = if (pauseEnd > knownPauseEnd) pauseEnd - nowMillis() else 0
-            knownPauseEnd = pauseEnd
+        var reservation = reserveSlot(group, intervalMillis)
+        while (reservation.waitMillis > 0) {
+            sleeper(reservation.waitMillis)
+            if (!pauseExtendedAndActive(group, reservation.knownPauseEndMillis)) return
+            reservation = reserveSlot(group, intervalMillis)
         }
     }
 
@@ -41,7 +40,7 @@ class TossRateLimiter(
         val perSecond = properties.rateLimits[group]
             ?: throw TossIntegrationDisabledException(listOf(envName(group)))
         if (perSecond <= 0) throw TossIntegrationDisabledException(listOf("${envName(group)}$OUT_OF_RANGE"))
-        return (MILLIS_PER_SECOND + perSecond - 1) / perSecond
+        return intervalMillisOf(perSecond)
     }
 
     // 예약 전 대기가 줄 대기 상한을 넘으면 슬롯을 잡지 않고 실패, 대기열이 끝없이 길어져 요청 스레드가 묶이지 않게 (RISK-08, C-01)
@@ -57,8 +56,12 @@ class TossRateLimiter(
         return Reservation(waitMillis, pausedUntilMillis[group] ?: 0L)
     }
 
+    // 예약 때 알던 것보다 멈춤 끝이 뒤로 갔고 지금도 안 끝났는지, 끝났으면 예약한 슬롯이 그대로 유효
     @Synchronized
-    private fun pauseEnd(group: TossRateLimitGroup): Long = pausedUntilMillis[group] ?: 0L
+    private fun pauseExtendedAndActive(group: TossRateLimitGroup, knownPauseEndMillis: Long): Boolean {
+        val pauseEnd = pausedUntilMillis[group] ?: 0L
+        return pauseEnd > knownPauseEndMillis && pauseEnd > nowMillis()
+    }
 
     /**
      * 429 를 받은 그룹을 now + delay 까지 멈춤, 모든 스레드가 같은 Retry-After 를 나눔 (C-05, S6-02)
@@ -77,5 +80,8 @@ class TossRateLimiter(
         private const val OUT_OF_RANGE = "(범위 오류)"
 
         fun envName(group: TossRateLimitGroup): String = "TOSS_RATE_LIMIT_${group.name}"
+
+        // 초당 한도(1 이상)의 최소 호출 간격, 올림, 설정 범위 검사(TossProperties)도 같은 식을 씀 (S7-03)
+        fun intervalMillisOf(perSecond: Int): Long = (MILLIS_PER_SECOND + perSecond - 1) / perSecond
     }
 }

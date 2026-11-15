@@ -196,6 +196,75 @@ class TossPropertiesTest {
         }
     }
 
+    // ---- S7-03: 줄 대기 상한은 설정된 그룹 간격(올림 1000 ÷ 초당 한도)의 최댓값 이상이어야 함 ----
+
+    private val queueWaitKey = "trading.toss.rate-limit-max-queue-wait-millis"
+    private val queueWaitEnvName = "TOSS_RATE_LIMIT_MAX_QUEUE_WAIT_MILLIS(범위 오류)"
+
+    @ParameterizedTest(name = "{0} 초당 {1}회(간격 {3}ms): 상한 {2} 는 최대 간격 미만이라 범위 오류, {3} 는 활성")
+    @CsvSource(
+        "ORDER_INFO, 6, 166, 167",
+        "ACCOUNT, 1, 999, 1000",
+        "ASSET, 7, 142, 143",
+    )
+    fun `줄 대기 상한이 설정된 그룹 간격의 최댓값 바로 아래면 비활성이고 최댓값이면 활성이다`(
+        group: String,
+        perSecond: String,
+        below: String,
+        atMax: String,
+    ) {
+        val limit = "trading.toss.rate-limits.$group" to perSecond
+
+        runner.withPropertyValues(*fullProperties(limit, queueWaitKey to below)).run { context ->
+            assertEquals(listOf(queueWaitEnvName), context.getBean(TossProperties::class.java).disabledKeyNames())
+        }
+        runner.withPropertyValues(*fullProperties(limit, queueWaitKey to atMax)).run { context ->
+            assertTrue(context.getBean(TossProperties::class.java).integrationEnabled())
+        }
+    }
+
+    @Test
+    fun `여러 그룹이면 가장 긴 간격이 기준이다`() {
+        val groups = arrayOf(
+            "trading.toss.rate-limits.ORDER_INFO" to "6",
+            "trading.toss.rate-limits.ACCOUNT" to "1",
+            "trading.toss.rate-limits.MARKET_DATA" to "15",
+        )
+        runner.withPropertyValues(*fullProperties(*groups, queueWaitKey to "999")).run { context ->
+            assertEquals(listOf(queueWaitEnvName), context.getBean(TossProperties::class.java).disabledKeyNames())
+        }
+        runner.withPropertyValues(*fullProperties(*groups, queueWaitKey to "1000")).run { context ->
+            assertTrue(context.getBean(TossProperties::class.java).integrationEnabled())
+        }
+    }
+
+    @Test
+    fun `범위 오류인 한도 그룹은 줄 대기 상한 기준에 넣지 않고 그 그룹의 범위 오류만 알린다`() {
+        val props = fullProperties(
+            "trading.toss.rate-limits.ASSET" to "0",
+            "trading.toss.rate-limits.AUTH" to "5",
+            queueWaitKey to "200",
+        )
+
+        runner.withPropertyValues(*props).run { context ->
+            val disabled = context.getBean(TossProperties::class.java).disabledKeyNames()
+
+            assertEquals(listOf("TOSS_RATE_LIMIT_ASSET(범위 오류)"), disabled)
+        }
+    }
+
+    @Test
+    fun `application yaml 기본 줄 대기 상한 5000 은 기본 한도 그룹 간격의 최댓값 1000 이상이라 활성이다`() {
+        runner.withInitializer(ConfigDataApplicationContextInitializer())
+            .withPropertyValues(*fullProperties())
+            .run { context ->
+                val properties = context.getBean(TossProperties::class.java)
+
+                assertEquals(5_000L, properties.rateLimitMaxQueueWaitMillis)
+                assertEquals(emptyList<String>(), properties.disabledKeyNames())
+            }
+    }
+
     @Test
     fun `이전 암호화 키는 선택이라 비어 있어도 활성이고 올바른 키를 주면 활성이다`() {
         runner.withPropertyValues(*fullProperties()).run { context ->

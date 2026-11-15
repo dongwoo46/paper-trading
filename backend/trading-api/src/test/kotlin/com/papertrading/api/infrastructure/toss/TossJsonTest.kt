@@ -122,6 +122,39 @@ class TossJsonTest {
         assertThrows<JsonProcessingException> { read("""{"result":{"on":true,"maybe":"$blank"}}""", Flags::class.java) }
     }
 
+    // ---- S7-02: 문자열 토큰 null 글자도 금액 칸에서 조용히 null 이 되지 않음 ----
+
+    // JSON 문자열 안에 들어갈 값이라 탭·줄바꿈은 이스케이프로 적음
+    @ParameterizedTest(name = "금액 칸의 문자열 [{0}] 은 null 이 되지 않고 실패한다")
+    @ValueSource(strings = ["null", " null ", "\\tnull\\n", "  null"])
+    fun `null 허용 금액 칸의 null 글자 문자열은 null 이 되지 않고 실패한다`(text: String) {
+        assertThrows<JsonProcessingException> { read("""{"result":{"krw":"1","usd":"$text"}}""", Amounts::class.java) }
+    }
+
+    @Test
+    fun `null 불가 금액 칸의 null 글자 문자열도 실패한다`() {
+        assertThrows<JsonProcessingException> { read("""{"result":{"krw":"null"}}""", Amounts::class.java) }
+        assertThrows<JsonProcessingException> { read("""{"result":{"krw":" null "}}""", Amounts::class.java) }
+    }
+
+    @Test
+    fun `금액 칸의 정상 숫자 문자열 JSON 숫자 JSON null 은 기존대로 읽는다`() {
+        assertEquals(
+            Amounts(BigDecimal("1"), BigDecimal("2.50")),
+            read("""{"result":{"krw":"1","usd":"2.50"}}""", Amounts::class.java),
+        )
+        assertEquals(
+            Amounts(BigDecimal("1.5"), BigDecimal("0.10")),
+            read("""{"result":{"krw":1.5,"usd":0.10}}""", Amounts::class.java),
+        )
+        assertEquals(Amounts(BigDecimal("1"), null), read("""{"result":{"krw":"1","usd":null}}""", Amounts::class.java))
+    }
+
+    @Test
+    fun `문자열 칸의 null 글자는 그대로 읽는다 숫자 칸만 막는다`() {
+        assertEquals(Named("null", "null"), read("""{"result":{"name":"null","note":"null"}}""", Named::class.java))
+    }
+
     @Test
     fun `문자열 칸의 빈 문자열은 그대로 읽는다 오류 본문의 빈 message 가 해석을 깨지 않도록`() {
         assertEquals(Named("", ""), read("""{"result":{"name":"","note":""}}""", Named::class.java))

@@ -310,6 +310,59 @@ class TossRateLimiterTest {
         assertEquals(listOf(1_000L), still.slept)
     }
 
+    // ---- S7-01: 멈춤 창 안에 예약해 잠든 호출은 깬 뒤 멈춤 끝 뒤의 새 슬롯을 받아 간격을 되찾음 ----
+
+    @Test
+    fun `멈춤 창 안에 예약해 잠든 호출들은 멈춤 끝부터 간격만큼 벌어져 나간다`() {
+        // 스레드마다 시계를 따로 둠, 깬 시각이 스레드 스케줄링에 흔들리지 않게 (송신 시각 = 슬롯 시각)
+        val threadClock = ThreadLocal.withInitial { 1_000L }
+        val reserved = CountDownLatch(3)
+        val pauseGiven = CountDownLatch(1)
+        val limits = properties(mapOf(TossRateLimitGroup.MARKET_DATA to 10))
+        val limiter = TossRateLimiter(limits, { threadClock.get() }) { millis ->
+            reserved.countDown()
+            check(pauseGiven.await(10, TimeUnit.SECONDS)) { "멈춤이 주어지지 않음" }
+            threadClock.set(threadClock.get() + millis)
+        }
+        limiter.acquire(TossRateLimitGroup.MARKET_DATA)
+        val pool = Executors.newFixedThreadPool(3)
+
+        val sends = (1..3).map {
+            pool.submit<Long> {
+                limiter.acquire(TossRateLimitGroup.MARKET_DATA)
+                threadClock.get()
+            }
+        }
+        assertTrue(reserved.await(10, TimeUnit.SECONDS), "세 호출이 모두 슬롯을 예약해 잠들어야 함")
+        limiter.deferNextSlot(TossRateLimitGroup.MARKET_DATA, 1_000)
+        pauseGiven.countDown()
+        val sendTimes = sends.map { it.get(10, TimeUnit.SECONDS) }.sorted()
+        pool.shutdown()
+
+        // 멈춤 끝 2000 부터 간격 100ms 씩, 한 순간에 몰리지 않음
+        assertEquals(listOf(2_000L, 2_100L, 2_200L), sendTimes)
+    }
+
+    @Test
+    fun `잠든 사이 늘어난 멈춤으로 다시 받은 슬롯이 줄 대기 상한을 넘으면 TOSS_RATE_LIMITED 이다`() {
+        val clock = AtomicLong(1_000)
+        val slept = mutableListOf<Long>()
+        val holder = arrayOfNulls<TossRateLimiter>(1)
+        val limiter = TossRateLimiter(capped(1_500, mapOf(TossRateLimitGroup.ACCOUNT to 1)), clock::get) { millis ->
+            slept += millis
+            if (slept.size == 1) holder[0]?.deferNextSlot(TossRateLimitGroup.ACCOUNT, 5_000)
+            clock.addAndGet(millis)
+        }
+        holder[0] = limiter
+        limiter.acquire(TossRateLimitGroup.ACCOUNT)
+
+        // 둘째는 1000ms 슬롯을 예약해 상한 안에서 잠들고, 자는 사이 5000ms 멈춤이 걸려 깬 뒤 새 슬롯의 대기가 4000ms 라 상한을 넘음
+        val error = assertThrows<TossRateLimitedException> { limiter.acquire(TossRateLimitGroup.ACCOUNT) }
+
+        assertEquals("TOSS_RATE_LIMITED", error.errorCode)
+        assertEquals(listOf(1_000L), slept, "상한을 넘는 늘어난 잠은 자지 않음")
+    }
+
     // ---- S6-04: 줄 대기 상한은 새 키(rateLimitMaxQueueWaitMillis), 429 대기 예산 키와 따로 ----
 
     @Test

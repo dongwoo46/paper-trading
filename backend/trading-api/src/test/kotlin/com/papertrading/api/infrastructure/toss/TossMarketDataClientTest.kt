@@ -10,7 +10,6 @@ import com.papertrading.api.infrastructure.toss.TossFixtures.reply
 import com.papertrading.api.infrastructure.toss.TossFixtures.replyRaw
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -31,6 +30,7 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.request
 import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
 import java.util.Base64
+import java.util.concurrent.atomic.AtomicLong
 
 // 토스 시세 어댑터: GET /api/v1/prices·orderbook (MARKET_DATA), /api/v1/candles (MARKET_DATA_CHART), 계좌 헤더 없음
 // 필드는 step-7 부록 A, 가격과 수량은 BigDecimal, 시각은 토스 원문 문자열, 누락·변환 실패는 TOSS_RESPONSE_INVALID (D9, D13, D14)
@@ -39,15 +39,23 @@ class TossMarketDataClientTest {
     private val restTemplate = RestTemplate()
     private val server = MockRestServiceServer.bindTo(restTemplate).build()
     private val tokenManager = mockk<TossTokenManager>()
-    private val limiter = mockk<TossRateLimiter>(relaxed = true)
 
-    // 시험이 정한 임의 값, 토스 정책 수치가 아님
+    // 시험이 정한 임의 값, 토스 정책 수치가 아님, 시세 두 그룹만 간격이 보이게 낮춤(MARKET_DATA 200ms, MARKET_DATA_CHART 100ms)
     private val properties = TossProperties().apply {
         baseUrl = "https://toss.example.invalid"
         clientId = "fake-client-id"
         clientSecret = "fake-client-secret"
         tokenEncryptionKey = Base64.getEncoder().encodeToString(ByteArray(32) { it.toByte() })
-        rateLimits = TossRateLimitGroup.entries.associateWith { 1_000 }
+        rateLimits = TossRateLimitGroup.entries.associateWith { 1_000 } +
+            mapOf(TossRateLimitGroup.MARKET_DATA to 5, TossRateLimitGroup.MARKET_DATA_CHART to 10)
+    }
+
+    // 실제 리미터와 주입 시계, 잠은 시계를 움직일 뿐 실제로 자지 않고 기록해 그룹 간격을 관찰
+    private val clock = AtomicLong(1_000)
+    private val slept = mutableListOf<Long>()
+    private val limiter = TossRateLimiter(properties, clock::get) { millis ->
+        slept += millis
+        clock.addAndGet(millis)
     }
     private val marketClient = TossMarketDataClient(TossApiClient(properties, tokenManager, limiter, restTemplate))
 
@@ -324,18 +332,22 @@ class TossMarketDataClientTest {
     // ---- 한도 그룹, 오류 분류, 비활성 ----
 
     @Test
-    fun `현재가와 호가는 MARKET_DATA 캔들은 MARKET_DATA_CHART 그룹을 한 번씩 쓴다`() {
+    fun `현재가와 호가는 MARKET_DATA 캔들은 MARKET_DATA_CHART 그룹의 간격을 따른다`() {
         expectGet("/prices?symbols=005930").andRespond(reply(HttpStatus.OK, "success-prices-kr.json"))
         expectGet("/orderbook?symbol=005930").andRespond(reply(HttpStatus.OK, "success-orderbook-kr.json"))
+        expectGet(dailyPath).andRespond(reply(HttpStatus.OK, "success-candles-last-page.json"))
         expectGet(dailyPath).andRespond(reply(HttpStatus.OK, "success-candles-last-page.json"))
 
         marketClient.fetchPrices(listOf("005930"))
         marketClient.fetchOrderbook("005930")
+        // devkit:test-change S7-04 TT7·TT44 목 리미터의 그룹별 호출 횟수 단언을 실제 리미터가 만드는 그룹 간격 관찰로 바꿈, 그룹 구분 기대는 그대로
+        assertEquals(listOf(200L), slept, "현재가 뒤 호가는 같은 그룹이라 MARKET_DATA 간격 200ms 를 기다림")
+        marketClient.fetchCandles(candleQuery())
+        assertEquals(listOf(200L), slept, "캔들의 첫 호출은 다른 그룹이라 기다리지 않음")
         marketClient.fetchCandles(candleQuery())
 
-        verify(exactly = 2) { limiter.acquire(TossRateLimitGroup.MARKET_DATA) }
-        verify(exactly = 1) { limiter.acquire(TossRateLimitGroup.MARKET_DATA_CHART) }
-        verify(exactly = 3) { limiter.acquire(any()) }
+        assertEquals(listOf(200L, 100L), slept, "캔들 둘째 호출은 MARKET_DATA_CHART 간격 100ms")
+        server.verify()
     }
 
     @Test

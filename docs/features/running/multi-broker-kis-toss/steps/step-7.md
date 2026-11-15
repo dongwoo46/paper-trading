@@ -86,6 +86,11 @@
 - 쿼리 `+` 인코딩: `TossTransportSupport.withPlusEncodedInQuery` 한 곳에서 `+`를 `%2B`로, 쉼표·콜론은 그대로
 - 리뷰 후속: S6-01 `withCoercionConfigDefaults`로 빈·공백 문자열 강제 변환 Fail. S6-02 그룹별 멈춤 끝 시각, 깬 뒤 재확인. S6-04 새 키 `rate-limit-max-queue-wait-millis`(application.yaml, TossProperties 범위 검사 1 이상). S6-05 `common/MaskAllButLastFour.kt` 한 함수로 옮기고 네 toString이 그것만 씀
 - fixture 9개(prices 2, orderbook 3, candles 4)와 README 줄 추가
+- 리뷰 후속(review/step7-code-review.md, 사람 결정 2026-11-16 «후속 4건도 고치자», 설계 재승인 ed07dc1):
+  - S7-01 `TossRateLimiter`: 깬 뒤 멈춤이 예약 때보다 늘었고 아직 안 끝났으면 `reserveSlot` 다시 호출(멈춤 끝 뒤 간격대로 새 슬롯, 줄 대기 상한 재검사)
+  - S7-02 `TossJson`: 문자열 토큰 `null`(앞뒤 공백 포함)을 실패로 돌리는 BigDecimal 역직렬화기, 나머지는 기본 역직렬화기에 위임
+  - S7-03 `TossProperties`: 줄 대기 상한이 설정된 그룹 간격 최댓값보다 작으면 범위 오류로 비활성(계획서 D16·§4), 간격 식은 `TossRateLimiter.intervalMillisOf` 한 곳, 키 주석·`application.yaml` 주석 갱신
+  - S7-04 시험: 컨트롤러 시험은 실제 `TossMarketQueryService` + 가짜 `TossMarketDataPort`, `TossMarketDataClientTest`는 실제 `TossRateLimiter` + 주입 시계
 
 ---
 
@@ -98,8 +103,15 @@
 | 린트 | `./gradlew compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` 메인 재실행 | exit 0 |
 | 부동소수점 | `TossFloatingPointScanTest`(대상에 `presentation/dto/toss`·`Toss*Controller` 추가) + 메인 grep | 0건(기존 주석 1줄 제외) |
 | 범위 | `git status`로 `infrastructure/kis/**`·collector-api·frontend | 변경 0 |
-| 전체 스위트 | 구현 커밋 푸시 뒤 CI `full-test` | 대기 |
-| 코드 리뷰 | `review/step7-code-review.md` | 대기 |
+| 전체 스위트(구현) | `356b248` 푸시 뒤 CI trading-api·collector-api·trading-web | success |
+| 전체 스위트(main 합침) | `d3b8056` 메인 `./gradlew test --rerun --offline`, 실행 뒤 생긴 xml만 집계 | 82개 클래스 1049건, 실패 0 |
+| 코드 리뷰 | `review/step7-code-review.md` 1회차 | 머지 가능, 막는 지적 0, 후속 4(S7-01~S7-04) |
+| 후속 Red | 바꾼 시험 먼저 실행(maker) | S7-01 2건(송신 시각 `[2000,2000,2000]`, 상한 초과 미발생), S7-02 4건, S7-03 4건. S7-04는 시험만 바뀌어 Red 없음, 대신 `MAX_COUNT` 임시 변경으로 `count=201` 시험이 실패함을 확인 뒤 원복 |
+| 후속 Green(바꾼 클래스) | maker 실행 | `TossJsonTest` 33, `TossMarketDataClientTest` 60, `TossPropertiesTest` 65, `TossRateLimiterTest` 27, `TossMarketControllerIntegrationTest` 19, 실패 0 |
+| 후속 전체 스위트 | 메인 `./gradlew test --rerun --offline`, 실행 뒤 생긴 xml만 집계(실행 전 xml 0) | 82개 클래스 1073건, 실패 0, 오류 0, 건너뜀 0 |
+| 후속 린트 | `./gradlew compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` 메인 재실행 | exit 0 |
+| 후속 범위·부동소수점 | `git diff --name-only origin/main` 의 `infrastructure/kis`·collector-api·frontend, toss 코드 grep | 변경 0, 부동소수점 0건(기존 주석 1줄 제외) |
+| 후속 CI | 후속 커밋 푸시 뒤 PR CI | 대기 |
 
 ---
 
@@ -110,6 +122,8 @@
   - main 신설: `application/toss/{TossMarketQueryService,port/TossMarketDataPort}.kt`, `common/MaskAllButLastFour.kt`, `common/exception/InvalidMarketQueryException.kt`, `infrastructure/toss/{TossMarketDataClient,dto/TossMarketData}.kt`, `presentation/controller/TossMarketController.kt`, `presentation/dto/toss/TossMarketResponse.kt`
   - main 수정: `BrokerAccountBalancePort`, `TossAccountListPort`, `TossApiClient`, `TossApiRequest`, `TossJson`, `TossProperties`, `TossRateLimiter`, `TossTransportSupport`, `dto/TossAccount`, `application.yaml`
   - test 신설 4, 수정 5(`TossApiClientTest`, `TossJsonTest`, `TossRateLimiterTest`, `TossPropertiesTest`, `TossFloatingPointScanTest`), fixture 9
+  - 리뷰 후속: main 수정 `TossJson`, `TossProperties`, `TossRateLimiter`, `application.yaml`, test 수정 `TossJsonTest`, `TossMarketDataClientTest`, `TossPropertiesTest`, `TossRateLimiterTest`, `TossMarketControllerIntegrationTest`
+  - 커밋: 구현 `356b248`, main 합침 `d3b8056`, 리뷰 기록 `9e8a7fd`, 설계 재승인 `ed07dc1`, 후속 수정은 이 기록과 함께 커밋. PR은 `feature/multi-broker-kis-toss-market` → main
 
 ---
 
@@ -125,8 +139,12 @@
 | before 오프셋 표기 | ASSUME: `OffsetDateTime.parse` 통과 값만. `+09`처럼 콜론 없는 오프셋도 통과하고 토스가 거부하면 `TOSS_REQUEST_REJECTED` |
 | 응답 시각 파싱 실패의 원인 예외 | ASSUME: cause를 잇지 않음(파싱 예외 문구에 응답 원문이 있음) |
 | S6-01 적용 범위 | ASSUME: 스칼라뿐 아니라 객체·목록 칸의 빈·공백 문자열도 Fail. 문자열 칸의 빈 문자열은 그대로 읽음(시험 고정) |
-| S6-02 깨어남 몰림 | 429로 멈춘 호출들이 같은 시각에 함께 깸. 리뷰 제안 방식 그대로라 막지 않음, 리뷰 확인 요청 |
-| 줄 대기 상한과 AUTH 간격 | 새 키를 1000 미만으로 두고 AUTH가 초당 1회면 락 안 두 번째 발급 호출이 먼저 `TOSS_RATE_LIMITED`. 기본 5000이라 설정 실수 때만 남. 후속 후보, 리뷰 판단 요청 |
+| S6-02 깨어남 몰림 | 429로 멈춘 호출들이 같은 시각에 함께 깸. 리뷰 S7-01로 확인, 깬 뒤 슬롯 재예약으로 고침 |
+| 줄 대기 상한과 AUTH 간격 | 리뷰 S7-03의 한 경우. 하한을 설정된 그룹 간격 최댓값으로 올려 고침(사람 결정 2026-11-16) |
+| 그룹이 하나도 없을 때 상한 하한 | ASSUME: 1(기존 0 거부·1 통과 시험 유지). D16·§4는 «설정된 그룹 간격 최댓값 이상»만 정함 |
+| S7-01 멈춤이 이미 끝난 경우 | ASSUME: 깬 시각에 늘어난 멈춤도 끝났으면 재예약하지 않음(슬롯 한 칸 추가 소모 방지) |
+| S7-04 남은 목 | `TossMarketDataClientTest`의 `tokenManager`는 목 그대로(리뷰 지적은 리미터뿐). S6-07은 findings 원장 그대로 |
+| 구현 중 규칙 어김 | maker가 `TossRateLimiterTest.kt` 추가분 52줄을 Edit 대신 셸 python으로 편집(자기 보고). `git diff`로 내용 확인, 이후 편집은 Edit/Write |
 | S6-05 계좌 목록 요약 | `accountNoLast4`는 이미 끝 4자리라 그대로, `accountSeq`만 마스킹 |
 | 기존 시험 단언 변경 | `TossRateLimiterTest.capped` 한 줄(상한 키 이름), 기대값 동일, `devkit:test-change` 표시 |
 | 미국 일봉 fixture | 명세 예시가 없어 임의 가짜 값, README에 적음 |
