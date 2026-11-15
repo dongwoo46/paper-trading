@@ -1,11 +1,14 @@
 package com.papertrading.api.infrastructure.toss
 
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.papertrading.api.infrastructure.toss.dto.TossErrorDetail
 import com.papertrading.api.infrastructure.toss.dto.TossErrorEnvelope
@@ -19,11 +22,16 @@ import com.papertrading.api.infrastructure.toss.dto.TossSuccessEnvelope
  */
 internal object TossJson {
     private val mapper: JsonMapper = JsonMapper.builder()
-        .addModule(kotlinModule())
+        // 목록·맵 원소 null 이 null 불가 원소 타입에 조용히 들어가지 않게 실패시킴 (D14, C-03)
+        .addModule(kotlinModule { enable(KotlinFeature.NewStrictNullChecks) })
+        // 봉투 result 처럼 제네릭 타입이 지워진 목록은 코틀린 검사가 못 보므로 원소 null 을 매퍼 전체에서 막음, 명세 배열에는 null 원소가 없음
+        .defaultSetterInfo(JsonSetter.Value.forContentNulls(Nulls.FAIL))
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
         // null·빈 값이 원시형(Long·Int) 필드에서 조용히 0 이 되지 않게 실패시킴 (D14)
         .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+        // 3600.9 가 3600 으로 절삭되어 정수 필드(Long·Int)에 들어가지 않게 실패시킴 (D14, C-03)
+        .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
         .build()
 
     fun javaType(type: Class<*>): JavaType = mapper.constructType(type)

@@ -154,6 +154,8 @@ class TossPropertiesTest {
         "trading.toss.token-lock-wait-millis, 0, TOSS_TOKEN_LOCK_WAIT_MILLIS(범위 오류)",
         "trading.toss.token-lock-wait-millis, -5, TOSS_TOKEN_LOCK_WAIT_MILLIS(범위 오류)",
         "trading.toss.token-request-deadline-millis, 15000, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
+        "trading.toss.token-request-deadline-millis, 15001, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
+        "trading.toss.token-request-deadline-millis, 16999, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
         "trading.toss.token-request-deadline-millis, 0, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
         "trading.toss.token-request-deadline-millis, -1, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
         "trading.toss.rate-limit-max-retries, -1, TOSS_RATE_LIMIT_MAX_RETRIES(범위 오류)",
@@ -179,7 +181,8 @@ class TossPropertiesTest {
         "trading.toss.token-lock-ttl-millis, 15001",
         "trading.toss.token-refresh-skew-seconds, 0",
         "trading.toss.token-lock-wait-millis, 1",
-        "trading.toss.token-request-deadline-millis, 15001",
+        // devkit:test-change C-04 — 하한이 15초에서 17초(발급 필요 16초 + 락 획득 여유 1초)로 바뀜
+        "trading.toss.token-request-deadline-millis, 17000",
         "trading.toss.rate-limit-max-retries, 0",
         "trading.toss.rate-limit-max-wait-millis, 0",
         "trading.toss.rate-limits.ASSET, 1",
@@ -233,6 +236,76 @@ class TossPropertiesTest {
         runner.run { context ->
             assertEquals("", context.getBean(TossProperties::class.java).baseUrl)
         }
+    }
+
+    // ---- C-02: base-url 은 절대 https URL 이어야 함, 아니면 토스만 비활성 ----
+
+    @ParameterizedTest(name = "base-url [{0}] 는 형식 오류라 토스만 비활성이다")
+    @CsvSource(
+        "api.example.com",
+        "http://api.example.com",
+        "ftp://api.example.com",
+        "https://",
+        "https:///path",
+        "//api.example.com",
+        "/relative/path",
+        "not a url",
+        "https://exa mple.com",
+    )
+    fun `base-url 이 절대 https URL 이 아니면 형식 오류로 비활성이고 값은 어디에도 싣지 않는다`(badUrl: String) {
+        LogCapture().use { logs ->
+            runner.withPropertyValues(*fullProperties("trading.toss.base-url" to badUrl)).run { context ->
+                assertNull(context.startupFailure)
+                val properties = context.getBean(TossProperties::class.java)
+
+                assertFalse(properties.integrationEnabled(), badUrl)
+                assertEquals(listOf("TOSS_BASE_URL(형식 오류)"), properties.disabledKeyNames())
+                val message = assertThrows(TossIntegrationDisabledException::class.java) {
+                    properties.requireEnabled()
+                }.message.orEmpty()
+                assertFalse(message.contains(badUrl), message)
+                assertTrue(logs.lines().none { it.contains(badUrl) })
+            }
+        }
+    }
+
+    @ParameterizedTest(name = "base-url [{0}] 는 절대 https URL 이라 활성이다")
+    @CsvSource(
+        "https://api.example.com",
+        "https://api.example.com/",
+        "https://api.example.com:8443/base",
+        "HTTPS://API.EXAMPLE.COM",
+    )
+    fun `base-url 이 절대 https URL 이면 활성이다`(goodUrl: String) {
+        runner.withPropertyValues(*fullProperties("trading.toss.base-url" to goodUrl)).run { context ->
+            assertTrue(context.getBean(TossProperties::class.java).integrationEnabled(), goodUrl)
+        }
+    }
+
+    // ---- C-04: 요청 상한의 하한 한 상수가 범위 검사와 실행 검사를 함께 이끎 ----
+
+    @Test
+    fun `요청 상한 하한은 발급 필요 시간에 락 획득 여유를 더한 값이고 발급 필요 시간은 발급 최악에 AUTH 대기 허용을 더한 값이다`() {
+        assertEquals(
+            TossProperties.ISSUE_WORST_CASE_MILLIS + TossProperties.AUTH_WAIT_ALLOWANCE_MILLIS,
+            TossProperties.ISSUE_TIME_BUDGET_MILLIS,
+        )
+        assertEquals(
+            TossProperties.ISSUE_TIME_BUDGET_MILLIS + TossProperties.LOCK_ACQUIRE_MARGIN_MILLIS,
+            TossProperties.MIN_REQUEST_DEADLINE_MILLIS,
+        )
+    }
+
+    @Test
+    fun `요청 상한이 하한 바로 아래면 비활성이고 하한이면 활성이며 기본값은 하한 이상이다`() {
+        val min = TossProperties.MIN_REQUEST_DEADLINE_MILLIS
+        listOf(min - 1 to false, min to true).forEach { (deadline, enabled) ->
+            runner.withPropertyValues(*fullProperties("trading.toss.token-request-deadline-millis" to "$deadline"))
+                .run { context ->
+                    assertEquals(enabled, context.getBean(TossProperties::class.java).integrationEnabled(), "$deadline")
+                }
+        }
+        assertTrue(TossProperties().tokenRequestDeadlineMillis >= min)
     }
 
     @Test

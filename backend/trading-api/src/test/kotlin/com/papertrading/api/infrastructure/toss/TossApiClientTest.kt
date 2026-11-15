@@ -371,6 +371,34 @@ class TossApiClientTest {
         assertEquals(listOf(1_000L), limiterSlept)
     }
 
+    // C-05: 429 를 받으면 그 그룹의 다음 슬롯을 Retry-After 뒤로 밀어, 대기 중에 들어온 다른 호출도 같은 시간을 기다림
+    @Test
+    fun `429 를 받으면 그 그룹의 다음 슬롯을 Retry-After 뒤로 밀어 다른 호출도 같은 시간을 기다린다`() {
+        every { tokenManager.getToken() } returns "fake-token-a"
+        // 대기하는 동안 다른 스레드가 같은 그룹을 쓰는 상황
+        val sharing = TossApiClient(properties, tokenManager, limiter, restTemplate) { millis ->
+            rateWaits += millis
+            limiter.acquire(TossRateLimitGroup.MARKET_DATA)
+        }
+        expectGet().andRespond(tooManyRequests("2"))
+        expectGet().andRespond(ok())
+
+        sharing.get(priceRequest, pricesType)
+
+        assertEquals(2_000L, limiterSlept.first(), "다른 호출이 밀린 슬롯까지 기다려야 함: $limiterSlept")
+    }
+
+    @Test
+    fun `재시도하지 않고 포기하는 429 는 그룹 슬롯을 밀지 않는다`() {
+        every { tokenManager.getToken() } returns "fake-token-a"
+        expectGet().andRespond(tooManyRequests("6"))
+        assertThrows<TossRateLimitedException> { call() }
+
+        limiter.acquire(TossRateLimitGroup.MARKET_DATA)
+
+        assertTrue(limiterSlept.none { it >= 1_000 }, "상한을 넘는 Retry-After 로 그룹을 길게 막지 않음: $limiterSlept")
+    }
+
     // ---- 5xx, 네트워크, 타임아웃 ----
 
     @Test

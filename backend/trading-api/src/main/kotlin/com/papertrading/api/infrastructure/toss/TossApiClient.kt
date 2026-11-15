@@ -23,6 +23,7 @@ import java.net.URI
  * 성공 봉투 `{result: ...}` 의 result 를 호출 쪽이 정한 data class 로 돌려줌 (D13, 잔고·시세 DTO 는 step 6~7)
  * 실패는 D15 의 code 로 분류(TossFailureClassifier), 토스 원문은 응답·예외 문구에 싣지 않고 code·requestId 만 로그에 남김
  * 모든 재시도(401, 429)는 새 한도 슬롯을 쓰며, 재시도 횟수와 대기 합계에 상한이 있음 (D12, D16, RISK-08)
+ * 429 를 받으면 그 그룹의 다음 슬롯을 Retry-After 뒤로 밀어 다른 스레드도 같은 대기를 나눔 (C-05)
  */
 @Component
 class TossApiClient(
@@ -113,6 +114,8 @@ class TossApiClient(
         if (!withinLimit) return false
         call.rateRetries++
         call.rateWaitedMillis += waitMillis
+        // 다른 스레드도 그 그룹의 다음 호출을 같은 시간만큼 미룸, 상한 안의 대기만 반영해 긴 Retry-After 로 그룹이 오래 막히지 않음 (C-05)
+        rateLimiter.deferNextSlot(call.request.group, waitMillis)
         log.warn { "토스 429 대기 후 재시도: ${call.request} waitMillis=$waitMillis retry=${call.rateRetries}" }
         if (waitMillis > 0) sleeper(waitMillis)
         return true

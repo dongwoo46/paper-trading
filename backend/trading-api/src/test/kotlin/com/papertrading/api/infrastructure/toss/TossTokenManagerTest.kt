@@ -501,9 +501,10 @@ class TossTokenManagerTest {
         return runCatching { manager.getToken() }
     }
 
+    // devkit:test-change C-04 — 발급에 필요한 시간이 15초에서 16초(발급 최악 15초 + AUTH 한도 대기 허용 1초)로 바뀌어 경계가 대기 5초에서 4초로 이동
     @Test
-    fun `대기 5초 뒤 락을 얻어 남은 시간이 발급 최악 15초 이상이면 발급한다`() {
-        listOf(4_900L, 5_000L).forEach { releaseAfter ->
+    fun `대기 4초 뒤 락을 얻어 남은 시간이 발급 필요 시간 16초 이상이면 발급한다`() {
+        listOf(3_900L, 4_000L).forEach { releaseAfter ->
             redisTemplate.delete(listOf(TossTokenManager.TOKEN_KEY, TossTokenManager.LOCK_KEY))
             val issuer = FakeTossTokenIssuer()
 
@@ -516,11 +517,12 @@ class TossTokenManagerTest {
         }
     }
 
+    // devkit:test-change C-04 — 위와 같은 이유로 경계가 대기 5.1초에서 4.1초로 이동
     @Test
-    fun `대기 5_1초 뒤 락을 얻어 남은 시간이 15초보다 짧으면 발급 0회이고 락을 풀고 TOSS_TOKEN_UNAVAILABLE 이다`() {
+    fun `대기 4_1초 뒤 락을 얻어 남은 시간이 16초보다 짧으면 발급 0회이고 락을 풀고 TOSS_TOKEN_UNAVAILABLE 이다`() {
         val issuer = FakeTossTokenIssuer()
 
-        val result = waiterAcquiringLockAfter(5_100, issuer)
+        val result = waiterAcquiringLockAfter(4_100, issuer)
 
         val error = result.exceptionOrNull()
         assertTrue(error is TossTokenUnavailableException, "error=$error")
@@ -528,6 +530,40 @@ class TossTokenManagerTest {
         assertEquals(0, issuer.callCount)
         assertNull(redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "락 해제")
         assertNull(rawToken())
+    }
+
+    // C-04: 요청 상한을 하한(발급 필요 시간 + 락 획득 여유)으로 둬도 Redis 왕복 몇 번(여유 안)이 지난 첫 요청은 발급한다
+    private fun managerWithLockDelay(delayMillis: Long, issuer: FakeTossTokenIssuer): TossTokenManager {
+        val clock = AtomicLong(1_000)
+        val slowLock = object : RedisDistributedLock(redisTemplate) {
+            override fun tryAcquire(key: String, ttlMillis: Long): String? {
+                clock.addAndGet(delayMillis)
+                return super.tryAcquire(key, ttlMillis)
+            }
+        }
+        val atMinimum = properties(requestDeadlineMillis = TossProperties.MIN_REQUEST_DEADLINE_MILLIS)
+        return TossTokenManager(atMinimum, redisTemplate, slowLock, issuer, clock::get, Thread::sleep)
+    }
+
+    @Test
+    fun `요청 상한이 하한이어도 락 획득 여유 안에서 락을 얻으면 첫 요청이 발급한다`() {
+        val issuer = FakeTossTokenIssuer()
+
+        val token = managerWithLockDelay(TossProperties.LOCK_ACQUIRE_MARGIN_MILLIS, issuer).getToken()
+
+        assertEquals("fake-access-token-1", token)
+        assertEquals(1, issuer.callCount)
+    }
+
+    @Test
+    fun `요청 상한이 하한이고 락 획득이 여유를 1ms 넘기면 발급하지 않고 락을 풀고 TOSS_TOKEN_UNAVAILABLE 이다`() {
+        val issuer = FakeTossTokenIssuer()
+
+        val manager = managerWithLockDelay(TossProperties.LOCK_ACQUIRE_MARGIN_MILLIS + 1, issuer)
+
+        assertThrows(TossTokenUnavailableException::class.java) { manager.getToken() }
+        assertEquals(0, issuer.callCount)
+        assertNull(redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "락 해제")
     }
 
     @Test

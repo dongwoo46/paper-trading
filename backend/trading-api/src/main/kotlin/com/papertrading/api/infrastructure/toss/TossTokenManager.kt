@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 /**
  * 토스 액세스 토큰 캐시·발급 직렬화·무효화 (토큰은 클라이언트당 1개만 유효 — RULE-06)
  * 순서: 캐시 확인 → 락 획득 → 캐시 재확인 → 발급 → 락을 쥔 채 암호화 저장 → 락 해제, 락 없이 발급하는 경로 없음
- * 요청 하나의 전체 상한(R1-02): 락을 얻은 시점에 남은 시간이 발급 최악 소요보다 짧으면 발급하지 않고 락을 풀고 실패
+ * 요청 하나의 전체 상한(R1-02, C-04): 락을 얻은 시점에 남은 시간이 발급 필요 시간(발급 최악 소요 + AUTH 한도 대기)보다 짧으면 발급하지 않고 락을 풀고 실패
  * Redis 에는 AES-GCM 암호문만 저장(RULE-05), 토큰·암호화 키·client secret 은 로그에 남기지 않음
  * 토스 설정이 비어 있어도 빈은 만들어지고(EDGE-01) 호출 때 TOSS_INTEGRATION_DISABLED
  */
@@ -74,11 +74,11 @@ class TossTokenManager(
         lock.release(LOCK_KEY, owner)
     }
 
-    // 남은 시간이 발급 최악 소요보다 짧으면 발급하지 않음, 발급이 끝나기 전에 요청 상한을 넘겨 스레드를 잡지 않게 (R1-02)
+    // 남은 시간이 발급 필요 시간(발급 최악 + 락 안 AUTH 한도 대기)보다 짧으면 발급하지 않음, 발급이 끝나기 전에 요청 상한을 넘겨 스레드를 잡지 않게 (R1-02, C-04)
     private fun issueIfTimeAllows(owner: String, requestDeadline: Long): String {
         val remainingMillis = requestDeadline - nowMillis()
-        if (remainingMillis < TossProperties.ISSUE_WORST_CASE_MILLIS) {
-            log.warn { "토스 토큰 요청 전체 상한까지 남은 시간이 발급 최악 소요보다 짧아 발급하지 않음: remainingMillis=$remainingMillis" }
+        if (remainingMillis < TossProperties.ISSUE_TIME_BUDGET_MILLIS) {
+            log.warn { "토스 토큰 요청 전체 상한까지 남은 시간이 발급 필요 시간보다 짧아 발급하지 않음: remainingMillis=$remainingMillis" }
             throw TossTokenUnavailableException("요청 전체 상한 초과")
         }
         return issueAndStore(owner)

@@ -7,6 +7,8 @@ import jakarta.annotation.PostConstruct
 import mu.KotlinLogging
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
+import java.net.URI
+import java.net.URISyntaxException
 
 /**
  * 토스 연동 설정 (trading.toss.*), 값은 환경변수로만 받음
@@ -31,7 +33,7 @@ class TossProperties {
     var tokenLockTtlMillis: Long = DEFAULT_LOCK_TTL_MILLIS
     var tokenLockWaitMillis: Long = DEFAULT_LOCK_WAIT_MILLIS
 
-    // 토큰 요청 하나의 전체 상한(락 대기와 발급을 합친 시간), 락을 얻은 시점의 남은 시간이 발급 최악보다 짧으면 발급하지 않음 (R1-02)
+    // 토큰 요청 하나의 전체 상한(락 대기와 발급을 합친 시간), 락을 얻은 시점의 남은 시간이 발급 필요 시간보다 짧으면 발급하지 않음 (R1-02, C-04)
     var tokenRequestDeadlineMillis: Long = DEFAULT_REQUEST_DEADLINE_MILLIS
 
     // 429 재시도 횟수와 그 대기 시간 합계의 상한, 요청 스레드를 막는 시간을 묶음 (RISK-08)
@@ -56,7 +58,10 @@ class TossProperties {
     private fun computeDisabledKeyNames(): List<String> = missingOrMalformedKeyNames() + outOfRangeKeyNames()
 
     private fun missingOrMalformedKeyNames(): List<String> = buildList {
-        if (baseUrl.isBlank()) add(ENV_BASE_URL)
+        when {
+            baseUrl.isBlank() -> add(ENV_BASE_URL)
+            !isAbsoluteHttpsUrl(baseUrl) -> add("$ENV_BASE_URL(형식 오류)")
+        }
         if (clientId.isBlank()) add(ENV_CLIENT_ID)
         if (clientSecret.isBlank()) add(ENV_CLIENT_SECRET)
         when {
@@ -69,12 +74,22 @@ class TossProperties {
         }
     }
 
+    // scheme 이 없으면 RestTemplate 이 IllegalArgumentException 을 던져 400 으로 새고, http 는 client secret 과 토큰이 평문으로 나감 (C-02)
+    private fun isAbsoluteHttpsUrl(value: String): Boolean {
+        val uri = try {
+            URI(value)
+        } catch (_: URISyntaxException) {
+            return false
+        }
+        return uri.scheme.equals(HTTPS_SCHEME, ignoreCase = true) && !uri.host.isNullOrBlank()
+    }
+
     // 범위를 벗어난 선택 키도 토스만 비활성 (C-04), 값은 싣지 않고 이름만
     private fun outOfRangeKeyNames(): List<String> = buildList {
         if (tokenRefreshSkewSeconds < 0) add("$ENV_REFRESH_SKEW$OUT_OF_RANGE")
         if (tokenLockTtlMillis <= MIN_LOCK_TTL_EXCLUSIVE_MILLIS) add("$ENV_LOCK_TTL$OUT_OF_RANGE")
         if (tokenLockWaitMillis <= 0) add("$ENV_LOCK_WAIT$OUT_OF_RANGE")
-        if (tokenRequestDeadlineMillis <= ISSUE_WORST_CASE_MILLIS) add("$ENV_REQUEST_DEADLINE$OUT_OF_RANGE")
+        if (tokenRequestDeadlineMillis < MIN_REQUEST_DEADLINE_MILLIS) add("$ENV_REQUEST_DEADLINE$OUT_OF_RANGE")
         if (rateLimitMaxRetries < 0) add("$ENV_RATE_LIMIT_MAX_RETRIES$OUT_OF_RANGE")
         if (rateLimitMaxWaitMillis < 0) add("$ENV_RATE_LIMIT_MAX_WAIT$OUT_OF_RANGE")
         rateLimits.filterValues { it <= 0 }.keys.forEach { add("${TossRateLimiter.envName(it)}$OUT_OF_RANGE") }
@@ -108,6 +123,20 @@ class TossProperties {
         // 발급 최악 소요 = 연결 타임아웃 + 읽기 타임아웃(RestTemplateConfig), 락 TTL 과 요청 전체 상한이 이 값을 넘어야 함
         const val ISSUE_WORST_CASE_MILLIS =
             (RestTemplateConfig.CONNECT_TIMEOUT_SECONDS + RestTemplateConfig.READ_TIMEOUT_SECONDS) * 1_000L
+
+        // 락 안에서 도는 AUTH 한도 대기 허용, AUTH 한도를 초당 1회까지 낮춰도 간격 1초 (C-04)
+        const val AUTH_WAIT_ALLOWANCE_MILLIS = 1_000L
+
+        // 락을 얻은 시점에 남아 있어야 하는 발급 필요 시간 = 발급 최악 + AUTH 한도 대기, TokenManager 의 실행 검사가 씀 (C-04)
+        const val ISSUE_TIME_BUDGET_MILLIS = ISSUE_WORST_CASE_MILLIS + AUTH_WAIT_ALLOWANCE_MILLIS
+
+        // 락 획득까지 Redis 왕복(캐시 확인·락 획득·재확인)에 드는 시간 여유 (C-04)
+        const val LOCK_ACQUIRE_MARGIN_MILLIS = 1_000L
+
+        // 요청 전체 상한의 하한 = 발급 필요 시간 + 락 획득 여유, 범위 검사가 씀, 이 값이어도 여유 안에서 락을 얻은 첫 요청은 발급함 (C-04)
+        const val MIN_REQUEST_DEADLINE_MILLIS = ISSUE_TIME_BUDGET_MILLIS + LOCK_ACQUIRE_MARGIN_MILLIS
+
+        private const val HTTPS_SCHEME = "https"
 
         // 락 TTL 은 발급 최악 소요를 넘어야 함, 이하이면 발급 도중 락이 만료
         private const val MIN_LOCK_TTL_EXCLUSIVE_MILLIS = ISSUE_WORST_CASE_MILLIS

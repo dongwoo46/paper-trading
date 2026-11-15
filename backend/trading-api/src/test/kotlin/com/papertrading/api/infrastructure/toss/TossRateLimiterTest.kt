@@ -1,6 +1,7 @@
 package com.papertrading.api.infrastructure.toss
 
 import com.papertrading.api.common.exception.TossIntegrationDisabledException
+import com.papertrading.api.common.exception.TossRateLimitedException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -158,5 +159,100 @@ class TossRateLimiterTest {
             limiter(mapOf(TossRateLimitGroup.ASSET to perSecond), time).acquire(TossRateLimitGroup.ASSET)
         }
         assertTrue(time.slept.isEmpty())
+    }
+
+    // ---- C-01: 예약 전 대기가 최대 대기 상한을 넘으면 슬롯을 잡지 않고 TOSS_RATE_LIMITED ----
+
+    // 시계를 움직이지 않고 기다릴 시간만 기록, 여러 스레드가 같은 시각에 몰린 상황
+    private class StillClock {
+        val clock = AtomicLong(1_000)
+        val slept = mutableListOf<Long>()
+
+        fun limiterFor(properties: TossProperties) = TossRateLimiter(properties, clock::get) { slept += it }
+    }
+
+    private fun capped(maxWaitMillis: Long, limits: Map<TossRateLimitGroup, Int>) = properties(limits)
+        .apply { rateLimitMaxWaitMillis = maxWaitMillis }
+
+    @Test
+    fun `예약 전 대기가 최대 대기 상한을 넘으면 잠들지 않고 TOSS_RATE_LIMITED 이다`() {
+        val still = StillClock()
+        val limiter = still.limiterFor(capped(1_500, mapOf(TossRateLimitGroup.ACCOUNT to 1)))
+
+        limiter.acquire(TossRateLimitGroup.ACCOUNT)
+        limiter.acquire(TossRateLimitGroup.ACCOUNT)
+        val error = assertThrows<TossRateLimitedException> { limiter.acquire(TossRateLimitGroup.ACCOUNT) }
+
+        assertEquals("TOSS_RATE_LIMITED", error.errorCode)
+        assertEquals(listOf(1_000L), still.slept, "첫 호출은 0, 둘째는 1000ms, 셋째는 2000ms 라 상한 1500ms 를 넘어 잠들지 않음")
+    }
+
+    @Test
+    fun `상한을 넘겨 실패한 호출은 슬롯을 잡지 않아 다음 호출의 대기를 늘리지 않는다`() {
+        val still = StillClock()
+        val limiter = still.limiterFor(capped(1_500, mapOf(TossRateLimitGroup.ACCOUNT to 1)))
+        limiter.acquire(TossRateLimitGroup.ACCOUNT)
+        limiter.acquire(TossRateLimitGroup.ACCOUNT)
+        assertThrows<TossRateLimitedException> { limiter.acquire(TossRateLimitGroup.ACCOUNT) }
+
+        still.clock.addAndGet(600)
+        limiter.acquire(TossRateLimitGroup.ACCOUNT)
+
+        assertEquals(listOf(1_000L, 1_400L), still.slept, "실패한 호출이 슬롯을 잡았다면 둘째 대기가 2400ms 가 되어 상한을 넘음")
+    }
+
+    @Test
+    fun `대기가 상한과 정확히 같으면 허용하고 상한 0 이면 기다려야 하는 호출은 실패한다`() {
+        val exact = StillClock()
+        val atLimit = exact.limiterFor(capped(1_000, mapOf(TossRateLimitGroup.ACCOUNT to 1)))
+        atLimit.acquire(TossRateLimitGroup.ACCOUNT)
+        atLimit.acquire(TossRateLimitGroup.ACCOUNT)
+        assertEquals(listOf(1_000L), exact.slept)
+
+        val zero = StillClock()
+        val noWait = zero.limiterFor(capped(0, mapOf(TossRateLimitGroup.ACCOUNT to 1)))
+        noWait.acquire(TossRateLimitGroup.ACCOUNT)
+        assertThrows<TossRateLimitedException> { noWait.acquire(TossRateLimitGroup.ACCOUNT) }
+        assertTrue(zero.slept.isEmpty())
+    }
+
+    // ---- C-05: 429 때 그 그룹의 다음 슬롯을 now + Retry-After 뒤로 밀어 모든 스레드가 같은 대기를 나눔 ----
+
+    @Test
+    fun `슬롯을 뒤로 밀면 다음 호출은 밀린 시간만큼 기다린다`() {
+        val still = StillClock()
+        val limiter = still.limiterFor(properties(mapOf(TossRateLimitGroup.ASSET to 5)))
+
+        limiter.deferNextSlot(TossRateLimitGroup.ASSET, 3_000)
+        limiter.acquire(TossRateLimitGroup.ASSET)
+
+        assertEquals(listOf(3_000L), still.slept)
+    }
+
+    @Test
+    fun `슬롯 미루기는 이미 더 뒤에 있는 슬롯을 앞당기지 않고 다른 그룹에 영향이 없다`() {
+        val still = StillClock()
+        val limiter = still.limiterFor(
+            properties(mapOf(TossRateLimitGroup.ASSET to 5, TossRateLimitGroup.MARKET_DATA to 5)),
+        )
+        limiter.deferNextSlot(TossRateLimitGroup.ASSET, 4_000)
+
+        limiter.deferNextSlot(TossRateLimitGroup.ASSET, 1_000)
+        limiter.acquire(TossRateLimitGroup.MARKET_DATA)
+        limiter.acquire(TossRateLimitGroup.ASSET)
+
+        assertEquals(listOf(4_000L), still.slept)
+    }
+
+    @Test
+    fun `슬롯 미루기 뒤 간격이 지나면 더 기다리지 않는다`() {
+        val still = StillClock()
+        val limiter = still.limiterFor(properties(mapOf(TossRateLimitGroup.ASSET to 5)))
+        limiter.deferNextSlot(TossRateLimitGroup.ASSET, 2_000)
+
+        still.clock.addAndGet(2_000)
+        limiter.acquire(TossRateLimitGroup.ASSET)
+
+        assertTrue(still.slept.isEmpty(), "${still.slept}")
     }
 }

@@ -76,7 +76,14 @@
 
 > Fill it by spelling out the §2 approach as the actual work (concretely, what was done).
 
--
+- 시험 먼저: 새 시험 7개 클래스(`TossAccountBalanceAdapterTest`, `TossAccountListClientTest`, `TossJsonTest`, `BrokerAccountQueryServiceTest`, `TossAccountListQueryServiceTest`, 컨트롤러 통합 2개)와 기존 6개 클래스 보강을 먼저 작성
+- D7 포트 `BrokerAccountBalancePort`와 값 타입(`BrokerAccountRef`, `BrokerBalanceSnapshot`, `BrokerCurrencyBalance`, `BrokerBalancePosition`), 결과 `BrokerAccountBalanceResult`
+- D8 `BrokerAccountQueryService`: `TradingMode` 전수 `when`, externalAccountId 공백 제거 뒤 숫자·Long 범위만 통과(아니면 409), `AccountQueryService`로 계좌 조회(리포지토리 직접 주입은 ArchUnit 위반)
+- `TossAccountBalanceAdapter`: holdings(ASSET) 1회와 buying-power KRW·USD(ORDER_INFO) 2회, 부록 A 매핑, 통화별 returnRate는 §7 KIS 방식 계산, 종목 returnRate는 `movePointRight(2)`
+- `TossAccountListClient`(ACCOUNT): accountNo를 끝 4자리로 바꿔 infrastructure 밖으로 전체 번호를 내보내지 않음. `TossAccountListPort`, `TossAccountListQueryService`
+- 새 예외 3개(I-2 `BROKER_BALANCE_NOT_SUPPORTED`, E-1 `NOT_BROKER_ACCOUNT`, F-4 `TOSS_ACCOUNT_NOT_LINKED`), 컨트롤러 `GET /api/v1/accounts/{accountId}/broker-balance`, `GET /api/toss/accounts`, 응답 숫자는 문자열(FLAG-10)
+- 리뷰 후속: C-01 `TossRateLimiter.reserveSlot`(예약 전 대기 상한), C-02 `isAbsoluteHttpsUrl`, C-03 `NewStrictNullChecks`·`ACCEPT_FLOAT_AS_INT` 끔·`contentNulls FAIL`, C-04 `TossProperties` 하한 상수(`MIN_REQUEST_DEADLINE_MILLIS` 등), C-05 `deferNextSlot`
+- fixture 7개(holdings 3, buying-power 2, accounts 2)와 README 1줄
 
 ---
 
@@ -84,14 +91,25 @@
 
 | What | How it was checked | Result |
 |---|---|---|
-|  | test / screenshot / API contract / manual |  |
+| Red(컴파일) | HEAD main에 새 시험을 덮은 스크래치 복사본에서 `compileTestKotlin --offline` | exit 1, 오류 279건. 구현 뒤 재구성(§8) |
+| Red(런타임) | 같은 복사본에 새 API 빈 껍데기만 두고 실행 | 195건 중 26건 실패(TossJson 5, Properties 12, RateLimiter 5, TokenManager 2, ApiClient 1, FloatScan 1) |
+| 관련 묶음(maker) | 새·바뀐 클래스, 기존 토스 13개, `presentation.*`, `infrastructure.kis.*`, xml 집계 | 476건, 실패 0, 오류 0, 건너뜀 0 |
+| 메인 재실행 | 바뀐 시험 14개 클래스(+ArchUnit) `--offline --tests`, xml 집계 | 297건, 실패 0, 오류 0, 건너뜀 0 |
+| 린트 | `./gradlew compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` 메인 재실행 | exit 0, 기준선 증가 0 |
+| 부동소수점 | `TossFloatingPointScanTest` + 메인 grep | Double·Float·toDouble·toFloat 0건(주석 1줄 제외) |
+| 범위 | `git status` | `infrastructure/kis/**`·collector-api·trading-web 변경 0 |
+| 전체 스위트 | 푸시 뒤 CI `full-test` | 대기 |
+| 코드 리뷰 | step 6 리뷰 | 대기 |
 
 ---
 
 ## 7. Result  (record)
 
-- Done:
-- Changed files / PR:
+- Done: (리뷰·CI 뒤 사람 판단)
+- Changed files / PR: 경로는 `backend/trading-api/src/` 기준
+  - main 신설: `application/account/{BrokerAccountQueryService,port/BrokerAccountBalancePort,result/BrokerAccountBalanceResult}.kt`, `application/toss/{TossAccountListQueryService,port/TossAccountListPort}.kt`, `common/exception/{BrokerBalanceNotSupported,NotBrokerAccount,TossAccountNotLinked}Exception.kt`, `infrastructure/toss/{TossAccountBalanceAdapter,TossAccountListClient}.kt`, `infrastructure/toss/dto/{TossHoldingsOverview,TossHoldingsItem,TossBuyingPower,TossAccount}.kt`, `presentation/controller/{BrokerAccountBalance,TossAccount}Controller.kt`, `presentation/dto/account/BrokerAccountBalanceResponse.kt`, `presentation/dto/toss/TossAccountResponse.kt`
+  - main 수정: `TossRateLimiter`, `TossApiClient`, `TossJson`, `TossProperties`, `TossTokenManager`
+  - test 신설 7, 수정 6(`TossRateLimiterTest`, `TossApiClientTest`, `TossPropertiesTest`, `TossTokenManagerTest`, `TossFloatingPointScanTest`, `TradingApiApplicationTests`), fixture 7
 
 ---
 
@@ -101,7 +119,18 @@
 
 | Problem | How it was handled |
 |---|---|
-|  | new step / change an existing step / open-questions flag / ignore |
+| 응답 `accountSeq` 형식 | ASSUME: JSON 문자열. `externalAccountId`(문자열)에 그대로 넣는 값이고 int64라 JS 정밀도 문제를 피함 |
+| `/api/toss/accounts` 응답 모양 | ASSUME: 래퍼 없이 객체 배열(`AccountController` 관례) |
+| 미연결 판정 | ASSUME: externalAccountId 공백 제거 뒤 숫자·Long 범위만 연결로 봄, 아니면 409. 포트의 `externalAccountId`는 null 불가 |
+| C-04 «한 상수» | ASSUME: 파생 상수 둘. 실행 검사는 발급 필요 16초(최악 15초 + AUTH 대기 허용 1초), 범위 검사는 락 여유 1초를 더한 17초. 같은 값을 쓰면 상한=하한인 첫 요청이 매번 실패. 1초 두 값은 가정, 리뷰 확인 요청 |
+| C-04로 기존 시험 경계 이동 | `TossPropertiesTest` 활성 경계 15001→17000, `TossTokenManagerTest` 대기 경계 5초→4초. `// devkit:test-change C-04` 표시 |
+| C-05 적용 범위 | ASSUME: 상한 안에서 재시도할 429에만 `deferNextSlot`(포기하는 큰 Retry-After가 그룹을 오래 막지 않게) |
+| 계좌번호 마스킹 위치 | `TossAccountListClient`에서 끝 4자리로 바꿈. 전체 번호는 infrastructure 밖으로 안 나감 |
+| 안 쓰는 필수 필드 | 존재 검사만. 통화별 `amountAfterCost`는 `Price` 모양이라 BigDecimal로 엄격히 읽음 |
+| asOf | 모든 호출 뒤 `LocalDateTime.now(Clock.systemDefaultZone())`, 시간대 안 붙임 |
+| Red 증거가 사후 재구성 | 시험은 먼저 썼으나 Red 실행을 구현 뒤 스크래치 복사본(`git archive HEAD` + 새 시험)에서 재현. maker 자진 보고. 프로젝트 파일은 Edit/Write로만 고침 |
+| 락 TTL 하한이 락 안 AUTH 대기를 반영 안 함 | 후속 후보(C-01~C-05 범위 밖), findings 원장 |
+| C-06~C-08 | findings 원장(step 5 리뷰 처분 그대로) |
 
 ---
 
