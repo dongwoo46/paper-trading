@@ -134,14 +134,15 @@ class Order protected constructor() : BaseAuditEntity() {
     @Column(name = "version", nullable = false)
     var version: Int = 0
 
-    /** 이번 체결을 반영하고 이번 체결 금액(수량 × 체결가)을 돌려준다 */
+    /** 이번 체결 반영, 반환값은 이번 체결 금액(수량 × 체결가, 반올림 없음) */
     fun applyExecution(executedQty: BigDecimal, executedPrice: BigDecimal, executedFee: BigDecimal): BigDecimal {
         check(orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PARTIAL) {
             "체결 적용 불가 상태입니다: $orderStatus"
         }
         require(executedQty > BigDecimal.ZERO) { "체결 수량은 0보다 커야 합니다." }
         require(executedPrice > BigDecimal.ZERO) { "체결 가격은 0보다 커야 합니다." }
-        val executedAmount = executedQty.multiply(executedPrice).setScale(AMOUNT_SCALE, RoundingMode.HALF_UP)
+        require(filledQuantity.add(executedQty) <= quantity) { "체결 수량이 주문 잔여 수량을 넘습니다." }
+        val executedAmount = executedQty.multiply(executedPrice)
         val newTotalAmount = (totalAmount ?: BigDecimal.ZERO).add(executedAmount)
         filledQuantity = filledQuantity.add(executedQty)
         totalAmount = newTotalAmount
@@ -163,16 +164,22 @@ class Order protected constructor() : BaseAuditEntity() {
         externalOrderId = externalId
     }
 
-    /** 체결 완료·취소 때 계좌에 돌려줄 잠금 잔액 (초기 잠금 - 누적 체결 금액, 0 하한) */
+    /** 최종 체결 때 계좌에 돌려줄 잠금 잔액 (초기 잠금 - 누적 체결 금액, 0 하한) */
     fun remainingLockedAmount(): BigDecimal {
         val remaining = lockedAmount.subtract(totalAmount ?: BigDecimal.ZERO)
         return remaining.coerceAtLeast(BigDecimal.ZERO)
     }
 
+    /** 매수 주문의 누적 체결 금액이 주문 잠금을 넘은 상태 (잔액 0 하한으로 가려지는 초과 사용) */
+    fun isLockedAmountExceeded(): Boolean {
+        val executedTotal = totalAmount ?: BigDecimal.ZERO
+        return orderSide == OrderSide.BUY && executedTotal > lockedAmount
+    }
+
     fun isCancellable(): Boolean = orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PARTIAL
 
     companion object {
-        /** 금액·평균가 소수 자리수 (orders 금액 열 scale 4) */
+        /** 평균가 표시·수수료 반올림 소수 자리수 (orders 금액 열 scale 4) */
         const val AMOUNT_SCALE = 4
 
         fun create(

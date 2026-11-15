@@ -96,7 +96,13 @@ class ExecutionProcessor(
         if (executionRepository.findByExternalExecutionId(externalExecutionId).isPresent) return
 
         val order = orderRepository.findByIdWithOptimisticLock(orderId).orElse(null) ?: return
-        if (order.orderStatus !in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) return
+        if (order.orderStatus !in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) {
+            log.warn {
+                "종료된 주문에 새 체결 무시: orderId=$orderId, externalExecutionId=$externalExecutionId, " +
+                    "status=${order.orderStatus}"
+            }
+            return
+        }
 
         val accountId = requireNotNull(order.account?.id) { "order.account.id is null: orderId=$orderId" }
         val account = accountRepository.findByIdWithLock(accountId)
@@ -150,7 +156,7 @@ class ExecutionProcessor(
             }
 
             val grossProceeds = executedAmount
-            val netProceeds = grossProceeds.subtract(fee).setScale(Order.AMOUNT_SCALE, RoundingMode.HALF_UP)
+            val netProceeds = grossProceeds.subtract(fee)
 
             when (tradingMode) {
                 TradingMode.LOCAL -> {
@@ -196,6 +202,12 @@ class ExecutionProcessor(
         }
 
         if (order.orderStatus == OrderStatus.FILLED) {
+            if (order.isLockedAmountExceeded()) {
+                log.warn {
+                    "체결 금액이 주문 잠금을 넘음(해제액 0 하한): orderId=$orderId, " +
+                        "lockedAmount=${order.lockedAmount}, totalAmount=${order.totalAmount}"
+                }
+            }
             val remainingLock = order.remainingLockedAmount()
             if (remainingLock > BigDecimal.ZERO) {
                 accountLedgerRepository.save(
