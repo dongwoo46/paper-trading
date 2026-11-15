@@ -1,0 +1,412 @@
+# detekt — cd backend/trading-api && ./gradlew detekt --console=plain
+실행 2026-11-14T20:08:37Z ~ 2026-11-14T20:09:12Z (UTC) · cwd backend/trading-api · commit 9d3d57b60c5eb7956fd96741458abe1ecea7a85d
+
+## 요약
+- 결과: BUILD SUCCESSFUL · 기준선 밖 새 발견 0건(build/reports/detekt/detekt.md «Findings (0)»)
+- 검사한 파일(checked) 293 — detekt.md Metrics «293 number of kt files»(src/main + src/test)
+- 설정: buildUponDefaultConfig = true(기본 임계: LongMethod 60·NestedBlockDepth 4·LongParameterList 6/7·TooManyFunctions 11·CyclomaticComplexMethod 15) — 팀 규칙 40줄·중첩 3보다 느슨함
+- 기준선 config/detekt/baseline.xml: 243건 · 규칙별 MaxLineLength 68 · MagicNumber 51 · LongParameterList 29 · ProtectedMemberInFinalClass 26 · NewLineAtEndOfFile 22 · ReturnCount 10 · TooGenericExceptionCaught 7 · TooManyFunctions 6 · LongMethod 4 · CyclomaticComplexMethod 3 · SwallowedException 3 · ThrowsCount 3 · UnusedParameter 3 · UnusedPrivateProperty 3 · EmptyFunctionBlock 1 · LoopWithTooManyJumpStatements 1 · MatchingDeclarationName 1 · SpreadOperator 1 · UnusedPrivateMember 1
+
+## gradle 출력
+```
+> Task :detekt
+
+BUILD SUCCESSFUL in 6s
+1 actionable task: 1 executed
+exit=0
+```
+
+## detekt.md (Metrics·Complexity·Findings)
+```
+# detekt
+
+## Metrics
+
+* 1,528 number of properties
+
+* 1,031 number of functions
+
+* 495 number of classes
+
+* 56 number of packages
+
+* 293 number of kt files
+
+## Complexity Report
+
+* 20,959 lines of code (loc)
+
+* 17,494 source lines of code (sloc)
+
+* 12,695 logical lines of code (lloc)
+
+* 467 comment lines of code (cloc)
+
+* 1,552 cyclomatic complexity (mcc)
+
+* 341 cognitive complexity
+
+* 0 number of total code smells
+
+* 2% comment source ratio
+
+* 122 mcc per 1,000 lloc
+
+* 0 code smells per 1,000 lloc
+
+## Findings (0)
+
+generated with [detekt version 1.23.8](https://detekt.dev/) on 2026-11-14 20:08:50 UTC
+```
+
+## 파일별 기준선 항목 (경로 → 규칙: 서명) — 서명의 파일 이름을 src 경로로 이음, 같은 이름 파일이 둘 이상이면 «|» 로 나열
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/account/command/AccountCommands.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.application.account.command.AccountCommands.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/account/query/LedgerFilter.kt	2건
+    MagicNumber: LedgerFilter$20
+    NewLineAtEndOfFile: com.papertrading.api.application.account.query.LedgerFilter.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/notification/SlackNotificationEventPublisher.kt	1건
+    MaxLineLength: SlackNotificationEventPublisher$fun
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/notification/SlackNotificationRequestedEvent.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.application.notification.SlackNotificationRequestedEvent.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/order/ExecutionProcessor.kt	6건
+    LongMethod: ExecutionProcessor$fun processFill( orderId: Long, fillPrice: BigDecimal, fillQty: BigDecimal, externalExecutionId: String, executedAt: Instant, )
+    LongParameterList: ExecutionProcessor$( private val orderRepository: OrderRepository, private val accountRepository: AccountRepository, private val positionRepository: PositionRepository, private val executionRepository: ExecutionRepository, private val accountLedgerRepository: AccountLedgerRepository, private val feePolicyRepository: FeePolicyRepository, private val collectorSubscriptionPort: CollectorSubscriptionPort, private val settlementRepository: SettlementRepository, private val settlementExecutionRepository: SettlementExecutionRepository, private val eventPublisher: ApplicationEventPublisher, private val slackNotificationEventPublisher: SlackNotificationEventPublisher, )
+    MagicNumber: ExecutionProcessor$4
+    MaxLineLength: ExecutionProcessor$currency = requireNotNull(account.baseCurrency) { "account.baseCurrency is null: accountId=$accountId" }
+    MaxLineLength: ExecutionProcessor$private
+    ReturnCount: ExecutionProcessor$fun processFill( orderId: Long, fillPrice: BigDecimal, fillQty: BigDecimal, externalExecutionId: String, executedAt: Instant, )
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/order/KisExecutionNoticeService.kt	2건
+    MaxLineLength: KisExecutionNoticeService$"duplicate KIS execution notice ignored: mode=${notice.mode}, externalOrderId=${notice.externalOrderId}, externalExecutionId=${notice.externalExecutionId}"
+    MaxLineLength: KisExecutionNoticeService$"executedPrice=${notice.executedPrice}, executedQty=${notice.executedQty}, executedAt=${notice.executedAt}"
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/order/KisLiveOrderExecutor.kt	1건
+    UnusedPrivateProperty: KisLiveOrderExecutor$private val orderRepository: OrderRepository
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/order/OrderCommandService.kt	7건
+    LongParameterList: OrderCommandService$( accountId: Long, ticker: String, marketType: com.papertrading.api.domain.enums.MarketType, quantity: BigDecimal, orderGroupId: String, triggerAuditInputs: List<AutoExitTriggerAuditInput>, )
+    LongParameterList: OrderCommandService$( private val accountRepository: AccountRepository, private val orderRepository: OrderRepository, private val positionRepository: PositionRepository, private val accountLedgerRepository: AccountLedgerRepository, private val marketQuotePort: MarketQuotePort, private val collectorSubscriptionPort: CollectorSubscriptionPort, private val localMatchingEngine: LocalMatchingEngine, private val kisPaperOrderExecutor: KisPaperOrderExecutor, private val kisLiveOrderExecutor: KisLiveOrderExecutor, )
+    MagicNumber: OrderCommandService$4
+    MagicNumber: OrderCommandService$60
+    ReturnCount: OrderCommandService$@Transactional fun placeOrder(accountId: Long, command: PlaceOrderCommand): Order
+    ReturnCount: OrderCommandService$private fun cancelIfUnfillableIocFok( accountId: Long, orderId: Long, command: PlaceOrderCommand, order: Order, tradingMode: TradingMode, ): Boolean
+    TooManyFunctions: OrderCommandService
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/portfolio/DailyBalanceCommandService.kt	1건
+    MagicNumber: DailyBalanceCommandService$6
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/portfolio/PortfolioSnapshotCommandService.kt	1건
+    MagicNumber: PortfolioSnapshotCommandService$6
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/portfolio/result/TaxComputationResult.kt	1건
+    MagicNumber: TaxComputationResult.Companion$4
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/portfolio/SnapshotJobService.kt	3건
+    MaxLineLength: SnapshotJobService$val latestRun = snapshotJobRunRepository.findTopByAccountIdAndBusinessDateOrderByStartedAtDesc(accountId, businessDate)
+    ThrowsCount: SnapshotJobService$@Transactional fun generateDailySnapshots( accountId: Long, businessDate: LocalDate, ): Int
+    TooGenericExceptionCaught: SnapshotJobService$ex: Exception
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/portfolio/tax/TaxSummaryCalculator.kt	1건
+    MagicNumber: TaxSummaryCalculator$4
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/portfolio/TaxSummaryCommandService.kt	6건
+    LongMethod: TaxSummaryCommandService$@Transactional fun recalculate( accountId: Long, taxYear: TaxYear, force: Boolean, runType: TaxSummaryRunType = TaxSummaryRunType.MANUAL, ): TaxSummary
+    MagicNumber: TaxSummaryCommandService$4
+    MaxLineLength: TaxSummaryCommandService$throw TaxSummaryAlreadyRunningException("이미 실행 중인 세금 요약 작업이 있습니다. accountId=$accountId taxYear=${taxYear.value}")
+    SwallowedException: TaxSummaryCommandService$ex: DataIntegrityViolationException
+    ThrowsCount: TaxSummaryCommandService$@Transactional fun recalculate( accountId: Long, taxYear: TaxYear, force: Boolean, runType: TaxSummaryRunType = TaxSummaryRunType.MANUAL, ): TaxSummary
+    TooGenericExceptionCaught: TaxSummaryCommandService$ex: Exception
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/portfolio/TaxSummaryQueryService.kt	2건
+    MaxLineLength: TaxSummaryQueryService$.
+    MaxLineLength: TaxSummaryQueryService$throw InvalidTaxYearRangeException("fromYear는 toYear보다 클 수 없습니다. fromYear=${fromYear.value} toYear=${toYear.value}")
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/position/AutoExitOrderPlacementService.kt	1건
+    LongParameterList: AutoExitOrderPlacementService$( accountId: Long, ticker: String, marketType: MarketType, quantity: BigDecimal, orderGroupId: String, triggerAuditInputs: List<AutoExitTriggerAuditInput>, )
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/position/PositionCommandService.kt	1건
+    MaxLineLength: PositionCommandService$"포지션 실시간 평가 캐시 갱신: ticker=$normalizedTicker, tradingMode=$tradingMode, price=$price, count=${snapshots.size}"
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/position/PositionExitTriggerCommandService.kt	2건
+    MagicNumber: PositionExitTriggerCommandService$4
+    MaxLineLength: PositionExitTriggerCommandService$?:
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/position/PositionExitTriggerEvaluator.kt	2건
+    MaxLineLength: PositionExitTriggerEvaluator$fun
+    ReturnCount: PositionExitTriggerEvaluator$fun evaluate(position: Position, trigger: PositionExitTrigger, quotePrice: BigDecimal, now: Instant): TriggerDecision?
+backend/trading-api/src/main/kotlin/com/papertrading/api/application/position/PositionExitTriggerOrchestrator.kt	13건
+    CyclomaticComplexMethod: PositionExitTriggerOrchestrator$private fun processGroup(ticker: String, groupKey: TriggerGroupKey, price: BigDecimal, quoteAt: Instant)
+    LongMethod: PositionExitTriggerOrchestrator$private fun processGroup(ticker: String, groupKey: TriggerGroupKey, price: BigDecimal, quoteAt: Instant)
+    LongParameterList: PositionExitTriggerOrchestrator$( accountId: Long, positionId: Long, triggerType: TriggerType, orderGroupId: String, quoteAt: Instant, reason: String, )
+    MagicNumber: PositionExitTriggerOrchestrator$16
+    MagicNumber: PositionExitTriggerOrchestrator$3
+    MagicNumber: PositionExitTriggerOrchestrator$8
+    MaxLineLength: PositionExitTriggerOrchestrator$// Duplicate-key may indicate a concurrent success. Confirm deterministic order existence before success.
+    MaxLineLength: PositionExitTriggerOrchestrator$message = "auto-exit order creation failed. accountId=$accountId, positionId=$positionId, triggerType=${triggerType.name}, orderGroupId=$orderGroupId, quoteAt=$quoteAt, reason=$reason"
+    ReturnCount: PositionExitTriggerOrchestrator$private fun processGroup(ticker: String, groupKey: TriggerGroupKey, price: BigDecimal, quoteAt: Instant)
+    ReturnCount: PositionExitTriggerOrchestrator$private fun tryCreateGroupedAutoExitOrderWithRetry( position: Position, quantity: BigDecimal, orderGroupId: String, decisions: List<TriggerDecision>, ): Boolean
+    SwallowedException: PositionExitTriggerOrchestrator$ex: CannotAcquireLockException
+    SwallowedException: PositionExitTriggerOrchestrator$ex: PessimisticLockingFailureException
+    TooGenericExceptionCaught: PositionExitTriggerOrchestrator$ex: Exception
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/account/Account.kt	6건
+    LongParameterList: Account.Companion$( accountName: String, accountType: AccountType, tradingMode: TradingMode, initialDeposit: BigDecimal, baseCurrency: String = "KRW", externalAccountId: String? = null )
+    MagicNumber: Account$4
+    MagicNumber: Account.Companion$3
+    MaxLineLength: Account$fun
+    ProtectedMemberInFinalClass: Account$protected constructor()
+    TooManyFunctions: Account : BaseAuditEntity
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/account/AccountExitTriggerDefault.kt	1건
+    ProtectedMemberInFinalClass: AccountExitTriggerDefault$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/account/AccountLedger.kt	2건
+    LongParameterList: AccountLedger.Companion$( account: Account, transactionType: TransactionType, amount: BigDecimal, balanceAfter: BigDecimal, idempotencyKey: String, refOrderId: Long? = null, refExecutionId: Long? = null, description: String? = null )
+    ProtectedMemberInFinalClass: AccountLedger$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/account/RiskEvent.kt	1건
+    ProtectedMemberInFinalClass: RiskEvent$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/account/RiskPolicy.kt	1건
+    ProtectedMemberInFinalClass: RiskPolicy$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/feepolicy/FeePolicy.kt	4건
+    LongParameterList: FeePolicy.Companion$( tradingMode: TradingMode, marketType: MarketType, feeRate: BigDecimal, minFee: BigDecimal, transactionTaxRate: BigDecimal, effectiveFrom: Instant, effectiveUntil: Instant? = null )
+    MagicNumber: FeePolicy$4
+    NewLineAtEndOfFile: com.papertrading.api.domain.entity.feepolicy.FeePolicy.kt
+    ProtectedMemberInFinalClass: FeePolicy$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/notification/Notification.kt	2건
+    LongParameterList: Notification.Companion$( eventType: NotificationEventType, sourceRef: String, title: String, message: String, account: Account? = null, refOrderId: Long? = null, refExecutionId: Long? = null, )
+    ProtectedMemberInFinalClass: Notification$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/order/Execution.kt	2건
+    LongParameterList: Execution.Companion$( order: Order, account: Account, ticker: String, executedQuantity: BigDecimal, executedPrice: BigDecimal, krwExecutedPrice: BigDecimal, externalExecutionId: String, executedAt: Instant, executionMode: TradingMode = account.tradingMode, fee: BigDecimal = BigDecimal.ZERO, currency: String = "KRW", fxRate: BigDecimal? = null )
+    ProtectedMemberInFinalClass: Execution$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/order/Order.kt	3건
+    LongParameterList: Order.Companion$( account: Account, ticker: String, marketType: MarketType, orderType: OrderType, orderSide: OrderSide, orderCondition: OrderCondition, quantity: BigDecimal, limitPrice: BigDecimal? = null, lockedAmount: BigDecimal = BigDecimal.ZERO, idempotencyKey: String, orderGroupId: String? = null, expireAt: Instant? = null, strategyId: Long? = null, signalId: Long? = null )
+    MaxLineLength: Order$uniqueConstraints = [UniqueConstraint(name = "uk_orders_account_idempotency", columnNames = ["account_id", "idempotency_key"])]
+    ProtectedMemberInFinalClass: Order$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/order/OrderAmendment.kt	4건
+    LongParameterList: OrderAmendment.Companion$( order: Order, amendmentType: String, beforeQuantity: BigDecimal? = null, afterQuantity: BigDecimal? = null, beforeLimitPrice: BigDecimal? = null, afterLimitPrice: BigDecimal? = null, reason: String? = null )
+    LongParameterList: OrderAmendment.Companion$( order: Order, beforeQuantity: BigDecimal? = null, afterQuantity: BigDecimal? = null, beforeLimitPrice: BigDecimal? = null, afterLimitPrice: BigDecimal? = null, reason: String? = null )
+    NewLineAtEndOfFile: com.papertrading.api.domain.entity.order.OrderAmendment.kt
+    ProtectedMemberInFinalClass: OrderAmendment$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/order/OrderSignal.kt	3건
+    LongParameterList: OrderSignal.Companion$( account: Account, ticker: String, signalSide: OrderSide, quantity: BigDecimal, idempotencyKey: String, strategyId: Long? = null, signalCategory: SignalCategory? = null, signalIndicator: SignalIndicator? = null, signalThreshold: BigDecimal? = null, signalActualValue: BigDecimal? = null, conditionSnapshot: String? = null, limitPrice: BigDecimal? = null )
+    NewLineAtEndOfFile: com.papertrading.api.domain.entity.order.OrderSignal.kt
+    ProtectedMemberInFinalClass: OrderSignal$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/portfolio/DailyBalance.kt	3건
+    LongParameterList: DailyBalance.Companion$( account: Account, businessDate: LocalDate, cashBalance: BigDecimal, stockMarketValue: BigDecimal, totalAssetValue: BigDecimal, pnlAmount: BigDecimal, pnlRate: BigDecimal )
+    MaxLineLength: DailyBalance$uniqueConstraints = [UniqueConstraint(name = "uk_daily_balances_account_date", columnNames = ["account_id", "business_date"])]
+    ProtectedMemberInFinalClass: DailyBalance$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/portfolio/PortfolioSnapshot.kt	3건
+    LongParameterList: PortfolioSnapshot$( quantity: BigDecimal, avgBuyPrice: BigDecimal, closePrice: BigDecimal, marketValue: BigDecimal, weight: BigDecimal, unrealizedPnl: BigDecimal )
+    LongParameterList: PortfolioSnapshot.Companion$( account: Account, businessDate: LocalDate, ticker: String, quantity: BigDecimal, avgBuyPrice: BigDecimal, closePrice: BigDecimal, marketValue: BigDecimal, weight: BigDecimal, unrealizedPnl: BigDecimal )
+    ProtectedMemberInFinalClass: PortfolioSnapshot$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/portfolio/SnapshotJobRun.kt	2건
+    MagicNumber: SnapshotJobRun$500
+    ProtectedMemberInFinalClass: SnapshotJobRun$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/portfolio/TaxSummary.kt	4건
+    MagicNumber: TaxSummary$4
+    MagicNumber: TaxSummary.Companion$4
+    MaxLineLength: TaxSummary$uniqueConstraints = [UniqueConstraint(name = "uk_tax_summaries_account_year", columnNames = ["account_id", "tax_year"])]
+    ProtectedMemberInFinalClass: TaxSummary$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/portfolio/TaxSummaryRun.kt	1건
+    ProtectedMemberInFinalClass: TaxSummaryRun$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/portfolio/TradingJournal.kt	2건
+    LongParameterList: TradingJournal.Companion$( account: Account, journalType: String, title: String, content: String, orderId: Long? = null, ticker: String? = null, sentiment: String? = null )
+    ProtectedMemberInFinalClass: TradingJournal$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/position/Position.kt	5건
+    LongParameterList: Position.Companion$( account: Account, ticker: String, marketType: MarketType, quantity: BigDecimal, avgBuyPrice: BigDecimal, lockedQuantity: BigDecimal = BigDecimal.ZERO, currentPrice: BigDecimal? = null, priceSource: PriceSource = PriceSource.UNKNOWN, )
+    MagicNumber: Position$4
+    MaxLineLength: Position$@Check(constraints = "quantity >= 0 AND locked_quantity >= 0 AND orderable_quantity >= 0 AND quantity >= locked_quantity")
+    MaxLineLength: Position$uniqueConstraints = [UniqueConstraint(name = "uk_positions_account_ticker", columnNames = ["account_id", "ticker"])]
+    ProtectedMemberInFinalClass: Position$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/position/PositionExitTrigger.kt	6건
+    CyclomaticComplexMethod: PositionExitTrigger$private fun validatePolicy( triggerPercent: BigDecimal?, triggerPrice: BigDecimal?, priceBasisPolicy: PriceBasisPolicy, )
+    LongParameterList: PositionExitTrigger.Companion$( positionId: Long, accountId: Long, ticker: String, triggerType: TriggerType, triggerPercent: BigDecimal?, triggerPrice: BigDecimal?, priceBasisPolicy: PriceBasisPolicy, exitRatioPercent: BigDecimal? = null, )
+    MagicNumber: PositionExitTrigger$4
+    ProtectedMemberInFinalClass: PositionExitTrigger$protected constructor()
+    ThrowsCount: PositionExitTrigger$private fun validatePolicy( triggerPercent: BigDecimal?, triggerPrice: BigDecimal?, priceBasisPolicy: PriceBasisPolicy, )
+    TooManyFunctions: PositionExitTrigger : BaseAuditEntity
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/settlement/Settlement.kt	3건
+    LongParameterList: Settlement.Companion$( order: Order, account: Account, execution: Execution, tax: BigDecimal = BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP), settledAt: Instant, fxRateAtSettlement: BigDecimal? = execution.fxRate, )
+    MagicNumber: Settlement.Companion$4
+    ProtectedMemberInFinalClass: Settlement$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/settlement/SettlementExecution.kt	2건
+    MaxLineLength: SettlementExecution$uniqueConstraints = [UniqueConstraint(name = "uk_settlement_executions", columnNames = ["settlement_id", "execution_id"])]
+    ProtectedMemberInFinalClass: SettlementExecution$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/strategy/Strategy.kt	6건
+    MagicNumber: Strategy$200
+    MagicNumber: Strategy$5
+    MagicNumber: Strategy$500
+    MagicNumber: Strategy.Companion$200
+    ProtectedMemberInFinalClass: Strategy$protected constructor()
+    TooManyFunctions: Strategy : BaseAuditEntity
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/strategy/StrategyDerivation.kt	1건
+    ProtectedMemberInFinalClass: StrategyDerivation$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/strategy/StrategyLog.kt	3건
+    LongParameterList: StrategyLog.Companion$( strategy: Strategy, account: Account, logLevel: String, message: String, context: String? = null, loggedAt: Instant = Instant.now() )
+    MagicNumber: StrategyLog.Companion$5
+    ProtectedMemberInFinalClass: StrategyLog$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/strategy/StrategyPerformanceSnapshot.kt	3건
+    LongParameterList: StrategyPerformanceSnapshot.Companion$( periodStart: LocalDate, periodEnd: LocalDate, totalReturn: BigDecimal, maxDrawdown: BigDecimal?, winRate: BigDecimal?, totalTrades: Int )
+    LongParameterList: StrategyPerformanceSnapshot.Companion$( strategy: Strategy, periodStart: LocalDate, periodEnd: LocalDate, totalReturn: BigDecimal, sharpeRatio: BigDecimal?, maxDrawdown: BigDecimal?, winRate: BigDecimal?, totalTrades: Int )
+    ProtectedMemberInFinalClass: StrategyPerformanceSnapshot$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/strategy/StrategyVersion.kt	4건
+    LongParameterList: StrategyVersion.Companion$( strategy: Strategy, versionNo: Int, rules: String, createdBy: String? = null, changeNote: String? = null, backtestRunId: UUID? = null )
+    MagicNumber: StrategyVersion.Companion$100
+    MaxLineLength: StrategyVersion$uniqueConstraints = [UniqueConstraint(name = "uk_strategy_versions_strategy_version", columnNames = ["strategy_id", "version_no"])]
+    ProtectedMemberInFinalClass: StrategyVersion$protected constructor()
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/event/ExecutionFilledEvent.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.domain.event.ExecutionFilledEvent.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/domain/port/LivePositionSnapshot.kt	1건
+    MagicNumber: LivePositionSnapshot$4
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/client/CollectorApiProperties.kt	3건
+    MagicNumber: CollectorApiProperties$2000
+    MagicNumber: CollectorApiProperties$3000
+    NewLineAtEndOfFile: com.papertrading.api.infrastructure.client.CollectorApiProperties.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/config/AsyncConfig.kt	2건
+    MagicNumber: AsyncConfig$100
+    MagicNumber: AsyncConfig$4
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/config/QueryDslConfig.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.infrastructure.config.QueryDslConfig.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/config/RestTemplateConfig.kt	3건
+    MagicNumber: RestTemplateConfig$10
+    MagicNumber: RestTemplateConfig$5
+    NewLineAtEndOfFile: com.papertrading.api.infrastructure.config.RestTemplateConfig.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/kis/KisAccountBalanceAdapter.kt	5건
+    MagicNumber: KisAccountBalanceAdapter$6
+    MaxLineLength: KisAccountBalanceAdapter$KisAuthorizationException("KIS authorization failed", KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))
+    MaxLineLength: KisAccountBalanceAdapter$KisRemoteCallException("KIS remote call failed", KisApiException(mapKisErrorCode(rtCd, message), rtCd, message))
+    MaxLineLength: KisAccountBalanceAdapter$private
+    UnusedParameter: KisAccountBalanceAdapter$marketValue: BigDecimal
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/kis/KisApiException.kt	3건
+    MaxLineLength: normalized.contains("auth") || normalized.contains("token") || normalized.contains("인증") -> KisErrorCode.KIS_AUTH_FAILED
+    MaxLineLength: normalized.contains("duplicate") || normalized.contains("already") || normalized.contains("중복") -> KisErrorCode.KIS_DUPLICATE_OR_ALREADY_PROCESSED
+    MaxLineLength: normalized.contains("rate") || normalized.contains("limit") || normalized.contains("초과") -> KisErrorCode.KIS_RATE_LIMITED
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionNoticeParser.kt	4건
+    CyclomaticComplexMethod: KisExecutionNoticeParser$fun parse(rawMessage: String, mode: String): KisExecutionNotice?
+    MagicNumber: KisExecutionNoticeParser$3
+    MagicNumber: KisExecutionNoticeParser$4
+    ReturnCount: KisExecutionNoticeParser$private fun parseFields(rawMessage: String): Map<String, String>?
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionWebSocketManager.kt	5건
+    MaxLineLength: KisExecutionWebSocketManager$log.error { "KIS WebSocket reconnect attempts exhausted: mode=$mode, attempts=${properties.wsReconnectMaxAttempts}" }
+    MaxLineLength: KisExecutionWebSocketManager$log.warn { "KIS WebSocket auth error: mode=$mode, code=${message.code}, message=${sanitizeControlMessage(message.message)}" }
+    MaxLineLength: KisExecutionWebSocketManager$log.warn { "KIS WebSocket error: mode=$mode, code=${message.code}, message=${sanitizeControlMessage(message.message)}" }
+    MaxLineLength: KisExecutionWebSocketManager$message.replace(Regex("(?i)(approval_key|access_token|appsecret|app_secret|secretkey|authorization)=\\S+"), "$1=<redacted>")
+    TooManyFunctions: KisExecutionWebSocketManager
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/kis/KisOrderProperties.kt	3건
+    MagicNumber: KisOrderProperties$1_000
+    MagicNumber: KisOrderProperties$30_000
+    MagicNumber: KisOrderProperties$5
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/kis/KisOrderRestClient.kt	4건
+    MaxLineLength: KisOrderRestClient$isFullyFilled = (item["PSBL_QTY"]?.toString()?.toBigDecimalOrNull() ?: BigDecimal.ONE) == BigDecimal.ZERO
+    ReturnCount: KisOrderRestClient$fun inquireFills(order: Order, mode: String): List<FillResult>
+    TooManyFunctions: KisOrderRestClient
+    UnusedPrivateProperty: KisOrderRestClient$private val log = KotlinLogging.logger {}
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/kis/KisTokenManager.kt	2건
+    MagicNumber: KisTokenManager$20
+    MagicNumber: KisTokenManager$86400
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/notification/NotificationPersistenceTxService.kt	1건
+    ReturnCount: NotificationPersistenceTxService$@Transactional(propagation = Propagation.REQUIRES_NEW) fun markDelivering(notification: Notification): Notification?
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/notification/SlackNotificationEventHandler.kt	1건
+    MaxLineLength: SlackNotificationEventHandler$log.warn { "Slack send failed on first attempt — leaving PENDING for scheduler retry: sourceRef=$sourceRef" }
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/notification/SlackNotificationScheduler.kt	2건
+    TooGenericExceptionCaught: SlackNotificationScheduler$ex: Exception
+    TooGenericExceptionCaught: SlackNotificationScheduler$saveEx: Exception
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/notification/SlackWebhookNotifier.kt	1건
+    TooGenericExceptionCaught: SlackWebhookNotifier$ex: Exception
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/persistence/AccountLedgerRepositoryCustom.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.infrastructure.persistence.AccountLedgerRepositoryCustom.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/persistence/AccountLedgerRepositoryImpl.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.infrastructure.persistence.AccountLedgerRepositoryImpl.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/persistence/NotificationRepositoryCustom.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.infrastructure.persistence.NotificationRepositoryCustom.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/persistence/NotificationRepositoryImpl.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.infrastructure.persistence.NotificationRepositoryImpl.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/persistence/SettlementTaxReadRepositoryImpl.kt	1건
+    MaxLineLength: SettlementTaxReadRepositoryImpl$override
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/persistence/TaxSummaryRepository.kt	1건
+    MaxLineLength: TaxSummaryRepository$fun findByAccountIdAndTaxYearBetweenOrderByTaxYearDesc(accountId: Long, fromYear: Int, toYear: Int): List<TaxSummary>
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/redis/RedisMarketQuoteAdapter.kt	1건
+    ReturnCount: RedisMarketQuoteAdapter$override fun getQuote(tradingMode: TradingMode, ticker: String): QuoteSnapshot?
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/scheduler/LocalMatchingScheduler.kt	1건
+    LoopWithTooManyJumpStatements: LocalMatchingScheduler$for
+backend/trading-api/src/main/kotlin/com/papertrading/api/infrastructure/sse/ExecutionSseRegistry.kt	1건
+    TooGenericExceptionCaught: ExecutionSseRegistry$e: Exception
+backend/trading-api/src/main/kotlin/com/papertrading/api/presentation/controller/AccountController.kt	2건
+    LongParameterList: AccountController$( @PathVariable id: Long, @RequestParam(required = false) type: TransactionType?, @RequestParam(required = false) from: LocalDate?, @RequestParam(required = false) to: LocalDate?, @RequestParam(defaultValue = "0") page: Int, @RequestParam(defaultValue = "20") size: Int )
+    MagicNumber: AccountController$100
+backend/trading-api/src/main/kotlin/com/papertrading/api/presentation/controller/ExecutionSseController.kt	1건
+    MagicNumber: ExecutionSseController$300_000L
+backend/trading-api/src/main/kotlin/com/papertrading/api/presentation/controller/TradingJournalController.kt	1건
+    MagicNumber: TradingJournalController$100
+backend/trading-api/src/main/kotlin/com/papertrading/api/presentation/dto/account/AccountRequest.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.presentation.dto.account.AccountRequest.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/presentation/dto/order/OrderRequest.kt	1건
+    MatchingDeclarationName: PlaceOrderRequest
+backend/trading-api/src/main/kotlin/com/papertrading/api/presentation/dto/portfolio/PortfolioSnapshotDto.kt	3건
+    MagicNumber: DailyBalanceResponse.Companion$6
+    MagicNumber: PortfolioSnapshotResponse.Companion$6
+    NewLineAtEndOfFile: com.papertrading.api.presentation.dto.portfolio.PortfolioSnapshotDto.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/presentation/exception/ApiErrorResponse.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.presentation.exception.ApiErrorResponse.kt
+backend/trading-api/src/main/kotlin/com/papertrading/api/presentation/exception/GlobalExceptionHandler.kt	6건
+    MagicNumber: GlobalExceptionHandler$400
+    MagicNumber: GlobalExceptionHandler$404
+    MagicNumber: GlobalExceptionHandler$500
+    MaxLineLength: GlobalExceptionHandler$(ex.message ?: "").contains("포지션") || (ex.message ?: "").contains("position") -> "POSITION_NOT_FOUND"
+    UnusedParameter: GlobalExceptionHandler$ex: Exception
+    UnusedParameter: GlobalExceptionHandler$ex: MethodArgumentNotValidException
+backend/trading-api/src/main/kotlin/com/papertrading/api/TradingApiApplication.kt	1건
+    SpreadOperator: (*args)
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/account/AccountQueryServiceTest.kt	1건
+    MaxLineLength: AccountQueryServiceTest$LedgerResult(1L, TransactionType.DEPOSIT, BigDecimal("100000"), BigDecimal("100000"), null, null, null, Instant.now())
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/order/ExecutionProcessorTest.kt	1건
+    MaxLineLength: ExecutionProcessorTest$/** Spec Test 1C: verify publishEvent(ExecutionFilledEvent) called after fill() with correct ticker, side, executionId */
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/order/KisExecutionNoticeServiceTest.kt	4건
+    MaxLineLength: KisExecutionNoticeServiceTest$every { executionRepository.findByExternalExecutionId("KIS_PAPER:12345678-01:10000001:00003") } returns Optional.empty()
+    MaxLineLength: KisExecutionNoticeServiceTest$every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns Optional.of(mockk<Execution>(relaxed = true))
+    MaxLineLength: KisExecutionNoticeServiceTest$executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+    MaxLineLength: KisExecutionNoticeServiceTest$fun
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/order/OrderCommandServiceTest.kt	1건
+    MaxLineLength: OrderCommandServiceTest$val quote = QuoteSnapshot("005930", TradingMode.LOCAL, BigDecimal("72000"), BigDecimal("72100"), BigDecimal("71900"), Instant.now())
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/portfolio/DailyBalanceCommandServiceTest.kt	1건
+    MaxLineLength: DailyBalanceCommandServiceTest$every { dailyBalanceRepository.findByAccountIdAndBusinessDate(1L, LocalDate.of(2026, 5, 6)) } returns Optional.empty()
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/portfolio/PortfolioSnapshotQueryServiceTest.kt	1건
+    MaxLineLength: PortfolioSnapshotQueryServiceTest$private
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/portfolio/SnapshotJobServiceAtomicRollbackIntegrationTest.kt	1건
+    MaxLineLength: SnapshotJobServiceAtomicRollbackIntegrationTest$val snapshotsAfter = portfolioSnapshotRepository.findByAccountIdAndBusinessDateOrderByTickerAsc(account.id!!, businessDate)
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/portfolio/SnapshotJobServiceTest.kt	2건
+    MaxLineLength: SnapshotJobServiceTest$every { snapshotJobRunRepository.findTopByAccountIdAndBusinessDateOrderByStartedAtDesc(1L, LocalDate.of(2026, 5, 1)) } returns null
+    MaxLineLength: SnapshotJobServiceTest$every { snapshotJobRunRepository.findTopByAccountIdAndBusinessDateOrderByStartedAtDesc(1L, LocalDate.of(2026, 5, 1)) } returns successRun
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/position/PositionCommandServiceTest.kt	3건
+    MaxLineLength: PositionCommandServiceTest$positionCommandService.updateCurrentPriceByTicker("005930", BigDecimal("75000"), PriceSource.REDIS_LIVE, TradingMode.LOCAL)
+    MaxLineLength: PositionCommandServiceTest$positionCommandService.updateCurrentPriceByTicker("NOTEXIST", BigDecimal("10000"), PriceSource.REDIS_LIVE, TradingMode.LOCAL)
+    MaxLineLength: PositionCommandServiceTest$val dbPosition = positionRepository.findByAccountIdAndQuantityGreaterThan(account.id!!, BigDecimal.ZERO).single()
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/position/PositionExitTriggerOrchestratorTest.kt	7건
+    MaxLineLength: PositionExitTriggerOrchestratorTest$every { autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) }
+    MaxLineLength: PositionExitTriggerOrchestratorTest$every { autoExitOrderPlacementService.createGroupedAutoExitSellOrder(any(), any(), any(), any(), any(), any()) } returns mockk<Order>()
+    MaxLineLength: PositionExitTriggerOrchestratorTest$every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.STOP_LOSS) } returns listOf(first, second)
+    MaxLineLength: PositionExitTriggerOrchestratorTest$every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.STOP_LOSS) } returns listOf(stopLoss)
+    MaxLineLength: PositionExitTriggerOrchestratorTest$every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.STOP_LOSS) } returns listOf(trigger)
+    MaxLineLength: PositionExitTriggerOrchestratorTest$every { triggerRepository.findArmedGroupForUpdate("005930", 10L, TriggerType.TAKE_PROFIT) } returns listOf(takeProfit)
+    MaxLineLength: PositionExitTriggerOrchestratorTest$every { triggerRepository.findByTickerAndState("005930", TriggerState.ARMED) } returns listOf(stopLoss, takeProfit)
+backend/trading-api/src/test/kotlin/com/papertrading/api/application/position/PositionQueryServiceTest.kt	2건
+    MaxLineLength: PositionQueryServiceTest$positionCommandService.updateCurrentPriceByTicker("005930", BigDecimal("65000"), PriceSource.REDIS_LIVE, TradingMode.LOCAL)
+    MaxLineLength: PositionQueryServiceTest$positionCommandService.updateCurrentPriceByTicker("005930", BigDecimal("75000"), PriceSource.REDIS_LIVE, TradingMode.LOCAL)
+backend/trading-api/src/test/kotlin/com/papertrading/api/domain/entity/feepolicy/FeePolicyTest.kt	2건
+    LongParameterList: FeePolicyTest$( tradingMode: TradingMode = TradingMode.LOCAL, marketType: MarketType = MarketType.KOSPI, feeRate: BigDecimal = BigDecimal("0.001500"), minFee: BigDecimal = BigDecimal("0.0000"), transactionTaxRate: BigDecimal = BigDecimal("0.0018"), effectiveFrom: Instant = Instant.parse("2024-01-01T00:00:00Z"), effectiveUntil: Instant? = null )
+    NewLineAtEndOfFile: com.papertrading.api.domain.entity.feepolicy.FeePolicyTest.kt
+backend/trading-api/src/test/kotlin/com/papertrading/api/domain/entity/notification/NotificationTest.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.domain.entity.notification.NotificationTest.kt
+backend/trading-api/src/test/kotlin/com/papertrading/api/domain/entity/portfolio/TradingJournalTest.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.domain.entity.portfolio.TradingJournalTest.kt
+backend/trading-api/src/test/kotlin/com/papertrading/api/domain/entity/settlement/SettlementEntitiesTest.kt	2건
+    LongParameterList: SettlementEntitiesTest$( order: Order, account: Account, ticker: String = "005930", qty: BigDecimal = BigDecimal("2"), price: BigDecimal = BigDecimal("70000"), fee: BigDecimal = BigDecimal("10.0000"), currency: String = "KRW", fxRate: BigDecimal? = null, )
+    MaxLineLength: SettlementEntitiesTest$val exec = execution(order = ord, account = acc, qty = BigDecimal("2"), price = BigDecimal("70000"), fee = BigDecimal("10.0000"))
+backend/trading-api/src/test/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionNoticeParserTest.kt	2건
+    MaxLineLength: KisExecutionNoticeParserTest$rawMessage = """{"tr_id":"H0STCNI0","ODNO":"20000001","CCLD_NO":"009","PDNO":"000660","SLL_BUY_DVSN_CD":"01","CCLD_QTY":"2","CCLD_UNPR":"101500","CCLD_DTTM":"20260501100130000"}"""
+    MaxLineLength: KisExecutionNoticeParserTest$rawMessage = "0|H0STCNI9|001|ODNO=10000001^CCLD_NO=00003^PDNO=005930^SLL_BUY_DVSN_CD=02^CCLD_QTY=3.5^CCLD_UNPR=70000.25^CCLD_DTTM=20260501093015000^CANO=12345678^ACNT_PRDT_CD=01"
+backend/trading-api/src/test/kotlin/com/papertrading/api/infrastructure/notification/SlackNotificationSchedulerTest.kt	1건
+    MaxLineLength: SlackNotificationSchedulerTest$every { txService.findPendingForRetry(props.maxRetries) } returns listOf(failingNotification, successNotification)
+backend/trading-api/src/test/kotlin/com/papertrading/api/interfaces/rest/position/PositionExitTriggerControllerTest.kt	1건
+    LongParameterList: PositionExitTriggerControllerTest$( id: Long, triggerType: TriggerType, triggerPercent: BigDecimal?, triggerPrice: BigDecimal?, priceBasisPolicy: PriceBasisPolicy, exitRatioPercent: BigDecimal, state: TriggerState = TriggerState.ARMED, version: Long = 0L, )
+backend/trading-api/src/test/kotlin/com/papertrading/api/presentation/controller/KisAccountBalanceControllerIntegrationTest.kt	1건
+    MaxLineLength: KisAccountBalanceControllerIntegrationTest$given(kisAccountQueryService.getBalance(1L, KisAccountMode.PAPER)).willThrow(KisAuthorizationException("unauthorized"))
+backend/trading-api/src/test/kotlin/com/papertrading/api/presentation/controller/OrderControllerIntegrationTest.kt	2건
+    MaxLineLength: OrderControllerIntegrationTest$val quote = QuoteSnapshot("005930", TradingMode.LOCAL, BigDecimal("70000"), BigDecimal("70100"), BigDecimal("69900"), Instant.now())
+    UnusedPrivateProperty: OrderControllerIntegrationTest$val beforeAvailable = objectMapper.readTree(beforeCancel.response.contentAsString)["availableDeposit"].asLong()
+backend/trading-api/src/test/kotlin/com/papertrading/api/presentation/controller/PositionControllerIntegrationTest.kt	1건
+    UnusedPrivateMember: PositionControllerIntegrationTest$private fun createAccountViaApi(): Long
+backend/trading-api/src/test/kotlin/com/papertrading/api/presentation/controller/TradingJournalControllerIntegrationTest.kt	1건
+    LongMethod: TradingJournalControllerIntegrationTest$@Test fun `create list detail update 흐름이 동작한다`()
+backend/trading-api/src/test/kotlin/com/papertrading/api/presentation/dto/sse/ExecutionSseEventTest.kt	1건
+    MaxLineLength: ExecutionSseEventTest$/** Spec: from_BigDecimal_fields_are_plain_strings — quantity "10.00" must serialize as "10.00", no scientific notation */
+backend/trading-api/src/test/kotlin/com/papertrading/api/support/TestEntityUtils.kt	1건
+    NewLineAtEndOfFile: com.papertrading.api.support.TestEntityUtils.kt
+backend/trading-api/src/test/kotlin/com/papertrading/api/TradingApiApplicationTests.kt	2건
+    EmptyFunctionBlock: TradingApiApplicationTests${ }
+    NewLineAtEndOfFile: com.papertrading.api.TradingApiApplicationTests.kt
+
