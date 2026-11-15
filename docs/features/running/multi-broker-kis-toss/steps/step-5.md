@@ -21,7 +21,7 @@
 | Title | 스키마 확정과 토스 전송 계층 |
 | Feature | multi-broker-kis-toss |
 | Based on | development-plan §5 1단계 4번(스키마 확정, D18로 공식 명세가 원본)·5번(전송 계층), §2 D10(R1-01 TTL 식)·D11(R1-02 전체 상한)·D12(401 처리)·D13(RestTemplate, BigDecimal)·D14(결측)·D15(에러 범주)·D16(호출 한도)·D18(스키마 확정 방식), §4 설정 키, §6 401 처리·에러 구분·비밀값 로그 누출 행, open-questions FLAG-13·14·16·17, 조사 문서 «개별 API 스키마», 공식 명세 openapi.json 1.2.28 |
-| Status | todo / in progress / done / blocked |
+| Status | done |
 | Owner |  |
 
 ---
@@ -104,13 +104,14 @@
 | 부동소수점 | `TossFloatingPointScanTest` | Double·Float·toDouble·toFloat·Map·JsonNode 0건 |
 | 린트 | `./gradlew compileKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` | exit 0, 기준선 증가 0 |
 | 범위 | `git status` | `infrastructure/kis/**`·collector-api·trading-web 변경 0 |
-| 전체 스위트 | 커밋 푸시 뒤 CI `full-test` | 대기 |
+| 전체 스위트 | 커밋 `908ac89` 푸시 뒤 CI `full-test` 실행 43700036485 | success (trading-api, collector-api, trading-web) |
+| 코드 리뷰 | `review/step5-code-review.md` 1회차, `review-verdict.js` | 머지 가능, 막는 지적 0 · 후속 8 |
 
 ---
 
 ## 7. Result  (record)
 
-- Done: 아직 아님. 코드와 관련 시험은 통과(maker 보고), CI 전체 스위트와 리뷰가 남음. done 판정은 사람
+- Done: §4 완료 기준을 시험·린트·CI 전체 스위트(43700036485)·코드 리뷰(막는 지적 0)로 충족, 커밋 `908ac89`. 사람이 2026-11-15 «done 처리, 후속은 step 6에»를 골라 done. 리뷰 후속 C-01~C-05는 step 6 범위로, C-06~C-08은 findings 원장
 - Changed files / PR: 아래 경로는 `backend/trading-api/` 기준
   - main 신설: `common/exception/Toss{AuthFailed,IpNotAllowed,RateLimited,Maintenance,Unavailable,Timeout,ResponseInvalid,RequestRejected}Exception.kt`, `infrastructure/toss/{TossTokenIssuerImpl,TossApiClient,TossApiRequest,TossFailureClassifier,TossRateLimiter,TossRateLimitGroup,TossJson,TossTransportSupport}.kt`, `infrastructure/toss/dto/{TossTokenResponse,TossOAuth2Error,TossErrorEnvelope,TossSuccessEnvelope}.kt`
   - main 수정: `TossTokenManager`, `TossProperties`, `TossTokenIssuer`(주석), `GlobalExceptionHandler`, `RestTemplateConfig`(상수 승격), `application.yaml`
