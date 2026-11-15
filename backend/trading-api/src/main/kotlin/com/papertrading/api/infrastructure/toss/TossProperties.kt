@@ -36,9 +36,14 @@ class TossProperties {
     // 토큰 요청 하나의 전체 상한(락 대기와 발급을 합친 시간), 락을 얻은 시점의 남은 시간이 발급 필요 시간보다 짧으면 발급하지 않음 (R1-02, C-04)
     var tokenRequestDeadlineMillis: Long = DEFAULT_REQUEST_DEADLINE_MILLIS
 
-    // 429 재시도 횟수와 그 대기 시간 합계의 상한, 요청 스레드를 막는 시간을 묶음 (RISK-08)
+    // 429 를 받았을 때 재시도 횟수와 Retry-After 대기 시간 합계의 상한(429 대기 예산), 0 이면 429 는 기다리지 않고 실패 (RISK-08)
     var rateLimitMaxRetries: Int = DEFAULT_RATE_LIMIT_MAX_RETRIES
     var rateLimitMaxWaitMillis: Long = DEFAULT_RATE_LIMIT_MAX_WAIT_MILLIS
+
+    // 호출 한도 리미터 줄에서 한 호출이 슬롯을 기다릴 수 있는 시간의 상한, 넘으면 슬롯을 잡지 않고 TOSS_RATE_LIMITED (S6-04, C-01)
+    // 429 대기 예산(rate-limit-max-wait-millis)과 따로, 설정된 그룹 간격(올림 1000 ÷ 초당 한도) 중 최댓값 이상이어야 하고 아니면 범위 오류로 토스만 비활성 (S7-03)
+    // 더 작으면 그 그룹의 연속 호출(잔고의 buying-power 두 번)이 간격만 기다려도 늘 실패함
+    var rateLimitMaxQueueWaitMillis: Long = DEFAULT_RATE_LIMIT_MAX_QUEUE_WAIT_MILLIS
 
     // 그룹별 초당 한도, 수치는 application.yaml 이 유일한 출처(코드 상수 금지), 빠진 그룹은 호출 때 TossRateLimiter 가 실패시킴
     var rateLimits: Map<TossRateLimitGroup, Int> = emptyMap()
@@ -92,8 +97,17 @@ class TossProperties {
         if (tokenRequestDeadlineMillis < MIN_REQUEST_DEADLINE_MILLIS) add("$ENV_REQUEST_DEADLINE$OUT_OF_RANGE")
         if (rateLimitMaxRetries < 0) add("$ENV_RATE_LIMIT_MAX_RETRIES$OUT_OF_RANGE")
         if (rateLimitMaxWaitMillis < 0) add("$ENV_RATE_LIMIT_MAX_WAIT$OUT_OF_RANGE")
+        if (rateLimitMaxQueueWaitMillis < minQueueWaitMillis()) add("$ENV_RATE_LIMIT_MAX_QUEUE_WAIT$OUT_OF_RANGE")
         rateLimits.filterValues { it <= 0 }.keys.forEach { add("${TossRateLimiter.envName(it)}$OUT_OF_RANGE") }
     }
+
+    // 줄 대기 상한의 하한 = 설정된 그룹 간격의 최댓값, 더 작으면 그 그룹의 연속 호출이 늘 TOSS_RATE_LIMITED (S7-03)
+    // 범위 오류인 한도(0 이하)는 간격을 못 구하므로 빼고 그 그룹의 범위 오류로만 알림, 그룹이 없으면 MIN_QUEUE_WAIT_MILLIS
+    private fun minQueueWaitMillis(): Long = rateLimits.values
+        .filter { it > 0 }
+        .maxOfOrNull { TossRateLimiter.intervalMillisOf(it) }
+        ?.coerceAtLeast(MIN_QUEUE_WAIT_MILLIS)
+        ?: MIN_QUEUE_WAIT_MILLIS
 
     // 기동 때 1회, 이름만 남기고 값은 남기지 않음
     @PostConstruct
@@ -118,6 +132,7 @@ class TossProperties {
         private const val ENV_REQUEST_DEADLINE = "TOSS_TOKEN_REQUEST_DEADLINE_MILLIS"
         private const val ENV_RATE_LIMIT_MAX_RETRIES = "TOSS_RATE_LIMIT_MAX_RETRIES"
         private const val ENV_RATE_LIMIT_MAX_WAIT = "TOSS_RATE_LIMIT_MAX_WAIT_MILLIS"
+        private const val ENV_RATE_LIMIT_MAX_QUEUE_WAIT = "TOSS_RATE_LIMIT_MAX_QUEUE_WAIT_MILLIS"
         private const val OUT_OF_RANGE = "(범위 오류)"
 
         // 발급 최악 소요 = 연결 타임아웃 + 읽기 타임아웃(RestTemplateConfig), 락 TTL 과 요청 전체 상한이 이 값을 넘어야 함
@@ -152,5 +167,10 @@ class TossProperties {
         // 429 는 Retry-After 가 보통 1초라 2회 재시도, 합계 5초면 요청 스레드가 길게 잡히지 않음, 구현자 가정
         private const val DEFAULT_RATE_LIMIT_MAX_RETRIES = 2
         private const val DEFAULT_RATE_LIMIT_MAX_WAIT_MILLIS = 5_000L
+
+        // 줄 대기 상한 기본 5초는 구현자 가정(사람 결정 2026-11-15 로 키만 분리), 하한은 설정된 그룹 간격의 최댓값(사람 결정 2026-11-16), 그룹이 없을 때의 하한 1
+        // 토큰 발급이 락 안에서 AUTH 한도를 기다리는 시간 허용(AUTH_WAIT_ALLOWANCE_MILLIS)은 락·요청 상한 시간 계산 몫이고 이 키와 식으로 묶이지 않음
+        private const val DEFAULT_RATE_LIMIT_MAX_QUEUE_WAIT_MILLIS = 5_000L
+        private const val MIN_QUEUE_WAIT_MILLIS = 1L
     }
 }

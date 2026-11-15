@@ -1,5 +1,6 @@
 package com.papertrading.api.application.account.port
 
+import com.papertrading.api.common.maskAllButLastFour
 import com.papertrading.api.domain.enums.TradingMode
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -12,19 +13,15 @@ interface BrokerAccountBalancePort {
     fun fetchBalance(account: BrokerAccountRef): BrokerBalanceSnapshot
 }
 
-/** 포트에 넘기는 계좌 식별값, externalAccountId 는 브로커 쪽 계좌 키(토스는 accountSeq)이고 문자열 표현은 끝 4자리만 보임 */
+/** 포트에 넘기는 계좌 식별값, externalAccountId 는 브로커 쪽 계좌 키(토스는 accountSeq)이고 문자열 표현은 maskAllButLastFour 로만 보임 */
 data class BrokerAccountRef(
     val accountId: Long,
     val tradingMode: TradingMode,
     val externalAccountId: String,
 ) {
-    private val maskedExternalAccountId: String get() = "****" + externalAccountId.takeLast(VISIBLE_TAIL_LENGTH)
+    private val maskedExternalAccountId: String get() = maskAllButLastFour(externalAccountId)
 
     override fun toString(): String = "BrokerAccountRef(accountId=$accountId, seq=$maskedExternalAccountId)"
-
-    private companion object {
-        const val VISIBLE_TAIL_LENGTH = 4
-    }
 }
 
 /** 조회 시각(시간대 없는 KST)과 통화별 합계, 종목별 보유 */

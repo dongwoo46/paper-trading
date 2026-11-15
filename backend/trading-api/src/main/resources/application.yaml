@@ -59,8 +59,12 @@ trading:
     token-lock-ttl-millis: ${TOSS_TOKEN_LOCK_TTL_MILLIS:20000}
     token-lock-wait-millis: ${TOSS_TOKEN_LOCK_WAIT_MILLIS:15000}
     token-request-deadline-millis: ${TOSS_TOKEN_REQUEST_DEADLINE_MILLIS:20000}
+    # 429 를 받았을 때만: 재시도 횟수와 Retry-After 대기 시간 합계의 상한(429 대기 예산), max-wait 0 이면 429 는 기다리지 않고 실패
     rate-limit-max-retries: ${TOSS_RATE_LIMIT_MAX_RETRIES:2}
     rate-limit-max-wait-millis: ${TOSS_RATE_LIMIT_MAX_WAIT_MILLIS:5000}
+    # 호출 한도 줄에서 한 호출이 슬롯을 기다릴 수 있는 시간의 상한, 넘으면 TOSS_RATE_LIMITED, 429 대기 예산과 따로
+    # 설정된 그룹 간격(올림 1000 ÷ 초당 한도) 중 최댓값 이상이어야 하고 아니면 범위 오류로 토스만 비활성
+    rate-limit-max-queue-wait-millis: ${TOSS_RATE_LIMIT_MAX_QUEUE_WAIT_MILLIS:5000}
     # 초당 호출 한도, 기본값은 토스 조사 문서(2026-11-15) 수치이고 토스가 사전 공지 없이 바꿀 수 있어 환경변수로 덮음
     rate-limits:
       AUTH: ${TOSS_RATE_LIMIT_AUTH:5}

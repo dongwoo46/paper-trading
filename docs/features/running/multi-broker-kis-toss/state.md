@@ -41,7 +41,7 @@
 | 4 | 토스 토큰 기반 | done | steps/step-4.md | 시험 71건 통과, CI 전체 success(`da617e5`, 실행 43688563304), 리뷰 막는 지적 0(후속 9건은 FLAG-15로 step 5 전 수정) |
 | 5 | 스키마 확정과 토스 전송 계층 | done | steps/step-5.md | 관련 시험 253건 통과, CI 전체 success(`908ac89`, 실행 43700036485), 리뷰 막는 지적 0(후속 C-01~C-05는 step 6 범위) |
 | 6 | 잔고 공통 포트와 토스 어댑터 | done | steps/step-6.md | 관련 시험 297건 통과, CI 전체 success(`2692c2d`, 실행 43723583394), 리뷰 막는 지적 0(후속 S6-01·02·04·05는 step 7 범위) |
-| 7 | 시세 REST와 최종 확인 | todo | steps/step-7.md |  |
+| 7 | 시세 REST와 최종 확인 | in progress | steps/step-7.md | 리뷰 1회차 막는 지적 0, 후속 S7-01~04 고침, 전체 1073건 실패 0, 린트 exit 0, PR CI 대기 |
 
 - **Status:** todo / in progress / done / blocked — a cell is read by its leading word; anything else (`WIP`, `not done`) is treated as unknown, never as done.
 
@@ -59,6 +59,9 @@
 | 2026-11-15 | step 5 범위에 R1-01(TTL 단조 식)·R1-02(요청 전체 상한 `token-request-deadline-millis` 20초)·TossTokenManager 빈 등록 추가, 설계 D10·D11·§4 수정 | 재리뷰 후속 FLAG-16 사람 결정, FLAG-14. 설계 재승인 받음 |
 | 2026-11-15 | step 6 범위에 step 5 리뷰 후속 C-01(리미터 대기 상한)·C-02(base URL https 검사)·C-03(목록 null·실수 절삭 차단)·C-04(요청 상한 하한 경계)·C-05(429 대기 리미터 공유) 추가 | 호출처가 붙는 step 6부터 드러나는 위험, 사람 결정 «후속은 step 6에». C-06~C-08은 findings 원장 |
 | 2026-11-15 | step 7 범위에 step 6 리뷰 후속 S6-01(빈 문자열 금액 null 통과)·S6-02(예약된 호출의 429 대기 미공유)·S6-04(대기 상한 0의 연속 호출 실패)·S6-05(accountSeq 마스킹 한 곳으로) 추가 | step 7이 같은 TossJson·TossRateLimiter를 다시 씀, 사람 결정 «나눠서 처리». S6-03(실호출 대조 필요)·S6-06(기존 처리기)·S6-07(시험 구조)은 findings 원장 |
+| 2026-11-16 | 3단계 중 토스 실주문은 범위에서 뺌, 사람이 다시 지시할 때까지 착수하지 않음(웹소켓 등 나머지 3단계 범위는 그대로) | 사용자 결정 «실주문은 제외할거야 바로 하지않는다 개발이 내가 나중에 실주문 다시 구현하라고 시킬거야». 계획서 §5 3단계 문구는 재개 지시 때 함께 고침(지금 고치면 설계 재승인이 다시 필요) |
+| 2026-11-16 | step 7 범위에 리뷰 후속 S7-01(429 멈춤 끝 몰림)·S7-02(문자열 "null" 금액)·S7-03(줄 대기 상한 하한을 그룹 간격 최댓값 이상으로, 계획서 D16·§4 수정)·S7-04(컨트롤러·클라이언트 시험의 목 대체) 추가 | step 7 코드 리뷰 1회차(`review/step7-code-review.md`, 막는 지적 0). 사용자 결정 «후속 4건도 고치자». 설계 재승인 `ed07dc1`(2026-11-16) |
+| 2026-11-15 | step 7 문서 생성. 시세 응답 시각은 토스 오프셋 원문 그대로, S6-04는 리미터 줄 대기 상한을 새 키 `rate-limit-max-queue-wait-millis`로 분리(계획서 D16·§4 수정, 설계 재승인 필요), 공용 클라이언트 쿼리 `+` 인코딩 결함을 step 7 범위에 추가 | 미국 일봉은 현지 자정 고정이라 KST로 바꾸면 거래일 뜻이 흐려짐. 같은 키를 두 뜻으로 쓰면 0(429 무대기)에서 연속 호출이 실패. candles `before`의 `+`가 공백으로 읽힘(명세 «%2B 인코딩»). 사람 결정 2026-11-15 |
 | 2026-11-15 | step 6 문서 생성. 수익률은 퍼센트로 통일(종목은 토스 비율 ×100, 통화별 합계는 §7 KIS 방식 계산), `/api/toss/accounts`의 accountNo는 끝 4자리만, FLAG-10 금액 문자열은 step-6 §1에 반영 | 공식 명세의 rate가 소수 비율이고 합계 rate는 원화 환산 전체 기준이라 통화별 칸에 못 씀. accountNo는 금융 개인정보. 사람 결정 2026-11-15 |
 | 2026-11-15 | main(PR #48·#49) 합류, 린트 정리 커밋 `a43538a`. 계획서 D15와 §3 수정: 새 범주 예외는 common 에서 Spring 무의존, HTTP 매핑은 GlobalExceptionHandler. step 3 범위에 NotImplementedException 이동 추가 | 새 레포 규칙(common 은 Spring 금지)과 ArchUnit 동결이 D15와 충돌. 사람 결정 «새 예외만 핸들러 매핑». 설계 재승인 필요 |
 
