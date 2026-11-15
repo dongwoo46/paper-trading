@@ -47,6 +47,8 @@
 | 10 | api | 새 토스 API의 금액·수량 JSON 형태 | ASK | `BigDecimal`을 JSON 숫자로 내면 프런트(JavaScript)에서 큰 수와 소수 자릿수가 깎임. trading-web 재제작 세션은 «금액·수량은 문자열» 규칙 | trading-web 재제작 세션 문의(2026-11-15) | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · 문자열로. 새 토스 API(`broker-balance`, `/api/toss/**`)에만 적용, 기존 API는 그대로 · 6단계 step 문서에 반영 |
 | 11 | api | `GlobalExceptionHandler`의 `IllegalArgumentException`·`IllegalStateException` → 400 묶음 매핑 | ASK | step 3에서 핸들러를 건드렸으나 이 매핑을 바꾸면 안 건드린 파일(주문·포지션 등)의 응답이 전부 바뀜(AE19 대 범위) | step 3 명세 리뷰 S3S-01 | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · `API-Errors-Deferred`로 명시적으로 미룸(DEC-02의 예외). 2단계 KIS 정렬 때 AE20 목록과 함께 다룸 |
 | 12 | api | 새 A·F 하위 예외의 기반 클래스 | ASK | 새 400·409 하위 예외가 동결 기반(`BadRequestException`·`ConflictException`, 상위 `ApiDomainException`이 `HttpStatus` 보유)을 상속하면 common이 HTTP 상태를 정하는 구조가 유지됨. ArchUnit은 상속 간접 의존을 못 봄 | step 3 명세 리뷰 S3S-02 | 중간 | 사용자 | confirmed | 사용자 · 2026-11-15 · 현재 구조로 확정. D15의 «Spring 무의존·핸들러 매핑»은 새 범주(I·J·K) 기반에만 적용, 기존 범주의 새 하위 예외는 동결 기반 상속. 기반 이동은 기존 예외 정리 때 한꺼번에 |
+| 13 | 설정 | 토큰 선택 설정 기본값(계획서에 수치 없음) | ASK | step 4 구현이 갱신 여유 60초, 락 TTL 20초, 락 대기 15초로 정함. 모두 환경변수로 덮을 수 있음 | development-plan D11(락 TTL은 연결 5초+읽기 10초보다 길게), step-4 §8 | 낮음 | 사용자 | confirmed | 사용자 · 2026-11-15 · 이대로 둠. 실제 응답을 본 step 5에서 다시 맞출 수 있음 |
+| 14 | api | `TossTokenManager` 빈 등록 시점 | ASK | 실제 발급기가 없어 step 4에서 빈으로 등록하면 앱 기동이 깨짐 | step-4 §8 | 낮음 | 사용자 | confirmed | 사용자 · 2026-11-15 · step 5로 넘김. 계획서는 고치지 않고 step 5 문서 범위에 적음 |
 | 09 | 상태 | 3단계(실주문) tier | ASSUME | 3단계 착수 전 tier를 수동, 확장승인으로 올리길 추천. 그 전까지 프로젝트 기본값 | 샌드박스 없음, 실거래 | 높음 | 사용자 | open | |
 
 ---

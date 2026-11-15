@@ -3,6 +3,7 @@ package com.papertrading.api.presentation.exception
 import com.papertrading.api.common.exception.ApiDomainException
 import com.papertrading.api.common.exception.InternalErrorException
 import com.papertrading.api.common.exception.NotImplementedException
+import com.papertrading.api.common.exception.ServiceUnavailableException
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
+@Suppress("TooManyFunctions") // 예외 종류마다 처리기 하나, 새 범주마다 하나씩 늘어남
 @RestControllerAdvice
 class GlobalExceptionHandler {
     private val log = KotlinLogging.logger {}
@@ -27,6 +29,16 @@ class GlobalExceptionHandler {
         val status = HttpStatus.NOT_IMPLEMENTED
         return ResponseEntity.status(status).body(
             ApiErrorResponse(status.value(), ex.errorCode, ex.message ?: "아직 지원하지 않는 기능입니다."),
+        )
+    }
+
+    // 범주 J(503), 메시지는 우리가 정한 고정 문구만이고 토스 원문은 원인 예외와 로그에만 남김
+    @ExceptionHandler(ServiceUnavailableException::class)
+    fun handleServiceUnavailable(ex: ServiceUnavailableException): ResponseEntity<ApiErrorResponse> {
+        log.warn(ex) { "외부 서비스 사용 불가: code=${ex.errorCode}" }
+        val status = HttpStatus.SERVICE_UNAVAILABLE
+        return ResponseEntity.status(status).body(
+            ApiErrorResponse(status.value(), ex.errorCode, ex.message ?: "외부 서비스를 일시적으로 사용할 수 없습니다."),
         )
     }
 

@@ -48,6 +48,15 @@ trading:
     ws-reconnect-initial-backoff-millis: ${KIS_WS_RECONNECT_INITIAL_BACKOFF_MILLIS:1000}
     ws-reconnect-max-backoff-millis: ${KIS_WS_RECONNECT_MAX_BACKOFF_MILLIS:30000}
     ws-reconnect-max-attempts: ${KIS_WS_RECONNECT_MAX_ATTEMPTS:5}
+  # 토스 연동: 필수 4개 중 하나라도 비면 토스만 비활성(앱은 기동), 값은 환경변수로만
+  toss:
+    base-url: ${TOSS_BASE_URL:}
+    client-id: ${TOSS_CLIENT_ID:}
+    client-secret: ${TOSS_CLIENT_SECRET:}
+    token-encryption-key: ${TOSS_TOKEN_ENCRYPTION_KEY:}
+    token-refresh-skew-seconds: ${TOSS_TOKEN_REFRESH_SKEW_SECONDS:60}
+    token-lock-ttl-millis: ${TOSS_TOKEN_LOCK_TTL_MILLIS:20000}
+    token-lock-wait-millis: ${TOSS_TOKEN_LOCK_WAIT_MILLIS:15000}
   notification:
     slack:
       enabled: ${TRADING_NOTIFICATION_SLACK_ENABLED:false}

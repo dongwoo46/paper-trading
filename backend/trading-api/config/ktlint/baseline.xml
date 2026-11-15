@@ -808,21 +808,21 @@
         <error line="7" column="1" source="standard:final-newline" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/presentation/exception/GlobalExceptionHandler.kt">
-        <error line="19" column="84" source="standard:function-signature" />
-        <error line="21" column="106" source="standard:trailing-comma-on-call-site" />
-        <error line="44" column="104" source="standard:function-signature" />
-        <error line="46" column="94" source="standard:trailing-comma-on-call-site" />
-        <error line="50" column="96" source="standard:function-signature" />
-        <error line="52" column="83" source="standard:trailing-comma-on-call-site" />
-        <error line="56" column="90" source="standard:function-signature" />
-        <error line="58" column="86" source="standard:trailing-comma-on-call-site" />
-        <error line="62" column="98" source="standard:function-signature" />
-        <error line="64" column="80" source="standard:trailing-comma-on-call-site" />
-        <error line="68" column="92" source="standard:function-signature" />
-        <error line="79" column="48" source="standard:trailing-comma-on-call-site" />
-        <error line="80" column="14" source="standard:trailing-comma-on-call-site" />
-        <error line="84" column="75" source="standard:function-signature" />
-        <error line="86" column="77" source="standard:trailing-comma-on-call-site" />
+        <error line="21" column="84" source="standard:function-signature" />
+        <error line="23" column="106" source="standard:trailing-comma-on-call-site" />
+        <error line="56" column="104" source="standard:function-signature" />
+        <error line="58" column="94" source="standard:trailing-comma-on-call-site" />
+        <error line="62" column="96" source="standard:function-signature" />
+        <error line="64" column="83" source="standard:trailing-comma-on-call-site" />
+        <error line="68" column="90" source="standard:function-signature" />
+        <error line="70" column="86" source="standard:trailing-comma-on-call-site" />
+        <error line="74" column="98" source="standard:function-signature" />
+        <error line="76" column="80" source="standard:trailing-comma-on-call-site" />
+        <error line="80" column="92" source="standard:function-signature" />
+        <error line="91" column="48" source="standard:trailing-comma-on-call-site" />
+        <error line="92" column="14" source="standard:trailing-comma-on-call-site" />
+        <error line="96" column="75" source="standard:function-signature" />
+        <error line="98" column="77" source="standard:trailing-comma-on-call-site" />
     </file>
     <file name="src/test/kotlin/com/papertrading/api/TradingApiApplicationTests.kt">
         <error line="31" column="1" source="standard:final-newline" />
