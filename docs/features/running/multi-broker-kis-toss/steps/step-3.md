@@ -21,7 +21,7 @@
 | Title | 건드린 파일 에러 응답 정렬 |
 | Feature | multi-broker-kis-toss |
 | Based on | development-plan §2 D5, D15, §5-2 후반, §6 에러 정렬 행, RISK-05, DEC-02 |
-| Status | in progress |
+| Status | done |
 | Owner |  |
 
 ---
@@ -170,13 +170,15 @@ K 범주(500) 응답 모양: 새 `InternalErrorException`(K)은 핸들러가 내
 | 501 응답 유지 | `OrderControllerIntegrationTest` TOSS_LIVE, UPBIT_LIVE 5건 + `GlobalExceptionHandlerTest` | 501 `BROKER_ORDER_NOT_SUPPORTED` 그대로 통과 |
 | ktlint, detekt, 기준선 증가 | `./gradlew ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main` | 통과. ktlint 기준선은 줄 이동 반영만(항목 762, HEAD 대비 (파일, 규칙)별 개수 변화 0), detekt 기준선 변경 0 |
 | test-gate | `node .../tools/test-gate.js --select --run <바꾼 파일>` | «범위 없음 — 바뀐 파일에 대응 테스트가 없습니다»로 끝남(Kotlin 변경에 대응 시험을 못 고름). 그래서 위 관련 묶음을 gradle로 직접 실행 |
+| 전체 스위트(S3S-03) | CI `full-test` 실행 43682358838, 커밋 `7111818`, 2026-11-15 | success. 작업 trading-api, trading-web, collector-api 모두 success. 직전 `a43538a` 실행(43637012955)은 `ArchitectureRulesTest > commonDoesNotDependOnJpaOrSpring` 1건 실패였고 이 커밋에서 해소 |
 
 ---
 
 ## 7. Result  (record)
 
-- Done: 5-1 표의 28개 경로를 범주 기반 예외로 정렬(커밋, 푸시 안 함, 미커밋 상태). 완료 선언은 사람 몫이라 Status는 in progress로 둠
-- Changed files / PR: 미커밋. 목록은 아래
+- Done: 5-1 표의 28개 경로를 범주 기반 예외로 정렬. 커밋 `7111818`, 원격 푸시, CI 전체 스위트 success. Status done은 사람이 2026-11-15 이어받기에서 확인한 계획대로 처리
+- 남은 후속: 시험 보강 S3Q-01~03(should-fix, deferred)은 별도 커밋으로 진행
+- Changed files / PR: 커밋 `7111818`(PR은 1단계 끝에). 목록은 아래
   - main: `common/exception/NotImplementedException.kt`(신규, Spring 무의존), `common/exception/InternalErrorException.kt`(신규), `common/exception/CommonApiExceptions.kt`, `presentation/exception/GlobalExceptionHandler.kt`, `domain/entity/account/Account.kt`, `application/order/OrderCommandService.kt`, `application/order/ExecutionProcessor.kt`
   - test: `presentation/exception/GlobalExceptionHandlerTest.kt`(신규), `domain/entity/account/AccountTest.kt`, `application/order/OrderCommandServiceTest.kt`, `application/order/ExecutionProcessorTest.kt`, `application/account/RiskPolicyServiceTest.kt`, `presentation/controller/OrderControllerIntegrationTest.kt`, `presentation/controller/AccountControllerIntegrationTest.kt`
   - 설정: `backend/trading-api/config/ktlint/baseline.xml`(줄 이동만)

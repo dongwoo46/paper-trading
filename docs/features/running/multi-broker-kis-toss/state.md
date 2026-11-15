@@ -37,7 +37,7 @@
 |---|---|---|---|---|
 | 1 | 기준선 기록 | done | steps/step-1.md | 393개 통과, 실패 0 (`e2904c8`) |
 | 2 | 모드 추가와 주문 안전장치 | done | steps/step-2.md | 438개 통과, 합동 리뷰 막는 지적 0 (후속 9 수정, 2 넘김) |
-| 3 | 건드린 파일 에러 응답 정렬 | in progress | steps/step-3.md | 관련 시험 154건 통과, 합동 리뷰 막는 지적 0(`review/step3-panel.md`) |
+| 3 | 건드린 파일 에러 응답 정렬 | done | steps/step-3.md | 관련 시험 154건 통과, CI 전체 success(`7111818`), 합동 리뷰 막는 지적 0(`review/step3-panel.md`) |
 | 4 | 토스 토큰 기반 | todo | steps/step-4.md |  |
 | 5 | 스키마 확정과 토스 전송 계층 | todo | steps/step-5.md |  |
 | 6 | 잔고 공통 포트와 토스 어댑터 | todo | steps/step-6.md |  |
