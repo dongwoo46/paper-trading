@@ -362,6 +362,32 @@ class OrderCommandServiceTest {
         assertApiError(ex, "ORDER_NOT_CANCELABLE", 409)
     }
 
+    // 소유 확인(404)이 상태 확인(409)보다 먼저, 다른 계좌 주문의 상태 노출 차단 (S3Q-01)
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = OrderStatus::class, names = ["FILLED", "CANCELLED"])
+    fun `다른 계좌의 취소 불가 상태 주문 취소도 409 가 아니라 404 ORDER_NOT_FOUND`(status: OrderStatus) {
+        val order = savedOrder(localAccount()).also { it.moveTo(status) }
+        every { orderRepository.findByIdWithOptimisticLock(10L) } returns Optional.of(order)
+
+        val ex = assertThrows<OrderNotFoundException> {
+            service.cancelOrder(2L, 10L, CancelOrderCommand())
+        }
+
+        assertApiError(ex, "ORDER_NOT_FOUND", 404)
+        assertEquals(status, order.orderStatus)
+        verify(exactly = 0) { accountRepository.findByIdWithLock(any()) }
+        verify(exactly = 0) { accountLedgerRepository.save(any()) }
+    }
+
+    private fun Order.moveTo(status: OrderStatus) {
+        when (status) {
+            OrderStatus.FILLED -> applyExecution(quantity, BigDecimal("70000"), BigDecimal.ZERO)
+            OrderStatus.CANCELLED -> cancel()
+            else -> error("시험 대상 아닌 상태: $status")
+        }
+        assertEquals(status, orderStatus)
+    }
+
     // ---- 브로커 주문 연동이 없는 모드는 자금 잠금 전에 501 로 거부 (대상 모드는 하단 표에서 파생) ----
 
     private fun accountFor(tradingMode: TradingMode): Account = Account.create(

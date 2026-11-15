@@ -276,7 +276,10 @@ class OrderControllerIntegrationTest {
         put("idempotencyKey", UUID.randomUUID().toString())
     }
 
+    // 거부 뒤 주문 행 수, 원장 행 수, 예수금, 잠금, 포지션 불변까지 단언 (S3Q-03)
     private fun expectOrderError(accountId: Long, body: Map<String, Any>, httpStatus: Int, code: String) {
+        val before = footprint(accountId)
+
         mockMvc.post("/api/v1/accounts/$accountId/orders") {
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(body)
@@ -285,6 +288,8 @@ class OrderControllerIntegrationTest {
             jsonPath("$.status") { value(httpStatus) }
             jsonPath("$.code") { value(code) }
         }
+
+        assertFootprintUnchanged(before, footprint(accountId))
     }
 
     @Test
@@ -351,11 +356,17 @@ class OrderControllerIntegrationTest {
         val ownerId = createAccountAndDeposit()
         val otherId = createAccountAndDeposit()
         val orderId = placePendingBuyOrder(ownerId)
+        val ownerBefore = footprint(ownerId)
+        val otherBefore = footprint(otherId)
 
         mockMvc.delete("/api/v1/accounts/$otherId/orders/$orderId").andExpect {
             status { isNotFound() }
             jsonPath("$.code") { value("ORDER_NOT_FOUND") }
         }
+
+        assertFootprintUnchanged(ownerBefore, footprint(ownerId))
+        assertFootprintUnchanged(otherBefore, footprint(otherId))
+        expectOrderStatus(ownerId, orderId, "PENDING")
     }
 
     @Test
@@ -363,11 +374,22 @@ class OrderControllerIntegrationTest {
         val accountId = createAccountAndDeposit()
         val orderId = placePendingBuyOrder(accountId)
         mockMvc.delete("/api/v1/accounts/$accountId/orders/$orderId").andExpect { status { isNoContent() } }
+        val afterFirstCancel = footprint(accountId)
 
         mockMvc.delete("/api/v1/accounts/$accountId/orders/$orderId").andExpect {
             status { isConflict() }
             jsonPath("$.status") { value(409) }
             jsonPath("$.code") { value("ORDER_NOT_CANCELABLE") }
+        }
+
+        assertFootprintUnchanged(afterFirstCancel, footprint(accountId))
+        expectOrderStatus(accountId, orderId, "CANCELLED")
+    }
+
+    private fun expectOrderStatus(accountId: Long, orderId: Long, orderStatus: String) {
+        mockMvc.get("/api/v1/accounts/$accountId/orders/$orderId").andExpect {
+            status { isOk() }
+            jsonPath("$.orderStatus") { value(orderStatus) }
         }
     }
 
@@ -415,10 +437,12 @@ class OrderControllerIntegrationTest {
         val availableDeposit: BigDecimal,
         val lockedDeposit: BigDecimal,
         val positionLockedQuantity: BigDecimal?,
+        val positionQuantity: BigDecimal?,
     )
 
     private fun footprint(accountId: Long): AccountFootprint {
         val account = accountRepository.findById(accountId).orElseThrow()
+        val position = positionRepository.findByAccountIdAndTicker(accountId, "005930").orElse(null)
         return AccountFootprint(
             orderCount = orderRepository.findByAccountIdOrderByCreatedAtDesc(accountId).size,
             ledgerCount = accountLedgerRepository.findByAccountIdOrderByCreatedAtDesc(accountId).size,
@@ -426,7 +450,26 @@ class OrderControllerIntegrationTest {
             lockedDeposit = account.lockedDeposit,
             positionLockedQuantity = positionRepository.findByAccountIdAndTicker(accountId, "005930")
                 .map { it.lockedQuantity }.orElse(null),
+            positionQuantity = position?.quantity,
         )
+    }
+
+    // 금액·수량은 compareTo 비교, 포지션 없음(null)은 그대로 null 이어야 함
+    private fun assertFootprintUnchanged(before: AccountFootprint, after: AccountFootprint) {
+        assertEquals(before.orderCount, after.orderCount, "주문 행 수")
+        assertEquals(before.ledgerCount, after.ledgerCount, "원장 행 수")
+        assertEquals(0, before.availableDeposit.compareTo(after.availableDeposit), "가용 예수금")
+        assertEquals(0, before.lockedDeposit.compareTo(after.lockedDeposit), "잠금 예수금")
+        assertSameAmount(before.positionQuantity, after.positionQuantity, "포지션 수량")
+        assertSameAmount(before.positionLockedQuantity, after.positionLockedQuantity, "포지션 잠금 수량")
+    }
+
+    private fun assertSameAmount(before: BigDecimal?, after: BigDecimal?, label: String) {
+        if (before == null || after == null) {
+            assertEquals(before, after, label)
+        } else {
+            assertEquals(0, before.compareTo(after), label)
+        }
     }
 
     private fun assertOrderRejectedWithoutChange(accountId: Long, body: String) {

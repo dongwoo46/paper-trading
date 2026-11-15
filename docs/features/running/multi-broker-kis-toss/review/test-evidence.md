@@ -70,3 +70,46 @@
 - 막는 지적 0건 · should-fix 0건 · nit 8건(Q3·Q4·P-10·E2·E3·E4·E6·E7).
 
 <!-- devkit:reviewed-head 6387778d31cf46ee9f2046212a48b4625268e29a -->
+
+---
+
+# step 3 시험 보강 — S3Q-01·02·03 (격리 사본 사전 검증 뒤 본 트리 적용·재실행, §9 첫 줄)
+
+## 6. 메타데이터
+
+| 항목 | 값 |
+|---|---|
+| 대상 | 커밋 `7111818`(step 3 에러 응답 정렬)의 리뷰 `review/step3-panel.md` S3Q-01·02·03 |
+| 테스터 | `devkit:tester` |
+| 날짜 | 2026-11-15 15:09~15:20 (KST) |
+| 상태 | 시험 코드는 본 트리에 아직 없음. tester 쓰기 범위 게이트가 `backend/**/src/test/**` 쓰기를 거부(허용 = `tests/**`·`docs/**`) → 격리 사본(레포 밖 scratchpad 의 `copy/trading-api`, `build`·`.gradle`·`.kotlin` 제외 rsync)에 작성·실행. 적용용 패치 `step3-test-reinforcement.patch`(sha256 `e444fdf1…c69c`, 추가 120줄·삭제 0줄) |
+| 제품 코드 | 사본 `src/main` 과 본 트리 `src/main` 은 `diff -rq` 차이 0(돌연변이 복구 뒤) · 본 트리 `git status --short backend/` 빈 출력 |
+
+## 7. 실행 기록
+
+| 명령 | 위치 | exit | 결과 |
+|---|---|---|---|
+| `./gradlew test --tests OrderCommandServiceTest --tests GlobalExceptionHandlerTest --tests OrderControllerIntegrationTest` | 사본(최종 판) | 0 | XML 집계: `OrderCommandServiceTest` 37/실패 0/오류 0/건너뜀 0 · `OrderControllerIntegrationTest` 17/0/0/0(Testcontainers, Docker 29.5.2) · `GlobalExceptionHandlerTest` 7/0/0/0. 시각 06:19:37~06:19:55Z |
+| 돌연변이 M-01: `OrderCommandService.cancelOrder` 소유 검사(404)와 상태 검사(409) 순서 뒤집기 | 사본 | — | 사본 diff 는 그 두 문장 이동뿐 |
+| `./gradlew test --tests OrderCommandServiceTest` | 사본(M-01) | 1 | 37건 중 2건 RED: 새 시험 `[FILLED]`·`[CANCELLED]` — `expected OrderNotFoundException but was OrderNotCancelableException`. 기존 35건은 초록 그대로(리뷰가 본 «못 잡음» 재현) |
+| 돌연변이 M-02: `GlobalExceptionHandler` 의 `@ExceptionHandler(InternalErrorException::class)`·`@ExceptionHandler(NotImplementedException::class)` 주석 처리 | 사본 | — | 두 줄만 바뀜 |
+| `./gradlew test --tests GlobalExceptionHandlerTest` | 사본(M-02) | 1 | 7건 중 3건 RED, 전부 새 MVC 경유 시험: K 기반 `$.code expected SOME_DEFECT but was INTERNAL_SERVER_ERROR` · K 하위 `expected LOCKED_DEPOSIT_INSUFFICIENT but was INTERNAL_SERVER_ERROR` · I 하위 `Status expected 501 but was 500`. 기존 직접 호출 4건은 초록 그대로. 두 매핑을 한 번에 지웠으나 K 시험은 code, I 시험은 상태로 갈려 실패해 매핑별 탐지가 구분됨 |
+| 복구: `cp *.orig` → `cmp` 본 트리 원본 일치 · `diff -rq src/main` | 사본 | 0 | 두 파일 모두 원본과 같음 |
+| `node …/devkit/0.95.0/tools/revert-probe.js` | 본 트리 | 0 | 흔적 출력 없음 |
+| `./gradlew ktlintCheck detekt --continue` | 사본(최종 판) | 0 | 위반 0. `verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main` 은 사본이 git 저장소가 아니라 못 돌림 — 본 트리 적용 뒤 실행 필요 |
+| `git apply --check --numstat <패치>` | 본 트리 | 0 | 세 파일 26·51·43줄 추가, 삭제 0. 커밋 게이트(삭제된 단언 줄만 봄)에 걸릴 줄 없음 |
+| 전체 스위트 | — | 안 함 | 요청대로(CI 몫) |
+
+## 8. 항목별 판정
+
+| ID | 추가한 시험 | 단언 | 판정 |
+|---|---|---|---|
+| S3Q-01 | `OrderCommandServiceTest` `다른 계좌의 취소 불가 상태 주문 취소도 409 가 아니라 404 ORDER_NOT_FOUND` (`@EnumSource` FILLED·CANCELLED) | `OrderNotFoundException` · code `ORDER_NOT_FOUND` · 404 · 상태 그대로 · 계좌 잠금 조회 0회 · 원장 저장 0회 | 증거 있음(실행) — M-01 RED 2건 |
+| S3Q-02 | `GlobalExceptionHandlerTest` MVC 경유 3건(`MockMvcBuilders.standaloneSetup` + `setControllerAdvice`, 시험 전용 중첩 컨트롤러). 레포 MockMvc 시험은 전부 `@WebMvcTest`+`@Import(GlobalExceptionHandler)` 라 실제 컨트롤러가 필요 → 범주 예외를 직접 던질 수 있게 standalone 선택, DSL(`mockMvc.get{}`)은 레포 관례 그대로 | K 기반: 500 · `$.status` 500 · `$.code` SOME_DEFECT · 고정 메시지(내부 메시지 미노출) · K 하위: 500 · 자기 code · I 하위: 501 · `$.status` · 자기 code | 증거 있음(실행) — M-02 RED 3건 |
+| S3Q-03 | `OrderControllerIntegrationTest` `expectOrderError` 에 전후 발자국 비교 추가(400 2건·409 3건) · 다른 계좌 취소 404(양쪽 계좌 발자국 + 주문 PENDING) · 재취소 409(첫 취소 뒤 발자국 + CANCELLED) | 주문 행 수 · 원장 행 수 · 가용 예수금 · 잠금 예수금 · 포지션 수량 · 포지션 잠금 수량(금액·수량은 `compareTo`, 포지션 없음은 null 그대로) | 증거 있음(실행, 초록만). 불변 단언 자체의 돌연변이는 안 돌림(요청 범위 밖) |
+
+## 9. 남은 것
+
+- 본 트리 적용과 재실행(2026-11-15, 메인 세션): `git apply` 로 패치 적용(시험 파일 3개, 추가 120줄·삭제 0줄). 세 시험 클래스 실행 exit 0, XML 집계 `OrderCommandServiceTest` 37 · `GlobalExceptionHandlerTest` 7 · `OrderControllerIntegrationTest` 17, 실패·오류·건너뜀 0. `ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main` exit 0.
+- 의도적으로 안 넣은 것: `LOCAL 시장가 매수 주문 — stale 시세면 400`·`LOCAL 미보유 종목 매도 시 400` 의 불변 단언. ktlint 기준선이 줄 번호로 묶여 있어, 기존 위반(통합 시험 파일 23건) 위쪽에 줄을 넣으면 기준선이 어긋나 `ktlintCheck` 가 빨개짐(사본에서 실측). 넣으려면 `ktlintGenerateBaseline` 재생성이 필요하고 그건 설정 파일 변경이라 메인 세션 판단 몫.
+- 발견한 제품 결함: 없음. 400·409·404 거부 7경로 모두 주문·원장·자금·포지션이 요청 전과 같음(특히 `INSUFFICIENT_AVAILABLE_DEPOSIT` 은 주문 저장 뒤 실패하지만 트랜잭션 롤백으로 주문 행이 남지 않음).
