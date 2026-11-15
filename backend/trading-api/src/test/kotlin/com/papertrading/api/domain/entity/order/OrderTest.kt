@@ -154,6 +154,17 @@ class OrderTest {
     }
 
     @Test
+    fun `applyExecution_가격이_다른_두_체결_뒤_평균가는_수량_가중평균이다`() {
+        val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
+        order.applyExecution(BigDecimal("4"), BigDecimal("69000"), BigDecimal("140"))
+
+        order.applyExecution(BigDecimal("6"), BigDecimal("70000"), BigDecimal("210"))
+
+        // (4*69000 + 6*70000) / 10 = 69600
+        assertEquals(0, order.avgFilledPrice!!.compareTo(BigDecimal("69600")))
+    }
+
+    @Test
     fun `applyExecution_CANCELLED_상태에서는_예외를_던진다`() {
         val order = createLimitBuyOrder(qty = BigDecimal("10"), price = BigDecimal("70000"))
         order.cancel()
