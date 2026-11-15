@@ -1,0 +1,327 @@
+{
+  "createdAt": "2026-11-14T20:01:40.950Z",
+  "projectRoot": "/Users/dongwoo/Desktop/paper-trading/.worktrees/trading-api-quality-audit",
+  "module": "backend/trading-api",
+  "slotBudget": 600,
+  "stack": [
+    "data",
+    "reliability"
+  ],
+  "rows": [
+    {
+      "lens": "data/caching-strategy",
+      "title": "Caching strategy",
+      "dept": "data",
+      "files": 11,
+      "targeted": 4,
+      "lines": 229,
+      "signals": {
+        "raw SQL": 7,
+        "await": 0
+      },
+      "instances": 1,
+      "applicable": true,
+      "reason": ""
+    },
+    {
+      "lens": "data/query",
+      "title": "Query",
+      "dept": "data",
+      "files": 11,
+      "targeted": 4,
+      "lines": 229,
+      "signals": {
+        "raw SQL": 7,
+        "await": 0
+      },
+      "instances": 1,
+      "applicable": true,
+      "reason": ""
+    },
+    {
+      "lens": "data/schema-data-model",
+      "title": "Schema & data model",
+      "dept": "data",
+      "files": 11,
+      "targeted": 4,
+      "lines": 229,
+      "signals": {
+        "raw SQL": 7,
+        "await": 0
+      },
+      "instances": 1,
+      "applicable": true,
+      "reason": ""
+    },
+    {
+      "lens": "data/transaction-boundary",
+      "title": "Transaction boundary",
+      "dept": "data",
+      "files": 11,
+      "targeted": 4,
+      "lines": 229,
+      "signals": {
+        "raw SQL": 7,
+        "await": 0
+      },
+      "instances": 1,
+      "applicable": true,
+      "reason": ""
+    },
+    {
+      "lens": "reliability/failure-handling",
+      "title": "Failure handling",
+      "dept": "reliability",
+      "files": 1,
+      "targeted": 0,
+      "lines": 17,
+      "signals": {
+        "예외 처리": 0,
+        "await": 0
+      },
+      "instances": 0,
+      "applicable": true,
+      "reason": ""
+    },
+    {
+      "lens": "reliability/load-concurrency",
+      "title": "Load & concurrency",
+      "dept": "reliability",
+      "files": 1,
+      "targeted": 0,
+      "lines": 17,
+      "signals": {
+        "예외 처리": 0,
+        "await": 0
+      },
+      "instances": 0,
+      "applicable": true,
+      "reason": ""
+    },
+    {
+      "lens": "reliability/observability",
+      "title": "Observability",
+      "dept": "reliability",
+      "files": 1,
+      "targeted": 1,
+      "lines": 17,
+      "signals": {
+        "예외 처리": 0,
+        "await": 0
+      },
+      "instances": 1,
+      "applicable": true,
+      "reason": ""
+    },
+    {
+      "lens": "reliability/security-config-hygiene",
+      "title": "Security · config hygiene",
+      "dept": "reliability",
+      "files": 1,
+      "targeted": 1,
+      "lines": 17,
+      "signals": {
+        "예외 처리": 0,
+        "await": 0
+      },
+      "instances": 1,
+      "applicable": true,
+      "reason": ""
+    },
+    {
+      "lens": "backend/code-shape",
+      "title": "Code shape",
+      "dept": "backend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "예외 처리": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "backend/layering",
+      "title": "Layering & domain purity",
+      "dept": "backend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "예외 처리": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "backend/naming-terminology",
+      "title": "Naming · terminology",
+      "dept": "backend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "예외 처리": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "backend/tdd-purity",
+      "title": "TDD purity",
+      "dept": "backend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "예외 처리": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "contract/api-contract",
+      "title": "API contract",
+      "dept": "contract",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "시각 호출": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "contract/codebase-hygiene",
+      "title": "Codebase hygiene",
+      "dept": "contract",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "시각 호출": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "contract/datetime-timezone",
+      "title": "Datetime · timezone",
+      "dept": "contract",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "시각 호출": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "frontend/accessibility",
+      "title": "Accessibility",
+      "dept": "frontend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "frontend/bundle-loading",
+      "title": "Bundle · loading",
+      "dept": "frontend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "frontend/data-flow",
+      "title": "Data flow",
+      "dept": "frontend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "frontend/readability-predictability",
+      "title": "Readability · predictability",
+      "dept": "frontend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "frontend/structure",
+      "title": "Structure",
+      "dept": "frontend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    },
+    {
+      "lens": "frontend/test-quality",
+      "title": "Test quality",
+      "dept": "frontend",
+      "files": 0,
+      "targeted": 0,
+      "lines": 0,
+      "signals": {
+        "800줄 초과 파일": 0,
+        "any 타입": 0
+      },
+      "instances": 0,
+      "applicable": false,
+      "reason": "이 레포에 그 부서의 대상 파일이 없음 — 스택 불일치"
+    }
+  ]
+}

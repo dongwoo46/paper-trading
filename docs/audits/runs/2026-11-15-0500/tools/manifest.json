@@ -1,0 +1,337 @@
+{
+  "runId": "2026-11-15-0500",
+  "tools": [
+    {
+      "id": "Tb661de0c",
+      "tool": "detekt",
+      "command": "cd backend/trading-api && ./gradlew detekt --console=plain",
+      "lenses": [
+        "backend/code-shape",
+        "backend/naming-terminology",
+        "reliability/failure-handling",
+        "reliability/observability",
+        "reliability/security-config-hygiene"
+      ],
+      "perTarget": false,
+      "status": "ran",
+      "output": "tools/Tb661de0c.txt",
+      "checked": 293,
+      "reason": null
+    },
+    {
+      "id": "T33dcbad6",
+      "tool": "ktlint",
+      "command": "cd backend/trading-api && ./gradlew ktlintCheck --console=plain",
+      "lenses": [
+        "backend/code-shape",
+        "backend/naming-terminology"
+      ],
+      "perTarget": false,
+      "status": "ran",
+      "output": "tools/T33dcbad6.txt",
+      "checked": 293,
+      "reason": null
+    },
+    {
+      "id": "T7b25a409",
+      "tool": "grep (BigDecimal 함정)",
+      "command": "grep -nE 'BigDecimal\\((-?[0-9]+\\.[0-9]+|[a-z][A-Za-z]*\\.toDouble\\(\\))\\)|\\.toDouble\\(\\)|\\.divide\\([^,()]*\\)|[A-Za-z)]\\s/\\s[A-Za-z(]|\\.equals\\(|==\\s*BigDecimal\\.' <chunk-files>",
+      "lenses": [
+        "backend/code-shape"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T98c854da",
+      "tool": "grep (시각·난수 직접 읽기)",
+      "command": "grep -nE '(LocalDateTime|LocalDate|Instant|ZonedDateTime|OffsetDateTime)\\.now\\(\\)|UUID\\.randomUUID\\(\\)|System\\.currentTimeMillis\\(\\)' <chunk-files>",
+      "lenses": [
+        "backend/code-shape"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T96587ad0",
+      "tool": "ArchUnit",
+      "command": "cd backend/trading-api && ./gradlew test --tests '*ArchitectureRulesTest*' --console=plain",
+      "lenses": [
+        "backend/layering",
+        "backend/tdd-purity",
+        "data/transaction-boundary"
+      ],
+      "perTarget": false,
+      "status": "ran",
+      "output": "tools/T96587ad0.txt",
+      "checked": 13,
+      "reason": null
+    },
+    {
+      "id": "Tf62c515d",
+      "tool": "grep (import 간선)",
+      "command": "grep -nE '^import (jakarta\\.persistence|org\\.hibernate|org\\.springframework|com\\.papertrading\\.api\\.(application|infrastructure|presentation))' <chunk-files>",
+      "lenses": [
+        "backend/layering"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "Tcca7594a",
+      "tool": "grep (포괄적 이름)",
+      "command": "grep -nE '(class|object|interface|fun) (Data|Info|Item|Manager|Handler|Util|Utils|Helper|Helpers|Common|Misc|Process|Processor)[A-Z(<: ]' <chunk-files>",
+      "lenses": [
+        "backend/naming-terminology"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T17097a51",
+      "tool": "grep (기간 단위)",
+      "command": "grep -nE '(timeout|ttl|delay|interval|expire|retention|period)[A-Za-z]*\\s*(:\\s*(Int|Long)|=\\s*[0-9]+)' <chunk-files>",
+      "lenses": [
+        "backend/naming-terminology"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T1acb43c4",
+      "tool": "grep (목 대상)",
+      "command": "grep -nE 'mockk<[A-Za-z]+>|@MockkBean|@MockBean|@MockitoBean|every \\{|verify \\{|verifyOrder|verifySequence' <chunk-files>",
+      "lenses": [
+        "backend/tdd-purity"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T30753bdb",
+      "tool": "grep (비결정·엔진 대체)",
+      "command": "grep -nE 'Thread\\.sleep|\\.now\\(\\)|randomUUID|H2|jdbc:h2|@DataJpaTest|@AutoConfigureTestDatabase|PostgreSQLContainer|GenericContainer|@ServiceConnection' <chunk-files>",
+      "lenses": [
+        "backend/tdd-purity"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T17e00c07",
+      "tool": "grep (BigDecimal 단언)",
+      "command": "grep -nE '(assertEquals|assertThat|shouldBe|isEqualTo)[^\\n]*BigDecimal' <chunk-files>",
+      "lenses": [
+        "backend/tdd-purity"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "Tf36fb827",
+      "tool": "grep (fetch join·페이징)",
+      "command": "grep -nE 'fetchJoin\\(\\)|JOIN FETCH|join fetch|@EntityGraph|\\.offset\\(|\\.limit\\(|Pageable|@BatchSize|default_batch_fetch_size' <chunk-files>",
+      "lenses": [
+        "data/query"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "Tee897ca9",
+      "tool": "grep (구간·함수 조건)",
+      "command": "grep -nE '\\.between\\(|Between\\(|BETWEEN|lower\\(|upper\\(|function\\(|date\\(|cast\\(|like\\(|contains\\(' <chunk-files>",
+      "lenses": [
+        "data/query"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T8214fd78",
+      "tool": "grep (무제한 목록)",
+      "command": "grep -nE 'findAll\\(\\)|\\.fetch\\(\\)|findAllBy[A-Za-z]*\\(' <chunk-files>",
+      "lenses": [
+        "data/query"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T3e6eeb44",
+      "tool": "grep (금액 열·버전·enum)",
+      "command": "grep -nE 'Double|Float|precision|scale|@Version|@Enumerated|EnumType|numeric|double precision|real\\b' <chunk-files>",
+      "lenses": [
+        "data/schema-data-model"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T362ac404",
+      "tool": "grep (마이그레이션 DDL)",
+      "command": "grep -nE 'CREATE (UNIQUE )?INDEX|FOREIGN KEY|REFERENCES|UNIQUE|CHECK|NOT NULL|DROP|ALTER COLUMN|UPDATE |DELETE FROM' <chunk-files>",
+      "lenses": [
+        "data/schema-data-model"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "Tbd4fa8ff",
+      "tool": "grep (경계·리스너)",
+      "command": "grep -nE '@Transactional|@TransactionalEventListener|@EventListener|TransactionPhase|propagation|REQUIRES_NEW|readOnly' <chunk-files>",
+      "lenses": [
+        "data/transaction-boundary"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "Tf609c715",
+      "tool": "grep (원격 호출)",
+      "command": "grep -nE 'restTemplate\\.|RestTemplate|WebClient|RestClient|convertAndSend|\\.send\\(|Notifier|Executor\\.|execute\\(' <chunk-files>",
+      "lenses": [
+        "data/transaction-boundary"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T46069fb0",
+      "tool": "grep (catch·runCatching)",
+      "command": "grep -nE 'catch \\(|runCatching|getOrNull\\(\\)|getOrElse|onFailure' <chunk-files>",
+      "lenses": [
+        "reliability/failure-handling"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T3b064751",
+      "tool": "grep (원격 호출·타임아웃)",
+      "command": "grep -nE 'RestTemplate|SimpleClientHttpRequestFactory|HttpComponents|setConnectTimeout|setReadTimeout|connectTimeout|readTimeout|timeout|WebSocketClient|exchange\\(|postFor|getFor' <chunk-files>",
+      "lenses": [
+        "reliability/failure-handling"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T2bf940b0",
+      "tool": "grep (실행기·스레드)",
+      "command": "grep -nE 'RedisMessageListenerContainer|setTaskExecutor|ThreadPoolTaskExecutor|SimpleAsyncTaskExecutor|Executors\\.|@Async|@EnableAsync|@Scheduled|setPoolSize|queueCapacity|setQueueCapacity' <chunk-files>",
+      "lenses": [
+        "reliability/load-concurrency"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T971d2e52",
+      "tool": "grep (공유 상태·락)",
+      "command": "grep -nE 'ConcurrentHashMap|mutableMapOf|mutableListOf|mutableSetOf|synchronized|ReentrantLock|Mutex|AtomicReference|AtomicBoolean|@Volatile|companion object' <chunk-files>",
+      "lenses": [
+        "reliability/load-concurrency"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "Ta33e2da3",
+      "tool": "grep (로그 호출)",
+      "command": "grep -nE 'log(ger)?\\.(error|warn|info|debug)|println\\(|printStackTrace|MDC\\.' <chunk-files>",
+      "lenses": [
+        "reliability/observability"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "T5b7501aa",
+      "tool": "grep (시크릿 후보)",
+      "command": "grep -nE '(key|secret|token|password|webhook)[A-Za-z-]*\\s*[:=]\\s*[^$ {]|\\$\\{[A-Z_]+:[^}]+\\}' <chunk-files>",
+      "lenses": [
+        "reliability/security-config-hygiene"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    },
+    {
+      "id": "Tb51a40b2",
+      "tool": "grep (원시 SQL)",
+      "command": "grep -nE 'nativeQuery\\s*=\\s*true|createNativeQuery|createQuery\\(|\"\\s*\\+\\s*[a-z]|\\$\\{?[a-z][A-Za-z]*\\}?.*(SELECT|WHERE|ORDER BY)' <chunk-files>",
+      "lenses": [
+        "reliability/security-config-hygiene"
+      ],
+      "perTarget": true,
+      "status": "per-target",
+      "output": null,
+      "checked": null,
+      "reason": null
+    }
+  ]
+}
