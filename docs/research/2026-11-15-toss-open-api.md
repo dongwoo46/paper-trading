@@ -5,7 +5,7 @@ KIS와 토스증권을 함께 쓰기 위해 토스증권 공식 문서로 가능
 ## 출처와 범위
 
 - 읽은 문서: [공식 개요 문서](https://openapi.tossinvest.com/openapi-docs/overview.md) 전문(엔드포인트 목록, 시작하기, 호출 한도, 에러 코드, 웹소켓 연동)
-- 읽지 못한 문서: 개별 API 페이지(요청, 응답 스키마). 공개 주소를 찾지 못했다(`openapi.json`, `llms.txt`, 목차 후보 주소는 모두 403 또는 404).
+- 개별 API 스키마: 2026-11-15 추가 확인. 공식 명세 `https://openapi.tossinvest.com/openapi-docs/latest/openapi.json`(OpenAPI, 버전 1.2.28)에 있다. 처음 조사 때는 다른 경로를 시도해 403·404였다. 요약은 아래 «개별 API 스키마(step 5~7 범위)» 절.
 - 읽지 못한 문서: 소개 페이지, 이용약관, FAQ, 보도자료. 본문을 자바스크립트로 그려서 서버에서 받으면 제목만 온다.
 - 공식 MCP: 개요 문서와 소개 페이지에 언급이 없다. 커뮤니티 서버만 있다(tossinvest-mcp, JeongSeongMok/tossinvest-openapi-mcp, scjang01/tossinvest-mcp, kcw2034/toss-invest-mcp).
 - 아래 표의 항목은 개요 문서에 적힌 것만 옮겼다. 필드 단위 스펙은 개별 문서를 직접 읽고 확정해야 한다.
@@ -86,8 +86,25 @@ KIS와 토스증권을 함께 쓰기 위해 토스증권 공식 문서로 가능
 - 허용 IP 등록이 필수라서 로컬 개발과 서버 환경의 IP를 각각 등록해야 하고, 회선이 바뀌면 403이 난다.
 - 주문은 실거래라서 `trading-api`의 LOCAL 모의 체결과 섞이지 않게 라우팅 경계를 먼저 설계해야 한다(설계 변경이므로 사용자 승인 필요).
 
+## 개별 API 스키마(step 5~7 범위)
+
+출처: 공식 명세 `openapi.json` 1.2.28(2026-11-15 확인). 필드 전체는 명세가 원본이고, 여기는 이 기능이 쓰는 것만 줄였다. `*`는 필수.
+
+| API | 요청 | 응답(성공 시 `result` 아래) |
+|---|---|---|
+| `POST /oauth2/token` | `application/x-www-form-urlencoded`: `grant_type*`(`client_credentials`만), `client_id*`, `client_secret*` | 최상위(봉투 없음): `access_token*`(JWT), `token_type*`(`Bearer`), `expires_in*`(int64, 만료까지 남은 초. 값의 크기는 명세에 없음) |
+| `GET /api/v1/accounts` | 토큰만 | `result[]`: `accountNo*`, `accountSeq*`(int64, 계좌 헤더에 넣는 값), `accountType*`(`BROKERAGE` 등, 현재 `BROKERAGE`만 지원) |
+| `GET /api/v1/holdings` | 헤더 `X-Tossinvest-Account*`(accountSeq), 선택 `symbol` | `result`: 합계 `totalPurchaseAmount`·`marketValue.amount`·`marketValue.amountAfterCost`·`profitLoss.amount`·`profitLoss.amountAfterCost`·`dailyProfitLoss.amount`는 통화별 `{krw*, usd(없으면 null)}`, 손익률 `rate`는 소수비율 문자열(0.1516 = 15.16%). `items[]`: `symbol*`, `name*`, `marketCountry*`(KR\|US), `currency*`(KRW\|USD), `quantity*`, `lastPrice*`, `averagePurchasePrice*`, `marketValue{purchaseAmount, amount, amountAfterCost}`, `profitLoss{amount, amountAfterCost, rate, rateAfterCost}`, `dailyProfitLoss{amount, rate}`, `cost{commission*, tax(없으면 null)}` |
+| `GET /api/v1/prices` | `symbols*`(콤마 구분, 최대 200) | `result[]`: `symbol*`, `timestamp`(date-time, 없으면 null), `lastPrice*`, `currency*` |
+
+이 기능에 바로 걸리는 사실:
+- 금액·수량·가격·비율은 모두 **decimal 문자열**이다. `BigDecimal(String)`으로 바로 읽는다(FLAG-06 확정, 부동소수 거치지 않음).
+- `marketCountry`·`currency` enum은 명세가 «모르는 값을 허용하도록 구현»하라고 적었다. 모르는 값에서 역직렬화가 터지지 않게 한다.
+- 토큰 응답만 `result` 봉투가 없다. 나머지는 성공 시 `result`, 실패 시 `error{requestId, code, message, data}` 봉투.
+- `expires_in` 크기는 명세에 없어 실제 응답으로 확인한다(FLAG-16의 TTL 계산이 이 값에 걸림).
+
 ## 다음에 필요한 일
 
-1. 개별 API 문서(요청, 응답 스키마)를 직접 읽는다. 공개 주소를 못 찾았으므로 WTS 로그인 상태의 문서 사이트에서 확인한다.
+1. (2026-11-15 끝) 개별 API 스키마는 공식 `openapi.json`에서 확인했다. 남은 것은 실제 응답으로 `expires_in` 크기를 보는 것뿐이다.
 2. 소개 페이지, 이용약관, FAQ를 브라우저로 읽어 신청 조건과 이용 제한을 확인한다.
 3. 토스를 시세 소스나 주문 채널로 붙일지 설계를 정해 승인받는다. 그 전에는 코드를 바꾸지 않는다.
