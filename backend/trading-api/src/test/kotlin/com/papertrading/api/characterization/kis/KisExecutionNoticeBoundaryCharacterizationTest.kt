@@ -1,6 +1,5 @@
 package com.papertrading.api.characterization.kis
 
-import com.papertrading.api.application.order.KisExecutionNoticeService
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.feepolicy.FeePolicy
@@ -16,8 +15,8 @@ import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.enums.TransactionType
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
-import com.papertrading.api.infrastructure.kis.KisExecutionNotice
-import com.papertrading.api.infrastructure.kis.KisExecutionNoticeParser
+import com.papertrading.api.infrastructure.kis.KisExecutionWebSocketManager
+import com.papertrading.api.infrastructure.kis.KisTokenManager
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
@@ -28,6 +27,7 @@ import com.papertrading.api.infrastructure.persistence.SettlementRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.BDDMockito.given
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.springframework.boot.test.context.SpringBootTest
@@ -48,18 +48,19 @@ import java.time.Instant
 
 /**
  * 특성화 시험(step 8, D21 c): KIS 체결 통지 원문 1건이 만드는 체결·포지션·원장·정산 행과 알림을 단언한다.
- * 입구는 파서(원문 → 통지) 와 KisExecutionNoticeService.handle 이고, 주문·잠금 상태는 접수 때와 같은 도메인 메서드로 DB 에 미리 둔다.
+ * 입구는 웹소켓 전송 경계: 대역 전송기가 받은 연결 요청의 onMessage 에 통지 원문을 넣고(승인키만 토큰 관리자 mock),
+ * 주문·잠금 상태는 접수 때와 같은 도메인 메서드로 DB 에 미리 둔다. 파서·체결 서비스·통지 타입 이름은 시험에 쓰지 않는다(D27 이름 바꿈 내성).
  * 규칙: 이후 step 9~14 에서 이 시험은 고치지 않고 통과시킨다 (고쳐야 하면 멈추고 사람 결정).
  */
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test")
-@Import(KisBoundaryEventCaptureConfig::class)
+@Import(KisBoundaryEventCaptureConfig::class, KisFakeExecutionWebSocketTransportConfig::class)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @Suppress("LongParameterList") // 스프링 생성자 주입으로 저장소를 받는 시험 클래스라 매개변수 수를 줄일 수 없음
 class KisExecutionNoticeBoundaryCharacterizationTest(
-    private val parser: KisExecutionNoticeParser,
-    private val noticeService: KisExecutionNoticeService,
+    private val webSocketManager: KisExecutionWebSocketManager,
+    private val webSocketTransport: KisFakeExecutionWebSocketTransport,
     private val accountRepository: AccountRepository,
     private val orderRepository: OrderRepository,
     private val positionRepository: PositionRepository,
@@ -73,6 +74,9 @@ class KisExecutionNoticeBoundaryCharacterizationTest(
     @MockitoBean
     lateinit var collectorSubscriptionPort: CollectorSubscriptionPort
 
+    @MockitoBean
+    lateinit var kisTokenManager: KisTokenManager
+
     private val transactionTemplate = TransactionTemplate(transactionManager)
 
     companion object {
@@ -83,6 +87,13 @@ class KisExecutionNoticeBoundaryCharacterizationTest(
         @Container
         @ServiceConnection(name = "redis")
         val redis = GenericContainer(DockerImageName.parse("redis:7-alpine")).withExposedPorts(6379)
+    }
+
+    // 웹소켓 연결 때 쓰는 승인키 조회만 고정, 통지 원문은 대역 전송기가 받은 요청의 onMessage 로 넣음
+    @BeforeEach
+    fun stubApprovalKeys() {
+        given(kisTokenManager.getWebSocketApprovalKey("paper")).willReturn("paper-approval-key")
+        given(kisTokenManager.getWebSocketApprovalKey("live")).willReturn("live-approval-key")
     }
 
     // 모드·시장마다 유효 정책은 1건이어야 하므로 클래스 DB 에 한 번만 심는다 (수수료율 0.015%, 최소 100원, 거래세 0.18%)
@@ -107,7 +118,7 @@ class KisExecutionNoticeBoundaryCharacterizationTest(
     fun `KIS_PAPER 매수 전량 체결 통지는 체결 포지션 원장 수수료 초과잠금 해제를 만들고 알림을 낸다`() {
         val seeded = seedBuyOrder("notice-paper-buy", TradingMode.KIS_PAPER, "12345678-01", "PAPERORD01")
 
-        noticeService.handle(parse(paperNotice("PAPERORD01", "00003", "02", qty = "10", price = "69900"), "paper"))
+        deliver("paper", paperNotice("PAPERORD01", "00003", "02", qty = "10", price = "69900"))
 
         val order = orderRepository.findById(seeded.orderId).orElseThrow()
         assertThat(order.orderStatus).isEqualTo(OrderStatus.FILLED)
@@ -172,10 +183,10 @@ class KisExecutionNoticeBoundaryCharacterizationTest(
     @Test
     fun `KIS_PAPER 매수 부분 체결 통지는 최소 수수료를 적용하고 잠금을 남기며 같은 통지 재수신은 무시한다`() {
         val seeded = seedBuyOrder("notice-paper-partial", TradingMode.KIS_PAPER, "12345678-01", "PAPERORD02")
-        val notice = parse(paperNotice("PAPERORD02", "00001", "02", qty = "4", price = "69900"), "paper")
+        val raw = paperNotice("PAPERORD02", "00001", "02", qty = "4", price = "69900")
 
-        noticeService.handle(notice)
-        noticeService.handle(notice)
+        deliver("paper", raw)
+        deliver("paper", raw)
 
         val order = orderRepository.findById(seeded.orderId).orElseThrow()
         assertThat(order.orderStatus).isEqualTo(OrderStatus.PARTIAL)
@@ -215,7 +226,7 @@ class KisExecutionNoticeBoundaryCharacterizationTest(
     fun `KIS_LIVE 매도 전량 체결 통지는 체결 포지션 매도 원장 수수료 정산을 만들고 예수금은 건드리지 않는다`() {
         val seeded = seedSellOrder("notice-live-sell", "87654321-01", "LIVEORD01")
 
-        noticeService.handle(parse(liveNotice("LIVEORD01", "00007", qty = "10", price = "70000"), "live"))
+        deliver("live", liveNotice("LIVEORD01", "00007", qty = "10", price = "70000"))
 
         val order = orderRepository.findById(seeded.orderId).orElseThrow()
         assertThat(order.orderStatus).isEqualTo(OrderStatus.FILLED)
@@ -339,9 +350,10 @@ class KisExecutionNoticeBoundaryCharacterizationTest(
         return head + tail
     }
 
-    private fun parse(raw: String, mode: String): KisExecutionNotice {
-        val notice = parser.parse(raw, mode)
-        return requireNotNull(notice) { "notice not parsed: $raw" }
+    // 웹소켓 연결을 열고(승인키는 토큰 관리자 mock) 대역 전송기가 받은 요청의 onMessage 로 통지 원문 1건을 넣음
+    private fun deliver(mode: String, raw: String) {
+        webSocketManager.connectMode(mode)
+        webSocketTransport.lastRequest(mode).onMessage(raw)
     }
 
     private fun ledgerRows(accountId: Long): List<AccountLedger> {

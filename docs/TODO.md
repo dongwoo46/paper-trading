@@ -123,6 +123,12 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - KIS 접수 타임아웃 뒤 우리 주문만 롤백되는데 KIS에는 접수됐을 수 있음(`KisLiveOrderExecutor.kt:30-42`)
   - 출처: multi-broker-kis-toss 계획서 RISK-15, DEC-08 A(사용자 2026-11-16, 2단계는 동작 불변이라 따로 등록)
 
+- [ ] KIS 주문 응답·취소 요청 필드명 대조와 수정 | project: trading-api | phase: kis-order-field-names | priority: P1
+  - 주문 접수는 `output.ORNO`를 읽고 없으면 예외(`KisOrderRestClient.kt:64` `requireNotNull`), 취소 요청은 `ORGN_ORNO`(L76). 주문 조회(L112, L130)와 체결 통지 파서(`KisExecutionNoticeParser.kt:25`)는 `ODNO`
+  - 2차 자료(wikidocs, algolab 등)는 주문 응답 `ODNO`, 취소 요청 `ORGN_ODNO`. 맞다면 KIS 실주문 접수가 매번 예외로 롤백됨. 공식 저장소(koreainvestment/open-trading-api)와 실호출로 확인 필요(미확인)
+  - 같은 자료에 매수 tr_id가 `TTTC0012U`로 바뀌었다는 내용도 있어 tr_id도 함께 대조
+  - 출처: multi-broker-kis-toss step 8 특성화 시험 작성 중 발견(fixture는 지금 코드 동작대로 `ORNO`로 고정), 사용자 결정 2026-11-16 «공식 문서 대조 후 TODO 등록». 2단계는 동작 불변이라 고치지 않음
+
 - [ ] KIS 토큰 평문 저장 해소 | project: trading-api, collector-api | phase: kis-token-encryption | priority: P1
   - `kis:token:{mode}`를 두 서비스가 평문으로 공유(`KisTokenManager.kt:85`, collector `KisTokenRedisStore.kt:12-21`). 토스 토큰 암호기(`AesGcmTokenCipher`)와 같은 형식으로 두 서비스를 함께 이전
   - 출처: multi-broker-kis-toss 계획서 RISK-13, DEC-07 A(사용자 2026-11-16, 3단계 collector 토큰 공유 작업과 함께 검토)

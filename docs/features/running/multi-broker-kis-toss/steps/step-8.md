@@ -77,10 +77,24 @@
 - 경계 (a) `KisAccountBalanceBoundaryCharacterizationTest` 3건: `/api/kis/account/balance` 를 서비스 mock 없이 호출. KIS 응답은 `MockRestServiceServer`, `KisTokenManager` 만 `@MockitoBean`. KIS 호출 URL(쿼리 전체)·`tr_id`·`authorization`·`appkey`·`appsecret`·`custtype`·`Content-Type` 와 응답 JSON 전체(글자 그대로, 금액 자릿수 포함)를 단언. 호출 시각이라 못 박을 수 없는 `asOf` 는 «UTC 오프셋 ISO 문자열이고 1분 안»만 단언
   - PAPER(VTTC8434R, 모의 주소, 로컬 포지션과 대사 3종 목록이 모두 채워지는 입력), LIVE(TTTC8434R, 실전 주소), KIS_PAPER 계좌를 `mode=LIVE` 로 조회(trId·주소는 계좌 모드가 아니라 `mode` 파라미터가 정함, 가정 2) 
 - 경계 (b) `KisOrderIntakeBoundaryCharacterizationTest` 4건: HTTP `POST /api/v1/accounts/{id}/orders` 부터 끝까지. KIS_PAPER 지정가 매수(VTTC0802U), KIS_LIVE 지정가 매수(TTTC0802U), KIS_PAPER 시장가 매도(VTTC0801U, `ORD_DVSN=01`, `ORD_UNPR=0`), KIS_LIVE 지정가 매도(TTTC0801U). KIS 요청은 주소·헤더·본문 전체 문자열, 저장은 `externalOrderId`·주문 `lockedAmount`·계좌 예수금/주문가능/잠금·원장 행(BUY_LOCK 금액·잔액·참조·멱등키)·매도 포지션 잠금 수량, 밖으로 나가는 것은 `SlackNotificationRequestedEvent`(ORDER_CREATED, 문구 전체)와 collector 구독 호출. collector 구독 포트는 외부 호출 차단용으로만 mock
-- 경계 (c) `KisExecutionNoticeBoundaryCharacterizationTest` 3건: 통지 원문 → `KisExecutionNoticeParser` → `KisExecutionNoticeService.handle`. 접수 직후 상태(주문 PENDING, 외부 주문번호, 매수 잠금 원장 또는 보유 전량 잠금)는 도메인 메서드로 DB 에 미리 둠. 수수료 정책(0.015%, 최소 100원, 거래세 0.18%)을 KIS_PAPER·KIS_LIVE 에 심음
+- 경계 (c) `KisExecutionNoticeBoundaryCharacterizationTest` 3건: 입구는 웹소켓 전송 경계(리뷰 1회차 C-01 고침). 대역 전송기 `KisFakeExecutionWebSocketTransport` 가 받은 연결 요청의 `onMessage` 에 통지 원문을 넣고, `KisExecutionWebSocketManager.connectMode` 로 연결을 엶(승인키는 `KisTokenManager` mock 으로 고정). 파서·체결 서비스·통지 타입 이름은 시험 파일에서 쓰지 않아 D27 이름 바꿈과 무관. 접수 직후 상태(주문 PENDING, 외부 주문번호, 매수 잠금 원장 또는 보유 전량 잠금)는 도메인 메서드로 DB 에 미리 둠. 수수료 정책(0.015%, 최소 100원, 거래세 0.18%)을 KIS_PAPER·KIS_LIVE 에 심음
   - KIS_PAPER 매수 전량 체결(체결·포지션·원장 BUY_LOCK/BUY_EXECUTE/FEE/BUY_UNLOCK 금액·잔액·멱등키, 계좌 3종 금액, 구독 해제, 체결 이벤트·Slack 문구)
   - KIS_PAPER 매수 부분 체결 + 같은 통지 재수신(최소 수수료 100 적용, 잠금 잔존, 재수신은 행 안 늘어남)
   - KIS_LIVE 매도 전량 체결(포지션 0, 예수금 불변, SELL_EXECUTE/FEE 원장, 정산 행 수수료·세금·손익)
+- 리뷰 1회차 C-01 확인 표(시험 파일이 직접 쓰는 main 타입과 계획서 §10.3·D22~D27 상 운명. 전수 = 각 파일의 `import com.papertrading.api.*` 줄)
+
+  | 시험 파일 | 쓰는 main 타입 | 계획서상 운명 | 판정 |
+  |---|---|---|---|
+  | `KisAccountBalanceBoundaryCharacterizationTest` | `Account`, `Position` (domain.entity) | 건드리지 않음(§10.3 마지막 줄 `main/domain/entity/**`) | 유지 |
+  | 〃 | `AccountType`, `MarketType`, `TradingMode` | §10.3 변경 표에 없음(D2 스키마 변경 없음, `AccountSource` 만 수정) | 유지 |
+  | 〃 | `KisTokenManager` | 건드리지 않음(DEC-07) | 유지 |
+  | 〃 | `AccountRepository`, `PositionRepository` | 변경 표에 없음 | 유지 |
+  | `KisOrderIntakeBoundaryCharacterizationTest` | `Account`, `Position`, `CollectorSubscriptionPort`, `NotificationEventType`, `OrderStatus`, `TransactionType`, `AccountType`, `MarketType`, `TradingMode`, `KisTokenManager`, 저장소 4종(`AccountRepository`, `AccountLedgerRepository`, `OrderRepository`, `PositionRepository`) | 모두 변경 표에 없거나 «건드리지 않음». D26 이 지우는 실행기 2종(`KisPaperOrderExecutor`, `KisLiveOrderExecutor`)과 새 `BrokerOrderSubmitter`·`KisOrderAdapter` 는 import 0, HTTP 입구(`POST /api/v1/accounts/{id}/orders`)만 사용 | 유지 |
+  | `KisBoundaryEventCapture` | `SlackNotificationRequestedEvent`, `ExecutionFilledEvent` | 변경 표에 없음(`ExecutionProcessor` 도 건드리지 않음) | 유지 |
+  | `KisExecutionNoticeBoundaryCharacterizationTest` (고치기 전) | `KisExecutionNoticeService`, `KisExecutionNotice`, `KisExecutionNoticeParser` | D27: `BrokerExecutionNoticeService` 로 이름 바꿈, `BrokerExecutionNotice` 신설, 파서·통지 수정(§10.3 378~379행) | 고침: 세 타입 import 0 |
+  | 〃 (고친 뒤) | `KisExecutionWebSocketManager`(`connectMode` 공개 메서드), `KisTokenManager`, `FeePolicy`, `Order`, `Account`, `AccountLedger`, `Position`, 열거형 7종, `CollectorSubscriptionPort`, 저장소 7종 | `KisExecutionWebSocketManager` 는 «수정»이지만 D27 은 입력 타입 교체만이라 클래스 이름·`connectMode`·연결 요청 모양은 안 바뀜. 나머지는 변경 없음 | 유지(남은 위험: 웹소켓 관리자 생성자·연결 요청 모양이 step 13 에서 바뀌면 이 시험도 영향을 받음. 계획서에는 그런 변경이 없음) |
+  | `KisFakeExecutionWebSocketTransport` | `KisExecutionWebSocketTransport`, `KisExecutionWebSocketConnectionRequest` | §10.3 변경 표에 없음(같은 파일의 `KisExecutionWebSocketManager` 만 수정 행) | 유지 |
+
 - 공통 지원 `KisBoundaryEventCapture` 1개: 발행된 Slack 이벤트와 `ExecutionFilledEvent` 를 모아 단언(전송기·DB 알림 저장은 건드리지 않음)
 - 린트 정리: 줄 길이 120·함수 매개변수 6 한도 때문에 매개변수 묶음 데이터 클래스로 줄이고, 스프링 생성자 주입 시험 클래스 2개에만 `@Suppress("LongParameterList")` 를 사유 주석과 함께 둠(baseline 파일은 건드리지 않음)
 
@@ -95,6 +109,7 @@
 | 기준선 KIS 모드·KIS 클라이언트를 쓰는 그 밖의 시험 클래스 10개 | 같은 xml | `OrderCommandServiceTest` 37, `ExecutionProcessorTest` 15, `OrderControllerIntegrationTest` 17(KisOrderRestClient mock), `BrokerAccountQueryServiceTest` 23, `BrokerAccountBalanceControllerIntegrationTest` 3, `AccountTest` 58, `PositionCommandServiceTest` 5, `TaxSummaryCommandServiceTest` 8, `TaxSummaryQueryServiceTest` 4, `RedisMarketQuoteAdapterTest` 2 (실패 0). 이 중 시그니처에 묶여 step 10~12 에서 옮겨질 후보는 DEC-05 A 목록(`KisAccountQueryServiceTest`, `KisAccountBalanceAdapterTest`, `OrderCommandServiceTest`)이고, 옮길 때 이 표를 근거로 목록을 남김 |
 | 특성화 시험 3개 클래스 10건이 옛 코드에서 통과 | `./gradlew test --rerun --offline --tests 'com.papertrading.api.characterization.kis.*'`, 종료 코드 0, 시작 뒤 생긴 xml 3개만 집계. 린트 정리 뒤 한 번 더 같은 명령으로 재실행 | 첫 실행·재실행 모두 10건, 실패 0, 오류 0, 건너뜀 0 (잔고 3, 주문 접수 4, 체결 통지 3) |
 | 특성화 시험이 주문 접수·체결 통지를 우연히 지나치지 않음 | 시험 안에서 `MockRestServiceServer.verify()`(기대한 KIS 호출이 실제로 일어났는지)와 응답 JSON 글자 그대로 비교, 행 값 `isEqualByComparingTo` | 통과(기대 호출이 안 일어나면 verify 가 깨짐). 코드 수정 뒤 «시험이 빨개지는지» 되돌림 실험은 main 무수정 범위라 하지 않음 |
+| 리뷰 1회차 C-01 고침 뒤 특성화 시험 | `./gradlew test --rerun --offline --tests 'com.papertrading.api.characterization.kis.*'`, 종료 코드 0, 시작 뒤 생긴 xml 3개만 집계 | 10건, 실패 0, 오류 0, 건너뜀 0 (잔고 3, 주문 접수 4, 체결 통지 3). 단언 값은 고치기 전과 같음 |
 | 린트 | `./gradlew compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` (backend/trading-api) | 종료 코드 0. ktlint·detekt baseline 늘어난 항목 0건 |
 | main 소스 변경 0 | `git status --short backend/trading-api/src/main` | 출력 0줄 |
 
