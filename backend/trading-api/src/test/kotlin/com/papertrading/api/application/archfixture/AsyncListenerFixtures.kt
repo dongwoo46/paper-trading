@@ -5,7 +5,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
-// ArchUnit 규칙 시험용 픽스처, 빈이 아니고(스테레오타입 없음) 실행되지 않으며 DoNotIncludeTests 때문에 본 규칙 시험에도 잡히지 않는다
+// ArchUnit 규칙 시험용 픽스처, 빈 아님(스테레오타입 없음)·미실행·DoNotIncludeTests 로 본 분석 제외
 
 class AfterCommitAsyncListenerFixture {
     @Async

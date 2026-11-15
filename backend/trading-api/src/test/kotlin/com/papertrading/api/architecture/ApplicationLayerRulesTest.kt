@@ -12,7 +12,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-/** PTB9 application 의 @Async 허용 범위(AFTER_COMMIT 리스너 메서드만)를 픽스처 클래스로 시험, 본 규칙 시험은 테스트 클래스를 제외해서 따로 둔다 */
+/** PTB9 application 의 @Async 허용 범위(AFTER_COMMIT 리스너 메서드만) 픽스처 시험, 본 분석은 테스트 클래스를 제외해 별도 */
 class ApplicationLayerRulesTest {
     private fun import(vararg types: Class<*>): JavaClasses = ClassFileImporter().importClasses(*types)
 

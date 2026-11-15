@@ -56,7 +56,7 @@ internal fun asyncOnlyOnAfterCommitListenerMethodsRule(): ArchRule = methods()
     .should()
     .beAnnotatedWith(afterCommitListenerAnnotation)
 
-/** PTB9 클래스 수준 @Async 는 모든 메서드에 걸려 메서드 조건을 우회하므로 application 에서 막는다 */
+/** PTB9 application 의 클래스 수준 @Async 금지, 모든 메서드에 걸려 메서드 조건 우회 */
 internal fun applicationClassesAreNotAsyncRule(): ArchRule = noClasses()
     .that()
     .resideInAPackage(APPLICATION_PACKAGE)
