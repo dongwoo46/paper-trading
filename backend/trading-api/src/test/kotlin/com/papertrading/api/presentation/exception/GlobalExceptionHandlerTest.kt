@@ -5,13 +5,23 @@ import com.papertrading.api.common.exception.InternalErrorException
 import com.papertrading.api.common.exception.LockedDepositInsufficientException
 import com.papertrading.api.common.exception.NotImplementedException
 import com.papertrading.api.common.exception.ServiceUnavailableException
+import com.papertrading.api.common.exception.TossAuthFailedException
 import com.papertrading.api.common.exception.TossIntegrationDisabledException
+import com.papertrading.api.common.exception.TossIpNotAllowedException
+import com.papertrading.api.common.exception.TossMaintenanceException
+import com.papertrading.api.common.exception.TossRateLimitedException
+import com.papertrading.api.common.exception.TossRequestRejectedException
+import com.papertrading.api.common.exception.TossResponseInvalidException
+import com.papertrading.api.common.exception.TossTimeoutException
 import com.papertrading.api.common.exception.TossTokenUnavailableException
+import com.papertrading.api.common.exception.TossUnavailableException
 import com.papertrading.api.support.LogCapture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -99,6 +109,55 @@ class GlobalExceptionHandlerTest {
 
             assertEquals(2, logs.linesOf("GlobalExceptionHandler").count { it.contains(raw) })
         }
+    }
+
+    // 토스 J 하위 예외의 code 와 응답 고정 문구, 예외 메시지에 토스 원문이 있어도 응답에는 싣지 않는다 (D15, AE8)
+    @ParameterizedTest(name = "{0} 는 503 과 고정 문구로 응답한다")
+    @CsvSource(
+        "TOSS_AUTH_FAILED, 토스 인증에 실패했습니다. 토스 키 설정을 확인해 주세요.",
+        "TOSS_IP_NOT_ALLOWED, 토스증권에 이 서버의 IP 가 허용 IP 로 등록돼 있지 않습니다. 토스증권 설정에서 허용 IP 를 등록한 뒤 다시 시도해 주세요.",
+        "TOSS_RATE_LIMITED, 토스 호출 한도를 넘었습니다. 잠시 후 다시 시도해 주세요.",
+        "TOSS_MAINTENANCE, 토스증권이 점검 중입니다. 잠시 후 다시 시도해 주세요.",
+        "TOSS_UNAVAILABLE, 토스증권을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+        "TOSS_TIMEOUT, 토스증권 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.",
+        "TOSS_RESPONSE_INVALID, 토스증권 응답을 해석하지 못했습니다.",
+    )
+    fun `토스 J 범주 code 는 503 과 code 별 고정 문구로 응답하고 예외 메시지는 싣지 않는다`(code: String, expectedMessage: String) {
+        val raw = "토스-원문-RAW-BODY-에러"
+
+        val response = handler.handleServiceUnavailable(ServiceUnavailableException(code, raw))
+
+        assertEquals(503, response.statusCode.value())
+        assertEquals(code, response.body?.code)
+        assertEquals(expectedMessage, response.body?.message)
+        assertFalse(response.body?.message.orEmpty().contains(raw))
+    }
+
+    @Test
+    fun `토스 J 하위 예외 클래스는 각자 code 를 가지고 범주 J 기반이다`() {
+        val expected = mapOf(
+            "TOSS_AUTH_FAILED" to TossAuthFailedException("사유"),
+            "TOSS_IP_NOT_ALLOWED" to TossIpNotAllowedException("사유"),
+            "TOSS_RATE_LIMITED" to TossRateLimitedException("사유"),
+            "TOSS_MAINTENANCE" to TossMaintenanceException("사유"),
+            "TOSS_UNAVAILABLE" to TossUnavailableException("사유"),
+            "TOSS_TIMEOUT" to TossTimeoutException("사유"),
+            "TOSS_RESPONSE_INVALID" to TossResponseInvalidException("사유"),
+        )
+
+        expected.forEach { (code, exception) ->
+            assertEquals(code, exception.errorCode)
+            assertEquals(503, handler.handleServiceUnavailable(exception).statusCode.value(), code)
+        }
+    }
+
+    @Test
+    fun `토스가 입력을 거부한 TOSS_REQUEST_REJECTED 는 A 범주 400 이고 토스 원문을 싣지 않는다`() {
+        val response = handler.handleApiDomain(TossRequestRejectedException(404))
+
+        assertEquals(400, response.statusCode.value())
+        assertEquals("TOSS_REQUEST_REJECTED", response.body?.code)
+        assertEquals("토스가 요청을 거부했습니다. 토스 상태=404", response.body?.message)
     }
 
     @Test

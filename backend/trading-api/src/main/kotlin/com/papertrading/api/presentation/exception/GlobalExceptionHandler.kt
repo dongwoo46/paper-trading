@@ -103,6 +103,13 @@ class GlobalExceptionHandler {
 
     private fun serviceUnavailableMessage(errorCode: String): String = when (errorCode) {
         "TOSS_TOKEN_UNAVAILABLE" -> "토스 액세스 토큰을 사용할 수 없습니다."
+        "TOSS_AUTH_FAILED" -> "토스 인증에 실패했습니다. 토스 키 설정을 확인해 주세요."
+        "TOSS_IP_NOT_ALLOWED" -> TOSS_IP_NOT_ALLOWED_MESSAGE
+        "TOSS_RATE_LIMITED" -> "토스 호출 한도를 넘었습니다. 잠시 후 다시 시도해 주세요."
+        "TOSS_MAINTENANCE" -> "토스증권이 점검 중입니다. 잠시 후 다시 시도해 주세요."
+        "TOSS_UNAVAILABLE" -> "토스증권을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
+        "TOSS_TIMEOUT" -> "토스증권 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요."
+        "TOSS_RESPONSE_INVALID" -> "토스증권 응답을 해석하지 못했습니다."
         else -> "외부 서비스를 일시적으로 사용할 수 없습니다."
     }
 
@@ -114,5 +121,11 @@ class GlobalExceptionHandler {
         "INVALID_RETRY_POLICY" -> "재시도 정책 값이 올바르지 않습니다."
         "WEBHOOK_NOT_CONFIGURED" -> "Webhook이 설정되지 않았습니다."
         else -> "요청 처리 중 오류가 발생했습니다."
+    }
+
+    companion object {
+        // 허용 IP 등록 안내 고정 문구 (D15)
+        private const val TOSS_IP_NOT_ALLOWED_MESSAGE =
+            "토스증권에 이 서버의 IP 가 허용 IP 로 등록돼 있지 않습니다. 토스증권 설정에서 허용 IP 를 등록한 뒤 다시 시도해 주세요."
     }
 }

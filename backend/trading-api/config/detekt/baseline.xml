@@ -75,8 +75,6 @@
     <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$16</ID>
     <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$3</ID>
     <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$8</ID>
-    <ID>MagicNumber:RestTemplateConfig.kt$RestTemplateConfig$10</ID>
-    <ID>MagicNumber:RestTemplateConfig.kt$RestTemplateConfig$5</ID>
     <ID>MagicNumber:Settlement.kt$Settlement.Companion$4</ID>
     <ID>MagicNumber:SnapshotJobRun.kt$SnapshotJobRun$500</ID>
     <ID>MagicNumber:Strategy.kt$Strategy$200</ID>
@@ -177,10 +175,8 @@
     <ID>NewLineAtEndOfFile:OrderSignal.kt$com.papertrading.api.domain.entity.order.OrderSignal.kt</ID>
     <ID>NewLineAtEndOfFile:PortfolioSnapshotDto.kt$com.papertrading.api.presentation.dto.portfolio.PortfolioSnapshotDto.kt</ID>
     <ID>NewLineAtEndOfFile:QueryDslConfig.kt$com.papertrading.api.infrastructure.config.QueryDslConfig.kt</ID>
-    <ID>NewLineAtEndOfFile:RestTemplateConfig.kt$com.papertrading.api.infrastructure.config.RestTemplateConfig.kt</ID>
     <ID>NewLineAtEndOfFile:SlackNotificationRequestedEvent.kt$com.papertrading.api.application.notification.SlackNotificationRequestedEvent.kt</ID>
     <ID>NewLineAtEndOfFile:TestEntityUtils.kt$com.papertrading.api.support.TestEntityUtils.kt</ID>
-    <ID>NewLineAtEndOfFile:TradingApiApplicationTests.kt$com.papertrading.api.TradingApiApplicationTests.kt</ID>
     <ID>NewLineAtEndOfFile:TradingJournalTest.kt$com.papertrading.api.domain.entity.portfolio.TradingJournalTest.kt</ID>
     <ID>ProtectedMemberInFinalClass:Account.kt$Account$protected constructor()</ID>
     <ID>ProtectedMemberInFinalClass:AccountExitTriggerDefault.kt$AccountExitTriggerDefault$protected constructor()</ID>

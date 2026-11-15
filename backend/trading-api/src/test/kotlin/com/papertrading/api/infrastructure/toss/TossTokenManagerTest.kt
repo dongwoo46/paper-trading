@@ -50,6 +50,7 @@ class TossTokenManagerTest {
         lockWaitMillis: Long = 30_000,
         key: String = encryptionKey,
         previousKey: String = "",
+        requestDeadlineMillis: Long = 20_000,
     ) = TossProperties().apply {
         baseUrl = "https://toss.example.invalid"
         clientId = "fake-client-id"
@@ -58,6 +59,7 @@ class TossTokenManagerTest {
         tokenPreviousEncryptionKey = previousKey
         tokenRefreshSkewSeconds = skewSeconds
         tokenLockWaitMillis = lockWaitMillis
+        tokenRequestDeadlineMillis = requestDeadlineMillis
     }
 
     private fun manager(
@@ -428,5 +430,166 @@ class TossTokenManagerTest {
         assertEquals(0, issuer.callCount)
         assertNull(rawToken())
         assertThrows(TossIntegrationDisabledException::class.java) { manager.invalidate("아무-토큰") }
+    }
+
+    // ---- R1-01: TTL = max(expires_in − 여유, max(expires_in / 2, 1)), 수명에 대해 단조 ----
+
+    @Test
+    fun `여유 60초에서 expires_in 60 61 119 120 121 의 TTL 은 30 30 59 60 61 이다`() {
+        // expires_in 과 기대 TTL(초), 61 과 119 는 옛 식에서 1 과 59 였다
+        listOf(60L to 30L, 61L to 30L, 119L to 59L, 120L to 60L, 121L to 61L).forEach { (expiresIn, expectedTtl) ->
+            redisTemplate.delete(TossTokenManager.TOKEN_KEY)
+
+            manager(FakeTossTokenIssuer(expiresInSeconds = expiresIn), properties(skewSeconds = 60)).getToken()
+
+            val ttl = requireNotNull(redisTemplate.getExpire(TossTokenManager.TOKEN_KEY, TimeUnit.SECONDS))
+            assertTrue(ttl in (expectedTtl - 1)..expectedTtl, "expires_in=$expiresIn ttl=$ttl expected=$expectedTtl")
+        }
+    }
+
+    @Test
+    fun `TTL 식은 여유 몇 이든 수명이 길수록 줄지 않고 expires_in 절반 아래로 내려가지 않는다`() {
+        listOf(0L, 1L, 60L, 300L).forEach { skew ->
+            var previous = TossTokenManager.storageTtlSeconds(0, skew)
+            (1L..1_000L).forEach { expiresIn ->
+                val ttl = TossTokenManager.storageTtlSeconds(expiresIn, skew)
+                assertTrue(ttl >= previous, "비단조: skew=$skew expires_in=$expiresIn ttl=$ttl previous=$previous")
+                assertTrue(ttl >= maxOf(expiresIn / 2, 1L), "절반 미만: skew=$skew expires_in=$expiresIn ttl=$ttl")
+                val upper = maxOf(expiresIn - skew, expiresIn / 2, 1L)
+                assertTrue(ttl <= upper, "식 초과: skew=$skew expires_in=$expiresIn ttl=$ttl")
+                previous = ttl
+            }
+        }
+    }
+
+    @Test
+    fun `뒤 항이 쓰일 때만 warn 이 1회 나고 여유를 빼도 절반 이상이면 warn 이 없다`() {
+        LogCapture().use { logs ->
+            manager(FakeTossTokenIssuer(expiresInSeconds = 61), properties(skewSeconds = 60)).getToken()
+            val reducedWarns = logs.linesOf("TossTokenManager").filter { it.contains(" WARN ") }
+            assertEquals(1, reducedWarns.size, reducedWarns.toString())
+
+            redisTemplate.delete(TossTokenManager.TOKEN_KEY)
+            manager(FakeTossTokenIssuer(expiresInSeconds = 120), properties(skewSeconds = 60)).getToken()
+            manager(FakeTossTokenIssuer(expiresInSeconds = 3_600), properties(skewSeconds = 60)).getToken()
+            val warnsAfter = logs.linesOf("TossTokenManager").filter { it.contains(" WARN ") }
+            assertEquals(1, warnsAfter.size, "경계(120)와 긴 수명은 warn 없음: $warnsAfter")
+        }
+    }
+
+    // ---- R1-02: 요청 하나의 전체 상한, 락을 얻은 시점의 남은 시간이 발급 최악(연결 5초+읽기 10초)보다 짧으면 발급하지 않음 ----
+
+    // 다른 프로세스가 같은 키로 암호화해 저장한 상황
+    private fun storeEncrypted(token: String) {
+        redisTemplate.opsForValue().set(TossTokenManager.TOKEN_KEY, cipher.encrypt(token, TossTokenManager.TOKEN_KEY))
+    }
+
+    // 락 보유자가 발급에 실패해 락만 풀린 상황을 요청 시작 뒤 releaseAfterMillis 에 재현
+    private fun waiterAcquiringLockAfter(releaseAfterMillis: Long, issuer: FakeTossTokenIssuer): Result<String> {
+        val holder = requireNotNull(lock.tryAcquire(TossTokenManager.LOCK_KEY, 60_000))
+        val start = 1_000L
+        val clock = AtomicLong(start)
+        val manager = manager(
+            issuer,
+            properties(lockWaitMillis = 60_000, requestDeadlineMillis = 20_000),
+            nowMillis = clock::get,
+            sleeper = { millis ->
+                clock.addAndGet(millis)
+                if (clock.get() - start >= releaseAfterMillis) lock.release(TossTokenManager.LOCK_KEY, holder)
+            },
+        )
+        return runCatching { manager.getToken() }
+    }
+
+    @Test
+    fun `대기 5초 뒤 락을 얻어 남은 시간이 발급 최악 15초 이상이면 발급한다`() {
+        listOf(4_900L, 5_000L).forEach { releaseAfter ->
+            redisTemplate.delete(listOf(TossTokenManager.TOKEN_KEY, TossTokenManager.LOCK_KEY))
+            val issuer = FakeTossTokenIssuer()
+
+            val result = waiterAcquiringLockAfter(releaseAfter, issuer)
+
+            val detail = "releaseAfter=$releaseAfter ${result.exceptionOrNull()}"
+            assertEquals("fake-access-token-1", result.getOrNull(), detail)
+            assertEquals(1, issuer.callCount, "releaseAfter=$releaseAfter")
+            assertNull(redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "발급 뒤 락 해제")
+        }
+    }
+
+    @Test
+    fun `대기 5_1초 뒤 락을 얻어 남은 시간이 15초보다 짧으면 발급 0회이고 락을 풀고 TOSS_TOKEN_UNAVAILABLE 이다`() {
+        val issuer = FakeTossTokenIssuer()
+
+        val result = waiterAcquiringLockAfter(5_100, issuer)
+
+        val error = result.exceptionOrNull()
+        assertTrue(error is TossTokenUnavailableException, "error=$error")
+        assertEquals("TOSS_TOKEN_UNAVAILABLE", (error as TossTokenUnavailableException).errorCode)
+        assertEquals(0, issuer.callCount)
+        assertNull(redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "락 해제")
+        assertNull(rawToken())
+    }
+
+    @Test
+    fun `락 대기 한도가 요청 전체 상한보다 길어도 요청 시작 20초에 멈춘다`() {
+        val issuer = FakeTossTokenIssuer()
+        requireNotNull(lock.tryAcquire(TossTokenManager.LOCK_KEY, 60_000))
+        val clock = AtomicLong(1_000)
+        val manager = manager(
+            issuer,
+            properties(lockWaitMillis = 60_000, requestDeadlineMillis = 20_000),
+            nowMillis = clock::get,
+            sleeper = { clock.addAndGet(it) },
+        )
+
+        assertThrows(TossTokenUnavailableException::class.java) { manager.getToken() }
+
+        val elapsed = clock.get() - 1_000
+        assertTrue(elapsed in 20_000..20_100, "elapsed=$elapsed")
+        assertEquals(0, issuer.callCount)
+    }
+
+    @Test
+    fun `발급을 포기할 시점이 지나도 락 보유자가 저장한 토큰은 상한 안에서 읽어 쓴다`() {
+        val issuer = FakeTossTokenIssuer()
+        val holder = requireNotNull(lock.tryAcquire(TossTokenManager.LOCK_KEY, 60_000))
+        val saved = "락-보유자가-늦게-저장한-토큰"
+        val start = 1_000L
+        val clock = AtomicLong(start)
+        val manager = manager(
+            issuer,
+            properties(lockWaitMillis = 60_000, requestDeadlineMillis = 20_000),
+            nowMillis = clock::get,
+            sleeper = { millis ->
+                clock.addAndGet(millis)
+                if (clock.get() - start >= 18_000) {
+                    storeEncrypted(saved)
+                }
+            },
+        )
+
+        assertEquals(saved, manager.getToken())
+        assertEquals(0, issuer.callCount)
+        assertEquals(holder, redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "남의 락은 그대로")
+    }
+
+    @Test
+    fun `락을 얻은 직후 재확인에서 토큰이 있으면 남은 시간이 짧아도 그 토큰을 쓰고 발급 시간 검사는 하지 않는다`() {
+        val issuer = FakeTossTokenIssuer()
+        val other = "다른-프로세스가-저장한-토큰"
+        val clock = AtomicLong(1_000)
+        val racingLock = object : RedisDistributedLock(redisTemplate) {
+            override fun tryAcquire(key: String, ttlMillis: Long): String? {
+                // 락을 얻기 직전에 시간이 18초 흐르고 다른 쪽이 토큰을 저장
+                clock.addAndGet(18_000)
+                storeEncrypted(other)
+                return super.tryAcquire(key, ttlMillis)
+            }
+        }
+        val manager = TossTokenManager(properties(), redisTemplate, racingLock, issuer, clock::get, Thread::sleep)
+
+        assertEquals(other, manager.getToken())
+        assertEquals(0, issuer.callCount)
+        assertNull(redisTemplate.opsForValue().get(TossTokenManager.LOCK_KEY), "락 해제")
     }
 }

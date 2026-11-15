@@ -10,7 +10,13 @@ class RestTemplateConfig {
 
     @Bean
     fun restTemplate(builder: RestTemplateBuilder) = builder
-        .connectTimeout(Duration.ofSeconds(5))
-        .readTimeout(Duration.ofSeconds(10))
+        .connectTimeout(Duration.ofSeconds(CONNECT_TIMEOUT_SECONDS))
+        .readTimeout(Duration.ofSeconds(READ_TIMEOUT_SECONDS))
         .build()
+
+    companion object {
+        // 토스 토큰 발급 최악 소요(락 TTL 과 요청 전체 상한의 근거)가 이 값에서 유도되므로 한 곳에 둠
+        const val CONNECT_TIMEOUT_SECONDS = 5L
+        const val READ_TIMEOUT_SECONDS = 10L
+    }
 }

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.Configuration
 import java.util.Base64
@@ -152,6 +153,13 @@ class TossPropertiesTest {
         "trading.toss.token-refresh-skew-seconds, -1, TOSS_TOKEN_REFRESH_SKEW_SECONDS(범위 오류)",
         "trading.toss.token-lock-wait-millis, 0, TOSS_TOKEN_LOCK_WAIT_MILLIS(범위 오류)",
         "trading.toss.token-lock-wait-millis, -5, TOSS_TOKEN_LOCK_WAIT_MILLIS(범위 오류)",
+        "trading.toss.token-request-deadline-millis, 15000, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
+        "trading.toss.token-request-deadline-millis, 0, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
+        "trading.toss.token-request-deadline-millis, -1, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
+        "trading.toss.rate-limit-max-retries, -1, TOSS_RATE_LIMIT_MAX_RETRIES(범위 오류)",
+        "trading.toss.rate-limit-max-wait-millis, -1, TOSS_RATE_LIMIT_MAX_WAIT_MILLIS(범위 오류)",
+        "trading.toss.rate-limits.ASSET, 0, TOSS_RATE_LIMIT_ASSET(범위 오류)",
+        "trading.toss.rate-limits.MARKET_DATA_CHART, -2, TOSS_RATE_LIMIT_MARKET_DATA_CHART(범위 오류)",
     )
     fun `선택 키가 범위를 벗어나면 토스만 비활성이고 컨텍스트는 기동한다`(property: String, value: String, expectedName: String) {
         runner.withPropertyValues(*fullProperties(property to value)).run { context ->
@@ -171,6 +179,10 @@ class TossPropertiesTest {
         "trading.toss.token-lock-ttl-millis, 15001",
         "trading.toss.token-refresh-skew-seconds, 0",
         "trading.toss.token-lock-wait-millis, 1",
+        "trading.toss.token-request-deadline-millis, 15001",
+        "trading.toss.rate-limit-max-retries, 0",
+        "trading.toss.rate-limit-max-wait-millis, 0",
+        "trading.toss.rate-limits.ASSET, 1",
     )
     fun `선택 키가 경계값 안이면 활성이다`(property: String, value: String) {
         runner.withPropertyValues(*fullProperties(property to value)).run { context ->
@@ -221,5 +233,67 @@ class TossPropertiesTest {
         runner.run { context ->
             assertEquals("", context.getBean(TossProperties::class.java).baseUrl)
         }
+    }
+
+    @Test
+    fun `호출 한도 그룹은 설정으로 받고 코드에는 기본 수치를 두지 않는다`() {
+        runner.withPropertyValues(
+            "trading.toss.rate-limits.MARKET_DATA_CHART=7",
+            "trading.toss.rate-limits.AUTH=3",
+            "trading.toss.rate-limits.order-info=4",
+        ).run { context ->
+            assertEquals(
+                mapOf(
+                    TossRateLimitGroup.MARKET_DATA_CHART to 7,
+                    TossRateLimitGroup.AUTH to 3,
+                    TossRateLimitGroup.ORDER_INFO to 4,
+                ),
+                context.getBean(TossProperties::class.java).rateLimits,
+            )
+        }
+        runner.run { context ->
+            assertEquals(emptyMap<TossRateLimitGroup, Int>(), context.getBean(TossProperties::class.java).rateLimits)
+        }
+    }
+
+    // 한도 기본값의 출처는 application.yaml 하나, 값은 조사 문서(2026-11-15) 수치
+    @Test
+    fun `application yaml 이 새 선택 키의 기본값과 그룹별 한도 기본값을 준다`() {
+        runner.withInitializer(ConfigDataApplicationContextInitializer()).run { context ->
+            val properties = context.getBean(TossProperties::class.java)
+
+            assertEquals(20_000L, properties.tokenRequestDeadlineMillis)
+            assertEquals(2, properties.rateLimitMaxRetries)
+            assertEquals(5_000L, properties.rateLimitMaxWaitMillis)
+            assertEquals(
+                mapOf(
+                    TossRateLimitGroup.AUTH to 5,
+                    TossRateLimitGroup.ACCOUNT to 1,
+                    TossRateLimitGroup.ASSET to 5,
+                    TossRateLimitGroup.ORDER_INFO to 6,
+                    TossRateLimitGroup.MARKET_DATA to 15,
+                    TossRateLimitGroup.MARKET_DATA_CHART to 20,
+                ),
+                properties.rateLimits,
+            )
+        }
+    }
+
+    @Test
+    fun `환경변수 이름으로 그룹별 한도와 새 선택 키를 덮을 수 있다`() {
+        runner.withInitializer(ConfigDataApplicationContextInitializer())
+            .withSystemProperties(
+                "TOSS_RATE_LIMIT_ACCOUNT=2",
+                "TOSS_TOKEN_REQUEST_DEADLINE_MILLIS=25000",
+                "TOSS_RATE_LIMIT_MAX_RETRIES=4",
+                "TOSS_RATE_LIMIT_MAX_WAIT_MILLIS=9000",
+            ).run { context ->
+                val properties = context.getBean(TossProperties::class.java)
+
+                assertEquals(2, properties.rateLimits[TossRateLimitGroup.ACCOUNT])
+                assertEquals(25_000L, properties.tokenRequestDeadlineMillis)
+                assertEquals(4, properties.rateLimitMaxRetries)
+                assertEquals(9_000L, properties.rateLimitMaxWaitMillis)
+            }
     }
 }

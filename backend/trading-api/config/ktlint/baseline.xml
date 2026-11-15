@@ -461,9 +461,6 @@
     <file name="src/main/kotlin/com/papertrading/api/infrastructure/config/QueryDslConfig.kt">
         <error line="17" column="1" source="standard:final-newline" />
     </file>
-    <file name="src/main/kotlin/com/papertrading/api/infrastructure/config/RestTemplateConfig.kt">
-        <error line="16" column="1" source="standard:final-newline" />
-    </file>
     <file name="src/main/kotlin/com/papertrading/api/infrastructure/kis/KisAccountBalanceAdapter.kt">
         <error line="86" column="34" source="standard:trailing-comma-on-call-site" />
         <error line="97" column="1" source="standard:blank-line-between-when-conditions" />
@@ -823,9 +820,6 @@
         <error line="92" column="14" source="standard:trailing-comma-on-call-site" />
         <error line="96" column="75" source="standard:function-signature" />
         <error line="98" column="77" source="standard:trailing-comma-on-call-site" />
-    </file>
-    <file name="src/test/kotlin/com/papertrading/api/TradingApiApplicationTests.kt">
-        <error line="31" column="1" source="standard:final-newline" />
     </file>
     <file name="src/test/kotlin/com/papertrading/api/application/account/AccountCommandServiceTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />

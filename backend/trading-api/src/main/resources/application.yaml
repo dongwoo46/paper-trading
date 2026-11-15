@@ -58,6 +58,17 @@ trading:
     token-refresh-skew-seconds: ${TOSS_TOKEN_REFRESH_SKEW_SECONDS:60}
     token-lock-ttl-millis: ${TOSS_TOKEN_LOCK_TTL_MILLIS:20000}
     token-lock-wait-millis: ${TOSS_TOKEN_LOCK_WAIT_MILLIS:15000}
+    token-request-deadline-millis: ${TOSS_TOKEN_REQUEST_DEADLINE_MILLIS:20000}
+    rate-limit-max-retries: ${TOSS_RATE_LIMIT_MAX_RETRIES:2}
+    rate-limit-max-wait-millis: ${TOSS_RATE_LIMIT_MAX_WAIT_MILLIS:5000}
+    # 초당 호출 한도, 기본값은 토스 조사 문서(2026-11-15) 수치이고 토스가 사전 공지 없이 바꿀 수 있어 환경변수로 덮음
+    rate-limits:
+      AUTH: ${TOSS_RATE_LIMIT_AUTH:5}
+      ACCOUNT: ${TOSS_RATE_LIMIT_ACCOUNT:1}
+      ASSET: ${TOSS_RATE_LIMIT_ASSET:5}
+      ORDER_INFO: ${TOSS_RATE_LIMIT_ORDER_INFO:6}
+      MARKET_DATA: ${TOSS_RATE_LIMIT_MARKET_DATA:15}
+      MARKET_DATA_CHART: ${TOSS_RATE_LIMIT_MARKET_DATA_CHART:20}
   notification:
     slack:
       enabled: ${TRADING_NOTIFICATION_SLACK_ENABLED:false}
