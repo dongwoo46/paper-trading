@@ -21,7 +21,7 @@
 | Title | 잔고 공통 포트와 토스 어댑터 |
 | Feature | multi-broker-kis-toss |
 | Based on | development-plan §5 1단계 6번(잔고), §2 D3(accountSeq 연결)·D7(잔고 공통 포트, cashBuyingPower 칸)·D8(모드 전수 when)·D9(내부 API 경로)·D13(BigDecimal)·D14(결측)·D15(에러 범주)·D16(한도), §3 바꿀 파일, §6 잔고 어댑터·모드 누락 표·컨트롤러·부동소수점·로그 누출 행, §7 수치 무결성·단위·결측 행, open-questions FLAG-04·07·10·18, 조사 문서 «개별 API 스키마», 공식 명세 openapi.json 1.2.28(Account·HoldingsOverview·BuyingPowerResponse), review/step5-code-review.md C-01~C-05, 사람 결정 2026-11-15(수익률 퍼센트 통일, accountNo 끝 4자리) |
-| Status | in progress |
+| Status | done |
 | Owner |  |
 
 ---
@@ -98,14 +98,14 @@
 | 린트 | `./gradlew compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` 메인 재실행 | exit 0, 기준선 증가 0 |
 | 부동소수점 | `TossFloatingPointScanTest` + 메인 grep | Double·Float·toDouble·toFloat 0건(주석 1줄 제외) |
 | 범위 | `git status` | `infrastructure/kis/**`·collector-api·trading-web 변경 0 |
-| 전체 스위트 | 푸시 뒤 CI `full-test` | 대기 |
-| 코드 리뷰 | step 6 리뷰 | 대기 |
+| 전체 스위트 | 커밋 `2692c2d` 푸시 뒤 CI `full-test` 실행 43723583394 | success |
+| 코드 리뷰 | `review/step6-code-review.md` 1회차, `review-verdict.js` | 머지 가능, 막는 지적 0 · 후속 7 |
 
 ---
 
 ## 7. Result  (record)
 
-- Done: (리뷰·CI 뒤 사람 판단)
+- Done: §4 완료 기준을 시험(메인 재실행 297건)·린트·CI 전체 스위트(43723583394)·코드 리뷰(막는 지적 0)로 충족, 커밋 `2692c2d`. 사람이 2026-11-15 «done 처리»와 후속 «나눠서 처리»를 고름: S6-01·S6-02·S6-04·S6-05는 step 7 범위, S6-03(실호출 대조 필요)·S6-06(기존)·S6-07은 findings 원장
 - Changed files / PR: 경로는 `backend/trading-api/src/` 기준
   - main 신설: `application/account/{BrokerAccountQueryService,port/BrokerAccountBalancePort,result/BrokerAccountBalanceResult}.kt`, `application/toss/{TossAccountListQueryService,port/TossAccountListPort}.kt`, `common/exception/{BrokerBalanceNotSupported,NotBrokerAccount,TossAccountNotLinked}Exception.kt`, `infrastructure/toss/{TossAccountBalanceAdapter,TossAccountListClient}.kt`, `infrastructure/toss/dto/{TossHoldingsOverview,TossHoldingsItem,TossBuyingPower,TossAccount}.kt`, `presentation/controller/{BrokerAccountBalance,TossAccount}Controller.kt`, `presentation/dto/account/BrokerAccountBalanceResponse.kt`, `presentation/dto/toss/TossAccountResponse.kt`
   - main 수정: `TossRateLimiter`, `TossApiClient`, `TossJson`, `TossProperties`, `TossTokenManager`
