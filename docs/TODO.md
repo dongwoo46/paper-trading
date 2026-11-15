@@ -95,6 +95,36 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ## trading-api
 
+### P1 — 돈·상태 결함 바로잡기 (감사 원장 A 갈래)
+
+- [ ] trading-api 돈·상태 결함 바로잡기 (체결 금액·잠금 해제·취소·멱등·수수료) | project: trading-api | phase: trading-api-money-state | priority: P1
+  - 상태: 계획 승인(2026-11-15), PR-A1 착수. 계획 `docs/features/running/trading-api-money-state/development-plan.md`, 진행 `state.md`
+  - 범위: PR-A1 체결 금액·최종 해제(#8 #127 #108) → A2 취소 해제(#253) → A3 KIS 접수 주문 취소 차단 → A4 멱등 → A5 수수료 → A6 조건부 보정. B·C·D 갈래는 이 항목 밖
+  - 원장 밖 관찰 O1~O3 은 DEC-08 로 다음 묶음. 아래 두 항목은 이 기능에서 미룬 별도 항목
+
+- [ ] 금액 열 자리수 확장 후속 (보고·평가·가격 열 점검과 V13 적용 절차) | project: trading-api | phase: trading-api-amount-column-scale | priority: P2
+  - 해소: 체결·잠금·원장·정산·포지션 매수 누적 금액 열은 PR-A1 에서 numeric(28,12)로 확장(리뷰 P-05·R2-N2·R2-N3, 사람 결정 2026-11-15)
+  - 남은 것: 보고용 사본 열(daily_balances.cash_balance 등)·평가 파생 열(positions.evaluation_amount·unrealized_pnl)은 저장 때 4자리로 반올림됨 — 돈인지 평가인지 사람 확인 후 확장 여부 결정
+  - 남은 것: 금액 필드가 소수 12자리까지 응답될 수 있음 — 다음 trading-web 주문·계좌 화면에서 표시 자리수 정리
+
+- [ ] 스키마 관리 방식 점검 (ddl-auto: create, Flyway 미사용) | project: trading-api | phase: trading-api-schema-management | priority: P1
+  - 발견(PR-A1, 열 확장 작업 중): trading-api 에 Flyway 의존성이 없고 application.yaml 이 `ddl-auto: create` 라 db/migration 의 V2~V13 SQL 은 자동 실행되지 않음. 운영에서 기동마다 스키마를 만드는 설정인지, 데이터가 유지되는 경로가 따로 있는지 사람이 확인 필요
+  - V13 열 확장은 기존 DB 에 수동 적용하는 스크립트로 둠
+
+- [ ] LOCAL 매도 대금이 예수금에 입금되지 않는 의심 결함 확인 (원장 밖 관찰 O5) | project: trading-api | phase: trading-api-local-sell-deposit | priority: P1
+  - 근거: 실제 PostgreSQL 통합 시험에서 LOCAL 매도 체결 뒤 예수금 증가분 0(원장 SELL_EXECUTE 는 30.0002). 포지션 원자 차감 쿼리(`applySellExecutionAtomically`, clearAutomatically)가 영속성 컨텍스트를 비운 뒤 `account.receiveSellProceeds` 가 분리된 엔티티를 바꿔 저장되지 않는 것으로 보임(기존 코드, PTD5)
+  - A1 범위 밖이라 고치지 않고 기록만 — 재현 시험부터 쓰고 고칠 것
+
+- [ ] ExecutionProcessor·주문 서비스 시험의 리포지토리 목 교체 (리뷰 P-14, 팀 TT7·T2) | project: trading-api | phase: trading-api-port-test-doubles | priority: P3
+  - 포트 도입(C 갈래) 뒤 리포지토리 목을 포트 가짜로 바꿈. 계획 §9 범위 밖
+
+- [ ] KIS 체결 통지 파싱 실패를 조용히 버리는 문제 (KisExecutionNoticeParser 의 runCatching, 리뷰 R2 형제) | project: trading-api | phase: trading-api-kis-notice-parse-log | priority: P3
+  - 파싱 못 한 통지가 기록 없이 null 로 사라짐(FH6). 비밀값을 싣지 않는 선에서 사유를 기록
+
+- [ ] trading-api 주문 오류 분류 정리 (AE19, DEC-07) | project: trading-api | phase: trading-api-order-errors | priority: P2
+  - 손댄 파일 Order.kt·OrderCommandService.kt 의 check·require 400 을 분류표대로(남의 주문 404, 취소 불가 상태 409, 수량 부족 409 등), #591 포지션 없음 조용히 건너뜀 포함
+  - 커밋 기록: `API-Errors-Deferred: backend/trading-api/src/main/kotlin/com/papertrading/api/domain/entity/order/Order.kt — 오류 분류 정리는 별도 항목`
+
 ### P0 — 포지션 청산 트리거 모델 리팩터링 ⚠️ 최우선
 
 - [x] PositionExitTrigger 단일 조건 모델 리팩터링 | project: trading-api | phase: position-exit-trigger-model-refactor | priority: P0 | done: 2026-05-19

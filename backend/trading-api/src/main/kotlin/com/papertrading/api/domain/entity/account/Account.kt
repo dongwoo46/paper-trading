@@ -46,15 +46,15 @@ class Account protected constructor() : BaseAuditEntity() {
     lateinit var tradingMode: TradingMode
         private set
 
-    @Column(name = "deposit", nullable = false, precision = 20, scale = 4)
+    @Column(name = "deposit", nullable = false, precision = 28, scale = 12)
     lateinit var deposit: BigDecimal
         private set
 
-    @Column(name = "available_deposit", nullable = false, precision = 20, scale = 4)
+    @Column(name = "available_deposit", nullable = false, precision = 28, scale = 12)
     lateinit var availableDeposit: BigDecimal
         private set
 
-    @Column(name = "locked_deposit", nullable = false, precision = 20, scale = 4)
+    @Column(name = "locked_deposit", nullable = false, precision = 28, scale = 12)
     lateinit var lockedDeposit: BigDecimal
         private set
 

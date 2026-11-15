@@ -1,17 +1,19 @@
 package com.papertrading.api.application.order
 
+import com.papertrading.api.application.notification.SlackNotificationEventPublisher
+import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.common.maskKisAccountNumber
+import com.papertrading.api.domain.entity.account.AccountLedger
+import com.papertrading.api.domain.entity.order.Execution
+import com.papertrading.api.domain.entity.order.Order
+import com.papertrading.api.domain.entity.position.Position
+import com.papertrading.api.domain.entity.settlement.Settlement
+import com.papertrading.api.domain.entity.settlement.SettlementExecution
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.event.ExecutionFilledEvent
-import com.papertrading.api.application.notification.SlackNotificationEventPublisher
-import com.papertrading.api.common.exception.AccountNotFoundException
-import com.papertrading.api.common.exception.PositionNotFoundException
-import com.papertrading.api.domain.entity.account.AccountLedger
-import com.papertrading.api.domain.entity.order.Execution
-import com.papertrading.api.domain.entity.position.Position
-import com.papertrading.api.domain.entity.settlement.Settlement
-import com.papertrading.api.domain.entity.settlement.SettlementExecution
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
@@ -79,7 +81,7 @@ class ExecutionProcessor(
             orderId = orderId,
             fillPrice = fillPrice,
             fillQty = fillQty,
-            externalExecutionId  = externalExecutionId,
+            externalExecutionId = externalExecutionId,
             executedAt = executedAt,
         )
     }
@@ -95,7 +97,14 @@ class ExecutionProcessor(
         if (executionRepository.findByExternalExecutionId(externalExecutionId).isPresent) return
 
         val order = orderRepository.findByIdWithOptimisticLock(orderId).orElse(null) ?: return
-        if (order.orderStatus !in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) return
+        if (order.orderStatus !in setOf(OrderStatus.PENDING, OrderStatus.PARTIAL)) {
+            log.warn {
+                "종료된 주문에 새 체결 무시: orderId=$orderId, " +
+                    "externalExecutionId=${maskKisAccountNumber(externalExecutionId)}, " +
+                    "status=${order.orderStatus}"
+            }
+            return
+        }
 
         val accountId = requireNotNull(order.account?.id) { "order.account.id is null: orderId=$orderId" }
         val account = accountRepository.findByIdWithLock(accountId)
@@ -108,16 +117,10 @@ class ExecutionProcessor(
         val feePolicy = feePolicyRepository.findActivePolicy(tradingMode, marketType, Instant.now())
         val feeRate = feePolicy.map { it.feeRate }.orElse(BigDecimal.ZERO)
         val minFee = feePolicy.map { it.minFee }.orElse(BigDecimal.ZERO)
-        val rawFee = fillPrice.multiply(fillQty).multiply(feeRate).setScale(4, RoundingMode.HALF_UP)
+        val rawFee = fillPrice.multiply(fillQty).multiply(feeRate).setScale(Order.AMOUNT_SCALE, RoundingMode.HALF_UP)
         val fee = rawFee.max(minFee)
 
-        val prevQty = order.filledQuantity
-        val prevAvg = order.avgFilledPrice ?: BigDecimal.ZERO
-        val newAvgPrice = if (prevQty == BigDecimal.ZERO) fillPrice
-        else prevAvg.multiply(prevQty).add(fillPrice.multiply(fillQty))
-            .divide(prevQty.add(fillQty), 4, RoundingMode.HALF_UP)
-
-        order.applyExecution(fillQty, newAvgPrice, fee)
+        val executedAmount = order.applyExecution(fillQty, fillPrice, fee)
 
         val execution = executionRepository.save(
             Execution.create(
@@ -132,20 +135,19 @@ class ExecutionProcessor(
                 externalExecutionId = externalExecutionId,
                 executedAt = executedAt,
                 executionMode = tradingMode,
-            )
+            ),
         )
         val executionId = requireNotNull(execution.id) { "saved execution.id is null" }
 
+        // 체결 원장은 매수·매도 공통으로 한 곳에서 저장(동결된 ArchUnit 호출 수 유지)
+        val executionLedger: AccountLedger
         if (order.orderSide == OrderSide.BUY) {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, ticker)
                 .orElseGet { Position.create(account = account, ticker = ticker, marketType = marketType) }
             position.applyBuy(fillQty, fillPrice)
             positionRepository.save(position)
 
-            val cost = fillPrice.multiply(fillQty)
-            accountLedgerRepository.save(
-                account.recordBuyExecution(cost, orderId, executionId, "buy-exec-$executionId")
-            )
+            executionLedger = account.recordBuyExecution(executedAmount, orderId, executionId, "buy-exec-$executionId")
         } else {
             val position = positionRepository.findByAccountIdAndTickerWithLock(accountId, ticker)
                 .orElseThrow { PositionNotFoundException(ticker = ticker) }
@@ -155,25 +157,25 @@ class ExecutionProcessor(
                 "원자적 매도 반영 실패: positionId=$positionId, qty=$fillQty"
             }
 
-            val grossProceeds = fillPrice.multiply(fillQty).setScale(4, RoundingMode.HALF_UP)
-            val netProceeds = grossProceeds.subtract(fee).setScale(4, RoundingMode.HALF_UP)
+            val grossProceeds = executedAmount
+            val netProceeds = grossProceeds.subtract(fee)
 
             when (tradingMode) {
                 TradingMode.LOCAL -> {
                     // LOCAL 모드: 즉시 예수금 입금 (모의투자 UX 유지)
                     account.receiveSellProceeds(netProceeds)
                 }
+
                 TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> {
                     // KIS 모드: 체결 상태 동기화만 수행한다.
                 }
+
                 else -> {
                     account.receiveSellProceeds(netProceeds)
                 }
             }
 
-            accountLedgerRepository.save(
-                account.recordSellExecution(netProceeds, orderId, executionId, "sell-exec-$executionId")
-            )
+            executionLedger = account.recordSellExecution(netProceeds, orderId, executionId, "sell-exec-$executionId")
 
             if (order.orderStatus == OrderStatus.FILLED && order.orderSide == OrderSide.SELL) {
                 val settlement = settlementRepository.save(
@@ -183,25 +185,37 @@ class ExecutionProcessor(
                         execution = execution,
                         tax = feePolicy.map { it.calculateTax(grossProceeds) }.orElse(BigDecimal.ZERO),
                         settledAt = Instant.now(),
-                    )
+                    ),
                 )
                 settlementExecutionRepository.save(
                     SettlementExecution.create(
                         settlement = settlement,
                         execution = execution,
-                    )
+                    ),
                 )
             }
         }
+        accountLedgerRepository.save(executionLedger)
 
         if (fee > BigDecimal.ZERO) {
             accountLedgerRepository.save(
-                account.recordFee(fee, orderId, executionId, "fee-$executionId")
+                account.recordFee(fee, orderId, executionId, "fee-$executionId"),
             )
         }
 
         if (order.orderStatus == OrderStatus.FILLED) {
-            releaseLockedExcess(orderId, order.lockedAmount, fillPrice, fillQty, account)
+            if (order.isLockedAmountExceeded()) {
+                log.warn {
+                    "체결 금액이 주문 잠금을 넘음(해제액 0 하한): orderId=$orderId, " +
+                        "lockedAmount=${order.lockedAmount}, totalAmount=${order.totalAmount}"
+                }
+            }
+            val remainingLock = order.remainingLockedAmount()
+            if (remainingLock > BigDecimal.ZERO) {
+                accountLedgerRepository.save(
+                    account.recordBuyUnlock(remainingLock, orderId, "unlock-excess-$orderId"),
+                )
+            }
             tryUnsubscribe(accountId, ticker, tradingMode.name)
         }
 
@@ -216,9 +230,11 @@ class ExecutionProcessor(
                 quantity = fillQty,
                 price = fillPrice,
                 fee = fee,
-                currency = requireNotNull(account.baseCurrency) { "account.baseCurrency is null: accountId=$accountId" },
+                currency = requireNotNull(account.baseCurrency) {
+                    "account.baseCurrency is null: accountId=$accountId"
+                },
                 executedAt = executedAt,
-            )
+            ),
         )
         val side = requireNotNull(order.orderSide) { "order.orderSide is null: orderId=$orderId" }
         slackNotificationEventPublisher.publishExecutionFilled(
@@ -230,26 +246,14 @@ class ExecutionProcessor(
         )
     }
 
-    /** LIMIT 매수에서 실제 체결가가 잠금 금액보다 낮을 때 차액을 해제 */
-    private fun releaseLockedExcess(orderId: Long, lockedAmount: BigDecimal, fillPrice: BigDecimal, fillQty: BigDecimal, account: com.papertrading.api.domain.entity.account.Account) {
-        val actualCost = fillPrice.multiply(fillQty)
-        val excess = lockedAmount.subtract(actualCost)
-        if (excess <= BigDecimal.ZERO) return
-
-        accountLedgerRepository.save(
-            account.recordBuyUnlock(excess, orderId, "unlock-excess-$orderId")
-        )
-    }
-
     /** 해당 ticker의 활성 주문이 없으면 collector-api 구독 해제 */
     private fun tryUnsubscribe(accountId: Long, ticker: String, mode: String) {
         val activeOrders = orderRepository.findByAccountIdAndOrderStatusIn(
-            accountId, listOf(OrderStatus.PENDING, OrderStatus.PARTIAL)
+            accountId,
+            listOf(OrderStatus.PENDING, OrderStatus.PARTIAL),
         )
         if (activeOrders.none { it.ticker == ticker }) {
             collectorSubscriptionPort.unsubscribe(mode, ticker)
         }
     }
 }
-
-

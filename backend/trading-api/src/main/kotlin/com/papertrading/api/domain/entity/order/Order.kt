@@ -1,12 +1,12 @@
 package com.papertrading.api.domain.entity.order
 
 import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.base.BaseAuditEntity
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
-import com.papertrading.api.domain.entity.base.BaseAuditEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -21,6 +21,7 @@ import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import jakarta.persistence.Version
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 
 /**
@@ -32,7 +33,9 @@ import java.time.Instant
 @Entity
 @Table(
     name = "orders",
-    uniqueConstraints = [UniqueConstraint(name = "uk_orders_account_idempotency", columnNames = ["account_id", "idempotency_key"])]
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_orders_account_idempotency", columnNames = ["account_id", "idempotency_key"]),
+    ],
 )
 class Order protected constructor() : BaseAuditEntity() {
 
@@ -90,7 +93,7 @@ class Order protected constructor() : BaseAuditEntity() {
     var avgFilledPrice: BigDecimal? = null
         private set
 
-    @Column(name = "total_amount", precision = 20, scale = 4)
+    @Column(name = "total_amount", precision = 28, scale = 12)
     var totalAmount: BigDecimal? = null
         private set
 
@@ -99,7 +102,7 @@ class Order protected constructor() : BaseAuditEntity() {
         private set
 
     // 매수 주문 접수 시 잠금된 예수금 — 취소/부분 체결 잔여분 해제 계산에 사용
-    @Column(name = "locked_amount", nullable = false, precision = 20, scale = 4)
+    @Column(name = "locked_amount", nullable = false, precision = 28, scale = 12)
     var lockedAmount: BigDecimal = BigDecimal.ZERO
         private set
 
@@ -131,15 +134,25 @@ class Order protected constructor() : BaseAuditEntity() {
     @Column(name = "version", nullable = false)
     var version: Int = 0
 
-    fun applyExecution(executedQty: BigDecimal, newAvgPrice: BigDecimal, executedFee: BigDecimal) {
+    /** 이번 체결 반영, 반환값은 이번 체결 금액(수량 × 체결가, 반올림 없음) */
+    fun applyExecution(executedQty: BigDecimal, executedPrice: BigDecimal, executedFee: BigDecimal): BigDecimal {
         check(orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PARTIAL) {
             "체결 적용 불가 상태입니다: $orderStatus"
         }
+        require(executedQty > BigDecimal.ZERO) { "체결 수량은 0보다 커야 합니다." }
+        require(executedPrice > BigDecimal.ZERO) { "체결 가격은 0보다 커야 합니다." }
+        require(filledQuantity.add(executedQty) <= quantity) {
+            "체결 수량이 주문 잔여 수량을 넘습니다: orderId=$id, executedQty=$executedQty, " +
+                "remainingQty=${quantity.subtract(filledQuantity)}"
+        }
+        val executedAmount = executedQty.multiply(executedPrice)
+        val newTotalAmount = (totalAmount ?: BigDecimal.ZERO).add(executedAmount)
         filledQuantity = filledQuantity.add(executedQty)
-        avgFilledPrice = newAvgPrice
-        totalAmount = (totalAmount ?: BigDecimal.ZERO).add(executedQty.multiply(newAvgPrice))
+        totalAmount = newTotalAmount
+        avgFilledPrice = newTotalAmount.divide(filledQuantity, AMOUNT_SCALE, RoundingMode.HALF_UP)
         fee = fee.add(executedFee)
         orderStatus = if (filledQuantity >= quantity) OrderStatus.FILLED else OrderStatus.PARTIAL
+        return executedAmount
     }
 
     fun cancel() {
@@ -154,14 +167,24 @@ class Order protected constructor() : BaseAuditEntity() {
         externalOrderId = externalId
     }
 
-    /** 취소 시 계좌에 반환할 잠금 해제 금액 (초기 잠금 - 실체결 금액) */
-    fun remainingLockedAmount(): BigDecimal =
-        lockedAmount.subtract(totalAmount ?: BigDecimal.ZERO).coerceAtLeast(BigDecimal.ZERO)
+    /** 최종 체결 때 계좌에 돌려줄 잠금 잔액 (초기 잠금 - 누적 체결 금액, 0 하한) */
+    fun remainingLockedAmount(): BigDecimal {
+        val remaining = lockedAmount.subtract(totalAmount ?: BigDecimal.ZERO)
+        return remaining.coerceAtLeast(BigDecimal.ZERO)
+    }
 
-    fun isCancellable(): Boolean =
-        orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PARTIAL
+    /** 매수 주문의 누적 체결 금액이 주문 잠금을 넘은 상태 (잔액 0 하한으로 가려지는 초과 사용) */
+    fun isLockedAmountExceeded(): Boolean {
+        val executedTotal = totalAmount ?: BigDecimal.ZERO
+        return orderSide == OrderSide.BUY && executedTotal > lockedAmount
+    }
+
+    fun isCancellable(): Boolean = orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PARTIAL
 
     companion object {
+        /** 평균가 표시·수수료 반올림 소수 자리수 (orders 금액 열 scale 4) */
+        const val AMOUNT_SCALE = 4
+
         fun create(
             account: Account,
             ticker: String,
