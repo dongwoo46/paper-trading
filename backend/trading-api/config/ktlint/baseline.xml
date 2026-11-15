@@ -82,11 +82,6 @@
     <file name="src/main/kotlin/com/papertrading/api/application/notification/result/SlackNotificationConfigResult.kt">
         <error line="17" column="90" source="standard:function-signature" />
     </file>
-    <file name="src/main/kotlin/com/papertrading/api/application/order/KisExecutionNoticeService.kt">
-        <error line="39" column="1" source="standard:indent" />
-        <error line="40" column="1" source="standard:indent" />
-        <error line="41" column="1" source="standard:indent" />
-    </file>
     <file name="src/main/kotlin/com/papertrading/api/application/order/LocalMatchingEngine.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="50" column="1" source="standard:blank-line-between-when-conditions" />
@@ -278,7 +273,7 @@
         <error line="108" column="39" source="standard:trailing-comma-on-declaration-site" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/domain/entity/order/Order.kt">
-        <error line="199" column="35" source="standard:trailing-comma-on-declaration-site" />
+        <error line="202" column="35" source="standard:trailing-comma-on-declaration-site" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/domain/entity/order/OrderAmendment.kt">
         <error line="65" column="35" source="standard:trailing-comma-on-declaration-site" />
@@ -453,14 +448,6 @@
     <file name="src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionNoticeParser.kt">
         <error line="85" column="83" source="standard:function-signature" />
         <error line="115" column="79" source="standard:function-signature" />
-    </file>
-    <file name="src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionWebSocketManager.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-        <error line="82" column="26" source="standard:trailing-comma-on-call-site" />
-        <error line="83" column="22" source="standard:trailing-comma-on-call-site" />
-        <error line="177" column="1" source="standard:blank-line-between-when-conditions" />
-        <error line="194" column="61" source="standard:function-signature" />
-        <error line="232" column="66" source="standard:function-signature" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/infrastructure/kis/KisOrderRestClient.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -838,9 +825,6 @@
         <error line="58" column="34" source="standard:trailing-comma-on-call-site" />
         <error line="94" column="34" source="standard:trailing-comma-on-call-site" />
     </file>
-    <file name="src/test/kotlin/com/papertrading/api/application/order/KisExecutionNoticeServiceTest.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-    </file>
     <file name="src/test/kotlin/com/papertrading/api/application/order/OrderCommandServiceTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="55" column="31" source="standard:argument-list-wrapping" />
@@ -1114,9 +1098,6 @@
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="23" column="101" source="standard:function-signature" />
     </file>
-    <file name="src/test/kotlin/com/papertrading/api/domain/entity/settlement/SettlementEntitiesTest.kt">
-        <error line="134" column="1" source="standard:no-consecutive-blank-lines" />
-    </file>
     <file name="src/test/kotlin/com/papertrading/api/domain/entity/strategy/StrategyDomainEntitiesTest.kt">
         <error line="174" column="31" source="standard:trailing-comma-on-call-site" />
         <error line="203" column="45" source="standard:trailing-comma-on-call-site" />
@@ -1136,14 +1117,6 @@
         <error line="68" column="22" source="standard:trailing-comma-on-call-site" />
         <error line="70" column="14" source="standard:trailing-comma-on-call-site" />
         <error line="99" column="14" source="standard:trailing-comma-on-call-site" />
-    </file>
-    <file name="src/test/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionWebSocketManagerTest.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-        <error line="58" column="31" source="standard:wrapping" />
-        <error line="63" column="13" source="standard:wrapping" />
-        <error line="66" column="31" source="standard:wrapping" />
-        <error line="71" column="13" source="standard:wrapping" />
-        <error line="174" column="14" source="standard:trailing-comma-on-call-site" />
     </file>
     <file name="src/test/kotlin/com/papertrading/api/infrastructure/kis/KisOrderRestClientTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
