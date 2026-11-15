@@ -120,7 +120,9 @@
 | TA:common/exception/OrderExceptions.kt | 신설 | 409·501 예외(D-06) | A4·A3 | 낮음 |
 | TA:presentation/exception/GlobalExceptionHandler.kt | 수정 | 501 매핑 | A3 | 중간 — 모든 오류 응답이 지남 |
 | TA:domain/entity/feepolicy/FeePolicy.kt | 수정(DEC-01 이 2안일 때만) | 반올림 방향 | A5 | 낮음 |
-| backend/trading-api/src/main/resources/db/migration/V13__*.sql | 신설(DEC-05 가 보정일 때만) | total_amount 재계산 | A6 | 중간 |
+| backend/trading-api/src/main/resources/db/migration/V14__*.sql | 신설(DEC-05 가 보정일 때만, 번호는 A1 의 열 확장 V13 다음) | total_amount 재계산 | A6 | 중간 |
+| backend/trading-api/src/main/resources/db/migration/V13__widen_money_columns.sql | 신설(사람 결정 2026-11-15 «금액 열 확장», A1) | 돈 열을 numeric(28,12)로 확장(수량 scale 8 × 가격 scale 4) | A1 | 중간 — 정수 자리 16 유지(축소 없음), 기존 값 그대로 보존 |
+| TA:domain/entity 의 돈 열 @Column(Account·AccountLedger·Order·Settlement·Position) | 수정 | 스키마 자동 생성 정의를 V13 과 같게 | A1 | 중간 |
 | TT:domain/entity/order/OrderTest.kt | 수정 | 체결 계약·조건 비교·브로커 접수 판정 시험 | A1·A4·A3 | 낮음 |
 | TT:application/order/ExecutionProcessorTest.kt | 수정 | 매수 부분 체결 재현, 수수료, #551 #552 | A1·A5 | 낮음 |
 | TT:application/order/OrderCommandServiceTest.kt | 수정 | 취소 해제, 멱등 불일치, KIS 취소 차단, #218 #324 | A2·A4·A3 | 낮음 |
@@ -157,7 +159,7 @@
 | 같은 DELETE·체결 처리, 부분 체결 시나리오 | «잠금 예수금이 부족합니다» IllegalArgumentException(400 / 체결 롤백)이 그 시나리오에서 사라짐 | backend | 아니오 |
 | 클라이언트 영향(팀 AE20) | 호출처 0 — trading-web 은 재제작 중이라 주문 접수·취소 호출 없음(멱등 키 생성 `frontend/trading-web/src/shared/lib/idempotency.ts` 만), `backend/quant-*`·collector-api 에 주문 API 호출 0(grep). 커밋에 `App-Impact: none — 호출처 0(grep)`. 다음 trading-web 주문 화면은 409·501 의 `code` 로 분기 | frontend | 아니오 |
 | OpenAPI | 명세 없음(springdoc 의존성 0) → openapi-diff 대상 없음. 계약 변경은 이 표와 커밋 기록으로 | backend | 아니오 |
-| DB | 스키마 변경 없음. DEC-05 가 보정이면 V13 데이터 마이그레이션만(orders 는 원장 행이 아니라 PTF1 대상 아님, 원장 행은 손대지 않음) | backend | DEC-05 |
+| DB | 스키마 변경 없음. DEC-05 가 보정이면 다음 번호(V14) 데이터 마이그레이션만(orders 는 원장 행이 아니라 PTF1 대상 아님, 원장 행은 손대지 않음) | backend | DEC-05 |
 
 DEC-05 점검 쿼리(읽기 전용, 사람이 운영 DB 에서):
 
@@ -246,7 +248,7 @@ PR 안 커밋 순서(공통): 1. 린트 정리 — 손댈 파일만, 동작 불�
 | DEC-03 | #17 I3 자리 | 1. B 갈래 첫 PR 로 — X3 #19·#18, 상태 #95(SUBMITTING·UNKNOWN), 확정 작업(PTF3), #219 와 함께. 장: 같은 코드를 한 번만 고침. 단: A 기간 동안 KIS 이중 주문 위험 유지. 2. 1 + A 기간 KIS_LIVE 주문 접수를 운영 설정으로 막음 — 장: 실돈 위험 0. 단: 실계좌 기능 정지(제품 결정). 3. A 에 넣음 — 장: 가장 큰 돈 위험을 먼저. 단: 갈래 순서를 뒤집고 B 설계를 A 에서 먼저 정함, A 가 커짐 | 1 (KIS_LIVE 를 실제로 쓰면 2) | 없음 (B 착수 시점) |
 | DEC-04 | #20 KIS 취소 — a. A 임시 조치 | 1. 사용자 취소(DELETE)만 «KIS 접수 주문»이면 501 거절, GTD 만료·IOC/FOK 는 그대로(D-05) — 장: «취소됐다»고 믿는데 KIS 에서 체결되는 갈림을 바로 막음, 다른 경로 불변. 단: B 전까지 앱에서 KIS 주문 취소 불가 — HTS 에서 취소하면 로컬 잠금이 B 의 대사 전까지 남음, GTD 만료 갈림은 남음. 2. 모든 로컬 취소에서 KIS 접수 주문 거절(GTD 포함) — 장: 갈림 전부 차단. 단: KIS 주문은 늘 당일 주문이라(KisOrderRestClient.kt:42 가 주문 조건을 안 보냄) 장 마감에 KIS 가 죽인 주문의 잠금이 B 전까지 안 풀리고 스케줄러가 30초마다 실패 로그. 3. 지금처럼 두고 B 로 — 장: 변경 없음. 단: 갈림 지속 | 1 | PR-A3 |
 | DEC-04 | #20 — b. B 에서 쓸 «KIS 취소 호출 실패·불확정 시 상태» | 1. CANCEL_REQUESTED 유지 + 조회로 확정(PTF3 — 타임아웃은 실패가 아님). 2. UNKNOWN 으로 두고 대사. 3. 원상태(PENDING) 복귀 + 오류 응답 — 실제로는 취소됐을 수 있어 재취소·이중 처리 위험. 참고: 지금 실행기 cancel 은 실패를 log.warn 으로 삼킴(KisLiveOrderExecutor.kt:59-61) → B 에서 그대로 쓰면 안 됨 | 1 | 없음 (B 입력) |
-| DEC-05 | 기존 total_amount 보정 (O4) | 1. §4 점검 쿼리를 운영 DB 에서 먼저 돌려 행 수 확인 → 0 이면 보정 없음, 있으면 PR-A6 에서 V13 으로 재계산 + 그 계좌의 lockedDeposit 차이를 대사 항목으로 기록 — 장: 근거로 정함. 단: 사람이 운영 DB 를 봐야 함. 2. 보정 없이 앞으로만 — 장: 마이그레이션 0. 단: 진행 중(PARTIAL) KIS 주문은 고친 뒤에도 틀린 값으로 해제액 계산. 3. 무조건 V13 — 장: 확실. 단: 영향 0 이면 불필요한 데이터 변경 | 1 | PR-A6 |
+| DEC-05 | 기존 total_amount 보정 (O4) | 1. §4 점검 쿼리를 운영 DB 에서 먼저 돌려 행 수 확인 → 0 이면 보정 없음, 있으면 PR-A6 에서 다음 번호(A1 의 열 확장 V13 다음, V14)로 재계산 + 그 계좌의 lockedDeposit 차이를 대사 항목으로 기록 — 장: 근거로 정함. 단: 사람이 운영 DB 를 봐야 함. 2. 보정 없이 앞으로만 — 장: 마이그레이션 0. 단: 진행 중(PARTIAL) KIS 주문은 고친 뒤에도 틀린 값으로 해제액 계산. 3. 무조건 V13 — 장: 확실. 단: 영향 0 이면 불필요한 데이터 변경 | 1 | PR-A6 |
 | DEC-06 | 손댄 파일 린트 범위 (R3-1 정책 해석) | 1. ktlint 는 손댄 파일 전부, detekt 는 국소 항목만 고치고 구조 항목(§3 표)은 기준선에 남겨 C·D 로 — 장: 구조 항목을 고치는 일이 곧 S1·S3·S4·D1 리팩터링이라 갈래 순서를 지키고 기준선은 줄어듦. 단: 손댄 파일에 detekt 항목이 남음(같은 ID 라 «늘지 않음»). 2. ktlint·detekt 전부 — 장: 정책 글자 그대로. 단: processFill 115줄 분해·생성자 의존 11개 축소(포트 = C)가 A 로 당겨짐. 3. 새 줄만 깨끗이 — 장: diff 최소. 단: 정책과 어긋남 | 1 | 전 PR 의 린트 커밋 |
 | DEC-07 | 손댄 파일 오류 분류 정리 (팀 AE19) | 1. 미룸 — A 커밋에 `API-Errors-Deferred: <path> — 오류 분류 정리는 별도 항목` 기록, docs/TODO.md 에 항목 등록. A 가 새로 만드는 예외(409·501)만 분류표대로 — 장: 사람이 정한 A 범위(돈·상태) 유지, 클라이언트 0 이라 급하지 않음. 단: OrderCommandService 의 check·require 400(남의 주문 → E-2 404, 취소 불가 상태 → F-2 409, 수량 부족 → F-5 409 등)이 남음, #591 도 이 묶음. 2. A 안 별도 PR 로 지금 고침(AE19 의 권장) — 장: 규칙 권장안. 단: 오류 응답 5곳 안팎이 바뀌어 기존 통합 시험 기대값(OrderControllerIntegrationTest.kt:134-135 «stale 시세면 400» 등)도 바뀜, A 범위 확대 | 1 | 없음 (커밋 기록 방식) |
 | DEC-08 | 원장 밖 관찰 O1~O3 편입 | 1. 원장 보강(발견 등록) 뒤 A 다음 묶음으로 — 각각 정책이 필요(매수 수수료 차감 여부·모드별, 시장가 잠금 여유 또는 체결 때 추가 잠금, 정산 단위 = 체결별 또는 주문별). 장: A 를 원장 후보로 고정. 단: 그동안 결함 유지. 2. A 에 편입 — 장: 같은 성격의 돈 결함. 단: 정책 결정 3건이 A 를 막고 재감사 없이 범위가 늘어남. 3. 안 다룸 — 단: 돈 결함 방치 | 1 | 없음 |
@@ -257,6 +259,7 @@ PR 안 커밋 순서(공통): 1. 린트 정리 — 손댈 파일만, 동작 불�
 **동결 저장소 1줄 삭제 승인 (2026-11-15, 팝업 «그 한 줄만 삭제»):** `archunit_store/bb05cc60-ae2b-4a57-8f2e-cec4890e2499` 164번 줄(`releaseLockedExcess` → `AccountLedgerRepository.save`) 한 줄만 손으로 삭제 허용. 고쳐서 사라진 위반 1건이고 줄 추가는 없으며 갱신 옵션은 쓰지 않음. 근거: ArchUnit 은 해결된 위반을 저장소에서 지우지 못하면 `StoreUpdateFailedException` 으로 실패(합동 리뷰가 바이트코드로 확인). 이 결정으로 §6 «계층 동결» 기대값이 «diff 0» 에서 «사라진 위반 줄 삭제만»으로 바뀜.
 **원장 저장 합침 (PR-A1, 합동 리뷰 정당 판정):** 동결 저장소가 `processFill` 의 `AccountLedgerRepository.save` 호출을 3건으로 세므로(4건이면 새 위반, 2건이면 해결 위반) 체결 원장(매수·매도) 저장을 한 곳으로 합쳐 호출 수 3 유지. 매도에서 원장 저장이 정산 저장 뒤로 가나 같은 트랜잭션이고 원장 금액·`balanceAfter` 값은 그대로. 이후 PR 이 `processFill` 에 저장 호출을 더하려면 이 제약을 따른다.
 **메모리 반올림 제거 (2026-11-15, 팝업, 사람 원칙 «돈은 반올림같은거하면안되는데»):** §2 AS-01(체결 금액 scale 4 HALF_UP)과 D-01 의 «이번 체결 금액(수량×체결가, scale 4 HALF_UP)» 을 철회한다. 이번 체결 금액·누적 금액은 반올림 없이 수량×체결가이고, 평균가만 누적 금액 ÷ 누적 수량의 4자리 HALF_UP(나눗셈 자리수 명시). 매도 순대금 반올림도 없앴다. 수수료 반올림은 DEC-01(PR-A5), 저장 열 소수 4자리 끝수(리뷰 P-05)는 TODO 별도 항목.
+**금액 열 확장 (2026-11-15, 사람 팝업):** 수량 scale 8 × 가격 scale 4 = scale 12 를 담도록 돈 열 자리수를 numeric(20,4) → numeric(28,12)로 확장(정수 자리 16 유지)하고 마이그레이션 V13 을 A1 에 넣는다. 메모리 반올림 없는 값이 DB 에서도 그대로 저장돼 리뷰 P-05·R2-N2(원장·예수금 0.0001 불일치)·R2-N3(소수 수량 나눠 체결 뒤 잠금 잔존)가 함께 사라진다. 열 목록은 커밋 본문과 step-1 §5 의 표. 단, 이 저장소는 Flyway 의존성이 없고 `ddl-auto: create` 로 스키마를 만들므로 V13 은 기존 DB 에 수동 적용하는 스크립트(V2~V12 와 같은 위치·형식)이고 엔티티 `@Column` 이 실제 스키마를 정한다.
 
 ---
 
