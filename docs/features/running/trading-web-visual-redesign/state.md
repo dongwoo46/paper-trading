@@ -1,5 +1,8 @@
 # 실행 상태 — trading-web visual redesign
 
+<!-- devkit:superseded-by docs/features/running/trading-web-shadcn-rebuild/state.md -->
+> 대체됨(2026-11-15): 이 기능의 남은 7~13단계는 `trading-web-shadcn-rebuild`(shadcn/ui 전면 재제작)로 대체됐다(사용자 확정 2026-11-15). 문서는 기록으로 보존하고 PR #41은 유지한다. 새 작업은 `docs/features/running/trading-web-shadcn-rebuild/`에서 한다.
+
 > `development-plan.md`를 기준으로 실제 구현·검증 상태를 추적한다. 단계 점유와 체크리스트는 `progress.md`에 둔다.
 
 ## 0. 메타데이터
@@ -9,8 +12,8 @@
 | 기능 | `trading-web-visual-redesign` |
 | 기반 | `development-plan.md` |
 | 브랜치 | `feature/trading-web-visual-redesign` |
-| 갱신일 | 2026-08-16 |
-| 전체 상태 | 진행중 |
+| 갱신일 | 2026-11-15 |
+| 전체 상태 | 대체됨 — `trading-web-shadcn-rebuild` |
 
 ## 1. 현재 위치
 
@@ -34,6 +37,7 @@ Step 6 진행 중. 구현·deterministic QA·독립 리뷰와 Ready PR #41 생�
 | 2026-08-16 | route 오류 설계 변경 | 선언형 `<Routes>`에는 `errorElement`가 적용되지 않아 React 오류 경계로 교정 |
 | 2026-08-16 | 1024px 반응형 경계 단일화 | App·Sidebar JS와 Tailwind `lg`의 경계 drift 및 desktop inert/focus 회귀 해소 |
 | 2026-08-16 | 최종 deterministic QA 확정 | 34 files/152 tests, lint, build, route/API diff 모두 통과 |
+| 2026-11-15 | `trading-web-shadcn-rebuild`로 대체 | 사용자 결정: 기존 trading-web 제거 후 shadcn/ui로 제자리 재작성 |
 
 ## 4. 막힘·이슈
 

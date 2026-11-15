@@ -25,6 +25,15 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 ---
 
+## trading-web 전면 재제작
+
+- [ ] trading-web 전면 재제작 (shadcn/ui, 단계별 화면. 첫 범위 0·1단계 화면 7개 + 공통 셸) | project: trading-web | phase: trading-web-shadcn-rebuild | priority: P1
+  - 상태: 제품 재기획 확정, 기획 승인(2026-11-15). 다음은 tech-planning. 명세 `docs/features/running/trading-web-shadcn-rebuild/feature-spec.md`, 화면 지도 `screen-spec-v3.md`
+  - 옛 `trading-web-visual-redesign` 7~13단계는 이 기능으로 대체(FLAG-02)
+  - 백엔드 API 신규 구현은 나중(FLAG-01). 필요한 API 는 명세 §7 에 요구로만 기록
+
+---
+
 ## CI 전체 테스트 복구
 
 - [ ] CI(full-test)에서 깨진 기존 테스트 수정 | project: trading-api, collector-api | phase: fix-broken-tests | priority: P1
