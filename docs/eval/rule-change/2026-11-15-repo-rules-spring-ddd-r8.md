@@ -2,7 +2,7 @@
 
 대상: `rules/backend-api.md`(계층과 포트 절 머리, PTB7·PTB9), `rules/data-access.md`(PTD4), `rules/async-external.md`(PTA2), 시험 `ArchitectureRulesTest`·`ApplicationLayerRules`·`ApplicationLayerRulesTest`(trading-api), 증거 문서 1차(팀 규칙 대조 표).
 
-출처: PR #50 1회차 독립 리뷰(2026-11-15, head 76938ce, should-fix 3건 C-1·C-2·C-3, nit 4건 C-4~C-7)와 사람 결정 2026-11-15. 이번에 승인된 범위는 C-1·C-2·C-3 세 건뿐이다. C-4 는 PTD4 에 한 구절로 자연스러워 같이 넣었고(아래), C-5·C-6·C-7 은 범위 밖이라 손대지 않았다.
+출처: PR #50 1회차 독립 리뷰(2026-11-15, head 76938ce, should-fix 3건 C-1·C-2·C-3, nit 4건 C-4~C-7)와 사람 결정 2026-11-15. 이번에 승인된 범위는 C-1·C-2·C-3 세 건뿐이다. C-4 는 후속으로 넘겼다(사람 결정 2026-11-15, 2회차 재리뷰 C2-2 에서 r9 가 PTD4 의 C-4 구절을 뺐다). C-5·C-6·C-7 은 범위 밖이라 손대지 않았다.
 
 ## 사람 결정 기록
 
@@ -13,7 +13,7 @@
 
 | 지적 | 처분 | 고친 곳 | 근거 |
 |---|---|---|---|
-| C-1 동기 `AFTER_COMMIT` 결과 기록 리스너가 원래 커넥션을 쥔 채 외부 호출과 `REQUIRES_NEW` 를 함, PTB9·시험이 application 의 `@Async` 를 막아 갇힘 | 고침(사람 결정 2번, 허용 확대) | PTB9 지시문·Why, PTB7 마지막 문장, PTD4 지시문·Why, 시험 | PTB9 application Spring 허용 목록에 `org.springframework.scheduling.annotation.Async` 를 `@TransactionalEventListener(phase = AFTER_COMMIT)` 리스너 메서드 한정으로 더했다. PTD4 는 «외부 호출을 하거나 결과를 기록하는 AFTER_COMMIT 리스너는 `@Async("상한 있는 실행기 이름")`(팀 규칙 LA21)로 다른 스레드에서 돌린다»를 적고 Why 의 «PTD2 가 지켜진다»를 «리스너에 `@Transactional` 을 안 건다고 PTD2 가 지켜지지는 않는다, 동기 리스너는 커넥션을 쥔다»로 정정했다. C-4(nit)는 PTD4 에 한 구절로 같이 넣었다(`AFTER_ROLLBACK`·`AFTER_COMPLETION` 리스너가 부르는 쓰기 유스케이스도 `REQUIRES_NEW`). 아래 «시험» 절에 시험 변경과 빨강→초록 증거 |
+| C-1 동기 `AFTER_COMMIT` 결과 기록 리스너가 원래 커넥션을 쥔 채 외부 호출과 `REQUIRES_NEW` 를 함, PTB9·시험이 application 의 `@Async` 를 막아 갇힘 | 고침(사람 결정 2번, 허용 확대) | PTB9 지시문·Why, PTB7 마지막 문장, PTD4 지시문·Why, 시험 | PTB9 application Spring 허용 목록에 `org.springframework.scheduling.annotation.Async` 를 `@TransactionalEventListener(phase = AFTER_COMMIT)` 리스너 메서드 한정으로 더했다. PTD4 는 «외부 호출을 하거나 결과를 기록하는 AFTER_COMMIT 리스너는 `@Async("상한 있는 실행기 이름")`(팀 규칙 LA21)로 다른 스레드에서 돌린다»를 적고 Why 의 «PTD2 가 지켜진다»를 «리스너에 `@Transactional` 을 안 건다고 PTD2 가 지켜지지는 않는다, 동기 리스너는 커넥션을 쥔다»로 정정했다. C-4(nit)는 후속으로 넘김(사람 결정 2026-11-15, r9). 아래 «시험» 절에 시험 변경과 빨강→초록 증거 |
 | C-2 종목 락·단일 소비자는 순서를 지키지 않아 낡은 호가 체결을 막지 못함 | 고침 | PTA2 지시문·Why | 직렬 처리 안에서 이미 처리한 `updatedAt` 보다 새롭지 않은 메시지를 버리는 것을 필수로 적었고 «직렬 처리와 `updatedAt` 비교 둘 다 필요»를 명시했다. Why 에 리뷰의 t=5·t=6 예(락 경쟁으로 t=6 이 먼저 매칭하고 t=5 가 낡은 호가로 체결, 단일 소비자도 `onMessage` 가 여러 스레드면 큐 삽입 순서부터 뒤바뀜)를 적었다. 직렬 처리 안이라 compare-and-set 없이 단순 비교로 충분하다는 리뷰 방향대로다 |
 | C-3 계층 절 머리 줄이 바깥 기술을 모두 infrastructure 몫이라 해 PTB7(Redis 리스너 같은 진입점은 presentation)과 어긋남, 클린 아키텍처 선언이 머리 줄과 PTB7 Why 끝 두 곳 | 고침 | 계층과 포트 절 머리 줄, PTB7 Why 끝 | 머리 줄을 «나가는 쪽 바깥 기술(JPA·Spring Data·외부 HTTP·Redis 발행)은 infrastructure 어댑터, 들어오는 진입점(HTTP 컨트롤러·스케줄러·Redis 구독)은 presentation»으로 PTB7 과 맞췄다. PTB7 Why 끝의 «사람 결정 2026-11-15: 클린 아키텍처(포트·어댑터).»는 «선언은 이 절 머리 줄 한 곳에 둔다»로 줄여 선언을 한 곳으로 했다 |
 
@@ -31,7 +31,7 @@
 
 ## 약화 판정
 
-C-1 은 허용 확대다. `@Async`(`org.springframework.scheduling.annotation`)를 application 허용 목록에 넣었으므로 허용 범위가 넓어졌고, 잠금 원칙(프레임워크는 바깥의 교체 가능한 세부)보다 느슨한 쪽이 하나 더 늘었다. 허용 근거는 두 가지다. 1. 사람 결정 2번(`@Async` 허용). 2. 범위 한정: `AFTER_COMMIT` 리스너 메서드에만 허용하고 다른 메서드·클래스 수준은 시험이 막는다. 같은 변경에서 PTD4 는 강화됐다(`@Async` 필수, `AFTER_ROLLBACK`·`AFTER_COMPLETION` 도 `REQUIRES_NEW`, 비동기 예외는 리스너 안에서 잡아 기록). 따라서 이 PR 은 «추가·강화만» 상시 승인 경로가 아니라 사람 머지가 필요한 변경이다(사람 결정 1번 «3건 고친 뒤 머지»가 머지 승인).
+C-1 은 허용 확대다. `@Async`(`org.springframework.scheduling.annotation`)를 application 허용 목록에 넣었으므로 허용 범위가 넓어졌고, 잠금 원칙(프레임워크는 바깥의 교체 가능한 세부)보다 느슨한 쪽이 하나 더 늘었다. 허용 근거는 두 가지다. 1. 사람 결정 2번(`@Async` 허용). 2. 범위 한정: `AFTER_COMMIT` 리스너 메서드에만 허용하고 다른 메서드·클래스 수준은 시험이 막는다. 같은 변경에서 PTD4 는 강화됐다(`@Async` 필수, 비동기 예외는 리스너 안에서 잡아 기록). 따라서 이 PR 은 «추가·강화만» 상시 승인 경로가 아니라 사람 머지가 필요한 변경이다(사람 결정 1번 «3건 고친 뒤 머지»가 머지 승인).
 C-2 는 강화다(`updatedAt` 비교를 필수로 승격). C-3 은 머리 줄이 바깥 기술 전부를 infrastructure 에 둔다는 문면을 «나가는 쪽만»으로 좁힌 것이라 허용을 늘리지 않는다(들어오는 진입점은 원래 PTB7 이 presentation 으로 정했다).
 
 ## 삭제 줄 대조
@@ -45,8 +45,8 @@ C-2 는 강화다(`updatedAt` 비교를 필수로 승격). C-3 은 머리 줄이
 5. PTB7 Why 옛 줄. 소실: 끝 문장 «사람 결정 2026-11-15: 클린 아키텍처(포트·어댑터).»(머리 줄과 중복 선언, C-3). 잔존: 머리 줄에 같은 선언과 사람 결정 인용이 있고 이 자리는 머리 줄을 가리킨다.
 6. PTB9 지시문 옛 줄. 소실: 없음. 허용 목록에 `Async` 와 시험 설명 두 문장을 더했다.
 7. PTB9 Why 옛 줄. 소실: 없음. `@Async` 허용 근거 두 문장을 더했다.
-8. PTD4 지시문 옛 줄. 소실: 없음. `@Async` 지시와 `AFTER_ROLLBACK`·`AFTER_COMPLETION` 구절을 더했다.
-9. PTD4 Why 옛 줄. 소실: 없음. 동기 리스너의 커넥션 점유와 `@Async` 근거, 비동기 예외, 롤백·완료 단계 문장을 더했다.
+8. PTD4 지시문 옛 줄. 소실: 없음. `@Async` 지시를 더했다(`AFTER_ROLLBACK`·`AFTER_COMPLETION` 구절은 r9 에서 뺐다).
+9. PTD4 Why 옛 줄. 소실: 없음. 동기 리스너의 커넥션 점유와 `@Async` 근거, 비동기 예외 문장을 더했다(롤백·완료 단계 문장은 r9 에서 뺐다).
 
 ## 팀 규칙 대조
 
@@ -58,7 +58,7 @@ C-2 는 강화다(`updatedAt` 비교를 필수로 승격). C-3 은 머리 줄이
 
 - Spring Framework `Async` Javadoc, https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/scheduling/annotation/Async.html — «Annotation that marks a method as a candidate for asynchronous execution. Can also be used at the type level, in which case all the type's methods are considered as asynchronous.» 시험이 클래스 수준 `@Async` 를 따로 막는 근거(타입에 붙이면 모든 메서드가 비동기)다.
 - Spring Framework 참조 문서 «Asynchronous Listeners», https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html — «If you want a particular listener to process events asynchronously, you can reuse the regular @Async support.» 그리고 한계: «If an asynchronous event listener throws an Exception, it is not propagated to the caller.» PTD4 Why 의 «`@Async` 로 다른 스레드에서 돌린다»와 «비동기 예외는 리스너 안에서 잡아 기록한다»의 근거다.
-- Spring Framework `TransactionalEventListener` Javadoc, https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html — «The default phase is TransactionPhase.AFTER_COMMIT.»(시험이 phase 생략 리스너를 `AFTER_COMMIT` 으로 보는 근거), 그리고 경고문 «if the TransactionPhase is set to AFTER_COMMIT (the default), AFTER_ROLLBACK, or AFTER_COMPLETION, the transaction will have been committed or rolled back already, but the transactional resources might still be active and accessible. As a consequence, any data access code triggered at this point will still "participate" in the original transaction, but changes will not be committed to the transactional resource.» PTD4 의 `AFTER_ROLLBACK`·`AFTER_COMPLETION` 구절(C-4)의 근거다.
+- Spring Framework `TransactionalEventListener` Javadoc, https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html — «The default phase is TransactionPhase.AFTER_COMMIT.»(시험이 phase 생략 리스너를 `AFTER_COMMIT` 으로 보는 근거), 그리고 경고문 «if the TransactionPhase is set to AFTER_COMMIT (the default), AFTER_ROLLBACK, or AFTER_COMPLETION, the transaction will have been committed or rolled back already, but the transactional resources might still be active and accessible. As a consequence, any data access code triggered at this point will still "participate" in the original transaction, but changes will not be committed to the transactional resource.» PTD4 Why 의 `AFTER_COMMIT` 참여 함정 설명과 같다(이 경고문이 `AFTER_ROLLBACK`·`AFTER_COMPLETION` 도 말하지만 그 구절, C-4 는 r9 에서 뺐다).
 - 참조 문서 «Transaction-bound Events», https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html — 유효한 phase 가 `BEFORE_COMMIT`, `AFTER_COMMIT`(기본), `AFTER_ROLLBACK`, `AFTER_COMPLETION` 이라는 설명.
 
 확인 못 한 범위: «동기 `AFTER_COMMIT` 리스너가 원래 트랜잭션의 EntityManager·JDBC 커넥션을 쥔 채 돈다»는 리뷰의 Spring 구현 지식 판정(`AbstractPlatformTransactionManager` 의 커밋 → afterCompletion → cleanup 순서, Hibernate 기본 커넥션 보유 모드)이고, 위 Javadoc 은 «자원이 아직 활성»까지만 말한다. 실행으로 재현하지 않았고 이 변경의 시험은 규칙 판정(ArchUnit)만 확인한다. 실행기 상한과 비동기 예외 처리의 실제 코드는 이후 리팩터링 때 잰다. 리뷰의 신뢰도 판정(중간~높음)을 그대로 따른다.
