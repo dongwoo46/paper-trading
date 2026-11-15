@@ -67,7 +67,7 @@ class TossApiClient(
     private fun uriOf(request: TossApiRequest): URI {
         val builder = UriComponentsBuilder.fromUriString(properties.baseUrl.trimEnd('/')).path(request.path)
         request.query.forEach { (name, value) -> builder.queryParam(name, value) }
-        return builder.build().encode().toUri()
+        return TossTransportSupport.withPlusEncodedInQuery(builder.build().encode().toUri())
     }
 
     private fun send(uri: URI, call: Call, token: String): Reply {

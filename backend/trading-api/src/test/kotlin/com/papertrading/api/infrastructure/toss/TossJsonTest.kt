@@ -69,4 +69,61 @@ class TossJsonTest {
     }
 
     data class Tagged(val symbol: String, val price: BigDecimal, val tags: List<String>)
+
+    // ---- S6-01: 빈·공백 문자열이 스칼라 칸에서 조용히 null 이 되지 않음, 명시적 JSON null 만 null ----
+
+    data class Amounts(val krw: BigDecimal, val usd: BigDecimal? = null)
+
+    data class Counts(val total: Long, val seen: Long? = null)
+
+    data class Flags(val on: Boolean, val maybe: Boolean? = null)
+
+    data class Named(val name: String, val note: String? = null)
+
+    private fun <T : Any> read(body: String, type: Class<T>): T? {
+        val envelope = TossJson.readSuccess<T>(body, TossJson.javaType(type))
+        return envelope?.result
+    }
+
+    // JSON 문자열 안에 들어갈 값이라 탭·줄바꿈은 이스케이프로 적음
+    @ParameterizedTest(name = "금액 칸의 문자열 [{0}] 은 실패한다")
+    @ValueSource(strings = ["", " ", "   ", "\\t", "\\n", "\\u00a0"])
+    fun `null 허용 금액 칸의 빈 문자열과 공백 문자열은 null 이 되지 않고 실패한다`(blank: String) {
+        assertThrows<JsonProcessingException> { read("""{"result":{"krw":"1","usd":"$blank"}}""", Amounts::class.java) }
+    }
+
+    @ParameterizedTest(name = "필수 금액 칸의 문자열 [{0}] 은 실패한다")
+    @ValueSource(strings = ["", " ", "\\t"])
+    fun `null 불가 금액 칸의 빈 문자열과 공백 문자열도 실패한다`(blank: String) {
+        assertThrows<JsonProcessingException> { read("""{"result":{"krw":"$blank"}}""", Amounts::class.java) }
+    }
+
+    @Test
+    fun `금액 칸은 명시적 JSON null 이나 생략일 때만 null 이다`() {
+        assertEquals(Amounts(BigDecimal("1"), null), read("""{"result":{"krw":"1","usd":null}}""", Amounts::class.java))
+        assertEquals(Amounts(BigDecimal("1"), null), read("""{"result":{"krw":"1"}}""", Amounts::class.java))
+        assertEquals(
+            Amounts(BigDecimal("1"), BigDecimal("2.50")),
+            read("""{"result":{"krw":"1","usd":"2.50"}}""", Amounts::class.java),
+        )
+    }
+
+    @ParameterizedTest(name = "정수 칸의 문자열 [{0}] 은 실패한다")
+    @ValueSource(strings = ["", " ", "\\t"])
+    fun `정수 칸의 빈 문자열과 공백 문자열은 0 이나 null 이 되지 않고 실패한다`(blank: String) {
+        assertThrows<JsonProcessingException> { read("""{"result":{"total":"$blank"}}""", Counts::class.java) }
+        assertThrows<JsonProcessingException> { read("""{"result":{"total":1,"seen":"$blank"}}""", Counts::class.java) }
+    }
+
+    @ParameterizedTest(name = "불린 칸의 문자열 [{0}] 은 실패한다")
+    @ValueSource(strings = ["", " ", "\\t"])
+    fun `불린 칸의 빈 문자열과 공백 문자열은 false 나 null 이 되지 않고 실패한다`(blank: String) {
+        assertThrows<JsonProcessingException> { read("""{"result":{"on":"$blank"}}""", Flags::class.java) }
+        assertThrows<JsonProcessingException> { read("""{"result":{"on":true,"maybe":"$blank"}}""", Flags::class.java) }
+    }
+
+    @Test
+    fun `문자열 칸의 빈 문자열은 그대로 읽는다 오류 본문의 빈 message 가 해석을 깨지 않도록`() {
+        assertEquals(Named("", ""), read("""{"result":{"name":"","note":""}}""", Named::class.java))
+    }
 }

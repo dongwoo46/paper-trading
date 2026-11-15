@@ -7,6 +7,9 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.cfg.CoercionAction
+import com.fasterxml.jackson.databind.cfg.CoercionInputShape
+import com.fasterxml.jackson.databind.cfg.MutableCoercionConfig
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.kotlinModule
@@ -32,7 +35,14 @@ internal object TossJson {
         .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
         // 3600.9 가 3600 으로 절삭되어 정수 필드(Long·Int)에 들어가지 않게 실패시킴 (D14, C-03)
         .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
+        // 빈·공백 문자열이 숫자·불린·객체·목록 칸에서 조용히 null·0·빈 값이 되지 않게 실패시킴, 칸이 비었다는 뜻은 명시적 JSON null 만 (D14, S6-01)
+        // 문자열 칸은 이 검사를 거치지 않아 빈 문자열을 그대로 읽음(오류 본문의 빈 message 등)
+        .withCoercionConfigDefaults(::failOnEmptyOrBlankString)
         .build()
+
+    private fun failOnEmptyOrBlankString(config: MutableCoercionConfig) {
+        config.setCoercion(CoercionInputShape.EmptyString, CoercionAction.Fail).setAcceptBlankAsEmpty(true)
+    }
 
     fun javaType(type: Class<*>): JavaType = mapper.constructType(type)
 

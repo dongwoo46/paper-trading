@@ -41,7 +41,7 @@
 | 4 | 토스 토큰 기반 | done | steps/step-4.md | 시험 71건 통과, CI 전체 success(`da617e5`, 실행 43688563304), 리뷰 막는 지적 0(후속 9건은 FLAG-15로 step 5 전 수정) |
 | 5 | 스키마 확정과 토스 전송 계층 | done | steps/step-5.md | 관련 시험 253건 통과, CI 전체 success(`908ac89`, 실행 43700036485), 리뷰 막는 지적 0(후속 C-01~C-05는 step 6 범위) |
 | 6 | 잔고 공통 포트와 토스 어댑터 | done | steps/step-6.md | 관련 시험 297건 통과, CI 전체 success(`2692c2d`, 실행 43723583394), 리뷰 막는 지적 0(후속 S6-01·02·04·05는 step 7 범위) |
-| 7 | 시세 REST와 최종 확인 | todo | steps/step-7.md |  |
+| 7 | 시세 REST와 최종 확인 | in progress | steps/step-7.md | 관련 시험 541건 통과, 린트 exit 0, CI·리뷰 대기 |
 
 - **Status:** todo / in progress / done / blocked — a cell is read by its leading word; anything else (`WIP`, `not done`) is treated as unknown, never as done.
 

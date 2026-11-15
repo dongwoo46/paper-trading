@@ -25,12 +25,23 @@ class TossFloatingPointScanTest {
         stream.filter { it.fileName.toString().startsWith("Broker") && it.toString().endsWith(".kt") }.toList()
     }
 
+    // 컨트롤러 폴더 바로 아래의 Toss 로 시작하는 파일만 (presentation/controller/Toss*)
+    private fun tossControllerFiles(): List<Path> {
+        val controllerDir = apiRoot.resolve("presentation/controller")
+        return Files.list(controllerDir).use { stream ->
+            stream.filter { it.fileName.toString().startsWith("Toss") && it.toString().endsWith(".kt") }.toList()
+        }
+    }
+
     private fun kotlinFiles(): List<Path> {
         val groups = listOf(
             walkKotlin(sourceRoot),
             brokerFiles("application/account/port"),
             brokerFiles("application/account/result"),
             walkKotlin(apiRoot.resolve("application/toss")),
+            // step 7: 시세 응답 DTO 와 컨트롤러도 대상, 가격·수량은 BigDecimal 에서 JSON 문자열로만 나감
+            walkKotlin(apiRoot.resolve("presentation/dto/toss")),
+            tossControllerFiles(),
         )
         groups.forEachIndexed { index, files -> assertTrue(files.isNotEmpty(), "검사 대상 묶음 $index 이 비어 있음") }
         return groups.flatten()

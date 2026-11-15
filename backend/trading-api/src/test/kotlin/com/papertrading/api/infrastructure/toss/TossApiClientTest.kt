@@ -112,6 +112,38 @@ class TossApiClientTest {
         server.verify()
     }
 
+    // 토스는 쿼리의 + 를 공백으로 읽음(명세: 오프셋의 + 는 %2B), 쉼표와 콜론은 그대로 두어도 됨
+    @Test
+    fun `쿼리 값의 + 는 퍼센트 인코딩된 2B 로 보내고 쉼표와 콜론은 그대로 둔다`() {
+        every { tokenManager.getToken() } returns "fake-token-a"
+        val request = TossApiRequest(
+            "/api/v1/candles",
+            TossRateLimitGroup.MARKET_DATA_CHART,
+            mapOf("symbols" to "005930,AAPL", "before" to "2026-03-25T09:00:00+09:00"),
+        )
+        expectGet("https://toss.example.invalid/api/v1/candles?symbols=005930,AAPL&before=2026-03-25T09:00:00%2B09:00")
+            .andRespond(ok())
+
+        client.get(request, pricesType)
+
+        server.verify()
+    }
+
+    @Test
+    fun `쿼리 값의 공백 앰퍼샌드 퍼센트도 안전하게 인코딩하고 + 는 값 안 어디에 있어도 퍼센트 인코딩된 2B 이다`() {
+        every { tokenManager.getToken() } returns "fake-token-a"
+        val request = TossApiRequest(
+            "/api/v1/candles",
+            TossRateLimitGroup.MARKET_DATA_CHART,
+            mapOf("before" to "a b&c%d+e+"),
+        )
+        expectGet("https://toss.example.invalid/api/v1/candles?before=a%20b%26c%25d%2Be%2B").andRespond(ok())
+
+        client.get(request, pricesType)
+
+        server.verify()
+    }
+
     @Test
     fun `금액이 JSON 숫자로 와도 자릿수를 잃지 않고 읽는다`() {
         every { tokenManager.getToken() } returns "fake-token-a"

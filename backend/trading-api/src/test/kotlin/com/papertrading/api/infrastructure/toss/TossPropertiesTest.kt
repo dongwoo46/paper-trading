@@ -160,6 +160,8 @@ class TossPropertiesTest {
         "trading.toss.token-request-deadline-millis, -1, TOSS_TOKEN_REQUEST_DEADLINE_MILLIS(범위 오류)",
         "trading.toss.rate-limit-max-retries, -1, TOSS_RATE_LIMIT_MAX_RETRIES(범위 오류)",
         "trading.toss.rate-limit-max-wait-millis, -1, TOSS_RATE_LIMIT_MAX_WAIT_MILLIS(범위 오류)",
+        "trading.toss.rate-limit-max-queue-wait-millis, 0, TOSS_RATE_LIMIT_MAX_QUEUE_WAIT_MILLIS(범위 오류)",
+        "trading.toss.rate-limit-max-queue-wait-millis, -1, TOSS_RATE_LIMIT_MAX_QUEUE_WAIT_MILLIS(범위 오류)",
         "trading.toss.rate-limits.ASSET, 0, TOSS_RATE_LIMIT_ASSET(범위 오류)",
         "trading.toss.rate-limits.MARKET_DATA_CHART, -2, TOSS_RATE_LIMIT_MARKET_DATA_CHART(범위 오류)",
     )
@@ -185,6 +187,7 @@ class TossPropertiesTest {
         "trading.toss.token-request-deadline-millis, 17000",
         "trading.toss.rate-limit-max-retries, 0",
         "trading.toss.rate-limit-max-wait-millis, 0",
+        "trading.toss.rate-limit-max-queue-wait-millis, 1",
         "trading.toss.rate-limits.ASSET, 1",
     )
     fun `선택 키가 경계값 안이면 활성이다`(property: String, value: String) {
@@ -338,6 +341,7 @@ class TossPropertiesTest {
             assertEquals(20_000L, properties.tokenRequestDeadlineMillis)
             assertEquals(2, properties.rateLimitMaxRetries)
             assertEquals(5_000L, properties.rateLimitMaxWaitMillis)
+            assertEquals(5_000L, properties.rateLimitMaxQueueWaitMillis)
             assertEquals(
                 mapOf(
                     TossRateLimitGroup.AUTH to 5,
@@ -360,6 +364,7 @@ class TossPropertiesTest {
                 "TOSS_TOKEN_REQUEST_DEADLINE_MILLIS=25000",
                 "TOSS_RATE_LIMIT_MAX_RETRIES=4",
                 "TOSS_RATE_LIMIT_MAX_WAIT_MILLIS=9000",
+                "TOSS_RATE_LIMIT_MAX_QUEUE_WAIT_MILLIS=7000",
             ).run { context ->
                 val properties = context.getBean(TossProperties::class.java)
 
@@ -367,6 +372,7 @@ class TossPropertiesTest {
                 assertEquals(25_000L, properties.tokenRequestDeadlineMillis)
                 assertEquals(4, properties.rateLimitMaxRetries)
                 assertEquals(9_000L, properties.rateLimitMaxWaitMillis)
+                assertEquals(7_000L, properties.rateLimitMaxQueueWaitMillis)
             }
     }
 }

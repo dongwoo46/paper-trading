@@ -21,7 +21,7 @@
 | Title | 시세 REST와 최종 확인 |
 | Feature | multi-broker-kis-toss |
 | Based on | development-plan §5 1단계 7번(시세 REST)·8번 중 전체 시험 재실행, §2 D9(내부 API 경로)·D13(BigDecimal)·D14(결측)·D15(400 TOSS_REQUEST_REJECTED)·D16(한도)·D18(공식 명세 원본)·D19(Redis에 안 씀), §6 시세·컨트롤러·부동소수점 행, §7 수치 무결성·결측 행, open-questions FLAG-08·10·18, 조사 문서 «개별 API 스키마», 공식 명세 openapi.json 1.2.28(PriceResponse·OrderbookResponse·OrderbookEntry·CandlePageResponse·Candle·SymbolQuery), review/step6-code-review.md S6-01·S6-02·S6-04·S6-05, 사람 결정 2026-11-15(시각은 토스 오프셋 그대로, S6-04 줄 대기 상한 키 분리) |
-| Status | todo |
+| Status | in progress |
 | Owner |  |
 
 ---
@@ -80,7 +80,12 @@
 
 > Fill it by spelling out the §2 approach as the actual work (concretely, what was done).
 
--
+- 시험 먼저: 새 시험 4개 클래스(`TossMarketDataClientTest`, `TossMarketQueryServiceTest`, `TossMarketControllerIntegrationTest`, `MaskAllButLastFourTest`)와 기존 5개 클래스 보강, 스텁(`TODO()` 뼈대)으로 컴파일만 되게 한 뒤 Red 실행
+- 포트 `TossMarketDataPort`와 값 타입, `TossMarketDataClient`(prices·orderbook MARKET_DATA, candles MARKET_DATA_CHART), 토스 DTO `TossMarketData`, 시각은 문자열로 받고 `OffsetDateTime.parse`로 형식만 검증
+- `TossMarketQueryService` 입력 검증(400 `INVALID_MARKET_QUERY`, 새 예외 `InvalidMarketQueryException`), `TossMarketController` 3경로, 응답 DTO `TossMarketResponse`(숫자는 JSON 문자열)
+- 쿼리 `+` 인코딩: `TossTransportSupport.withPlusEncodedInQuery` 한 곳에서 `+`를 `%2B`로, 쉼표·콜론은 그대로
+- 리뷰 후속: S6-01 `withCoercionConfigDefaults`로 빈·공백 문자열 강제 변환 Fail. S6-02 그룹별 멈춤 끝 시각, 깬 뒤 재확인. S6-04 새 키 `rate-limit-max-queue-wait-millis`(application.yaml, TossProperties 범위 검사 1 이상). S6-05 `common/MaskAllButLastFour.kt` 한 함수로 옮기고 네 toString이 그것만 씀
+- fixture 9개(prices 2, orderbook 3, candles 4)와 README 줄 추가
 
 ---
 
@@ -88,14 +93,23 @@
 
 | What | How it was checked | Result |
 |---|---|---|
-|  | test / screenshot / API contract / manual |  |
+| Red | 스텁으로 컴파일만 되게 한 뒤 새·바뀐 시험 실행(maker) | 실패 192건(MarketQueryService 91, MarketDataClient 60, TossJson 11, Controller 10, Mask 9, RateLimiter 6, Properties 3, ApiClient 2) |
+| 메인 재실행 | `./gradlew test --rerun --offline --tests '*Toss*' '*MaskAllButLastFourTest' '*BrokerAccount*' '*ArchitectureRulesTest' '*KisAccountBalance*'`, 실행 뒤 생긴 xml만 집계 | 22개 클래스 541건, 실패 0, 오류 0, 건너뜀 0 |
+| 린트 | `./gradlew compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` 메인 재실행 | exit 0 |
+| 부동소수점 | `TossFloatingPointScanTest`(대상에 `presentation/dto/toss`·`Toss*Controller` 추가) + 메인 grep | 0건(기존 주석 1줄 제외) |
+| 범위 | `git status`로 `infrastructure/kis/**`·collector-api·frontend | 변경 0 |
+| 전체 스위트 | 구현 커밋 푸시 뒤 CI `full-test` | 대기 |
+| 코드 리뷰 | `review/step7-code-review.md` | 대기 |
 
 ---
 
 ## 7. Result  (record)
 
 - Done:
-- Changed files / PR:
+- Changed files / PR: 경로는 `backend/trading-api/src/` 기준
+  - main 신설: `application/toss/{TossMarketQueryService,port/TossMarketDataPort}.kt`, `common/MaskAllButLastFour.kt`, `common/exception/InvalidMarketQueryException.kt`, `infrastructure/toss/{TossMarketDataClient,dto/TossMarketData}.kt`, `presentation/controller/TossMarketController.kt`, `presentation/dto/toss/TossMarketResponse.kt`
+  - main 수정: `BrokerAccountBalancePort`, `TossAccountListPort`, `TossApiClient`, `TossApiRequest`, `TossJson`, `TossProperties`, `TossRateLimiter`, `TossTransportSupport`, `dto/TossAccount`, `application.yaml`
+  - test 신설 4, 수정 5(`TossApiClientTest`, `TossJsonTest`, `TossRateLimiterTest`, `TossPropertiesTest`, `TossFloatingPointScanTest`), fixture 9
 
 ---
 
@@ -105,7 +119,18 @@
 
 | Problem | How it was handled |
 |---|---|
-|  | new step / change an existing step / open-questions flag / ignore |
+| 컨트롤러 파라미터 형식 | ASSUME: 전부 `String?`로 받고 서비스 한 곳에서 검증, 숫자 형식 오류도 같은 `INVALID_MARKET_QUERY` |
+| adjusted·count 표기 | ASSUME: adjusted는 소문자 `true`/`false`만, count는 숫자만(앞자리 0은 허용) |
+| 중복 종목 | ASSUME: 형식만 검증, 중복은 막지 않음(토스에 그대로) |
+| before 오프셋 표기 | ASSUME: `OffsetDateTime.parse` 통과 값만. `+09`처럼 콜론 없는 오프셋도 통과하고 토스가 거부하면 `TOSS_REQUEST_REJECTED` |
+| 응답 시각 파싱 실패의 원인 예외 | ASSUME: cause를 잇지 않음(파싱 예외 문구에 응답 원문이 있음) |
+| S6-01 적용 범위 | ASSUME: 스칼라뿐 아니라 객체·목록 칸의 빈·공백 문자열도 Fail. 문자열 칸의 빈 문자열은 그대로 읽음(시험 고정) |
+| S6-02 깨어남 몰림 | 429로 멈춘 호출들이 같은 시각에 함께 깸. 리뷰 제안 방식 그대로라 막지 않음, 리뷰 확인 요청 |
+| 줄 대기 상한과 AUTH 간격 | 새 키를 1000 미만으로 두고 AUTH가 초당 1회면 락 안 두 번째 발급 호출이 먼저 `TOSS_RATE_LIMITED`. 기본 5000이라 설정 실수 때만 남. 후속 후보, 리뷰 판단 요청 |
+| S6-05 계좌 목록 요약 | `accountNoLast4`는 이미 끝 4자리라 그대로, `accountSeq`만 마스킹 |
+| 기존 시험 단언 변경 | `TossRateLimiterTest.capped` 한 줄(상한 키 이름), 기대값 동일, `devkit:test-change` 표시 |
+| 미국 일봉 fixture | 명세 예시가 없어 임의 가짜 값, README에 적음 |
+| 실호출 대조(§5 8번) | 사람이 토스 키·허용 IP 준비 뒤, 1단계 PR 전 남은 일 |
 
 ---
 
