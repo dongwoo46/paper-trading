@@ -67,6 +67,7 @@
 | O2 | 시장가 매수 잠금 부족. 잠금 = 접수 시 시세 × 수량, 체결 = 다음 틱 시세. 체결가가 더 높으면 confirmBuy 가 계좌 전체 잠금에서 빼 다른 주문 잠금을 쓰거나, 없으면 require 실패로 매 틱 체결 실패 | OrderCommandService.kt:95-110 · LocalMatchingEngine.kt:46-49 · Account.kt:158-163 |
 | O3 | 다건 체결 매도의 정산이 마지막 체결 1건만 담음 → 앞선 체결의 대금·세금 누락(부분 체결은 KIS 모드뿐) | ExecutionProcessor.kt:178-194 · TA:domain/entity/settlement/Settlement.kt:85-98 |
 | O4 | #8 로 이미 저장된 orders.total_amount 오염(가격이 다른 다건 체결 KIS 주문). 고친 뒤 해제액이 이 값을 읽음 | DEC-05 |
+| O5 | LOCAL 매도 대금이 예수금에 입금되지 않는 것으로 보임. `applySellExecutionAtomically` 의 `clearAutomatically` 가 영속성 컨텍스트를 비운 뒤 `account.receiveSellProceeds` 가 분리된 엔티티를 바꿔 저장 안 됨(A1 열 확장 통합 시험에서 관찰: 원장 SELL_EXECUTE 30.0002, 예수금 증가분 0). 기록만 하고 고치지 않음(§9) | ExecutionProcessor.kt processFill · PositionRepository.kt applySellExecutionAtomically · TODO 항목 |
 
 ### 1-3. 부분별 가능성
 

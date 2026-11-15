@@ -75,6 +75,11 @@
 - 1dd52a5 red tests with the ledger numbers (3 red, regression green); 474e066 fix D-01 and D-02 plus root-cause.md; 8ee77a3 baseline regeneration.
 - Joint review round 1 (review/panel.md): 44a830c red edge tests (11 red), 50f382d fix (no in-memory rounding, overfill rejected, two warn logs, KDoc), cf00dac baseline position update.
 - Docs: plan section 8-1 and 6 updated, TODO items for P-05 and AE19, review files and explainer html.
+- Re-review round 2 (review/rereview-1.md): 5af13b8 plan note for the column widening; c8136c8 red tests (8 red: real PostgreSQL round trip, settlement exactness, rejection message, socket boundary, log masking); 13f1187 money columns to numeric(28,12) plus V13 plus settlement rounding removed; db40348 notice rejection logged at the socket boundary plus KIS account-number masking; 1d79e26 baseline update.
+
+  Money columns widened (entity @Column and V13 SQL, numeric(20,4) to numeric(28,12), integer digits stay 16): accounts.deposit, available_deposit, locked_deposit (Account.kt:49,53,57); account_ledger.amount, balance_after (AccountLedger.kt:50,54); orders.total_amount, locked_amount (Order.kt:96,105); settlements.realized_pnl, net_pnl, krw_net_pnl (Settlement.kt:52,64,76); positions.total_buy_amount (Position.kt:76).
+
+  Not changed (unsure or out of scope): prices and averages (orders.limit_price, avg_filled_price, executions.executed_price, krw_executed_price, positions.avg_buy_price, current_price), fees and taxes (orders.fee, executions.fee, settlements.fee, tax, fee_policies.min_fee: rule is PR-A5), valuation columns (positions.evaluation_amount, unrealized_pnl), report copies (daily_balances, portfolio_snapshots, tax_summaries), risk_policies, strategy columns.
 
 ---
 
@@ -86,6 +91,8 @@
 | Red before review fix | 44a830c run of OrderTest and ExecutionProcessorTest | 11 red, then green after 50f382d |
 | Full gate | `./gradlew test ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=e510634 --rerun-tasks` | BUILD SUCCESSFUL at cf00dac (7m40s); baselines grown 0 vs e510634 for ktlint and detekt |
 | Frozen store | `git diff` of archunit_store | one line deleted, none added |
+| Round 2 red | c8136c8 run of the touched test classes | 8 red: BUY_EXECUTE ledger 50.0001 vs deposit decrease 50.0000, FILLED lock 0.0002 left, settlement 30.0002 vs 30.00015, message without ids, exception escaping the socket handler, account number in 3 logs; green after 13f1187 and db40348 |
+| Round 2 gate | `./gradlew test ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=e510634 --rerun-tasks` | BUILD SUCCESSFUL at 1d79e26 (9m15s); baselines grown 0 vs e510634 |
 
 ---
 
@@ -108,3 +115,8 @@
 | Review blockers P-01~P-03: A1 fix added 4-digit in-memory rounding | human decision: no in-memory rounding (plan section 8-1); fixed in 50f382d with red tests first |
 | P-05: storage column 4-digit remainder can exceed the lock | TODO item for a column scale change (schema decision); not fixed here |
 | P-14: service tests mock repositories | left to the C track (ports), plan section 9 |
+| R2-N2, R2-N3 and P-05: stored 4-digit columns cut the unrounded amounts | human decision: widen money columns to numeric(28,12) in A1 (plan section 8-1), V13 added; the repo has no Flyway and uses ddl-auto create, so the entity definition is the real schema and V13 is a manual script (TODO item for schema management) |
+| R2-N1: rejection exception closed the KIS session | caught at the socket boundary (outside the transaction, rule PTB9), logged with order id, masked execution id, quantity and remaining quantity; the notice stays rolled back |
+| R2-N4: account number in logs | one masking function (common/LogMasking.kt) used by the three log sites |
+| Found while testing: LOCAL sell proceeds not credited to the deposit in a real DB test (applySellExecutionAtomically clears the persistence context) | not fixed, recorded as plan O5 and a TODO item (out of ledger, rule: record only) |
+| Found: no Flyway dependency, ddl-auto create in application.yaml | recorded in the plan and a TODO item for a human check |
