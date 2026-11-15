@@ -74,6 +74,16 @@ class ArchitectureRulesTest {
     val applicationUsesOnlyAllowedSpringTypes: ArchRule =
         FreezingArchRule.freeze(applicationUsesOnlyAllowedSpringTypesRule())
 
+    // 위반 0 이라 동결 없이 등록, application 에 @Async 메서드가 아직 없어 빈 대상 허용
+    @ArchTest
+    @JvmField
+    val asyncOnlyOnAfterCommitListenerMethods: ArchRule =
+        asyncOnlyOnAfterCommitListenerMethodsRule().allowEmptyShould(true)
+
+    @ArchTest
+    @JvmField
+    val applicationClassesAreNotAsync: ArchRule = applicationClassesAreNotAsyncRule()
+
     @ArchTest
     @JvmField
     val presentationDoesNotDependOnInfrastructure: ArchRule =
