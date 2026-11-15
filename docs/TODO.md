@@ -118,6 +118,15 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - ✅ 순서: 1) 토스 읽기 전용(시세·잔고·보유 REST) 2) 공통 브로커 계층으로 KIS 전면 리팩터링 3) 토스 시세 웹소켓·실주문
   - 조사 문서: `docs/research/2026-11-15-toss-open-api.md` · 기획: `docs/features/running/multi-broker-kis-toss/`
 
+- [ ] KIS 주문 취소·접수 타임아웃 결함 수정 | project: trading-api | phase: kis-order-cancel-timeout | priority: P1
+  - 우리 주문 취소가 KIS 취소를 부르지 않아 KIS에 살아 있는 주문의 잠금이 풀리고, 뒤 체결 통지가 버려짐(`OrderCommandService.kt:260-303`, `ExecutionProcessor.kt:100`)
+  - KIS 접수 타임아웃 뒤 우리 주문만 롤백되는데 KIS에는 접수됐을 수 있음(`KisLiveOrderExecutor.kt:30-42`)
+  - 출처: multi-broker-kis-toss 계획서 RISK-15, DEC-08 A(사용자 2026-11-16, 2단계는 동작 불변이라 따로 등록)
+
+- [ ] KIS 토큰 평문 저장 해소 | project: trading-api, collector-api | phase: kis-token-encryption | priority: P1
+  - `kis:token:{mode}`를 두 서비스가 평문으로 공유(`KisTokenManager.kt:85`, collector `KisTokenRedisStore.kt:12-21`). 토스 토큰 암호기(`AesGcmTokenCipher`)와 같은 형식으로 두 서비스를 함께 이전
+  - 출처: multi-broker-kis-toss 계획서 RISK-13, DEC-07 A(사용자 2026-11-16, 3단계 collector 토큰 공유 작업과 함께 검토)
+
 - [ ] 전략 실행 모드 설계 결정 | project: trading-api | phase: strategy-execution-mode-design | priority: P1
   - ✅ 실행 모드 3개 지원 결정: `KIS_LIVE` / `KIS_PAPER` / `LOCAL`
   - ✅ 전략 단위 독립 제어, 글로벌 킬스위치 필요

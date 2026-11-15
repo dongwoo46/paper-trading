@@ -41,7 +41,14 @@
 | 4 | 토스 토큰 기반 | done | steps/step-4.md | 시험 71건 통과, CI 전체 success(`da617e5`, 실행 43688563304), 리뷰 막는 지적 0(후속 9건은 FLAG-15로 step 5 전 수정) |
 | 5 | 스키마 확정과 토스 전송 계층 | done | steps/step-5.md | 관련 시험 253건 통과, CI 전체 success(`908ac89`, 실행 43700036485), 리뷰 막는 지적 0(후속 C-01~C-05는 step 6 범위) |
 | 6 | 잔고 공통 포트와 토스 어댑터 | done | steps/step-6.md | 관련 시험 297건 통과, CI 전체 success(`2692c2d`, 실행 43723583394), 리뷰 막는 지적 0(후속 S6-01·02·04·05는 step 7 범위) |
-| 7 | 시세 REST와 최종 확인 | in progress | steps/step-7.md | 리뷰 1회차 막는 지적 0, 후속 S7-01~04 고침, 전체 1073건 실패 0, 린트 exit 0, PR CI 대기 |
+| 7 | 시세 REST와 최종 확인 | in progress | steps/step-7.md | 코드는 PR #55로 머지(`263f047`, 전체 1073건 실패 0). 남은 것은 §5 8번 수동 실호출 대조(사람 준비 뒤, 2단계와 병행) |
+| 8 | 2단계 기준선과 특성화 시험 | todo | - | 계획서 §5 2단계 1번, D21 |
+| 9 | KIS 에러 정렬 | todo | - | 2단계 2번, D28, DEC-05 A |
+| 10 | 브로커 선택과 KIS 잔고 이전 | todo | - | 2단계 3번, D22~D25 |
+| 11 | 주문 공통 포트 | todo | - | 2단계 4번, D26 |
+| 12 | 계좌 응답 출처와 ADR 갱신 | todo | - | 2단계 5번, D29 |
+| 13 | 체결 입력 공통화 | todo | - | 2단계 6번, D27, PR #53 머지 뒤에만 |
+| 14 | 2단계 최종 확인 | todo | - | 2단계 7번 |
 
 - **Status:** todo / in progress / done / blocked — a cell is read by its leading word; anything else (`WIP`, `not done`) is treated as unknown, never as done.
 
@@ -54,6 +61,7 @@
 | Date | Change | Reason |
 |---|---|---|
 | (example) 6/7 | step-2.5 added | step-2 found a missing field in the API response |
+| 2026-11-16 | 2단계 step 8~14 추가(계획서 §5 2단계 1~7번, §10). 범위는 trading-api만, 토스 실주문·trading-web·KIS 토큰 이전 제외. DEC-05~08 모두 A | 사용자 결정 «백엔드만, 화면은 나중», «시작, 대조는 병행», DEC-05~08 추천안 선택. 설계 재승인 필요 |
 | 2026-11-15 | 예외 범주 J(503)·K(500)는 처음 쓰는 단계로 미룸 | 2단계는 I(501)만 필요(미사용 코드 금지) |
 | 2026-11-15 | 2단계 재리뷰(`review/rereview-1.md`)와 QA 증거(`review/test-evidence.md`) 완료, 보류 해제 | 9건 모두 고침, 막는 지적 0. 후속 P-06·P-07·R2-01은 이유와 함께 deferred 처분 |
 | 2026-11-15 | step 5 범위에 R1-01(TTL 단조 식)·R1-02(요청 전체 상한 `token-request-deadline-millis` 20초)·TossTokenManager 빈 등록 추가, 설계 D10·D11·§4 수정 | 재리뷰 후속 FLAG-16 사람 결정, FLAG-14. 설계 재승인 받음 |

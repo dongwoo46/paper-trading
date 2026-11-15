@@ -1,10 +1,10 @@
-# Development Plan: KIS·토스증권 다중 브로커 연동 (1단계 토스 읽기 전용)
+# Development Plan: KIS·토스증권 다중 브로커 연동 (1단계 토스 읽기 전용, 2단계 KIS 공통 계층)
 
 > Tech Planner 산출물. 승인된 feature-spec을 받아 «어떻게 만들지, 지금 만들 수 있나»를 정한 결정 스냅샷입니다.
 > 기반: [feature-spec.md](./feature-spec.md), [open-questions.md](./open-questions.md), [planning-approval.md](./planning-approval.md), [토스 Open API 조사](../../../research/2026-11-15-toss-open-api.md). 다음: state.md, steps/step-N.md
 >
 > 합의되면 고정합니다. 진행 상태는 여기 적지 않고 state.md에 적습니다.
-> 상세 계획은 1단계만입니다. 2단계와 3단계는 §5에 큰 줄기와 선행 조건만 둡니다(feature-spec §3, §10 그대로).
+> 상세 계획은 1단계(§0~§9)와 2단계(§10, 2026-11-16 추가)입니다. 3단계는 §5에 큰 줄기와 선행 조건만 둡니다(feature-spec §3, §10 그대로).
 > 줄 번호는 `origin/main` e2904c8 기준입니다. 경로 앞의 `backend/trading-api/src/main/kotlin/com/papertrading/api/`는 줄였습니다.
 > 틀: devkit v0.95.0 `templates/planner/development-plan.template.md`
 
@@ -182,10 +182,17 @@
 7. 시세 REST: prices, orderbook, candles, 내부 API
 8. 수동 확인: 실제 토스 계좌 잔고 1회, 시세 1회 조회, 전체 테스트 재실행
 
-2단계 (KIS를 공통 브로커 계층으로 전면 리팩터링), 큰 줄기:
-- KIS 잔고를 `BrokerAccountBalancePort`로 옮김(`trId`는 `tradingMode`로 정함). 공통 서비스에 대사(reconciliation) 추가. `/api/kis/account/balance` 존폐 결정(기존 응답 변경이라 AE20 목록과 trading-web 호출부 확인)
-- 주문과 체결 공통 포트, 브로커 선택 방식 재설계(D8의 레지스트리 재검토, ADR-005 정리). KIS 토큰을 D10, D11 방식으로 이전. KIS 에러 범주 정렬(502, 504를 503으로). `AccountResponse.source`를 모드에서 산출. trading-web 타입과 화면(FLAG-05)
-- 선행 조건: 1단계 완료, 1단계 기준선 대비 KIS 테스트 전부 통과, RULE-10(KIS 동작 불변, 리팩터링 전후 같은 테스트 통과)
+2단계 (KIS를 공통 브로커 계층으로 리팩터링, 결정·파일·시험·위험은 §10):
+
+1. 기준선과 특성화 시험: 착수 시점 main에서 `./gradlew test` 결과와 KIS 시험 목록을 기록하고, 옛 코드에 경계 특성화 시험(D21)을 넣어 통과시킴. RULE-10 비교 기준
+2. KIS 에러 정렬(DEC-05가 A일 때만): 범주 기반 KIS 예외, 잔고 경로 매핑, 핸들러 고정 문구, AE20 목록과 trading-web 호출부 재점검(D28). 3번이 같은 파일을 건드리기 전에 끝냄(AE19). DEC-05가 B면 이 묶음은 없음
+3. 브로커 선택과 KIS 잔고: 포트별 지원 모드와 기동 때 검사(D25), KIS 잔고 어댑터를 `BrokerAccountBalancePort`로(D22), `broker-balance`의 KIS 지원(D24), `/api/kis/account/balance`는 계약 그대로 공통 포트 경유(D23)
+4. 주문 공통 포트: `BrokerOrderPort`와 `KisOrderAdapter`, 실행기 둘을 `BrokerOrderSubmitter` 하나로, 주문 경로 KIS 에러 정렬(D26, D28). TOSS_LIVE·UPBIT_LIVE 501 그대로
+5. 계좌 응답 출처와 ADR: `AccountResponse.source`를 모드에서 산출(D29), ADR-005 갱신(D25, D26)
+6. 체결 입력 공통화: PR #53 머지 뒤에만. `KisExecutionNotice`를 application의 `BrokerExecutionNotice`로(D27)
+7. 최종 확인: 빌드·전체 시험·린트, 기준선과 특성화 시험 비교, (선택) KIS 모의 계좌로 두 잔고 경로 값 대조 1회(사람)
+- 선행 조건: 1단계 기준선 대비 KIS 테스트 전부 통과(RULE-10). 1단계 §5 8번 수동 실호출 대조는 병행하며 선행 조건이 아님(D20, 사람 결정 2026-11-16)
+- 2단계에서 뺀 것: trading-web 타입과 화면(FLAG-05, RISK-07), 토스 실주문, KIS 토큰 이전(🔴, DEC-07)
 
 3단계 (토스 시세 웹소켓, 실주문과 체결 이벤트), 큰 줄기:
 - collector-api가 토스 웹소켓을 받아(FLAG-08) Redis `quote:toss:live:*`에 기록. 토스 실주문 어댑터(`clientOrderId`와 내부 `idempotencyKey` 연결). 체결 이벤트를 `ExecutionProcessor` TOSS_LIVE 분기로(1단계의 예외를 대체)
@@ -288,3 +295,190 @@
 - 운영 DB가 ddl-auto를 덮어써 enum 제약 변경 SQL이 필요할 때(RISK-04)
 - 기준선 대비 KIS 테스트가 새로 실패할 때, Docker가 없어 통합 테스트를 못 돌릴 때
 - 새 의존성이 필요해 보일 때
+
+---
+
+## 10. 2단계 상세 (KIS를 공통 브로커 계층으로 리팩터링)
+
+> 2026-11-16 추가(Claude tech-planner). 1단계 절(§0~§9)의 결정은 그대로 두고, 2단계 결정은 D20부터, 사람 결정은 DEC-05부터 씁니다. 굵은 순서는 §5 «2단계»입니다.
+> 줄 번호는 main `263f047` 기준이고 경로 줄임은 §3과 같습니다(«main/», «test/»). 범위는 trading-api만입니다(사람 결정 2026-11-16).
+
+### 10.0 메타데이터
+
+| 항목 | 값 |
+|---|---|
+| 기반 | feature-spec §3 2단계, §4 6행, RULE-01, RULE-03, RULE-10. 사람 결정 2026-11-16(범위) |
+| 날짜 | 2026-11-16 |
+| 대상 브랜치 | `feature/multi-broker-kis-toss-phase2` (main `263f047`, 1단계 step 1~7 머지 뒤) |
+| 상태 | draft (설계 재승인 전) |
+
+### 10.1 구현 가능성
+
+| 항목 | 값 |
+|---|---|
+| feature-spec 준비됨? | ready (2단계 의도는 §3 «공통 브로커 계층으로 KIS 전면 리팩터링», §4 6행) |
+| 막힌 ASK | 없음. DEC-05~DEC-08은 2026-11-16 사용자가 모두 A로 결정(§10.8) |
+| 판정 | 🟡 일부 조건부, 🔴 1건 |
+| 코멘트 | 🔴는 KIS 토큰 이전 하나이고 §5 2단계 순서에 넣지 않았습니다(DEC-07). KIS 에러 정렬과 시그니처에 묶인 KIS 시험 처리는 RULE-10을 어떻게 판정할지(DEC-05)에 달렸습니다. 체결 묶음은 PR #53 머지 뒤에만 됩니다 |
+
+부분별 가능성:
+
+| 부분 | 가능? | 필요한 선행 작업 | 근거(읽은 파일) |
+|---|---|---|---|
+| 기준선과 경계 특성화 시험 | 🟢 | Docker | 1단계 Testcontainers·`MockRestServiceServer` 시험(§6), `test/presentation/controller/KisAccountBalanceControllerIntegrationTest.kt:30-46` |
+| KIS 잔고를 `BrokerAccountBalancePort`로 | 🟢 | - | `main/infrastructure/kis/KisAccountBalanceAdapter.kt:28-88`(모드를 `trId` 문자열로 판정 L41, 국내주식 API L44), `main/application/account/port/BrokerAccountBalancePort.kt:12-54`, `main/application/account/port/KisAccountBalancePort.kt:6-27` |
+| `/api/kis/account/balance` 계약 유지 | 🟢 | - | `main/presentation/controller/KisAccountBalanceController.kt:12-20`, `main/application/account/KisAccountQueryService.kt:19-63`, `main/application/account/result/KisAccountBalanceResult.kt:8-19` |
+| `broker-balance`의 KIS 지원 | 🟢 | - | `main/application/account/BrokerAccountQueryService.kt:26-34` |
+| 브로커 선택 재설계 | 🟢 | - | `BrokerAccountQueryService.kt:21-22`(매개변수 이름=빈 이름에 기댐), `src/test/resources/archunit_store/stored.rules`(application의 Spring 의존 동결 규칙 `5ffdb0db`) |
+| 주문 공통 포트 (KIS만, TOSS_LIVE·UPBIT_LIVE 501 유지) | 🟢 | - | `main/application/order/OrderCommandService.kt:42-53, 179-199`, `KisPaperOrderExecutor.kt:15-40`, `KisLiveOrderExecutor.kt:16-43`, `main/infrastructure/kis/KisOrderRestClient.kt:39-65`, 레포 규칙 `rules/backend-api.md:37, 40` |
+| 체결 입력 공통화 | 🟡 | PR #53 머지 | `main/application/order/KisExecutionNoticeService.kt:3, 19-53`, `main/infrastructure/kis/KisExecutionWebSocketManager.kt:4, 134, 227-229`, PR #53 변경 파일 목록(`gh pr view 53`), `git merge-tree` 시험 결과(RISK-11) |
+| KIS 에러 정렬 | 🟡 | DEC-05 | `main/common/exception/CommonApiExceptions.kt:67-104`, `KisAccountBalanceAdapter.kt:58-69, 90-102`, `KisAccountBalanceControllerIntegrationTest.kt:86-111`(401·403·502·504와 예외 원문 message 단언), `main/presentation/exception/GlobalExceptionHandler.kt:36-43, 96-114` |
+| `AccountResponse.source`를 모드에서 산출 | 🟢 | - | `main/presentation/dto/account/AccountResponse.kt:18, 34`, `main/domain/enums/AccountSource.kt:3-7`, trading-web `src`에 `source` 읽는 곳 0건 |
+| KIS 토큰을 D10·D11 방식으로 | 🔴 (이번 범위) | 범위를 collector-api까지 넓히거나 미룸(DEC-07) | `main/infrastructure/kis/KisTokenManager.kt:14-16, 28, 32-40, 85`, collector-api `infra/kis/source/rest/KisTokenRedisStore.kt:12-21`, `KisAccessTokenClient.kt:33-41, 63-64`(같은 키 `kis:token:{mode}`를 평문으로 읽고 씀, DB 저장소도 따로 둠) |
+
+🔴 사유: trading-api만 암호화하면 collector-api가 암호문을 KIS 토큰으로 보내 KIS 인증이 실패하거나, trading-api가 collector가 넣은 평문을 못 풀어 KIS 토큰을 따로 또 발급합니다(KIS 토큰은 발급 횟수가 제한돼 두 서비스가 공유 중, `KisTokenManager.kt:16`). 되게 하려면 collector-api의 저장·발급을 같은 형식·키·락 규약으로 함께 바꿔야 하는데 2단계 범위 밖입니다.
+
+### 10.2 아키텍처·통합 결정 (D20~)
+
+| 결정 | 선택 | 근거 | 기각한 대안 |
+|---|---|---|---|
+| D20 2단계 범위와 선행 조건 | trading-api만. trading-web 타입·화면(FLAG-05, RISK-07)과 토스 실주문은 뺌. TOSS_LIVE·UPBIT_LIVE 주문은 지금처럼 501 `BROKER_ORDER_NOT_SUPPORTED`(D4, D5, DEC-01 그대로). 선행 조건은 «1단계 기준선 대비 KIS 테스트 전부 통과(RULE-10)»로 좁히고, 1단계 §5 8번 수동 실호출 대조는 병행 | 사람 결정 2026-11-16 | 1단계 완료(수동 확인 포함)를 선행 조건으로: 허용 IP·키 준비 일정에 2단계가 묶임. trading-web 포함: 사람 결정으로 뺌 |
+| D21 RULE-10 증거 | §5 2단계 1번에서 옛 코드에 경계 특성화 시험(입력을 고정하고 밖으로 보이는 결과를 통째로 단언하는 시험)을 먼저 넣어 통과시키고, 이후 모든 묶음에서 고치지 않고 통과시킴. 경계 셋: (a) `/api/kis/account/balance`를 서비스 mock 없이 끝까지(KIS 응답은 `MockRestServiceServer` fixture, 토큰 관리자만 mock) 부른 응답 JSON과 KIS 호출 URL·`tr_id`·헤더 (b) KIS_PAPER·KIS_LIVE 주문 접수의 KIS 요청(경로, `tr_id`, 본문), `externalOrderId` 저장, 원장·잠금 행, Slack 문구 (c) KIS 체결 통지 1건이 만드는 체결·포지션·원장 행. 바뀌는 시그니처에 묶인 기존 KIS 시험의 처리는 DEC-05 | 기존 시험이 옛 시그니처에 묶여 글자 그대로는 전후 같은 시험을 못 돌림: `fetchBalance(1L, "VTTC8434R")`(`test/application/account/KisAccountQueryServiceTest.kt:41-56`, `test/infrastructure/kis/KisAccountBalanceAdapterTest.kt:73, 102`), 실행기 mock(`test/application/order/OrderCommandServiceTest.kt:62-68, 209-240`). 컨트롤러 시험은 서비스를 mock해(`KisAccountBalanceControllerIntegrationTest.kt:38`) 리팩터링 대상 코드를 지나지 않음 | 단위 시험만으로 판정: 경계 동작 변화를 못 잡음. 옛 시그니처를 남기는 덧댐 어댑터: 공통 계층으로 못 가고 죽은 포트가 남음 |
+| D22 KIS 잔고 이전 | `KisAccountBalanceAdapter`가 `BrokerAccountBalancePort`를 구현(지원 모드 KIS_PAPER, KIS_LIVE). `trId`와 REST 주소 모드는 `ref.tradingMode` 전수 `when`으로(KIS_PAPER → `VTTC8434R`·paper, KIS_LIVE → `TTTC8434R`·live, 그 밖은 범주 K 내부 오류이고 KIS 호출 없음). 계좌 로드는 어댑터에서 빼고 호출 서비스가 `BrokerAccountRef`로 넘김. 응답 해석(Map 파싱, 누락 시 0)은 그대로(가정 3). 통화는 KRW 한 줄: `cashBalance` = `dnca_tot_amt`, `cashBuyingPower` = null(이 API에 매수 가능 금액이 없고 새 KIS 호출은 만들지 않음), 나머지 합계는 지금 값. 종목 `currency`는 KRW. `asOf`는 KST `LocalDateTime`. `KisAccountBalancePort`, `KisBalanceSnapshot`, `KisBalancePosition` 삭제. 이력: D7 «KIS 전용 `trId` 인자는 뺌(2단계에 KIS 어댑터가 `tradingMode`로 정함)» | 국내주식 잔고 API(`KisAccountBalanceAdapter.kt:44`)라 KRW만 옴. 지금 모드 판정이 `trId` 문자열 비교(L41)라 모드가 문자열로 새고 있음. RULE-03 | 새 어댑터를 따로 두고 옛 어댑터 유지: 같은 KIS 호출 코드가 둘. 포트에 `trId` 인자 추가: D7에서 기각한 KIS 전용 인자 |
+| D23 `/api/kis/account/balance` 존폐 | 유지, 성공 응답 계약 불변(`KisAccountBalanceResult` 그대로, 금액은 JSON 숫자 그대로. FLAG-10 문자열은 새 API만). `KisAccountQueryService`가 계좌를 읽고 `mode` 파라미터를 모드로 바꿔(LIVE → KIS_LIVE, PAPER → KIS_PAPER) `BrokerAccountRef`를 만들어 KIS 어댑터를 부름. 지금처럼 `trId`는 계좌 모드가 아니라 `mode` 파라미터가 정함(가정 2). 대사(reconciliation) 계산은 이 서비스에 그대로 | trading-web `src`에 호출부 0건(읽기 전용 검색). 진행 중인 trading-web 재제작 계획이 이 경로를 쓸 예정(`docs/features/running/trading-web-shadcn-rebuild/development-plan.md:50, 167`), 프록시 표에 접두사가 있음(`frontend/trading-web/proxy.config.ts:25`). RULE-10 | 삭제: 다른 기능의 계획이 깨지고 AE20 큰 변경. `broker-balance`로 넘기기: 금액 표기(문자열)와 대사 유무가 달라 같은 계약이 아님 |
+| D24 `broker-balance`의 KIS 지원 | `BrokerAccountQueryService`에서 KIS_PAPER, KIS_LIVE를 501에서 KIS 어댑터 조회로. `source` = KIS. `externalAccountId`가 `XXXXXXXX-XX`(지금 KIS 규칙 `KisAccountBalanceAdapter.kt:113-119`)가 아니면 409 `KIS_ACCOUNT_NOT_LINKED`(F-4, `TOSS_ACCOUNT_NOT_LINKED`와 같은 범주). 금액은 문자열(FLAG-10). 대사는 넣지 않음(가정 4). UPBIT_LIVE 501, LOCAL 404는 그대로. 501 → 200은 기존 응답 변경이라 §10.4 AE20 목록에 올림 | feature-spec §4 6행 «어떤 계좌로든 … 공통 포트가 해당 어댑터를 고름». D9가 계좌 하위 경로를 고른 이유(2단계에 KIS가 와도 경로 유지) | KIS는 옛 경로만 쓰게 501 유지: 2단계 목적과 어긋남 |
+| D25 브로커 선택 방식 (D8 재검토) | 공통 포트마다 `supportedModes: Set<TradingMode>`를 두고, 서비스는 `List<포트>`를 주입받아 생성 때 모드 → 구현 표를 만듦. 어느 모드를 어댑터·501·404로 보낼지는 서비스의 전수 `when`(else 없음)이 정하고, 생성 때 «`when`이 어댑터로 보내는 모드 집합 = 구현 표의 키 집합, 모드마다 구현 1개»를 검사해 어긋나면 기동 실패. 잔고 포트와 주문 포트에 같은 방식. ADR-005를 이 방식으로 갱신. 이력: D8(1단계는 어댑터 1개라 레지스트리 기각, «2단계 공통 계층 설계 때 다시 봄») | 지금 선택은 매개변수 이름과 빈 이름이 같다는 약속에 기댐(`BrokerAccountQueryService.kt:21-22`). KIS 어댑터가 같은 포트를 구현하면 그 약속 하나에 선택이 걸림. application은 Service·Async·트랜잭션·context.event 밖의 Spring 의존이 ArchUnit으로 막혀 `@Qualifier`를 못 씀(`stored.rules` `5ffdb0db`). 모드 누락이 컴파일(`when`)과 기동(표 검사) 두 곳에서 드러남(RULE-03) | `supports()` 레지스트리만: 누락이 호출 때만 드러남. 매개변수 이름 주입 유지: 암묵적이고 어댑터가 늘수록 깨지기 쉬움. 모드마다 포트 인터페이스: 포트 수가 모드 수만큼 늘어남 |
+| D26 주문 공통 포트 | `main/application/order/port/BrokerOrderPort`(브로커에 주문을 접수하는 포트): `supportedModes`, `submit(order: Order): BrokerOrderReceipt`(`externalOrderId`). KIS 구현 `main/infrastructure/kis/KisOrderAdapter`가 `KisOrderRestClient.placeOrder`를 감싸고 모드로 paper·live를 정함(`KisOrderRestClient`는 안 고침). 두 실행기를 `BrokerOrderSubmitter`(포트를 골라 접수하고 외부 주문번호 기록, 로그, Slack 알림을 하는 서비스) 하나로 합치고 로그·Slack 문구는 모드 이름으로 지금과 같은 글자. `submitExternalOrderIfNeeded`의 KIS 두 분기는 이 서비스 호출, TOSS_LIVE·UPBIT_LIVE는 D4 선행 거부와 방어 분기 그대로. 취소는 포트에 넣지 않음(DEC-08). 이력: ADR-005 «OrderExecutionPort» | 레포 규칙 «application → infrastructure 금지, 출력 포트는 `application/<컨텍스트>/port`»(`rules/backend-api.md:37, 40`)인데 실행기가 `KisOrderRestClient`를 직접 import(`KisPaperOrderExecutor.kt:5`, `KisLiveOrderExecutor.kt:5`). 두 실행기는 모드 문자열과 문구만 다름. 지금 주문 취소는 KIS 취소를 부르지 않음(`OrderCommandService.kt:260-303`, 실행기 `cancel()` 호출 0건) | 실행기 둘을 두고 포트만 주입: 모드마다 KIS 이름의 클래스가 남음. 토스 주문 어댑터 자리까지 지금 만들기: 실주문 범위 밖, 쓰지 않는 코드. 포트에 취소를 넣고 연동: KIS 동작이 바뀜(RULE-10) |
+| D27 체결 입력 공통화 | 입력 경계만 공통화: application이 import하는 infrastructure 타입 `KisExecutionNotice`(`KisExecutionNoticeService.kt:3`)를 application 명령 `BrokerExecutionNotice`(브로커 체결 통지, 모드 포함)로 바꾸고 `KisExecutionNoticeService`를 `BrokerExecutionNoticeService`로 이름을 바꿈. KIS 주문 찾기 쿼리와 `ExecutionProcessor`는 그대로. PR #53 머지 뒤에만 착수하고, 그 차례에 PR #53이 열려 있으면 멈추고 ASK | 토스 체결은 3단계이고 실주문이 빠져 체결 쪽 구현은 KIS 하나뿐(최소 코드). PR #53이 같은 두 파일과 `ExecutionProcessor`를 고침(RISK-11) | 체결 처리 포트 신설: 구현 1개, 쓰는 곳 없음. PR #53 전에 착수: 충돌, D6 되돌림 위험 |
+| D28 KIS 에러 정렬 (적용은 DEC-05 뒤) | KIS 쪽 실패는 범주 J(503)로 두고 code로 원인을 가름: 인증 `KIS_AUTH_FAILED`, 권한 `KIS_PERMISSION_DENIED`, 그 밖 원격 실패 `KIS_UNAVAILABLE`, 타임아웃 `KIS_TIMEOUT`, 호출 한도 `KIS_RATE_LIMITED`. 계좌번호 없음·형식 틀림은 F-4(409) `KIS_ACCOUNT_NOT_LINKED`. KIS가 주문을 받지 않은 경우(`KisErrorCode`의 ORDER_REJECTED, INVALID_ACCOUNT, DUPLICATE_OR_ALREADY_PROCESSED)는 A(400) `KIS_ORDER_REJECTED`(D15의 `TOSS_REQUEST_REJECTED`와 같은 범주). 잔고 경로는 `KisAccountBalanceAdapter`에서, 주문 경로는 새 `KisOrderAdapter`에서 바꿈. 새 예외는 1단계 범주 기반(Spring 무의존, D15)을 상속하고 응답 message는 code별 고정 문구(KIS 원문은 로그만, AE8). 옛 code(`KIS_UNAUTHORIZED`, `KIS_FORBIDDEN`, `KIS_BAD_GATEWAY`, `KIS_GATEWAY_TIMEOUT`, `KIS_RESPONSE_PARSE_ERROR`)는 재사용하지 않고 은퇴, 쓰는 곳이 없어진 옛 예외 클래스만 삭제(`KisResponseParseException`은 `KisOrderRestClient`가 계속 써서 남음). `KisOrderRestClient`·`KisTokenManager` 안에서 나는 예외는 파일을 안 건드려 그대로 | backend-api AE4(외부 의존 실패는 503), D15와 같은 근거(우리 호출자의 인증·권한 문제가 아닌데 401·403을 줌). AE19(건드린 파일 전체 정렬): §5 2단계 3번·4번이 KIS 어댑터 파일을 건드림. 주문 경로 KIS 실패는 지금 `KisApiException`이 기본 처리기로 가 500 `INTERNAL_SERVER_ERROR`(`KisOrderRestClient.kt:161-166`, `GlobalExceptionHandler.kt:96-102`) | 옛 code 이름 유지하고 상태만 503: 이름이 502·504를 뜻해 오해. 401·403·502·504 유지: AE4 위반이 남음(미루기는 사람만 고름, DEC-05 B) |
+| D29 `AccountResponse.source` | `AccountSource`에 모드 → 출처 함수 하나(전수 `when`): LOCAL → LOCAL, KIS_PAPER·KIS_LIVE → KIS, TOSS_LIVE → TOSS, UPBIT_LIVE → UPBIT(`AccountSource`에 UPBIT 추가, 가정 1). `AccountResponse.from`과 `BrokerAccountQueryService`가 이 함수를 씀. KIS·TOSS·UPBIT 계좌의 `source`가 LOCAL에서 바뀌므로 AE20 목록에 올림 | 지금 모든 계좌가 LOCAL로 나감(`AccountResponse.kt:34`, §2 영향 지점 표). trading-web `src`에 `source`를 읽는 곳 0건 | `source` 필드 삭제: 응답 필드 삭제는 큰 AE20 변경. UPBIT_LIVE를 LOCAL로 둠: 틀린 값을 유지 |
+
+### 10.3 바꿀 파일·모듈
+
+| 경로 / 모듈 | 변경 종류 | 목적 | 위험 |
+|---|---|---|---|
+| test/ 아래 KIS 특성화 시험 3개(이름은 step 문서에서) | 신설 | D21 (a)(b)(c) | - |
+| main/application/account/port/BrokerAccountBalancePort.kt | 수정 | `supportedModes`(D25) | 낮음 |
+| main/application/account/port/KisAccountBalancePort.kt | 삭제 | D22 | 낮음 |
+| main/infrastructure/kis/KisAccountBalanceAdapter.kt | 수정 | 공통 포트 구현, 모드 전수 `when`, 계좌 로드 제거(D22), 에러 정렬(D28) | 높음 (KIS 잔고 경로, RULE-10) |
+| main/infrastructure/toss/TossAccountBalanceAdapter.kt | 수정 | `supportedModes` = TOSS_LIVE | 낮음 |
+| main/application/account/BrokerAccountQueryService.kt | 수정 | D24, D25 | 중간 |
+| main/application/account/KisAccountQueryService.kt | 수정 | D23(L35의 `!!`도 없앰, backend `CLAUDE.md`) | 중간 |
+| main/application/order/port/BrokerOrderPort.kt | 신설 | D26 | 중간 |
+| main/infrastructure/kis/KisOrderAdapter.kt | 신설 | D26, 주문 경로 에러 정렬(D28) | 높음 (실주문 경로) |
+| main/application/order/BrokerOrderSubmitter.kt | 신설 | D26 | 높음 (실주문 경로) |
+| main/application/order/OrderCommandService.kt | 수정 | 생성자, `submitExternalOrderIfNeeded`의 KIS 분기(D26) | 높음 (주문 핵심 경로) |
+| main/application/order/KisPaperOrderExecutor.kt, KisLiveOrderExecutor.kt | 삭제 | D26(호출 0건인 `cancel()`, `pollFills()`도 함께 사라짐) | 중간 |
+| main/infrastructure/scheduler/KisPaperPollingScheduler.kt | 삭제 | 빈이 아니고(§2 영향 지점 표) `pollFills()`만 부르며, 실행기 삭제로 컴파일되지 않음 | 낮음 |
+| main/common/exception/Kis*Exception.kt | 신설 | D28 새 예외(파일 하나에 선언 하나, KDoc 첫 줄 범주 기호) | 낮음 |
+| main/common/exception/CommonApiExceptions.kt | 수정 | 쓰는 곳이 없어진 옛 KIS 예외와 기반 클래스 삭제(D28) | 중간 (ArchUnit 동결 대상) |
+| main/presentation/exception/GlobalExceptionHandler.kt | 수정 | KIS code 고정 문구(D28) | 중간 |
+| main/domain/enums/AccountSource.kt | 수정 | UPBIT, 모드 → 출처 함수(D29) | 낮음 |
+| main/presentation/dto/account/AccountResponse.kt | 수정 | D29 | 낮음 |
+| main/application/order/KisExecutionNoticeService.kt → BrokerExecutionNoticeService.kt, main/application/order/command/BrokerExecutionNotice.kt | 이름 바꿈, 신설 | D27(PR #53 뒤) | 중간 (체결 경로) |
+| main/infrastructure/kis/KisExecutionNotice.kt, KisExecutionNoticeParser.kt, KisExecutionWebSocketManager.kt | 수정 | D27 입력 타입 교체 | 중간 |
+| src/test/resources/archunit_store/* | 수정 | 해결된 동결 위반 줄 제거(실행기 2파일, 체결 서비스) | 낮음 (PR #53과 같은 파일, RISK-11) |
+| docs/ADR.md | 수정 | ADR-005 갱신(D25, D26) | 낮음 |
+| test/application/account/KisAccountQueryServiceTest.kt, test/infrastructure/kis/KisAccountBalanceAdapterTest.kt, test/application/order/OrderCommandServiceTest.kt, test/application/account/BrokerAccountQueryServiceTest.kt | 수정 | 새 포트 기준(DEC-05), 모드 표 | - |
+| test/presentation/controller/KisAccountBalanceControllerIntegrationTest.kt | 수정 | 오류 매핑 시험만 D28 기준(DEC-05 A일 때만) | - |
+| test/ 아래 `BrokerOrderSubmitterTest`, `KisOrderAdapterTest`, 선택 검사 시험, `AccountSource`·`AccountResponse` 모드 표 시험 | 신설 | §10.6 | - |
+
+건드리지 않음: collector-api, trading-web, quant-worker, `main/infrastructure/kis/KisTokenManager.kt`(DEC-07), `main/infrastructure/kis/KisOrderRestClient.kt`, `main/application/order/ExecutionProcessor.kt`, `main/domain/entity/**`, `db/migration/*`, 토스 주문·체결 코드, PR #53 브랜치.
+
+### 10.4 데이터·API 작업 (AE20 목록)
+
+| 항목 | 지금 → 2단계 뒤 | 소유 | 막는가(blocking)? |
+|---|---|---|---|
+| `GET /api/v1/accounts/{accountId}/broker-balance`, KIS 계좌 | 501 `BROKER_BALANCE_NOT_SUPPORTED` → 200, 미연결 409 `KIS_ACCOUNT_NOT_LINKED`, KIS 실패 503 `KIS_*`. 호출부: trading-web `src` 0건 | backend | 아니오 |
+| `GET /api/kis/account/balance` 성공 응답 | 불변(D23) | backend | 아니오 |
+| 같은 경로 오류 (DEC-05 A일 때) | 401 `KIS_UNAUTHORIZED` → 503 `KIS_AUTH_FAILED`, 403 `KIS_FORBIDDEN` → 503 `KIS_PERMISSION_DENIED`, 502 `KIS_BAD_GATEWAY` → 503 `KIS_UNAVAILABLE`, 504 `KIS_GATEWAY_TIMEOUT` → 503 `KIS_TIMEOUT`, 400 `BAD_REQUEST`(계좌번호 없음)·400 `KIS_RESPONSE_PARSE_ERROR`(형식) → 409 `KIS_ACCOUNT_NOT_LINKED`. message는 예외 원문 → code별 고정 문구. 호출부: trading-web `src` 0건, 재제작 계획은 성공 응답만 언급 | backend | 예 (DEC-05) |
+| `POST /api/v1/accounts/{accountId}/orders`, KIS 계좌 접수 실패 (DEC-05 A일 때) | 500 `INTERNAL_SERVER_ERROR` → D28 code(503·409·400), 400 `BAD_REQUEST`(계좌번호 없음)·400 `KIS_RESPONSE_PARSE_ERROR` → 409 `KIS_ACCOUNT_NOT_LINKED`. 주문 롤백 동작은 그대로. 호출부: trading-web `src`에 주문 호출 0건 | backend | 예 (DEC-05) |
+| 계좌 응답 `source`(`AccountResponse`를 쓰는 계좌 API) | KIS·TOSS·UPBIT 계좌 LOCAL → KIS·TOSS·UPBIT(D29). 호출부 0건 | backend | 아니오 |
+| Redis 키, 설정 키, DB 스키마 | 변경 없음(KIS 토큰 이전 안 함) | - | 아니오 |
+| 새 HTTP 경로 | 없음. 만들게 되면 기존 프록시 접두사 아래에만(`proxy.config.ts:22-31`을 컨트롤러 소스와 대조하는 `src/test/proxy-table.test.ts:134-142`) | backend | 아니오 |
+| 계약 비교 | OpenAPI 문서가 없어 `openapi-diff` 대상 없음(§4와 같음) | - | 아니오 |
+
+호출부 점검은 `263f047` 기준 읽기 전용 검색 결과입니다. 묶음마다 착수 때 trading-web을 다시 검색하고, 호출부가 생겼으면 멈추고 ASK(프런트 변경은 범위 밖).
+
+### 10.5 구현 순서
+
+§5 «2단계» 1~7번입니다. 묶음마다 테스트를 먼저 씁니다(CLAUDE.md TDD).
+
+### 10.6 테스트 계획
+
+명령은 `cd /Users/dongwoo/Desktop/paper-trading/.worktrees/multi-broker-kis-toss-phase2/backend/trading-api` 뒤에 실행합니다. Testcontainers 시험은 Docker가 필요합니다.
+
+| 테스트 | 종류 | 명령 / 방법 | 기대 결과 |
+|---|---|---|---|
+| 기준선 | integration | 착수 전 `./gradlew test --rerun --offline`, 실행 뒤 생긴 xml만 집계 | 결과와 실패 목록, KIS 시험 목록(`Kis`·`kis`를 담은 시험 파일, `263f047`에서 14개)을 step 문서에 고정 |
+| 특성화: KIS 잔고 | integration (Testcontainers, `MockRestServiceServer`) | 옛 코드에서 먼저 작성·통과. PAPER, LIVE, 보유 0, 필드 누락 응답 | 응답 JSON 전체와 KIS 호출 URL·`tr_id`·헤더가 2단계 2번·3번 뒤에도 같음 |
+| 특성화: KIS 주문 | integration | KIS_PAPER·KIS_LIVE 계좌로 매수·매도 접수, KIS order-cash 응답 고정 | `tr_id`(VTTC0802U·VTTC0801U, TTTC0802U·TTTC0801U), 본문, `externalOrderId`, 원장·잠금 행, Slack 문구가 4번 전후 같음 |
+| 특성화: KIS 체결 | integration | 같은 KIS 체결 통지(부분, 전량) | 체결·포지션·원장 행이 6번 전후 같음 |
+| 잔고 모드 표 | unit | `BrokerAccountQueryServiceTest`: `TradingMode.entries` 전부 | TOSS_LIVE → 토스, KIS_PAPER·KIS_LIVE → KIS 어댑터(ref 모드 일치), UPBIT_LIVE 501, LOCAL 404, KIS 미연결 409 `KIS_ACCOUNT_NOT_LINKED` |
+| 선택 검사 | unit | 구현 누락, 한 모드에 구현 둘, 정책이 어댑터로 안 보내는 모드를 구현이 지원 | 서비스 생성 때 예외(기동 실패), 메시지에 모드 이름 |
+| KIS 어댑터 모드 | unit | `ref.tradingMode` KIS_PAPER, KIS_LIVE, 그 밖 | paper 주소와 `VTTC8434R`, live 주소와 `TTTC8434R`, 그 밖은 내부 오류이고 KIS 호출 0회 |
+| 옛 경로 `mode` | unit | KIS_PAPER 계좌를 `mode=LIVE`로 | 지금처럼 live 호출(가정 2) |
+| 주문 모드 표 | unit | `OrderCommandServiceTest`: `entries` 전부 | LOCAL 내부 매칭, KIS 둘은 `BrokerOrderSubmitter`, TOSS_LIVE·UPBIT_LIVE 501과 잠금·저장·구독 0회(1단계 단언 유지) |
+| 접수 서비스 | unit | `BrokerOrderSubmitterTest`: KIS_PAPER, KIS_LIVE, 접수 실패 | 포트 1회, `externalOrderId` 기록, Slack 문구가 지금과 같은 글자, 실패는 그대로 던짐 |
+| 에러 정렬 (DEC-05 A) | unit, integration | KIS 실패 종류마다 잔고·주문 경로 | §10.4의 상태와 code, 고정 문구, 응답에 KIS 원문·계좌번호 없음 |
+| 출처 | unit | `AccountSource` 함수와 `AccountResponse`: `entries` 전부 | 모드별 출처, 표 키 집합이 `entries`와 같음 |
+| 아키텍처 | unit | `ArchitectureRulesTest`, `ApplicationLayerRulesTest` | 새 위반 0, 해결된 동결 위반 줄이 저장소에서 빠짐 |
+| 부동소수점 스캔 | unit (결정적 checker) | 1단계 스캔 대상에 `main/application/order/port/**`, `main/application/order/BrokerOrderSubmitter.kt`, `main/infrastructure/kis/KisOrderAdapter.kt` 추가 | 0건 |
+| 비밀값 로그 누출 | unit | 1단계 로그 누출 시험을 KIS 새 파일 경로로 넓힘 | 토큰, app secret 0건, 계좌번호는 끝 4자리만 |
+| 프록시 표 | unit (프런트, 실행만) | `cd /Users/dongwoo/Desktop/paper-trading/.worktrees/multi-broker-kis-toss-phase2/frontend/trading-web && npx vitest run src/test/proxy-table.test.ts` | 통과. trading-web 파일은 안 고침 |
+| 빌드·전체·린트 | integration | `./gradlew compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline`, `./gradlew test --rerun --offline` | exit 0, 기준선 대비 새 실패 0, 특성화 시험은 고치지 않고 통과 |
+| KIS 실호출 (선택) | manual | KIS 키가 있는 환경에서 모의 계좌 하나를 옛 경로와 `broker-balance`로 1회씩 | 같은 값(표기만 숫자와 문자열), 기록은 마스킹 |
+
+### 10.7 도메인 제약 반영
+
+| 차원 | 적용 | 구현·검증 방법 | review routing |
+|---|---|---|---|
+| 수치 무결성 | y | KIS 숫자 경로(Map 값 → 문자열 → `BigDecimal`, `KisAccountBalanceAdapter.kt:127-128`)와 수익률 계산(L162-168)을 바꾸지 않음. golden은 특성화 시험 (a)의 응답 JSON 전체 일치. 새 파일은 부동소수점 스캔 | 수치 경로 변경은 사람 확인 |
+| 단위·기준치 | y | KIS는 KRW 한 줄(D22). 통화 합산 코드 없음(FLAG-07) | - |
+| 결측·이상치 | y | KIS 누락 값 0 채움은 그대로(가정 3, 기존 결함으로 기록). 새 API의 KIS `cashBuyingPower`는 0이 아니라 null | 0 채움을 고치려면 별도 결정 |
+| 규제·표현 | n | - | - |
+| PHI | n | 참고: KIS 계좌번호는 `BrokerAccountRef.toString`이 끝 4자리만 보임(`BrokerAccountBalancePort.kt:22-24`). 새 KIS 예외 응답에는 계좌번호를 싣지 않음(지금 `KisOrderRestClient.kt:155`는 메시지에 원값을 넣음) | - |
+
+### 10.8 리스크·막힘
+
+| ID | 리스크 / 막힘 | impact | 완화 / 필요한 결정 |
+|---|---|---|---|
+| RISK-11 | 열린 PR #53(`fix/trading-api-money-state`)과 겹침. 그 브랜치는 1단계 전 main(`e510634`)에서 갈라져 지금 main과 이미 충돌(`git merge-tree`: `ExecutionProcessor.kt`, `ExecutionProcessorTest.kt`, ktlint 기준선). 그 PR의 `ExecutionProcessor`에는 `else -> account.receiveSellProceeds(netProceeds)`가 남아 있어, 충돌을 PR 쪽으로 풀면 D6이 되돌아가 TOSS_LIVE·UPBIT_LIVE 매도가 LOCAL처럼 입금됨. 같은 ArchUnit 동결 파일(`archunit_store/bb05cc60…`), `KisExecutionNoticeService`, `KisExecutionWebSocketManager`도 고침. 마스킹 함수도 따로 추가(`LogMasking.kt`의 `maskKisAccountNumber`, main에는 `MaskAllButLastFour.kt`) | 높음 | PR #53을 main에 맞춰 먼저 머지(추천, 머지는 사람). 2단계 1~5번은 PR #53 본문 파일을 안 건드리고 6번만 머지 뒤(D27). 충돌 해소 원칙: main의 전수 `when`과 진입부 거부(`ExecutionProcessor.kt:162-173, 239-245`), 1단계 모드 표 시험을 지킴. 해소 뒤 `ExecutionProcessorTest`·`OrderCommandServiceTest` 모드 표 통과와 `ExecutionProcessor.kt`에 `else ->` 0건 확인. 2단계 도중 머지되면 다음 묶음 시작 때 main을 합치고 기준선을 다시 기록. 동결 파일은 양쪽의 줄 삭제를 합침. 그 PR은 고치지 않음 |
+| RISK-12 | RULE-10 문구(«기존 KIS 테스트가 전후로 모두 통과»)와 시그니처에 묶인 시험(D21 근거)이 맞지 않음 | 높음 | DEC-05 |
+| RISK-13 | KIS 토큰 평문 저장이 계속 남음(CLAUDE.md «Never store tokens in plaintext») | 높음 | DEC-07 |
+| RISK-14 | FLAG-11(`GlobalExceptionHandler.kt:61-71`의 `IllegalArgumentException`·`IllegalStateException` → 400 묶음)이 «2단계 KIS 정렬 때 다룸»으로 미뤄져 있음. 바꾸면 main 31파일 162곳의 `require`·`check` 계열 응답이 함께 바뀜 | 중간 | DEC-06 |
+| RISK-15 | KIS 주문 경로의 기존 결함 둘. 주문 취소가 KIS 취소를 부르지 않아, KIS에 살아 있는 주문의 잠금이 풀리고 나중 체결 통지는 종료된 주문이라 버려짐(`OrderCommandService.kt:260-303`, `ExecutionProcessor.kt:100`). KIS 접수 타임아웃 뒤 우리 주문은 롤백되는데 KIS에는 접수됐을 수 있음(`KisLiveOrderExecutor.kt:30-42`가 예외를 다시 던짐) | 높음 | DEC-08. 2단계는 동작을 바꾸지 않음 |
+| RISK-16 | KIS 응답은 fixture로만 검증하고 KIS 실호출이 없음 | 중간 | §10.6 선택 수동 확인(사람). 특성화 fixture는 기존 KIS 시험의 응답 모양을 씀 |
+| RISK-17 | 기동 때 선택 검사(D25)가 잘못 짜이면 앱이 안 뜸 | 중간 | 선택 검사 단위 시험과 전체 컨텍스트를 띄우는 기존 통합 시험이 같은 묶음에서 통과해야 완료 |
+| DEC-05 | 결정됨(사용자, 2026-11-16): A. 결정 전 선택지: RULE-10을 무엇으로 판정하나. A ⭐ 돈·주문·체결 동작과 성공 응답 불변을 RULE-10으로 보고 D21 특성화 시험을 증거로 삼음. 시그니처에 묶인 KIS 단위 시험은 포트를 바꾸는 같은 커밋에서 새 포트 기준으로 옮기고 목록을 step 문서에 남김. KIS 에러 응답 변경(D28)은 AE20 목록으로 허용. B: 시험 옮김만 허용하고 KIS 에러 응답은 그대로(D28 제외, 건드린 KIS 파일 커밋에 사람이 `API-Errors-Deferred` 기록). C: 글자 그대로(기존 시험 수정 0), 이 경우 D22와 D26을 못 함 | 높음 | 막는 묶음: §5 2단계 2~4번 |
+| DEC-06 | 결정됨(사용자, 2026-11-16): A. 결정 전 선택지: FLAG-11. A ⭐ 이번에도 미루고 건드린 KIS 파일 안의 `require`·`check`만 범주 예외로 바꿈. B: 핸들러 매핑을 지금 바꿈(31파일 응답 변경, AE20 목록이 커짐) | 중간 | 막는 묶음: 없음(A면 그대로 진행) |
+| DEC-07 | 결정됨(사용자, 2026-11-16): A. 결정 전 선택지: KIS 토큰 이전(🔴). A ⭐ 2단계에서 빼고 collector-api를 함께 바꿀 수 있는 작업으로 미룸. B: 범위를 collector-api까지 넓혀 두 서비스가 같은 암호 형식·키·락을 씀(collector의 DB 토큰 저장소도 확인 필요). C: trading-api만 다른 키에 암호 저장하고 공유를 끊음 | 높음 | 막는 묶음: 없음(순서에 없음) |
+| DEC-08 | 결정됨(사용자, 2026-11-16): A. 결정 전 선택지: RISK-15의 결함 둘. A ⭐ 2단계는 동작 불변, 결함 둘을 `docs/TODO.md`에 별도 기능으로 등록. B: 4번 묶음에서 취소 연동과 타임아웃 뒤 처리를 함께 고침(RULE-10 예외, KIS_LIVE 실주문 취소 시험 필요) | 높음 | 막는 묶음: 없음(A면 그대로) |
+| 가정 1 | `AccountSource`에 UPBIT 추가(D29) | 낮음 | 응답 enum 값 추가라 되돌리기 쉬움 |
+| 가정 2 | 옛 경로는 `mode` 파라미터가 `trId`를 정하는 지금 동작 유지(계좌 모드와 달라도 거부하지 않음, D23). 불일치 거부와 경로 폐지 시점은 trading-web 재제작이 쓸 경로를 정한 뒤 | 낮음 | 읽기 전용 조회 |
+| 가정 3 | KIS 응답 누락 값 0 채움 유지(D22, RULE-10). core 6(silent default 금지)과 어긋나는 기존 결함으로 기록 | 중간 | 고치려면 KIS 동작 변경이라 별도 결정 |
+| 가정 4 | `broker-balance`에 대사를 넣지 않음(D24). 대사는 옛 경로에만 | 낮음 | 화면이 필요로 할 때 Product 결정 |
+
+### 10.9 구현자에게 넘기기 (Handoff)
+
+착수 전에 Maker가 §5 «2단계»로 state.md 로드맵과 step 문서를 만들고, 사람이 설계 재승인 흔적을 남깁니다(§9와 같은 절차).
+
+이것만 만들어라 (승인된 범위):
+- §5 «2단계» 1~7번, D20~D29. D28은 DEC-05가 A일 때만, 6번은 PR #53 머지 뒤
+
+이건 하지 마라 (범위 밖):
+- trading-web, collector-api, quant-worker 변경. PR #53 브랜치 수정
+- 토스 주문·체결, TOSS_LIVE·UPBIT_LIVE 주문 허용
+- KIS 토큰 저장·발급 방식 변경(DEC-07), `KisOrderRestClient` 수정
+- KIS 주문 취소 연동, 접수 타임아웃 처리 변경(DEC-08), KIS 0 채움 수정(가정 3)
+- `GlobalExceptionHandler`의 `IllegalArgumentException`·`IllegalStateException` 매핑 변경(DEC-06이 B가 아니면)
+- `/api/kis/account/balance` 삭제나 성공 응답 변경, 새 대사 기능
+- `KisExecutionWebSocketManager`를 다른 계층으로 옮기기, 새 의존성 추가
+
+이때는 멈추고 물어봐라:
+- 특성화 시험이 옛 코드에서 통과하지 않을 때(지금 동작이 계획의 이해와 다름)
+- 기준선 대비 KIS 시험이 새로 실패하거나, 특성화 시험을 고쳐야 할 것 같을 때
+- DEC-05가 정해지지 않았는데 2~4번 차례일 때, 6번 차례에 PR #53이 열려 있을 때
+- trading-web에 §10.4 경로의 호출부가 새로 생겼을 때, 기존 프록시 접두사 밖 경로가 필요할 때
+- 동결 목록 밖 ArchUnit 새 위반이 생길 때
+- Docker가 없어 통합 시험을 못 돌릴 때
