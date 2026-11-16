@@ -6,10 +6,12 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 /**
- * 브로커 공통 잔고 조회 포트 (D7), 1단계 구현은 토스 하나
- * 브로커가 주지 않는 값은 0 이 아니라 null
+ * 브로커 공통 잔고 조회 포트 (D7), 구현은 토스와 KIS
+ * 브로커가 주지 않는 값은 0 이 아니라 null, supportedModes 는 서비스가 모드 → 구현 표를 만드는 근거 (D25)
  */
 interface BrokerAccountBalancePort {
+    val supportedModes: Set<TradingMode>
+
     fun fetchBalance(account: BrokerAccountRef): BrokerBalanceSnapshot
 }
 

@@ -44,7 +44,7 @@
 | 7 | 시세 REST와 최종 확인 | in progress | steps/step-7.md | 코드는 PR #55로 머지(`263f047`, 전체 1073건 실패 0). 남은 것은 §5 8번 수동 실호출 대조(사람 준비 뒤, 2단계와 병행) |
 | 8 | 2단계 기준선과 특성화 시험 | done | steps/step-8.md | 기준선 1073건 실패 0, 특성화 10건 통과(`338a5ad`), 리뷰 2회차 막는 지적 0(`review/step8-rereview-1.md`) |
 | 9 | KIS 에러 정렬 | done | steps/step-9.md | 잔고 경로만(주문 경로·KIS_ORDER_REJECTED 는 step 11). 전체 1095건 실패 0, 리뷰 막는 지적 0(`review/step9-code-review.md`, 후속 9건 원장) |
-| 10 | 브로커 선택과 KIS 잔고 이전 | todo | - | 2단계 3번, D22~D25 |
+| 10 | 브로커 선택과 KIS 잔고 이전 | done | steps/step-10.md | 전체 1116건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step10-code-review.md`, 메인 인라인 리뷰, 후속 3건 원장) |
 | 11 | 주문 공통 포트 | todo | - | 2단계 4번, D26 |
 | 12 | 계좌 응답 출처와 ADR 갱신 | todo | - | 2단계 5번, D29 |
 | 13 | 체결 입력 공통화 | todo | - | 2단계 6번, D27, PR #53 머지 뒤에만 |

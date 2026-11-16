@@ -1,16 +1,18 @@
 package com.papertrading.api.infrastructure.kis
 
-import com.papertrading.api.application.account.port.KisAccountBalancePort
-import com.papertrading.api.application.account.port.KisBalancePosition
-import com.papertrading.api.application.account.port.KisBalanceSnapshot
-import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.application.account.port.BrokerAccountBalancePort
+import com.papertrading.api.application.account.port.BrokerAccountRef
+import com.papertrading.api.application.account.port.BrokerBalancePosition
+import com.papertrading.api.application.account.port.BrokerBalanceSnapshot
+import com.papertrading.api.application.account.port.BrokerCurrencyBalance
+import com.papertrading.api.common.exception.InternalErrorException
 import com.papertrading.api.common.exception.KisAccountNotLinkedException
 import com.papertrading.api.common.exception.KisAuthFailedException
 import com.papertrading.api.common.exception.KisPermissionDeniedException
 import com.papertrading.api.common.exception.KisRateLimitedException
 import com.papertrading.api.common.exception.KisTimeoutException
 import com.papertrading.api.common.exception.KisUnavailableException
-import com.papertrading.api.infrastructure.persistence.AccountRepository
+import com.papertrading.api.domain.enums.TradingMode
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -22,22 +24,37 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.Clock
+import java.time.LocalDateTime
+import java.time.ZoneId
 
+/**
+ * KIS 국내주식 잔고 어댑터 (D22): 공통 잔고 포트의 KIS 구현, trId 와 REST 주소 모드는 ref.tradingMode 가 정함
+ * 계좌 연결 검사는 호출 서비스가 먼저 하고 여기서는 형식이 틀린 ref 만 막음, 응답 해석은 누락 시 0 채움 그대로 (가정 3)
+ * 통화는 KRW 한 줄이고 매수 가능 금액은 이 API 에 없어 null
+ */
 @Component
 class KisAccountBalanceAdapter(
-    private val accountRepository: AccountRepository,
     private val properties: KisOrderProperties,
     private val tokenManager: KisTokenManager,
     private val restTemplate: RestTemplate,
-) : KisAccountBalancePort {
-    override fun fetchBalance(accountId: Long, trId: String): KisBalanceSnapshot {
-        val account = accountRepository.findById(accountId)
-            .orElseThrow { AccountNotFoundException(accountId) }
-        val externalAccountId = account.externalAccountId ?: throw KisAccountNotLinkedException()
-        val (cano, acntPrdtCd) = parseExternalAccountId(externalAccountId)
-        val mode = if (trId == PAPER_TR_ID) "paper" else "live"
+    private val clock: Clock = Clock.systemUTC(),
+) : BrokerAccountBalancePort {
+    override val supportedModes: Set<TradingMode> = setOf(TradingMode.KIS_PAPER, TradingMode.KIS_LIVE)
+
+    override fun fetchBalance(account: BrokerAccountRef): BrokerBalanceSnapshot {
+        val (mode, trId) = when (account.tradingMode) {
+            TradingMode.KIS_PAPER -> "paper" to PAPER_TR_ID
+
+            TradingMode.KIS_LIVE -> "live" to LIVE_TR_ID
+
+            TradingMode.LOCAL, TradingMode.UPBIT_LIVE, TradingMode.TOSS_LIVE ->
+                throw InternalErrorException(
+                    "KIS_BALANCE_MODE_UNSUPPORTED",
+                    "KIS 잔고 어댑터가 지원하지 않는 모드: ${account.tradingMode.name}",
+                )
+        }
+        val (cano, acntPrdtCd) = parseExternalAccountId(account.externalAccountId)
 
         val url = UriComponentsBuilder
             .fromHttpUrl("${properties.restBaseUrl(mode)}/uapi/domestic-stock/v1/trading/inquire-balance")
@@ -76,13 +93,19 @@ class KisAccountBalanceAdapter(
         val cashBalance = decimal(summary, "dnca_tot_amt")
         val returnRate = calculateReturnRate(summary, marketValue, unrealizedPnl)
 
-        return KisBalanceSnapshot(
-            asOf = OffsetDateTime.now(ZoneOffset.UTC),
-            cashBalance = cashBalance,
-            marketValue = marketValue,
-            unrealizedPnl = unrealizedPnl,
-            returnRate = returnRate,
-            positions = positions
+        return BrokerBalanceSnapshot(
+            asOf = LocalDateTime.ofInstant(clock.instant(), KST),
+            currencyBalances = listOf(
+                BrokerCurrencyBalance(
+                    currency = KRW,
+                    cashBalance = cashBalance,
+                    cashBuyingPower = null,
+                    marketValue = marketValue,
+                    unrealizedPnl = unrealizedPnl,
+                    returnRate = returnRate,
+                ),
+            ),
+            positions = positions,
         )
     }
 
@@ -132,7 +155,7 @@ class KisAccountBalanceAdapter(
     private fun decimal(map: Map<*, *>, key: String): BigDecimal =
         map[key]?.toString()?.replace(",", "")?.toBigDecimalOrNull() ?: BigDecimal.ZERO
 
-    private fun positionFrom(item: Map<*, *>): KisBalancePosition? {
+    private fun positionFrom(item: Map<*, *>): BrokerBalancePosition? {
         val ticker = item["pdno"]?.toString().orEmpty().trim()
         if (ticker.isBlank()) return null
 
@@ -147,8 +170,9 @@ class KisAccountBalanceAdapter(
             calculateReturnRate(avgPrice.multiply(quantity), marketValue, unrealizedPnl)
         }
 
-        return KisBalancePosition(
+        return BrokerBalancePosition(
             ticker = ticker,
+            currency = KRW,
             quantity = quantity,
             avgPrice = avgPrice,
             currentPrice = currentPrice,
@@ -174,5 +198,8 @@ class KisAccountBalanceAdapter(
 
     companion object {
         private const val PAPER_TR_ID = "VTTC8434R"
+        private const val LIVE_TR_ID = "TTTC8434R"
+        private const val KRW = "KRW"
+        private val KST: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }

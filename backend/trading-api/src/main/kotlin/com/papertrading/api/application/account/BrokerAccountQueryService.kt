@@ -12,36 +12,47 @@ import com.papertrading.api.domain.enums.TradingMode
 import org.springframework.stereotype.Service
 
 /**
- * 계좌 모드로 브로커 잔고 어댑터를 골라 조회 (D8)
- * 모드를 전부 명시해 새 모드가 생기면 컴파일이 누락을 알림 (RULE-03), 트랜잭션 없이 외부 호출만 함
+ * 계좌 모드로 브로커 잔고 어댑터를 골라 조회 (D25)
+ * 어느 모드를 어댑터·501·404 로 보낼지는 전수 when 이 정하고(새 모드는 컴파일이 알림, RULE-03), 생성 때 그 결과와 구현 표를 맞춰 보아 어긋나면 기동 실패
+ * 트랜잭션 없이 외부 호출만 함
  */
 @Service
 class BrokerAccountQueryService(
     private val accountQueryService: AccountQueryService,
-    // 파라미터 이름이 토스 어댑터 빈 이름과 같아, 2단계에 구현이 늘어도 이름으로 가려짐
-    private val tossAccountBalanceAdapter: BrokerAccountBalancePort,
+    balancePorts: List<BrokerAccountBalancePort>,
 ) {
+    private val portTable = BrokerBalancePortTable(balancePorts)
+
+    init {
+        val routedToAdapter = TradingMode.entries.filter { routeOf(it).usesAdapter }.toSet()
+        val missing = routedToAdapter - portTable.modes
+        val unrouted = portTable.modes - routedToAdapter
+        check(missing.isEmpty()) { "어댑터로 보내는 모드에 잔고 포트 구현이 없습니다: ${missing.names()}" }
+        check(unrouted.isEmpty()) { "어댑터로 보내지 않는 모드를 잔고 포트 구현이 지원합니다: ${unrouted.names()}" }
+    }
+
     fun getBalance(accountId: Long): BrokerAccountBalanceResult {
         val account = accountQueryService.getAccount(accountId)
-        return when (val mode = account.tradingMode) {
-            TradingMode.TOSS_LIVE -> fetchToss(accountId, account)
-
-            TradingMode.KIS_PAPER, TradingMode.KIS_LIVE, TradingMode.UPBIT_LIVE ->
-                throw BrokerBalanceNotSupportedException(mode.name)
-
-            TradingMode.LOCAL -> throw NotBrokerAccountException(mode.name)
+        val mode = account.tradingMode
+        return when (routeOf(mode)) {
+            Route.TOSS -> fetch(accountId, mode, AccountSource.TOSS, linkedAccountSeq(account.externalAccountId))
+            Route.KIS -> fetch(accountId, mode, AccountSource.KIS, linkedKisAccountNumber(account.externalAccountId))
+            Route.NOT_SUPPORTED -> throw BrokerBalanceNotSupportedException(mode.name)
+            Route.NOT_BROKER_ACCOUNT -> throw NotBrokerAccountException(mode.name)
         }
     }
 
-    private fun fetchToss(accountId: Long, account: Account): BrokerAccountBalanceResult {
-        val accountSeq = linkedAccountSeq(account.externalAccountId)
-        val snapshot = tossAccountBalanceAdapter.fetchBalance(
-            BrokerAccountRef(accountId, TradingMode.TOSS_LIVE, accountSeq),
-        )
+    private fun fetch(
+        accountId: Long,
+        mode: TradingMode,
+        source: AccountSource,
+        externalAccountId: String,
+    ): BrokerAccountBalanceResult {
+        val snapshot = portTable.portFor(mode).fetchBalance(BrokerAccountRef(accountId, mode, externalAccountId))
         return BrokerAccountBalanceResult(
             accountId = accountId,
-            source = AccountSource.TOSS,
-            tradingMode = TradingMode.TOSS_LIVE,
+            source = source,
+            tradingMode = mode,
             asOf = snapshot.asOf,
             currencyBalances = snapshot.currencyBalances,
             positions = snapshot.positions,
@@ -54,5 +65,22 @@ class BrokerAccountQueryService(
         val isAccountSeq = seq.isNotEmpty() && seq.all { it in '0'..'9' } && seq.toLongOrNull() != null
         if (!isAccountSeq) throw TossAccountNotLinkedException()
         return seq
+    }
+
+    private fun Set<TradingMode>.names(): String = joinToString { it.name }
+
+    private enum class Route(val usesAdapter: Boolean) {
+        TOSS(true),
+        KIS(true),
+        NOT_SUPPORTED(false),
+        NOT_BROKER_ACCOUNT(false),
+    }
+
+    // 모드 분기의 유일한 자리, else 없이 전수로 둠
+    private fun routeOf(mode: TradingMode): Route = when (mode) {
+        TradingMode.TOSS_LIVE -> Route.TOSS
+        TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> Route.KIS
+        TradingMode.UPBIT_LIVE -> Route.NOT_SUPPORTED
+        TradingMode.LOCAL -> Route.NOT_BROKER_ACCOUNT
     }
 }

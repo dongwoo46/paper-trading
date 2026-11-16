@@ -8,6 +8,8 @@ import com.papertrading.api.application.account.port.BrokerCurrencyBalance
 import com.papertrading.api.common.exception.AccountNotFoundException
 import com.papertrading.api.common.exception.BrokerBalanceNotSupportedException
 import com.papertrading.api.common.exception.ConflictException
+import com.papertrading.api.common.exception.KisAccountNotLinkedException
+import com.papertrading.api.common.exception.KisTimeoutException
 import com.papertrading.api.common.exception.NotBrokerAccountException
 import com.papertrading.api.common.exception.NotFoundException
 import com.papertrading.api.common.exception.NotImplementedException
@@ -30,14 +32,20 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-// 계좌 모드별 잔고 조회 선택: 모드를 전부 표로 (D8, RULE-03)
+// 계좌 모드별 잔고 조회 선택: 모드를 전부 표로 (D25, RULE-03)
 class BrokerAccountQueryServiceTest {
 
     private val accountQueryService = mockk<AccountQueryService>()
-    private val tossPort = mockk<BrokerAccountBalancePort>()
-    private val service = BrokerAccountQueryService(accountQueryService, tossPort)
+    private val tossPort = portSupporting(TradingMode.TOSS_LIVE)
+    private val kisPort = portSupporting(TradingMode.KIS_PAPER, TradingMode.KIS_LIVE)
+    private val service = BrokerAccountQueryService(accountQueryService, listOf(tossPort, kisPort))
+
+    private fun portSupporting(vararg modes: TradingMode) = mockk<BrokerAccountBalancePort> {
+        every { supportedModes } returns modes.toSet()
+    }
 
     private val linkedSeq = "1234567890"
+    private val kisAccountNumber = "12345678-01"
     private val snapshot = BrokerBalanceSnapshot(
         asOf = LocalDateTime.of(2026, 11, 15, 10, 0),
         currencyBalances = listOf(
@@ -73,16 +81,21 @@ class BrokerAccountQueryServiceTest {
         every { accountQueryService.getAccount(1L) } returns accountOf(mode, externalAccountId)
     }
 
-    private enum class Outcome { ADAPTER, NOT_SUPPORTED, NOT_BROKER_ACCOUNT }
+    private enum class Outcome { TOSS_ADAPTER, KIS_ADAPTER, NOT_SUPPORTED, NOT_BROKER_ACCOUNT }
 
     // 새 모드를 넣으면 이 표에도 넣어야 시험이 통과함
     private val expectedByMode = mapOf(
-        TradingMode.TOSS_LIVE to Outcome.ADAPTER,
-        TradingMode.KIS_PAPER to Outcome.NOT_SUPPORTED,
-        TradingMode.KIS_LIVE to Outcome.NOT_SUPPORTED,
+        TradingMode.TOSS_LIVE to Outcome.TOSS_ADAPTER,
+        TradingMode.KIS_PAPER to Outcome.KIS_ADAPTER,
+        TradingMode.KIS_LIVE to Outcome.KIS_ADAPTER,
         TradingMode.UPBIT_LIVE to Outcome.NOT_SUPPORTED,
         TradingMode.LOCAL to Outcome.NOT_BROKER_ACCOUNT,
     )
+
+    private fun externalAccountIdFor(mode: TradingMode): String {
+        val isKis = mode == TradingMode.KIS_PAPER || mode == TradingMode.KIS_LIVE
+        return if (isKis) kisAccountNumber else linkedSeq
+    }
 
     @Test
     fun `모드 표의 키 집합이 TradingMode 전체와 같다`() {
@@ -92,15 +105,24 @@ class BrokerAccountQueryServiceTest {
     @Test
     fun `모드마다 표의 결과대로 동작한다`() {
         TradingMode.entries.forEach { mode ->
-            givenAccount(mode)
+            givenAccount(mode, externalAccountIdFor(mode))
             every { tossPort.fetchBalance(any()) } returns snapshot
+            every { kisPort.fetchBalance(any()) } returns snapshot
 
             val outcome = runCatching { service.getBalance(1L) }
             val error = outcome.exceptionOrNull()
 
             when (expectedByMode.getValue(mode)) {
-                Outcome.ADAPTER -> assertEquals(AccountSource.TOSS, outcome.getOrThrow().source, "$mode")
+                Outcome.TOSS_ADAPTER -> assertEquals(AccountSource.TOSS, outcome.getOrThrow().source, "$mode")
+
+                Outcome.KIS_ADAPTER -> {
+                    assertEquals(AccountSource.KIS, outcome.getOrThrow().source, "$mode")
+                    assertEquals(mode, outcome.getOrThrow().tradingMode, "$mode")
+                    verify(exactly = 1) { kisPort.fetchBalance(BrokerAccountRef(1L, mode, kisAccountNumber)) }
+                }
+
                 Outcome.NOT_SUPPORTED -> assertTrue(error is BrokerBalanceNotSupportedException, "$mode $error")
+
                 Outcome.NOT_BROKER_ACCOUNT -> assertTrue(error is NotBrokerAccountException, "$mode $error")
             }
         }
@@ -122,16 +144,16 @@ class BrokerAccountQueryServiceTest {
         verify(exactly = 1) { tossPort.fetchBalance(BrokerAccountRef(1L, TradingMode.TOSS_LIVE, linkedSeq)) }
     }
 
-    @ParameterizedTest(name = "{0} 계좌는 어댑터를 부르지 않고 501 범주 예외이다")
-    @ValueSource(strings = ["KIS_PAPER", "KIS_LIVE", "UPBIT_LIVE"])
-    fun `브로커 잔고 연동이 없는 모드는 BROKER_BALANCE_NOT_SUPPORTED 이다`(modeName: String) {
-        givenAccount(TradingMode.valueOf(modeName))
+    @Test
+    fun `UPBIT_LIVE 계좌는 어댑터를 부르지 않고 BROKER_BALANCE_NOT_SUPPORTED 이다`() {
+        givenAccount(TradingMode.UPBIT_LIVE)
 
         val error = assertThrows<BrokerBalanceNotSupportedException> { service.getBalance(1L) }
 
         assertEquals("BROKER_BALANCE_NOT_SUPPORTED", error.errorCode)
-        assertTrue(error.message.orEmpty().contains(modeName), error.message)
+        assertTrue(error.message.orEmpty().contains("UPBIT_LIVE"), error.message)
         verify(exactly = 0) { tossPort.fetchBalance(any()) }
+        verify(exactly = 0) { kisPort.fetchBalance(any()) }
     }
 
     @Test
@@ -142,6 +164,7 @@ class BrokerAccountQueryServiceTest {
 
         assertEquals("NOT_BROKER_ACCOUNT", error.errorCode)
         verify(exactly = 0) { tossPort.fetchBalance(any()) }
+        verify(exactly = 0) { kisPort.fetchBalance(any()) }
     }
 
     @ParameterizedTest(name = "externalAccountId [{0}] 는 미연결이다")
@@ -176,12 +199,92 @@ class BrokerAccountQueryServiceTest {
     }
 
     @Test
-    fun `KIS 와 LOCAL 계좌는 externalAccountId 검사보다 모드 판정이 먼저이다`() {
-        givenAccount(TradingMode.KIS_LIVE, "KIS-ACCOUNT")
+    fun `LOCAL 과 UPBIT_LIVE 계좌는 externalAccountId 검사보다 모드 판정이 먼저이다`() {
+        givenAccount(TradingMode.UPBIT_LIVE, "KIS-ACCOUNT")
         assertThrows<BrokerBalanceNotSupportedException> { service.getBalance(1L) }
 
         givenAccount(TradingMode.LOCAL, null)
         assertThrows<NotBrokerAccountException> { service.getBalance(1L) }
+    }
+
+    // devkit:test-change D24 — KIS 두 모드가 501 에서 KIS 어댑터 조회로 바뀐 기준, 옛 «KIS_PAPER·KIS_LIVE 501» 단언을 대체
+    @ParameterizedTest(name = "KIS 계좌의 externalAccountId [{0}] 는 미연결이다")
+    @ValueSource(strings = ["", "   ", "abc", "99998888", "1234-5678-01", "12345678-", "-01", "12345678- "])
+    fun `KIS 계좌의 externalAccountId 가 XXXXXXXX-XX 형식이 아니면 KIS_ACCOUNT_NOT_LINKED 이고 어댑터를 부르지 않는다`(value: String) {
+        TradingMode.entries.filter { it == TradingMode.KIS_PAPER || it == TradingMode.KIS_LIVE }.forEach { mode ->
+            givenAccount(mode, value)
+
+            val error = assertThrows<KisAccountNotLinkedException> { service.getBalance(1L) }
+
+            assertEquals("KIS_ACCOUNT_NOT_LINKED", error.errorCode)
+            val leaked = error.message.orEmpty().contains(value.trim().ifEmpty { "\u0000" })
+            assertFalse(leaked, "값은 싣지 않음: ${error.message}")
+        }
+        verify(exactly = 0) { kisPort.fetchBalance(any()) }
+    }
+
+    @Test
+    fun `KIS 계좌의 externalAccountId 가 null 이면 KIS_ACCOUNT_NOT_LINKED 이다`() {
+        givenAccount(TradingMode.KIS_LIVE, null)
+
+        assertThrows<KisAccountNotLinkedException> { service.getBalance(1L) }
+
+        verify(exactly = 0) { kisPort.fetchBalance(any()) }
+    }
+
+    @Test
+    fun `KIS 어댑터 결과를 계좌 식별값과 KIS 출처와 함께 돌려주고 어댑터 예외는 그대로 올린다`() {
+        givenAccount(TradingMode.KIS_PAPER, kisAccountNumber)
+        every { kisPort.fetchBalance(any()) } returns snapshot
+
+        val result = service.getBalance(1L)
+
+        assertEquals(1L, result.accountId)
+        assertEquals(AccountSource.KIS, result.source)
+        assertEquals(TradingMode.KIS_PAPER, result.tradingMode)
+        assertEquals(snapshot.asOf, result.asOf)
+        assertEquals(snapshot.currencyBalances, result.currencyBalances)
+        assertEquals(snapshot.positions, result.positions)
+        verify(exactly = 0) { tossPort.fetchBalance(any()) }
+
+        every { kisPort.fetchBalance(any()) } throws KisTimeoutException(null)
+        assertThrows<KisTimeoutException> { service.getBalance(1L) }
+    }
+
+    // devkit:test-change D25 — 선택을 매개변수 이름이 아니라 supportedModes 표와 생성 때 검사로 바꾼 기준
+    @Test
+    fun `어댑터로 보내는 모드에 구현이 없으면 생성 때 모드 이름과 함께 실패한다`() {
+        val error = assertThrows<IllegalStateException> {
+            BrokerAccountQueryService(accountQueryService, listOf(tossPort))
+        }
+
+        val message = error.message.orEmpty()
+        assertTrue(message.contains("KIS_PAPER") && message.contains("KIS_LIVE"), message)
+    }
+
+    @Test
+    fun `한 모드에 구현이 둘이면 생성 때 모드 이름과 함께 실패한다`() {
+        val error = assertThrows<IllegalStateException> {
+            BrokerAccountQueryService(
+                accountQueryService,
+                listOf(tossPort, kisPort, portSupporting(TradingMode.TOSS_LIVE)),
+            )
+        }
+
+        assertTrue(error.message.orEmpty().contains("TOSS_LIVE"), error.message)
+    }
+
+    @ParameterizedTest(name = "구현이 {0} 를 지원하면 생성 때 실패한다")
+    @ValueSource(strings = ["UPBIT_LIVE", "LOCAL"])
+    fun `어댑터로 보내지 않는 모드를 구현이 지원하면 생성 때 모드 이름과 함께 실패한다`(modeName: String) {
+        val error = assertThrows<IllegalStateException> {
+            BrokerAccountQueryService(
+                accountQueryService,
+                listOf(tossPort, kisPort, portSupporting(TradingMode.valueOf(modeName))),
+            )
+        }
+
+        assertTrue(error.message.orEmpty().contains(modeName), error.message)
     }
 
     @Test

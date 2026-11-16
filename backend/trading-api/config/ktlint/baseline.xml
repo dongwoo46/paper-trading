@@ -21,11 +21,6 @@
         <error line="25" column="85" source="standard:function-signature" />
         <error line="32" column="80" source="standard:function-signature" />
     </file>
-    <file name="src/main/kotlin/com/papertrading/api/application/account/KisAccountQueryService.kt">
-        <error line="54" column="47" source="standard:trailing-comma-on-call-site" />
-        <error line="60" column="52" source="standard:trailing-comma-on-call-site" />
-        <error line="61" column="14" source="standard:trailing-comma-on-call-site" />
-    </file>
     <file name="src/main/kotlin/com/papertrading/api/application/account/RiskPolicyService.kt">
         <error line="15" column="59" source="standard:trailing-comma-on-declaration-site" />
         <error line="30" column="52" source="standard:trailing-comma-on-call-site" />
@@ -40,10 +35,6 @@
     </file>
     <file name="src/main/kotlin/com/papertrading/api/application/account/command/UpsertRiskPolicyCommand.kt">
         <error line="8" column="36" source="standard:trailing-comma-on-declaration-site" />
-    </file>
-    <file name="src/main/kotlin/com/papertrading/api/application/account/port/KisAccountBalancePort.kt">
-        <error line="16" column="44" source="standard:trailing-comma-on-declaration-site" />
-        <error line="26" column="31" source="standard:trailing-comma-on-declaration-site" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/application/account/query/LedgerFilter.kt">
         <error line="12" column="51" source="standard:trailing-comma-on-declaration-site" />
@@ -458,13 +449,12 @@
         <error line="17" column="1" source="standard:final-newline" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/infrastructure/kis/KisAccountBalanceAdapter.kt">
-        <error line="85" column="34" source="standard:trailing-comma-on-call-site" />
-        <error line="96" column="1" source="standard:blank-line-between-when-conditions" />
-        <error line="98" column="1" source="standard:blank-line-between-when-conditions" />
-        <error line="126" column="81" source="standard:function-signature" />
-        <error line="129" column="74" source="standard:function-signature" />
-        <error line="132" column="67" source="standard:function-signature" />
-        <error line="157" column="36" source="standard:trailing-comma-on-call-site" />
+        <error line="119" column="1" source="standard:blank-line-between-when-conditions" />
+        <error line="121" column="1" source="standard:blank-line-between-when-conditions" />
+        <error line="149" column="81" source="standard:function-signature" />
+        <error line="152" column="74" source="standard:function-signature" />
+        <error line="155" column="67" source="standard:function-signature" />
+        <error line="181" column="36" source="standard:trailing-comma-on-call-site" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionNoticeParser.kt">
         <error line="85" column="83" source="standard:function-signature" />
@@ -829,22 +819,6 @@
         <error line="95" column="45" source="standard:trailing-comma-on-call-site" />
         <error line="98" column="131" source="standard:trailing-comma-on-call-site" />
     </file>
-    <file name="src/test/kotlin/com/papertrading/api/application/account/KisAccountQueryServiceTest.kt">
-        <error line="85" column="52" source="standard:trailing-comma-on-call-site" />
-        <error line="86" column="18" source="standard:trailing-comma-on-call-site" />
-        <error line="87" column="14" source="standard:trailing-comma-on-call-site" />
-        <error line="103" column="14" source="standard:trailing-comma-on-call-site" />
-        <error line="113" column="26" source="standard:parameter-list-wrapping" />
-        <error line="113" column="26" source="standard:wrapping" />
-        <error line="113" column="26" source="standard:function-signature" />
-        <error line="121" column="44" source="standard:trailing-comma-on-call-site" />
-        <error line="122" column="10" source="standard:trailing-comma-on-call-site" />
-        <error line="123" column="5" source="standard:wrapping" />
-        <error line="123" column="6" source="standard:parameter-list-wrapping" />
-        <error line="123" column="6" source="standard:function-signature" />
-        <error line="123" column="6" source="standard:trailing-comma-on-declaration-site" />
-        <error line="129" column="30" source="standard:trailing-comma-on-call-site" />
-    </file>
     <file name="src/test/kotlin/com/papertrading/api/application/account/RiskPolicyServiceTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="40" column="50" source="standard:trailing-comma-on-call-site" />
@@ -1052,13 +1026,6 @@
         <error line="364" column="33" source="standard:trailing-comma-on-call-site" />
         <error line="368" column="42" source="standard:function-expression-body" />
         <error line="373" column="55" source="standard:trailing-comma-on-call-site" />
-    </file>
-    <file name="src/test/kotlin/com/papertrading/api/infrastructure/kis/KisAccountBalanceAdapterTest.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-        <error line="66" column="22" source="standard:trailing-comma-on-call-site" />
-        <error line="74" column="22" source="standard:trailing-comma-on-call-site" />
-        <error line="76" column="14" source="standard:trailing-comma-on-call-site" />
-        <error line="105" column="14" source="standard:trailing-comma-on-call-site" />
     </file>
     <file name="src/test/kotlin/com/papertrading/api/infrastructure/kis/KisExecutionWebSocketManagerTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />

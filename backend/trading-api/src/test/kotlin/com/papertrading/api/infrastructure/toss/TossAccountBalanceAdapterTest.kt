@@ -62,6 +62,12 @@ class TossAccountBalanceAdapterTest {
     private val mixed = TossFixtures.read("success-holdings-mixed.json")
     private val krwOnly = TossFixtures.read("success-holdings-krw-only.json")
 
+    // devkit:test-change D25 — 포트마다 지원 모드를 선언하는 새 계약, 서비스가 이 값으로 모드 → 구현 표를 만듦
+    @Test
+    fun `지원 모드는 TOSS_LIVE 하나이다`() {
+        assertEquals(setOf(TradingMode.TOSS_LIVE), adapter.supportedModes)
+    }
+
     private fun expectGet(path: String): ResponseActions = server.expect(requestTo("$base$path"))
         .andExpect(method(HttpMethod.GET))
         .andExpect(header("Authorization", "Bearer fake-token"))

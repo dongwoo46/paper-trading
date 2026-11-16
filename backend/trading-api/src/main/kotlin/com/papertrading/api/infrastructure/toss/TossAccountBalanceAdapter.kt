@@ -6,6 +6,7 @@ import com.papertrading.api.application.account.port.BrokerBalancePosition
 import com.papertrading.api.application.account.port.BrokerBalanceSnapshot
 import com.papertrading.api.application.account.port.BrokerCurrencyBalance
 import com.papertrading.api.common.exception.TossResponseInvalidException
+import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.infrastructure.toss.dto.TossBuyingPower
 import com.papertrading.api.infrastructure.toss.dto.TossCurrencyAmounts
 import com.papertrading.api.infrastructure.toss.dto.TossHoldingsItem
@@ -28,6 +29,8 @@ class TossAccountBalanceAdapter(
     private val client: TossApiClient,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : BrokerAccountBalancePort {
+
+    override val supportedModes: Set<TradingMode> = setOf(TradingMode.TOSS_LIVE)
 
     override fun fetchBalance(account: BrokerAccountRef): BrokerBalanceSnapshot {
         val accountSeq = account.externalAccountId
