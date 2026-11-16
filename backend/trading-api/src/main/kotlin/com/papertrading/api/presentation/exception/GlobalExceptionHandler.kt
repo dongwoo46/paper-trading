@@ -110,6 +110,16 @@ class GlobalExceptionHandler {
         "TOSS_UNAVAILABLE" -> "토스증권을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
         "TOSS_TIMEOUT" -> "토스증권 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요."
         "TOSS_RESPONSE_INVALID" -> "토스증권 응답을 해석하지 못했습니다."
+        else -> kisServiceUnavailableMessage(errorCode)
+    }
+
+    // 토스 쪽과 나눈 이유: 한 함수에 모으면 detekt CyclomaticComplexMethod 한도(15) 도달
+    private fun kisServiceUnavailableMessage(errorCode: String): String = when (errorCode) {
+        "KIS_AUTH_FAILED" -> "KIS 인증에 실패했습니다. KIS 키 설정을 확인해 주세요."
+        "KIS_PERMISSION_DENIED" -> "KIS 계좌 조회 권한이 없습니다. KIS 앱 권한 설정을 확인해 주세요."
+        "KIS_RATE_LIMITED" -> "KIS 호출 한도를 넘었습니다. 잠시 후 다시 시도해 주세요."
+        "KIS_UNAVAILABLE" -> "KIS를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
+        "KIS_TIMEOUT" -> "KIS 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요."
         else -> "외부 서비스를 일시적으로 사용할 수 없습니다."
     }
 

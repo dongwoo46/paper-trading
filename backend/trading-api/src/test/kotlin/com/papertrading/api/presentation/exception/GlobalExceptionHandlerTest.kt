@@ -2,6 +2,12 @@ package com.papertrading.api.presentation.exception
 
 import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
 import com.papertrading.api.common.exception.InternalErrorException
+import com.papertrading.api.common.exception.KisAccountNotLinkedException
+import com.papertrading.api.common.exception.KisAuthFailedException
+import com.papertrading.api.common.exception.KisPermissionDeniedException
+import com.papertrading.api.common.exception.KisRateLimitedException
+import com.papertrading.api.common.exception.KisTimeoutException
+import com.papertrading.api.common.exception.KisUnavailableException
 import com.papertrading.api.common.exception.LockedDepositInsufficientException
 import com.papertrading.api.common.exception.NotImplementedException
 import com.papertrading.api.common.exception.ServiceUnavailableException
@@ -149,6 +155,57 @@ class GlobalExceptionHandlerTest {
             assertEquals(code, exception.errorCode)
             assertEquals(503, handler.handleServiceUnavailable(exception).statusCode.value(), code)
         }
+    }
+
+    // devkit:test-change D28 DEC-05 A — KIS 실패는 토스와 같은 범주 J(503) 와 code 별 고정 문구, 예외 메시지(KIS 원문 가능)는 싣지 않는다
+    @ParameterizedTest(name = "{0} 는 503 과 고정 문구로 응답한다")
+    @CsvSource(
+        "KIS_AUTH_FAILED, KIS 인증에 실패했습니다. KIS 키 설정을 확인해 주세요.",
+        "KIS_PERMISSION_DENIED, KIS 계좌 조회 권한이 없습니다. KIS 앱 권한 설정을 확인해 주세요.",
+        "KIS_UNAVAILABLE, KIS를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+        "KIS_TIMEOUT, KIS 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.",
+        "KIS_RATE_LIMITED, KIS 호출 한도를 넘었습니다. 잠시 후 다시 시도해 주세요.",
+    )
+    fun `KIS J 범주 code 는 503 과 code 별 고정 문구로 응답하고 예외 메시지는 싣지 않는다`(code: String, expectedMessage: String) {
+        val raw = "KIS-원문-RAW-에러"
+
+        val response = handler.handleServiceUnavailable(ServiceUnavailableException(code, raw))
+
+        assertEquals(503, response.statusCode.value())
+        assertEquals(code, response.body?.code)
+        assertEquals(expectedMessage, response.body?.message)
+        assertFalse(response.body?.message.orEmpty().contains(raw))
+    }
+
+    @Test
+    fun `KIS J 하위 예외 클래스는 각자 code 를 가지고 범주 J 기반이다`() {
+        val cause = RuntimeException("KIS-원문-RAW-에러")
+        val expected = mapOf(
+            "KIS_AUTH_FAILED" to KisAuthFailedException(cause),
+            "KIS_PERMISSION_DENIED" to KisPermissionDeniedException(cause),
+            "KIS_UNAVAILABLE" to KisUnavailableException(cause),
+            "KIS_TIMEOUT" to KisTimeoutException(cause),
+            "KIS_RATE_LIMITED" to KisRateLimitedException(cause),
+        )
+
+        expected.forEach { (code, exception) ->
+            assertEquals(code, exception.errorCode)
+            assertEquals(503, handler.handleServiceUnavailable(exception).statusCode.value(), code)
+            assertFalse(exception.message.orEmpty().contains("KIS-원문-RAW-에러"), code)
+            assertEquals(cause, exception.cause, code)
+        }
+    }
+
+    @Test
+    fun `KIS_ACCOUNT_NOT_LINKED 는 F-4 범주 409 이고 계좌번호를 싣지 않는다`() {
+        val response = handler.handleApiDomain(KisAccountNotLinkedException())
+
+        assertEquals(409, response.statusCode.value())
+        assertEquals("KIS_ACCOUNT_NOT_LINKED", response.body?.code)
+        assertEquals(
+            "KIS 계좌와 연결되지 않았습니다. 계좌의 externalAccountId 를 XXXXXXXX-XX 형식으로 등록해 주세요.",
+            response.body?.message,
+        )
     }
 
     @Test

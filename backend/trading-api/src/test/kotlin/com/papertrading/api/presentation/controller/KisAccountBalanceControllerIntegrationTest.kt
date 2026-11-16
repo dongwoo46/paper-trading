@@ -4,11 +4,14 @@ import com.papertrading.api.application.account.KisAccountQueryService
 import com.papertrading.api.application.account.result.KisAccountBalanceResult
 import com.papertrading.api.application.account.result.KisBalancePositionResult
 import com.papertrading.api.application.account.result.KisReconciliationResult
-import com.papertrading.api.common.exception.KisAuthorizationException
-import com.papertrading.api.common.exception.KisForbiddenException
-import com.papertrading.api.common.exception.KisRemoteCallException
+import com.papertrading.api.common.exception.KisAccountNotLinkedException
+import com.papertrading.api.common.exception.KisAuthFailedException
+import com.papertrading.api.common.exception.KisPermissionDeniedException
+import com.papertrading.api.common.exception.KisRateLimitedException
 import com.papertrading.api.common.exception.KisTimeoutException
+import com.papertrading.api.common.exception.KisUnavailableException
 import com.papertrading.api.domain.enums.KisAccountMode
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +41,9 @@ class KisAccountBalanceControllerIntegrationTest {
     @MockitoBean lateinit var kisAccountQueryService: KisAccountQueryService
 
     companion object {
+        private const val KIS_RAW_MESSAGE = "KIS-원문-RAW-에러"
+        private const val ACCOUNT_NUMBER = "12345678-01"
+
         @Container @ServiceConnection
         val postgres = PostgreSQLContainer("postgres:16-alpine")
 
@@ -83,30 +89,47 @@ class KisAccountBalanceControllerIntegrationTest {
             }
     }
 
+    // devkit:test-change D28 DEC-05 A — 잔고 경로 오류를 범주 기반(J 503, F-4 409)과 code 별 고정 문구로 맞춘 기준, 옛 401·403·502·504 단언 대체
     @Test
-    fun `오류 매핑 400 401 403 502 504`() {
+    fun `오류 매핑 400 과 KIS 실패 503 와 미연결 409`() {
         given(kisAccountQueryService.getBalance(0L, KisAccountMode.LIVE)).willThrow(IllegalArgumentException("bad"))
-        given(kisAccountQueryService.getBalance(1L, KisAccountMode.PAPER)).willThrow(KisAuthorizationException("unauthorized"))
-        given(kisAccountQueryService.getBalance(2L, KisAccountMode.PAPER)).willThrow(KisForbiddenException("forbidden"))
-        given(kisAccountQueryService.getBalance(3L, KisAccountMode.PAPER)).willThrow(KisRemoteCallException("remote"))
-        given(kisAccountQueryService.getBalance(4L, KisAccountMode.PAPER)).willThrow(KisTimeoutException("timeout"))
+        givenPaperFailure(1L, KisAuthFailedException(kisCause()))
+        givenPaperFailure(2L, KisPermissionDeniedException(kisCause()))
+        givenPaperFailure(3L, KisUnavailableException(kisCause()))
+        givenPaperFailure(4L, KisTimeoutException(kisCause()))
+        givenPaperFailure(5L, KisRateLimitedException(kisCause()))
+        givenPaperFailure(6L, KisAccountNotLinkedException())
 
         mockMvc.get("/api/kis/account/balance?accountId=0&mode=LIVE").andExpect { status { isBadRequest() } }
-        mockMvc.get("/api/kis/account/balance?accountId=1&mode=PAPER").andExpect {
-            status { isUnauthorized() }
-            jsonPath("$.message") { value("unauthorized") }
-        }
-        mockMvc.get("/api/kis/account/balance?accountId=2&mode=PAPER").andExpect {
-            status { isForbidden() }
-            jsonPath("$.message") { value("forbidden") }
-        }
-        mockMvc.get("/api/kis/account/balance?accountId=3&mode=PAPER").andExpect {
-            status { isBadGateway() }
-            jsonPath("$.message") { value("remote") }
-        }
-        mockMvc.get("/api/kis/account/balance?accountId=4&mode=PAPER").andExpect {
-            status { isGatewayTimeout() }
-            jsonPath("$.message") { value("timeout") }
-        }
+        expectError(1L, 503, "KIS_AUTH_FAILED", "KIS 인증에 실패했습니다. KIS 키 설정을 확인해 주세요.")
+        expectError(2L, 503, "KIS_PERMISSION_DENIED", "KIS 계좌 조회 권한이 없습니다. KIS 앱 권한 설정을 확인해 주세요.")
+        expectError(3L, 503, "KIS_UNAVAILABLE", "KIS를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.")
+        expectError(4L, 503, "KIS_TIMEOUT", "KIS 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.")
+        expectError(5L, 503, "KIS_RATE_LIMITED", "KIS 호출 한도를 넘었습니다. 잠시 후 다시 시도해 주세요.")
+        expectError(
+            6L,
+            409,
+            "KIS_ACCOUNT_NOT_LINKED",
+            "KIS 계좌와 연결되지 않았습니다. 계좌의 externalAccountId 를 XXXXXXXX-XX 형식으로 등록해 주세요.",
+        )
     }
+
+    // cause 에는 KIS 원문과 계좌번호가 있어도 응답 본문 어디에도 나오면 안 된다 (AE8)
+    private fun expectError(accountId: Long, status: Int, code: String, message: String) {
+        val body = mockMvc.get("/api/kis/account/balance?accountId=$accountId&mode=PAPER")
+            .andExpect {
+                status { isEqualTo(status) }
+                jsonPath("$.status") { value(status) }
+                jsonPath("$.code") { value(code) }
+                jsonPath("$.message") { value(message) }
+            }
+            .andReturn().response.contentAsString
+        assertThat(body).doesNotContain(KIS_RAW_MESSAGE).doesNotContain(ACCOUNT_NUMBER)
+    }
+
+    private fun givenPaperFailure(accountId: Long, failure: RuntimeException) {
+        given(kisAccountQueryService.getBalance(accountId, KisAccountMode.PAPER)).willThrow(failure)
+    }
+
+    private fun kisCause() = RuntimeException("$KIS_RAW_MESSAGE account=$ACCOUNT_NUMBER")
 }

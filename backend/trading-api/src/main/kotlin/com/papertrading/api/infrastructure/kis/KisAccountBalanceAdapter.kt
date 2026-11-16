@@ -4,11 +4,12 @@ import com.papertrading.api.application.account.port.KisAccountBalancePort
 import com.papertrading.api.application.account.port.KisBalancePosition
 import com.papertrading.api.application.account.port.KisBalanceSnapshot
 import com.papertrading.api.common.exception.AccountNotFoundException
-import com.papertrading.api.common.exception.KisAuthorizationException
-import com.papertrading.api.common.exception.KisForbiddenException
-import com.papertrading.api.common.exception.KisRemoteCallException
-import com.papertrading.api.common.exception.KisResponseParseException
+import com.papertrading.api.common.exception.KisAccountNotLinkedException
+import com.papertrading.api.common.exception.KisAuthFailedException
+import com.papertrading.api.common.exception.KisPermissionDeniedException
+import com.papertrading.api.common.exception.KisRateLimitedException
 import com.papertrading.api.common.exception.KisTimeoutException
+import com.papertrading.api.common.exception.KisUnavailableException
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -34,9 +35,7 @@ class KisAccountBalanceAdapter(
     override fun fetchBalance(accountId: Long, trId: String): KisBalanceSnapshot {
         val account = accountRepository.findById(accountId)
             .orElseThrow { AccountNotFoundException(accountId) }
-        val externalAccountId = requireNotNull(account.externalAccountId) {
-            "externalAccountId is required for KIS account balance"
-        }
+        val externalAccountId = account.externalAccountId ?: throw KisAccountNotLinkedException()
         val (cano, acntPrdtCd) = parseExternalAccountId(externalAccountId)
         val mode = if (trId == PAPER_TR_ID) "paper" else "live"
 
@@ -63,9 +62,9 @@ class KisAccountBalanceAdapter(
                 Map::class.java,
             ).body
         } catch (ex: ResourceAccessException) {
-            throw KisTimeoutException("KIS request timed out", ex)
+            throw KisTimeoutException(ex)
         } catch (ex: RestClientException) {
-            throw KisRemoteCallException("KIS request failed", ex)
+            throw KisUnavailableException(ex)
         }
 
         ensureSuccess(response)
@@ -93,11 +92,17 @@ class KisAccountBalanceAdapter(
         val message = response?.get("msg1")?.toString().orEmpty()
         throw when {
             rtCd == "1" || message.contains("인증") || message.contains("token", ignoreCase = true) ->
-                KisAuthorizationException("KIS authorization failed", KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))
+                KisAuthFailedException(KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))
             rtCd == "7" || message.contains("권한") ->
-                KisForbiddenException("KIS forbidden", KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))
-            else ->
-                KisRemoteCallException("KIS remote call failed", KisApiException(mapKisErrorCode(rtCd, message), rtCd, message))
+                KisPermissionDeniedException(KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))
+            // 가정 D28: 한도 문구만 KIS_RATE_LIMITED, 나머지 rt_cd 실패는 KIS_UNAVAILABLE
+            else -> KisApiException(mapKisErrorCode(rtCd, message), rtCd, message).let { cause ->
+                if (cause.code == KisErrorCode.KIS_RATE_LIMITED) {
+                    KisRateLimitedException(cause)
+                } else {
+                    KisUnavailableException(cause)
+                }
+            }
         }
     }
 
@@ -113,7 +118,7 @@ class KisAccountBalanceAdapter(
     private fun parseExternalAccountId(value: String): Pair<String, String> {
         val parts = value.split("-")
         if (!(parts.size == 2 && parts[0].isNotBlank() && parts[1].isNotBlank())) {
-            throw KisResponseParseException("externalAccountId format must be XXXXXXXX-XX")
+            throw KisAccountNotLinkedException()
         }
         return parts[0] to parts[1]
     }

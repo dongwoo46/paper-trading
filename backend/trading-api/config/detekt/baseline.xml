@@ -99,10 +99,7 @@
     <ID>MaxLineLength:ExecutionProcessorTest.kt$ExecutionProcessorTest$/** Spec Test 1C: verify publishEvent(ExecutionFilledEvent) called after fill() with correct ticker, side, executionId */</ID>
     <ID>MaxLineLength:ExecutionSseEventTest.kt$ExecutionSseEventTest$/** Spec: from_BigDecimal_fields_are_plain_strings — quantity "10.00" must serialize as "10.00", no scientific notation */</ID>
     <ID>MaxLineLength:GlobalExceptionHandler.kt$GlobalExceptionHandler$(ex.message ?: "").contains("포지션") || (ex.message ?: "").contains("position") -&gt; "POSITION_NOT_FOUND"</ID>
-    <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$KisAuthorizationException("KIS authorization failed", KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))</ID>
-    <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$KisRemoteCallException("KIS remote call failed", KisApiException(mapKisErrorCode(rtCd, message), rtCd, message))</ID>
     <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$private</ID>
-    <ID>MaxLineLength:KisAccountBalanceControllerIntegrationTest.kt$KisAccountBalanceControllerIntegrationTest$given(kisAccountQueryService.getBalance(1L, KisAccountMode.PAPER)).willThrow(KisAuthorizationException("unauthorized"))</ID>
     <ID>MaxLineLength:KisApiException.kt$normalized.contains("auth") || normalized.contains("token") || normalized.contains("인증") -&gt; KisErrorCode.KIS_AUTH_FAILED</ID>
     <ID>MaxLineLength:KisApiException.kt$normalized.contains("duplicate") || normalized.contains("already") || normalized.contains("중복") -&gt; KisErrorCode.KIS_DUPLICATE_OR_ALREADY_PROCESSED</ID>
     <ID>MaxLineLength:KisApiException.kt$normalized.contains("rate") || normalized.contains("limit") || normalized.contains("초과") -&gt; KisErrorCode.KIS_RATE_LIMITED</ID>
