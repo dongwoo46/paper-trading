@@ -6,19 +6,12 @@ import com.papertrading.api.application.account.port.BrokerBalancePosition
 import com.papertrading.api.application.account.port.BrokerBalanceSnapshot
 import com.papertrading.api.application.account.port.BrokerCurrencyBalance
 import com.papertrading.api.common.exception.InternalErrorException
-import com.papertrading.api.common.exception.KisAccountNotLinkedException
-import com.papertrading.api.common.exception.KisAuthFailedException
-import com.papertrading.api.common.exception.KisPermissionDeniedException
-import com.papertrading.api.common.exception.KisRateLimitedException
-import com.papertrading.api.common.exception.KisTimeoutException
-import com.papertrading.api.common.exception.KisUnavailableException
 import com.papertrading.api.domain.enums.TradingMode
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
-import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
@@ -54,7 +47,7 @@ class KisAccountBalanceAdapter(
                     "KIS 잔고 어댑터가 지원하지 않는 모드: ${account.tradingMode.name}",
                 )
         }
-        val (cano, acntPrdtCd) = parseExternalAccountId(account.externalAccountId)
+        val (cano, acntPrdtCd) = kisAccountNumberParts(account.externalAccountId)
 
         val url = UriComponentsBuilder
             .fromHttpUrl("${properties.restBaseUrl(mode)}/uapi/domestic-stock/v1/trading/inquire-balance")
@@ -78,10 +71,8 @@ class KisAccountBalanceAdapter(
                 HttpEntity<Void>(kisHeaders(mode, trId)),
                 Map::class.java,
             ).body
-        } catch (ex: ResourceAccessException) {
-            throw KisTimeoutException(ex)
         } catch (ex: RestClientException) {
-            throw KisUnavailableException(ex)
+            throw KisFailureClassifier.transportFailure(ex)
         }
 
         ensureSuccess(response)
@@ -112,21 +103,8 @@ class KisAccountBalanceAdapter(
     private fun ensureSuccess(response: Map<*, *>?) {
         val rtCd = response?.get("rt_cd")?.toString()
         if (rtCd == "0") return
-        val message = response?.get("msg1")?.toString().orEmpty()
-        throw when {
-            rtCd == "1" || message.contains("인증") || message.contains("token", ignoreCase = true) ->
-                KisAuthFailedException(KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))
-            rtCd == "7" || message.contains("권한") ->
-                KisPermissionDeniedException(KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))
-            // 가정 D28: 한도 문구만 KIS_RATE_LIMITED, 나머지 rt_cd 실패는 KIS_UNAVAILABLE
-            else -> KisApiException(mapKisErrorCode(rtCd, message), rtCd, message).let { cause ->
-                if (cause.code == KisErrorCode.KIS_RATE_LIMITED) {
-                    KisRateLimitedException(cause)
-                } else {
-                    KisUnavailableException(cause)
-                }
-            }
-        }
+        val msgCd = response?.get("msg_cd")?.toString()
+        throw KisFailureClassifier.balanceFailure(rtCd, msgCd, response?.get("msg1")?.toString().orEmpty())
     }
 
     private fun kisHeaders(mode: String, trId: String): HttpHeaders = HttpHeaders().apply {
@@ -136,14 +114,6 @@ class KisAccountBalanceAdapter(
         set("appsecret", properties.appSecret(mode))
         set("tr_id", trId)
         set("custtype", "P")
-    }
-
-    private fun parseExternalAccountId(value: String): Pair<String, String> {
-        val parts = value.split("-")
-        if (!(parts.size == 2 && parts[0].isNotBlank() && parts[1].isNotBlank())) {
-            throw KisAccountNotLinkedException()
-        }
-        return parts[0] to parts[1]
     }
 
     private fun outputList(response: Map<*, *>?, key: String): List<Map<*, *>> =
@@ -178,7 +148,7 @@ class KisAccountBalanceAdapter(
             currentPrice = currentPrice,
             marketValue = marketValue,
             unrealizedPnl = unrealizedPnl,
-            returnRate = returnRate
+            returnRate = returnRate,
         )
     }
 

@@ -45,7 +45,7 @@
 | 8 | 2단계 기준선과 특성화 시험 | done | steps/step-8.md | 기준선 1073건 실패 0, 특성화 10건 통과(`338a5ad`), 리뷰 2회차 막는 지적 0(`review/step8-rereview-1.md`) |
 | 9 | KIS 에러 정렬 | done | steps/step-9.md | 잔고 경로만(주문 경로·KIS_ORDER_REJECTED 는 step 11). 전체 1095건 실패 0, 리뷰 막는 지적 0(`review/step9-code-review.md`, 후속 9건 원장) |
 | 10 | 브로커 선택과 KIS 잔고 이전 | done | steps/step-10.md | 전체 1116건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step10-code-review.md`, 메인 인라인 리뷰, 후속 3건 원장) |
-| 11 | 주문 공통 포트 | todo | - | 2단계 4번, D26 |
+| 11 | 주문 공통 포트 | done | steps/step-11.md | 2단계 4번, D26·D28, S9-01·S9-02 함께. 전체 1176건 실패 0, 특성화 10건 무수정 통과, 리뷰 3회차 머지 가능(`review/step11-code-review.md`·`step11-rereview-1.md`·`step11-rereview-2.md`, 3회차 메인 인라인), 후속은 원장·TODO P1 |
 | 12 | 계좌 응답 출처와 ADR 갱신 | todo | - | 2단계 5번, D29 |
 | 13 | 체결 입력 공통화 | todo | - | 2단계 6번, D27, PR #53 머지 뒤에만 |
 | 14 | 2단계 최종 확인 | todo | - | 2단계 7번 |
@@ -61,6 +61,8 @@
 | Date | Change | Reason |
 |---|---|---|
 | (example) 6/7 | step-2.5 added | step-2 found a missing field in the API response |
+| 2026-11-21 | step 11 범위에 step 9 리뷰 후속 S9-01(연결 거부가 KIS_TIMEOUT)·S9-02(rt_cd 1 한도가 인증으로 가려짐) 추가, KIS 실패 분류를 잔고·주문 어댑터 공용으로. 한도 판정은 msg_cd EGW00201 또는 «초당 거래건수» 문구(«초과» 단독 금지), ORNO 없는 성공 응답은 KIS_UNAVAILABLE(가정) | 주문 어댑터가 같은 분류를 써 따로 고치면 판정이 갈라짐. 사용자 결정 «함께 고침». 계획서 문구 변경 없음 |
+| 2026-11-21 | 주문 경로: mapKisErrorCode 가 «초과»·rate·limit 문구로 붙인 RATE_LIMITED 는 «초당 거래건수» 문구가 없으면 400 KIS_ORDER_REJECTED. step 11 이 KisPaperPollingScheduler 도 삭제(계획서 §10.3 삭제 행, 실행기 삭제로 컴파일 불가) | 고치지 않기로 한 mapKisErrorCode 와 «초과 단독 한도 금지»가 부딪힘. 사용자 결정 «그대로 둠» |
 | 2026-11-16 | 2단계 step 8~14 추가(계획서 §5 2단계 1~7번, §10). 범위는 trading-api만, 토스 실주문·trading-web·KIS 토큰 이전 제외. DEC-05~08 모두 A | 사용자 결정 «백엔드만, 화면은 나중», «시작, 대조는 병행», DEC-05~08 추천안 선택. 설계 재승인 필요 |
 | 2026-11-15 | 예외 범주 J(503)·K(500)는 처음 쓰는 단계로 미룸 | 2단계는 I(501)만 필요(미사용 코드 금지) |
 | 2026-11-15 | 2단계 재리뷰(`review/rereview-1.md`)와 QA 증거(`review/test-evidence.md`) 완료, 보류 해제 | 9건 모두 고침, 막는 지적 0. 후속 P-06·P-07·R2-01은 이유와 함께 deferred 처분 |

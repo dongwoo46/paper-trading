@@ -1,9 +1,12 @@
 package com.papertrading.api.presentation.exception
 
+import com.papertrading.api.common.exception.BadRequestException
 import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
 import com.papertrading.api.common.exception.InternalErrorException
 import com.papertrading.api.common.exception.KisAccountNotLinkedException
 import com.papertrading.api.common.exception.KisAuthFailedException
+import com.papertrading.api.common.exception.KisOrderRejectedException
+import com.papertrading.api.common.exception.KisOrderResultUnknownException
 import com.papertrading.api.common.exception.KisPermissionDeniedException
 import com.papertrading.api.common.exception.KisRateLimitedException
 import com.papertrading.api.common.exception.KisTimeoutException
@@ -38,6 +41,10 @@ import org.springframework.web.bind.annotation.RestController
 class GlobalExceptionHandlerTest {
 
     private val handler = GlobalExceptionHandler()
+
+    private companion object {
+        const val KIS_ORDER_REJECTED_MESSAGE = "KIS가 주문을 받지 않았습니다. 주문 내용과 계좌 상태를 확인해 주세요."
+    }
 
     @Test
     fun `범주 I 예외는 501 과 예외 code 로 응답한다`() {
@@ -165,6 +172,7 @@ class GlobalExceptionHandlerTest {
         "KIS_UNAVAILABLE, KIS를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "KIS_TIMEOUT, KIS 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.",
         "KIS_RATE_LIMITED, KIS 호출 한도를 넘었습니다. 잠시 후 다시 시도해 주세요.",
+        "KIS_ORDER_RESULT_UNKNOWN, KIS 접수 결과를 확인하지 못했습니다. 다시 주문하기 전에 KIS 주문 내역을 확인해 주세요.",
     )
     fun `KIS J 범주 code 는 503 과 code 별 고정 문구로 응답하고 예외 메시지는 싣지 않는다`(code: String, expectedMessage: String) {
         val raw = "KIS-원문-RAW-에러"
@@ -186,6 +194,7 @@ class GlobalExceptionHandlerTest {
             "KIS_UNAVAILABLE" to KisUnavailableException(cause),
             "KIS_TIMEOUT" to KisTimeoutException(cause),
             "KIS_RATE_LIMITED" to KisRateLimitedException(cause),
+            "KIS_ORDER_RESULT_UNKNOWN" to KisOrderResultUnknownException(cause),
         )
 
         expected.forEach { (code, exception) ->
@@ -206,6 +215,28 @@ class GlobalExceptionHandlerTest {
             "KIS 계좌와 연결되지 않았습니다. 계좌의 externalAccountId 를 XXXXXXXX-XX 형식으로 등록해 주세요.",
             response.body?.message,
         )
+    }
+
+    // D28: KIS 가 주문을 받지 않은 경우는 A 범주 400, 응답 문구는 code 고정 문구이고 KIS 원문은 cause 에만
+    @Test
+    fun `KIS_ORDER_REJECTED 는 A 범주 400 과 고정 문구로 응답하고 KIS 원문을 싣지 않는다`() {
+        val raw = "KIS-원문-RAW-에러"
+        val exception = KisOrderRejectedException(RuntimeException(raw))
+
+        val response = handler.handleApiDomain(exception)
+
+        assertEquals(400, response.statusCode.value())
+        assertEquals("KIS_ORDER_REJECTED", response.body?.code)
+        assertEquals(KIS_ORDER_REJECTED_MESSAGE, response.body?.message)
+        assertFalse(exception.message.orEmpty().contains(raw))
+        assertTrue(BadRequestException::class.java.isAssignableFrom(KisOrderRejectedException::class.java))
+    }
+
+    @Test
+    fun `KIS_ORDER_REJECTED code 는 예외 메시지와 무관하게 고정 문구로 응답한다`() {
+        val response = handler.handleApiDomain(BadRequestException("KIS_ORDER_REJECTED", "KIS-원문-RAW-에러"))
+
+        assertEquals(KIS_ORDER_REJECTED_MESSAGE, response.body?.message)
     }
 
     @Test

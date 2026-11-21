@@ -1,5 +1,6 @@
 package com.papertrading.api.application.order
 
+import com.papertrading.api.application.common.result.QuoteSnapshot
 import com.papertrading.api.application.order.command.CancelOrderCommand
 import com.papertrading.api.application.order.command.PlaceOrderCommand
 import com.papertrading.api.common.exception.AccountInactiveException
@@ -8,12 +9,16 @@ import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
 import com.papertrading.api.common.exception.ExpireAtRequiredException
 import com.papertrading.api.common.exception.InsufficientAvailableDepositException
 import com.papertrading.api.common.exception.InsufficientOrderableQuantityException
+import com.papertrading.api.common.exception.KisOrderRejectedException
 import com.papertrading.api.common.exception.LimitPriceRequiredException
 import com.papertrading.api.common.exception.OrderNotCancelableException
 import com.papertrading.api.common.exception.OrderNotFoundException
 import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.common.exception.QuoteStaleException
 import com.papertrading.api.common.exception.QuoteUnavailableException
+import com.papertrading.api.domain.entity.account.Account
+import com.papertrading.api.domain.entity.order.Order
+import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.MarketType
 import com.papertrading.api.domain.enums.OrderCondition
@@ -22,23 +27,20 @@ import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
 import com.papertrading.api.domain.enums.TriggerType
-import com.papertrading.api.domain.entity.account.Account
-import com.papertrading.api.support.withId
-import com.papertrading.api.domain.entity.order.Order
-import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.domain.port.MarketQuotePort
-import com.papertrading.api.application.common.result.QuoteSnapshot
 import com.papertrading.api.infrastructure.persistence.AccountLedgerRepository
 import com.papertrading.api.infrastructure.persistence.AccountRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
 import com.papertrading.api.infrastructure.persistence.PositionRepository
+import com.papertrading.api.support.withId
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -59,28 +61,38 @@ class OrderCommandServiceTest {
     private val marketQuotePort = mockk<MarketQuotePort>()
     private val collectorSubscriptionPort = mockk<CollectorSubscriptionPort>()
     private val localMatchingEngine = mockk<LocalMatchingEngine>()
-    private val kisPaperOrderExecutor = mockk<KisPaperOrderExecutor>()
-    private val kisLiveOrderExecutor = mockk<KisLiveOrderExecutor>()
+    private val brokerOrderSubmitter = mockk<BrokerOrderSubmitter>()
 
     private val service = OrderCommandService(
-        accountRepository, orderRepository, positionRepository, accountLedgerRepository,
-        marketQuotePort, collectorSubscriptionPort, localMatchingEngine,
-        kisPaperOrderExecutor, kisLiveOrderExecutor,
+        accountRepository,
+        orderRepository,
+        positionRepository,
+        accountLedgerRepository,
+        marketQuotePort,
+        collectorSubscriptionPort,
+        localMatchingEngine,
+        brokerOrderSubmitter,
     )
 
     private fun localAccount(deposit: BigDecimal = BigDecimal("1000000")): Account = Account.create(
-        accountName = "test", accountType = AccountType.STOCK,
-        tradingMode = TradingMode.LOCAL, initialDeposit = deposit
+        accountName = "test",
+        accountType = AccountType.STOCK,
+        tradingMode = TradingMode.LOCAL,
+        initialDeposit = deposit,
     ).withId(1L)
 
     private fun paperAccount(deposit: BigDecimal = BigDecimal("1000000")): Account = Account.create(
-        accountName = "paper", accountType = AccountType.STOCK,
-        tradingMode = TradingMode.KIS_PAPER, initialDeposit = deposit
+        accountName = "paper",
+        accountType = AccountType.STOCK,
+        tradingMode = TradingMode.KIS_PAPER,
+        initialDeposit = deposit,
     ).withId(2L)
 
     private fun liveAccount(deposit: BigDecimal = BigDecimal("1000000")): Account = Account.create(
-        accountName = "live", accountType = AccountType.STOCK,
-        tradingMode = TradingMode.KIS_LIVE, initialDeposit = deposit
+        accountName = "live",
+        accountType = AccountType.STOCK,
+        tradingMode = TradingMode.KIS_LIVE,
+        initialDeposit = deposit,
     ).withId(3L)
 
     private fun savedOrder(account: Account): Order = Order.create(
@@ -106,12 +118,15 @@ class OrderCommandServiceTest {
         every { collectorSubscriptionPort.subscribe("LOCAL", "005930") } just runs
         every { localMatchingEngine.determineFillPrice(any(), any()) } returns null
 
-        val order = service.placeOrder(1L, PlaceOrderCommand(
-            ticker = "005930", marketType = MarketType.KOSPI,
-            orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
-            orderCondition = OrderCondition.DAY, quantity = BigDecimal("5"),
-            limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-1",
-        ))
+        val order = service.placeOrder(
+            1L,
+            PlaceOrderCommand(
+                ticker = "005930", marketType = MarketType.KOSPI,
+                orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
+                orderCondition = OrderCondition.DAY, quantity = BigDecimal("5"),
+                limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-1",
+            ),
+        )
 
         assertEquals(OrderStatus.PENDING, order.orderStatus)
         assertEquals(BigDecimal("650000"), account.availableDeposit) // 1000000 - 350000
@@ -126,12 +141,15 @@ class OrderCommandServiceTest {
         every { marketQuotePort.getQuote(TradingMode.LOCAL, "005930") } returns null
 
         assertThrows<QuoteUnavailableException> {
-            service.placeOrder(1L, PlaceOrderCommand(
-                ticker = "005930", marketType = MarketType.KOSPI,
-                orderType = OrderType.MARKET, orderSide = OrderSide.BUY,
-                orderCondition = OrderCondition.DAY, quantity = BigDecimal("1"),
-                limitPrice = null, expireAt = null, idempotencyKey = "key-2",
-            ))
+            service.placeOrder(
+                1L,
+                PlaceOrderCommand(
+                    ticker = "005930", marketType = MarketType.KOSPI,
+                    orderType = OrderType.MARKET, orderSide = OrderSide.BUY,
+                    orderCondition = OrderCondition.DAY, quantity = BigDecimal("1"),
+                    limitPrice = null, expireAt = null, idempotencyKey = "key-2",
+                ),
+            )
         }
     }
 
@@ -143,12 +161,15 @@ class OrderCommandServiceTest {
         every { positionRepository.findByAccountIdAndTickerWithLock(1L, "005930") } returns Optional.empty()
 
         assertThrows<PositionNotFoundException> {
-            service.placeOrder(1L, PlaceOrderCommand(
-                ticker = "005930", marketType = MarketType.KOSPI,
-                orderType = OrderType.LIMIT, orderSide = OrderSide.SELL,
-                orderCondition = OrderCondition.DAY, quantity = BigDecimal("3"),
-                limitPrice = BigDecimal("75000"), expireAt = null, idempotencyKey = "key-3",
-            ))
+            service.placeOrder(
+                1L,
+                PlaceOrderCommand(
+                    ticker = "005930", marketType = MarketType.KOSPI,
+                    orderType = OrderType.LIMIT, orderSide = OrderSide.SELL,
+                    orderCondition = OrderCondition.DAY, quantity = BigDecimal("3"),
+                    limitPrice = BigDecimal("75000"), expireAt = null, idempotencyKey = "key-3",
+                ),
+            )
         }
     }
 
@@ -165,12 +186,15 @@ class OrderCommandServiceTest {
         // cancelOrder 호출
         every { orderRepository.findByIdWithOptimisticLock(10L) } returns Optional.of(savedOrderObj)
 
-        service.placeOrder(1L, PlaceOrderCommand(
-            ticker = "005930", marketType = MarketType.KOSPI,
-            orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
-            orderCondition = OrderCondition.IOC, quantity = BigDecimal("5"),
-            limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-4",
-        ))
+        service.placeOrder(
+            1L,
+            PlaceOrderCommand(
+                ticker = "005930", marketType = MarketType.KOSPI,
+                orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
+                orderCondition = OrderCondition.IOC, quantity = BigDecimal("5"),
+                limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-4",
+            ),
+        )
 
         assertEquals(OrderStatus.CANCELLED, savedOrderObj.orderStatus)
     }
@@ -186,58 +210,86 @@ class OrderCommandServiceTest {
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { collectorSubscriptionPort.subscribe("LOCAL", "005930") } just runs
 
-        val order = service.placeOrder(1L, PlaceOrderCommand(
-            ticker = "005930", marketType = MarketType.KOSPI,
-            orderType = OrderType.MARKET, orderSide = OrderSide.BUY,
-            orderCondition = OrderCondition.DAY, quantity = BigDecimal("2"),
-            limitPrice = null, expireAt = null, idempotencyKey = "key-5",
-        ))
+        val order = service.placeOrder(
+            1L,
+            PlaceOrderCommand(
+                ticker = "005930", marketType = MarketType.KOSPI,
+                orderType = OrderType.MARKET, orderSide = OrderSide.BUY,
+                orderCondition = OrderCondition.DAY, quantity = BigDecimal("2"),
+                limitPrice = null, expireAt = null, idempotencyKey = "key-5",
+            ),
+        )
 
         assertEquals(OrderStatus.PENDING, order.orderStatus)
         // 72000 * 2 = 144000 잠금
         assertEquals(BigDecimal("856000"), account.availableDeposit)
     }
 
+    // devkit:test-change D26 DEC-05 A — 실행기 둘을 BrokerOrderSubmitter 하나로 합친 기준
+    // 모드별 KIS 선택과 문구는 BrokerOrderSubmitterTest·KisOrderAdapterTest 몫
     @Test
-    fun `KIS_PAPER 주문은 paper executor를 호출한다`() {
+    fun `KIS_PAPER 주문은 브로커 주문 접수기를 저장된 주문으로 한 번 부른다`() {
         val account = paperAccount()
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-paper") } returns null
         every { orderRepository.save(any()) } answers { firstArg<Order>().withId(21L) }
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { collectorSubscriptionPort.subscribe("KIS_PAPER", "005930") } just runs
-        every { kisPaperOrderExecutor.submit(any()) } just runs
+        every { brokerOrderSubmitter.submit(any()) } just runs
 
-        service.placeOrder(1L, PlaceOrderCommand(
-            ticker = "005930", marketType = MarketType.KOSPI,
-            orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
-            orderCondition = OrderCondition.DAY, quantity = BigDecimal("1"),
-            limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-paper",
-        ))
+        val order = service.placeOrder(
+            1L,
+            PlaceOrderCommand(
+                ticker = "005930", marketType = MarketType.KOSPI,
+                orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
+                orderCondition = OrderCondition.DAY, quantity = BigDecimal("1"),
+                limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-paper",
+            ),
+        )
 
-        verify(exactly = 1) { kisPaperOrderExecutor.submit(any()) }
-        verify(exactly = 0) { kisLiveOrderExecutor.submit(any()) }
+        verify(exactly = 1) { brokerOrderSubmitter.submit(order) }
     }
 
     @Test
-    fun `KIS_LIVE 주문은 live executor를 호출한다`() {
+    fun `KIS_LIVE 주문은 브로커 주문 접수기를 저장된 주문으로 한 번 부른다`() {
         val account = liveAccount()
         every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
         every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-live") } returns null
         every { orderRepository.save(any()) } answers { firstArg<Order>().withId(31L) }
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { collectorSubscriptionPort.subscribe("KIS_LIVE", "005930") } just runs
-        every { kisLiveOrderExecutor.submit(any()) } just runs
+        every { brokerOrderSubmitter.submit(any()) } just runs
 
-        service.placeOrder(1L, PlaceOrderCommand(
-            ticker = "005930", marketType = MarketType.KOSPI,
-            orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
-            orderCondition = OrderCondition.DAY, quantity = BigDecimal("1"),
-            limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-live",
-        ))
+        val order = service.placeOrder(
+            1L,
+            PlaceOrderCommand(
+                ticker = "005930", marketType = MarketType.KOSPI,
+                orderType = OrderType.LIMIT, orderSide = OrderSide.BUY,
+                orderCondition = OrderCondition.DAY, quantity = BigDecimal("1"),
+                limitPrice = BigDecimal("70000"), expireAt = null, idempotencyKey = "key-live",
+            ),
+        )
 
-        verify(exactly = 1) { kisLiveOrderExecutor.submit(any()) }
-        verify(exactly = 0) { kisPaperOrderExecutor.submit(any()) }
+        verify(exactly = 1) { brokerOrderSubmitter.submit(order) }
+    }
+
+    // 주문 트랜잭션 롤백은 예외가 placeOrder 밖으로 나가는 것에 기댐 (DEC-08, 롤백 자체는 특성화 시험 범위 밖)
+    @Test
+    fun `KIS 접수 실패 예외는 바꾸지 않고 그대로 올린다`() {
+        val account = paperAccount()
+        val failure = KisOrderRejectedException(RuntimeException("KIS-원문"))
+        every { accountRepository.findByIdWithLock(1L) } returns Optional.of(account)
+        every { orderRepository.findByAccountIdAndIdempotencyKey(1L, "key-fail") } returns null
+        every { orderRepository.save(any()) } answers { firstArg<Order>().withId(22L) }
+        every { accountLedgerRepository.save(any()) } answers { firstArg() }
+        every { collectorSubscriptionPort.subscribe("KIS_PAPER", "005930") } just runs
+        every { brokerOrderSubmitter.submit(any()) } throws failure
+
+        val thrown = assertThrows<KisOrderRejectedException> {
+            service.placeOrder(1L, command(OrderType.LIMIT, OrderSide.BUY, idempotencyKey = "key-fail"))
+        }
+
+        assertSame(failure, thrown)
     }
 
     // ---- 에러 정렬(DEC-02): 400 으로 뭉치던 check, require 를 범주와 code 로 분리 ----
@@ -427,8 +479,7 @@ class OrderCommandServiceTest {
         verify(exactly = 0) { positionRepository.findByAccountIdAndTickerWithLock(any(), any()) }
         verify(exactly = 0) { collectorSubscriptionPort.subscribe(any(), any()) }
         verify(exactly = 0) { marketQuotePort.getQuote(any(), any()) }
-        verify(exactly = 0) { kisPaperOrderExecutor.submit(any()) }
-        verify(exactly = 0) { kisLiveOrderExecutor.submit(any()) }
+        verify(exactly = 0) { brokerOrderSubmitter.submit(any()) }
     }
 
     private fun assertDepositUntouched(account: Account) {
@@ -534,16 +585,16 @@ class OrderCommandServiceTest {
 
     // ---- 모드 누락 표: 새 TradingMode 를 추가하면 이 표에 주문 동작을 적어야 통과한다 ----
 
-    private enum class OrderRouting { INTERNAL_MATCHING, KIS_PAPER_EXECUTOR, KIS_LIVE_EXECUTOR, REJECTED }
+    // devkit:test-change D26 DEC-05 A — KIS 두 실행기 행을 브로커 주문 접수기 한 행으로, 모드 전수 표는 그대로
+    private enum class OrderRouting { INTERNAL_MATCHING, BROKER_SUBMITTER, REJECTED }
 
     // 라우팅마다 기대 호출 수를 전수 when 으로 명시 (새 라우팅 값은 컴파일 에러)
-    private data class ExpectedCalls(val saved: Int, val paperExecutor: Int, val liveExecutor: Int)
+    private data class ExpectedCalls(val saved: Int, val submitted: Int)
 
     private fun expectedCalls(routing: OrderRouting): ExpectedCalls = when (routing) {
-        OrderRouting.INTERNAL_MATCHING -> ExpectedCalls(saved = 1, paperExecutor = 0, liveExecutor = 0)
-        OrderRouting.KIS_PAPER_EXECUTOR -> ExpectedCalls(saved = 1, paperExecutor = 1, liveExecutor = 0)
-        OrderRouting.KIS_LIVE_EXECUTOR -> ExpectedCalls(saved = 1, paperExecutor = 0, liveExecutor = 1)
-        OrderRouting.REJECTED -> ExpectedCalls(saved = 0, paperExecutor = 0, liveExecutor = 0)
+        OrderRouting.INTERNAL_MATCHING -> ExpectedCalls(saved = 1, submitted = 0)
+        OrderRouting.BROKER_SUBMITTER -> ExpectedCalls(saved = 1, submitted = 1)
+        OrderRouting.REJECTED -> ExpectedCalls(saved = 0, submitted = 0)
     }
 
     @Test
@@ -562,25 +613,23 @@ class OrderCommandServiceTest {
         every { orderRepository.save(any()) } answers { firstArg<Order>().withId(50L) }
         every { accountLedgerRepository.save(any()) } answers { firstArg() }
         every { collectorSubscriptionPort.subscribe(mode.name, "005930") } just runs
-        every { kisPaperOrderExecutor.submit(any()) } just runs
-        every { kisLiveOrderExecutor.submit(any()) } just runs
+        every { brokerOrderSubmitter.submit(any()) } just runs
 
         val place = { service.placeOrder(1L, command(OrderType.LIMIT, OrderSide.BUY, idempotencyKey = key)) }
         when (routing) {
             OrderRouting.REJECTED -> assertRejectedAsBrokerOrderNotSupported { place() }
-            OrderRouting.INTERNAL_MATCHING, OrderRouting.KIS_PAPER_EXECUTOR, OrderRouting.KIS_LIVE_EXECUTOR -> place()
+            OrderRouting.INTERNAL_MATCHING, OrderRouting.BROKER_SUBMITTER -> place()
         }
 
         verify(exactly = expected.saved) { orderRepository.save(any()) }
-        verify(exactly = expected.paperExecutor) { kisPaperOrderExecutor.submit(any()) }
-        verify(exactly = expected.liveExecutor) { kisLiveOrderExecutor.submit(any()) }
+        verify(exactly = expected.submitted) { brokerOrderSubmitter.submit(match { it.account.tradingMode == mode }) }
     }
 
     companion object {
         private val EXPECTED_ORDER_ROUTING: Map<TradingMode, OrderRouting> = mapOf(
             TradingMode.LOCAL to OrderRouting.INTERNAL_MATCHING,
-            TradingMode.KIS_PAPER to OrderRouting.KIS_PAPER_EXECUTOR,
-            TradingMode.KIS_LIVE to OrderRouting.KIS_LIVE_EXECUTOR,
+            TradingMode.KIS_PAPER to OrderRouting.BROKER_SUBMITTER,
+            TradingMode.KIS_LIVE to OrderRouting.BROKER_SUBMITTER,
             TradingMode.TOSS_LIVE to OrderRouting.REJECTED,
             TradingMode.UPBIT_LIVE to OrderRouting.REJECTED,
         )

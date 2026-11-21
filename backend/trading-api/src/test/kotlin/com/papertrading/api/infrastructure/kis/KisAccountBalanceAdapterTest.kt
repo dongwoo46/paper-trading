@@ -22,6 +22,9 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
@@ -170,14 +173,34 @@ class KisAccountBalanceAdapterTest {
         assertThat(ex.message).doesNotContain("권한 없음").doesNotContain("12345678")
     }
 
+    // devkit:test-change S9-02 step 11 — 한도 판정을 msg_cd EGW00201·«초당 거래건수» 로 좁힌 기준
+    // 실재 확인 안 된 rt_cd 9 + 영문 문구 예시를 KIS 한도 응답 모양으로 대체
     @Test
-    fun `호출 한도 문구의 KIS 오류는 KIS_RATE_LIMITED 로 변환한다`() {
-        stubRtCd("9", "rate limit exceeded")
+    fun `rt_cd 1 이라도 msg_cd EGW00201 이면 인증이 아니라 KIS_RATE_LIMITED 로 변환한다`() {
+        stubRtCd("1", "초당 거래건수를 초과하였습니다.", msgCd = "EGW00201")
 
         val ex = assertThrows(KisRateLimitedException::class.java) { adapter.fetchBalance(paperRef) }
 
         assertThat(ex.errorCode).isEqualTo("KIS_RATE_LIMITED")
-        assertThat(ex.message).doesNotContain("rate limit exceeded")
+        assertThat(ex.message).doesNotContain("초당 거래건수")
+    }
+
+    @Test
+    fun `rt_cd 1 이고 msg_cd 가 없어도 초당 거래건수 문구면 KIS_RATE_LIMITED 로 변환한다`() {
+        stubRtCd("1", "초당 거래건수를 초과하였습니다.")
+
+        val ex = assertThrows(KisRateLimitedException::class.java) { adapter.fetchBalance(paperRef) }
+
+        assertThat(ex.errorCode).isEqualTo("KIS_RATE_LIMITED")
+    }
+
+    @Test
+    fun `초과 문구만으로는 한도로 보지 않는다`() {
+        stubRtCd("9", "조회 가능 건수를 초과하였습니다.")
+
+        val ex = assertThrows(KisUnavailableException::class.java) { adapter.fetchBalance(paperRef) }
+
+        assertThat(ex.errorCode).isEqualTo("KIS_UNAVAILABLE")
     }
 
     @Test
@@ -190,14 +213,35 @@ class KisAccountBalanceAdapterTest {
         assertThat(ex.message).doesNotContain("temporary unavailable")
     }
 
+    // devkit:test-change S9-01 step 11 — 타임아웃을 원인 체인(SocketTimeoutException·HttpTimeoutException)으로만 판정
+    // 원인 없는 예외를 RestTemplate 이 실제로 던지는 모양(원인 포함)으로 대체
     @Test
     fun `KIS 접속 시간 초과는 KIS_TIMEOUT 로 변환한다`() {
-        stubTransportFailure(ResourceAccessException("Read timed out"))
+        stubTransportFailure(ResourceAccessException("I/O error", SocketTimeoutException("Read timed out")))
 
         val ex = assertThrows(KisTimeoutException::class.java) { adapter.fetchBalance(paperRef) }
 
         assertThat(ex.errorCode).isEqualTo("KIS_TIMEOUT")
         assertThat(ex.cause).isInstanceOf(ResourceAccessException::class.java)
+    }
+
+    @Test
+    fun `KIS 연결 거부는 타임아웃이 아니라 KIS_UNAVAILABLE 로 변환한다`() {
+        stubTransportFailure(ResourceAccessException("I/O error", ConnectException("Connection refused")))
+
+        val ex = assertThrows(KisUnavailableException::class.java) { adapter.fetchBalance(paperRef) }
+
+        assertThat(ex.errorCode).isEqualTo("KIS_UNAVAILABLE")
+        assertThat(ex.cause).isInstanceOf(ResourceAccessException::class.java)
+    }
+
+    @Test
+    fun `KIS 주소 해석 실패는 KIS_UNAVAILABLE 로 변환한다`() {
+        stubTransportFailure(ResourceAccessException("I/O error", UnknownHostException("paper.example")))
+
+        val ex = assertThrows(KisUnavailableException::class.java) { adapter.fetchBalance(paperRef) }
+
+        assertThat(ex.errorCode).isEqualTo("KIS_UNAVAILABLE")
     }
 
     @Test
@@ -222,10 +266,35 @@ class KisAccountBalanceAdapterTest {
         verify(exactly = 0) { restTemplate.exchange(any<String>(), any<HttpMethod>(), any(), Map::class.java) }
     }
 
-    private fun stubRtCd(rtCd: String, msg: String) {
+    private fun stubRtCd(rtCd: String, msg: String, msgCd: String? = null) {
+        val body = mapOf("rt_cd" to rtCd, "msg1" to msg) + (msgCd?.let { mapOf("msg_cd" to it) } ?: emptyMap())
         every { tokenManager.getToken("paper") } returns "paper-token"
         every { restTemplate.exchange(any<String>(), HttpMethod.GET, any(), Map::class.java) } returns
-            ResponseEntity.ok(mapOf("rt_cd" to rtCd, "msg1" to msg))
+            ResponseEntity.ok(body)
+    }
+
+    // devkit:test-change C-02 step 11 리뷰 — KIS 오류 본문이 HTTP 4xx·5xx 로 와도 본문으로 분류
+    @Test
+    fun `HTTP 500 이라도 본문이 EGW00201 이면 KIS_RATE_LIMITED 이다`() {
+        stubTransportFailure(httpError(500, kisBody("1", "EGW00201", "초당 거래건수를 초과하였습니다.")))
+
+        val ex = assertThrows(KisRateLimitedException::class.java) { adapter.fetchBalance(paperRef) }
+
+        assertThat(ex.errorCode).isEqualTo("KIS_RATE_LIMITED")
+    }
+
+    @Test
+    fun `HTTP 500 이라도 본문이 토큰 만료면 KIS_AUTH_FAILED 이다`() {
+        stubTransportFailure(httpError(500, kisBody("1", "EGW00123", "기간이 만료된 token 입니다.")))
+
+        assertThrows(KisAuthFailedException::class.java) { adapter.fetchBalance(paperRef) }
+    }
+
+    @Test
+    fun `HTTP 500 빈 본문은 KIS_UNAVAILABLE 이다`() {
+        stubTransportFailure(httpError(500, ""))
+
+        assertThrows(KisUnavailableException::class.java) { adapter.fetchBalance(paperRef) }
     }
 
     private fun stubTransportFailure(failure: RestClientException) {

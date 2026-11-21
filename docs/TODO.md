@@ -120,7 +120,8 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 
 - [ ] KIS 주문 취소·접수 타임아웃 결함 수정 | project: trading-api | phase: kis-order-cancel-timeout | priority: P1
   - 우리 주문 취소가 KIS 취소를 부르지 않아 KIS에 살아 있는 주문의 잠금이 풀리고, 뒤 체결 통지가 버려짐(`OrderCommandService.kt:260-303`, `ExecutionProcessor.kt:100`)
-  - KIS 접수 타임아웃 뒤 우리 주문만 롤백되는데 KIS에는 접수됐을 수 있음(`KisLiveOrderExecutor.kt:30-42`)
+  - KIS 접수 타임아웃 뒤 우리 주문만 롤백되는데 KIS에는 접수됐을 수 있음(`BrokerOrderSubmitter.kt:54-66`·`KisOrderAdapter.kt:24-25`, 옛 `KisLiveOrderExecutor.kt:30-42` 는 step 11 에서 삭제)
+  - 자동 청산 재시도(`PositionExitTriggerOrchestrator.kt:170` `catch (Exception)`)가 `KIS_ORDER_RESULT_UNKNOWN` 도 같은 orderGroupId 로 최대 3회 재접수 → 실매도 중복 위험(step 11 재리뷰 R1-03, 코드는 안 고침)
   - 출처: multi-broker-kis-toss 계획서 RISK-15, DEC-08 A(사용자 2026-11-16, 2단계는 동작 불변이라 따로 등록)
 
 - [ ] KIS 주문 응답·취소 요청 필드명 대조와 수정 | project: trading-api | phase: kis-order-field-names | priority: P1

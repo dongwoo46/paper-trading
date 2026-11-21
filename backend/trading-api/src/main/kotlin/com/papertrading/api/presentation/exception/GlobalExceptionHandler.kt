@@ -17,11 +17,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 class GlobalExceptionHandler {
     private val log = KotlinLogging.logger {}
 
+    // 외부 원문이 실릴 수 있는 code 는 예외 메시지 대신 code 고정 문구 (D28, AE8)
     @ExceptionHandler(ApiDomainException::class)
-    fun handleApiDomain(ex: ApiDomainException): ResponseEntity<ApiErrorResponse> =
-        ResponseEntity.status(ex.status).body(
-            ApiErrorResponse(ex.status.value(), ex.errorCode, ex.message ?: defaultMessage(ex.errorCode))
-        )
+    fun handleApiDomain(ex: ApiDomainException): ResponseEntity<ApiErrorResponse> {
+        val message = fixedDomainMessage(ex.errorCode) ?: ex.message ?: defaultMessage(ex.errorCode)
+        return ResponseEntity.status(ex.status).body(ApiErrorResponse(ex.status.value(), ex.errorCode, message))
+    }
 
     // 범주 I(501), common 예외는 Spring 을 몰라 범주→HTTP 상태 매핑을 여기서만 한다
     @ExceptionHandler(NotImplementedException::class)
@@ -55,25 +56,25 @@ class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            ApiErrorResponse(400, "INVALID_BUSINESS_DATE", ex.message ?: "날짜 형식이 올바르지 않습니다.")
+            ApiErrorResponse(400, "INVALID_BUSINESS_DATE", ex.message ?: "날짜 형식이 올바르지 않습니다."),
         )
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            ApiErrorResponse(400, "BAD_REQUEST", ex.message ?: "요청 값이 유효하지 않습니다.")
+            ApiErrorResponse(400, "BAD_REQUEST", ex.message ?: "요청 값이 유효하지 않습니다."),
         )
 
     @ExceptionHandler(IllegalStateException::class)
     fun handleIllegalState(ex: IllegalStateException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            ApiErrorResponse(400, "BAD_REQUEST", ex.message ?: "요청을 처리할 수 없는 상태입니다.")
+            ApiErrorResponse(400, "BAD_REQUEST", ex.message ?: "요청을 처리할 수 없는 상태입니다."),
         )
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            ApiErrorResponse(400, "INVALID_PERCENT_VALUE", "요청 본문 검증에 실패했습니다.")
+            ApiErrorResponse(400, "INVALID_PERCENT_VALUE", "요청 본문 검증에 실패했습니다."),
         )
 
     @ExceptionHandler(NoSuchElementException::class)
@@ -88,8 +89,8 @@ class GlobalExceptionHandler {
                     (ex.message ?: "").contains("거래 일지") -> "TRADING_JOURNAL_NOT_FOUND"
                     else -> "NOT_FOUND"
                 },
-                ex.message ?: "리소스를 찾을 수 없습니다."
-            )
+                ex.message ?: "리소스를 찾을 수 없습니다.",
+            ),
         )
 
     // 응답은 고정 500, 원인은 응답에 싣지 않고 로그에만 남김 (C-07)
@@ -120,7 +121,13 @@ class GlobalExceptionHandler {
         "KIS_RATE_LIMITED" -> "KIS 호출 한도를 넘었습니다. 잠시 후 다시 시도해 주세요."
         "KIS_UNAVAILABLE" -> "KIS를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
         "KIS_TIMEOUT" -> "KIS 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요."
+        "KIS_ORDER_RESULT_UNKNOWN" -> "KIS 접수 결과를 확인하지 못했습니다. 다시 주문하기 전에 KIS 주문 내역을 확인해 주세요."
         else -> "외부 서비스를 일시적으로 사용할 수 없습니다."
+    }
+
+    private fun fixedDomainMessage(errorCode: String): String? = when (errorCode) {
+        "KIS_ORDER_REJECTED" -> "KIS가 주문을 받지 않았습니다. 주문 내용과 계좌 상태를 확인해 주세요."
+        else -> null
     }
 
     private fun defaultMessage(errorCode: String): String = when (errorCode) {

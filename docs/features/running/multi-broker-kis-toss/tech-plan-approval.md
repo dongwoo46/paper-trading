@@ -1,10 +1,10 @@
 # Design approval (tech-plan-approval)
 
 - Approved by: dongwoo406
-- Approved on: 2026-11-16
+- Approved on: 2026-11-21
 - Target: development-plan.md + roadmap (state §2)
-- Grounds: S7-03 줄 대기 상한 하한을 그룹 간격 최댓값 이상으로 (2026-11-16)
+- Grounds: step 11 재리뷰 R1-02: 주문 경로 5xx 는 한도·인증만 본문 확정, 나머지 결과 미확인
 
-roadmap-sig: 2f6550cbe1f70e82
+roadmap-sig: 07c3aafc57112399
 
-plan-sig: e6c84f7db2851ee0
+plan-sig: 2dab075627fa4232
