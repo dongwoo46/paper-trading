@@ -1,6 +1,6 @@
 # Market data 도메인 — 시세·일봉·매크로 수집 (paper-trading)
 <!-- devkit:pointer
-path: ^backend/(collector-api/src/main/.+\.kt|quant-collector/.+\.py)$
+path: ^backend/(collector-api/src/main/.+\.kt|quant-(collector|worker)/.+\.py)$
 adr: ../../docs/adr/market-data-collector-worker-incidents.md
 why: 시세·OHLCV·매크로 수집과 Redis 시세 발행 코드(collector-api, quant-collector)
 -->
@@ -17,6 +17,8 @@ why: 시세·OHLCV·매크로 수집과 Redis 시세 발행 코드(collector-api
 ## 아키텍처
 
 ### 디렉토리 구조
+> 옛 PRD 시점의 그림이다. 실제 패키지 이름과 계층 자리(Redis 리스너·컨트롤러 같은 진입점은 presentation)는 `rules/backend-api.md` 의 «계층과 포트» 절이 이긴다.
+
 ```
 src/
 └── main/kotlin/com/papertrading/collector/

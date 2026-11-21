@@ -1,6 +1,6 @@
 # trading-web
 
-모의투자·알고리즘 트레이딩 운영 대시보드(React · TypeScript · Vite · shadcn/ui Base Nova). 지침은 `CLAUDE.md`, UI 규칙은 `docs/UI_GUIDE.md` 입니다.
+모의투자·알고리즘 트레이딩 운영 대시보드(React · TypeScript · Vite · shadcn/ui Base Nova). 지침은 `AGENTS.md`(Claude 는 `CLAUDE.md`), UI 규칙은 레포 루트 `rules/design-system.md` 입니다.
 
 ## 실행
 

@@ -4,7 +4,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
 
 형식: `- [ ] 설명 | project: {프로젝트} | phase: {phase명} | priority: P{n}`
-완료 시: `- [x]` 로 변경 + `| done: YYYY-MM-DD | pr: #{n}` → TODO-DONE.md로 이동
+완료 시: `- [x]` 로 변경 + `| done: YYYY-MM-DD | pr: #{n}` — 완료 항목은 이 파일에 둔다(옛 TODO-DONE.md 는 docs/archive/ 로 동결)
 
 ---
 
@@ -115,7 +115,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] KIS·토스증권 다중 브로커 연동 | project: trading-api, collector-api | phase: multi-broker-kis-toss | priority: P1
   - ✅ 계좌별 브로커 지정(계좌 하나 = 브로커 하나), 토스는 `TOSS_LIVE` 실계좌 모드
   - ✅ 순서: 1) 토스 읽기 전용(시세·잔고·보유 REST) 2) 공통 브로커 계층으로 KIS 전면 리팩터링 3) 토스 시세 웹소켓·실주문
-  - 조사 문서: `docs/research/2026-11-15-toss-open-api.md` · 기획: `docs/features/running/multi-broker-kis-toss/`
+  - 조사 문서: `docs/reference/2026-11-15-toss-open-api.md` · 기획: `docs/features/running/multi-broker-kis-toss/`
 
 - [ ] 전략 실행 모드 설계 결정 | project: trading-api | phase: strategy-execution-mode-design | priority: P1
   - ✅ 실행 모드 3개 지원 결정: `KIS_LIVE` / `KIS_PAPER` / `LOCAL`

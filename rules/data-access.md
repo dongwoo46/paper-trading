@@ -49,8 +49,6 @@ adr: ../docs/adr/data-access.md
 
 - Indexes: verify with query execution plan before adding.
 
-- Indexes: verify with query execution plan before adding.
-
 ## 옮겨 온 줄 — backend/trading-api/docs/ADR.md
 
 - **트레이드오프**: 비관적 락은 데드락 위험. Account 락 먼저 → Position 락 나중 순서를 코드 레벨에서 강제해야 함.

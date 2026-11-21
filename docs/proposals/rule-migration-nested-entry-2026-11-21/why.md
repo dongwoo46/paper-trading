@@ -29,3 +29,8 @@
 ## Next Step
 
 - PR 리뷰 뒤 사람 머지. 적용은 같은 PR 의 이사 커밋이 이미 담고 있다.
+
+## 리뷰 뒤 고침 (2026-11-21)
+
+- 합동 리뷰가 하위 `CLAUDE.md` 5개가 옆 `AGENTS.md` 본문을 복사했고(표준은 가져오기) 빈 제목이 남았다고 막았다(P10·P11). 사람 지시 «이 PR 에서 모두 고침».
+- 고침: 하위 `CLAUDE.md` 는 `@../CLAUDE.md`·`@AGENTS.md` 두 줄만 두고 본문은 `AGENTS.md` 하나에. `backend/AGENTS.md`·`frontend/trading-web/AGENTS.md` 는 빈 제목 대신 사실 줄. 대상 파일에 `backend/collector-api/CLAUDE.md`·`backend/quant-worker/CLAUDE.md` 추가.

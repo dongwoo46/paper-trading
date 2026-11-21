@@ -10,9 +10,6 @@ why: 토큰·비밀값 저장과 서비스 간 내부 API 를 다루는 코드
 ## 옮겨 온 줄 — 옛 하네스(.claude/_disabled·.codex)
 
 - `/api/internal/**` 서비스 간 API 는 외부에 노출하지 않고 외부 API 와 다른 인증을 건다.
-- Never expose externally. Use separate authentication.
-
-- Never expose externally. Use separate authentication.
 
 ## 옮겨 온 줄 — 루트 CLAUDE.md
 

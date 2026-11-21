@@ -1,8 +1,8 @@
 # Backend API — Kotlin·Spring 도메인 모델과 금액 (paper-trading)
 <!-- devkit:pointer
 path: ^backend/(trading-api|collector-api)/src/main/.+\.kt$
-signal: @Entity|BigDecimal|class \w+\s*(protected )?constructor|private set|@ManyToOne|@OneToMany|@OneToOne|^import com\.papertrading\.api\.(application|infrastructure|presentation)\.|@Service|@Transactional|interface \w+Port\b
-why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트를 다루는 Kotlin 코드
+signal: @Entity|BigDecimal|class \w+\s*(protected )?constructor|private set|@ManyToOne|@OneToMany|@OneToOne|^import com\.papertrading\.api\.(application|infrastructure|presentation)\.|@Service|@Transactional|interface \w+Port\b|@Component|@Controller|@RestController|@Configuration|@Repository|@Autowired|!!|\bDouble\b|\bFloat\b
+why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트·Spring 빈 주입·null 단언을 다루는 Kotlin 코드
 -->
 <!-- devkit:scope narrows DD9, DD10, DD11, DD12, DD13, DD14, AR3 -->
 <!-- devkit:form v2 -->
@@ -60,17 +60,9 @@ why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트를
 - trading-api·collector-api 에서 금액과 수량은 `BigDecimal` 로 다루고 `Double`·`Float` 을 쓰지 않는다.
 
 - Spring 빈은 생성자로 주입하고 `@Autowired` 필드 주입을 쓰지 않는다.
-- Constructor injection only. Field injection via `@Autowired` is forbidden.
-
-- `trading-api` domain package must be pure Kotlin — no Spring, no JPA.
-
-- Always use BigDecimal for monetary and quantity values (double/float is forbidden)
-
-- Constructor injection only. Field injection via `@Autowired` is forbidden.
 
 - `trading-api` domain package must be pure Kotlin — no Spring, no JPA.
 
 ## 옮겨 온 줄 — backend/CLAUDE.md
 
-- Constructor injection only — no `@Autowired` field injection
 - Prefer `val` over `var` — never use `!!`

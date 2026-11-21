@@ -82,6 +82,8 @@ trading-api → collector-api POST /api/internal/subscriptions/{ticker}
 ## 아키텍처
 
 ### 디렉토리 구조
+> 옛 PRD 시점의 그림이다. 실제 패키지 이름과 계층 자리(Redis 리스너·컨트롤러 같은 진입점은 presentation)는 `rules/backend-api.md` 의 «계층과 포트» 절이 이긴다.
+
 ```
 src/
 └── main/kotlin/com/papertrading/trading/

@@ -9,7 +9,7 @@ why: trading-web 의 React·TypeScript 코드, API 호출, 금액 표시, 프록
 
 ## 옮겨 온 줄 — 루트 CLAUDE.md
 
-- 프론트엔드 작업은 `frontend/trading-web/CODEX.md`와 `frontend/trading-web/docs/UI_GUIDE.md`를 먼저 적용한다.
+- 프론트엔드 작업은 `rules/design-system.md`(옛 `frontend/trading-web/docs/UI_GUIDE.md`)와 이 파일을 먼저 적용한다.
 
 ## 옮겨 온 줄 — frontend/trading-web/CLAUDE.md
 
@@ -25,7 +25,7 @@ why: trading-web 의 React·TypeScript 코드, API 호출, 금액 표시, 프록
 
 ## 옮겨 온 줄 — frontend/trading-web/CODEX.md
 
-- `CLAUDE.md` 와 같은 규칙입니다. 먼저 `CLAUDE.md` 를 읽고, UI 작업은 `docs/UI_GUIDE.md` 를 적용합니다.
+- UI 작업은 `rules/design-system.md` 를 적용한다.
 
 - 금액·수량·가격은 문자열이며 `parseFloat`·`parseInt`·`Number(`·`Math.` 를 쓰지 않습니다(RULE-03).
 - 변경 뒤 `npm run build && npm run lint && npm test -- --run` 이 모두 통과해야 합니다.

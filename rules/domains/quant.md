@@ -1,6 +1,6 @@
 # Quant 도메인 — 수식·백테스트·신호 (paper-trading)
 <!-- devkit:pointer
-path: ^backend/quant-(ai|research|collector)/.+\.py$
+path: ^backend/quant-[a-z]+/.+\.py$
 why: 퀀트 수식·백테스트·신호·금액 계산 Python 코드
 -->
 
@@ -12,17 +12,10 @@ why: 퀀트 수식·백테스트·신호·금액 계산 Python 코드
 - quant-worker 의 금액 계산은 `Decimal` 로 하고 `float` 를 쓰지 않는다.
 
 - 백테스트와 신호 계산은 시점 T 에 T 이전에 알 수 있던 데이터만 쓴다(룩어헤드 편향 금지).
-- **Look-ahead bias is strictly forbidden**: data at time T must use only information available before T.
 
 - 백테스트 성과에는 슬리피지, 수수료, 세금을 늘 반영한다.
-- **Always include transaction costs**: slippage + commission + tax.
 
-- Translate formulas to code (variable names must match formula notation; verify step-by-step).
 - 백테스트는 결측값, 상장폐지 종목, 서킷브레이커(거래 정지) 구간을 명시적으로 처리한다.
-
-- **Look-ahead bias is strictly forbidden**: data at time T must use only information available before T.
-
-- **Always include transaction costs**: slippage + commission + tax.
 
 - Use `Decimal` for monetary calculations and verify quant math with targeted tests.
 

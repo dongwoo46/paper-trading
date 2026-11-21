@@ -1223,3 +1223,38 @@
 | docs/harness_analysis/README.md:50 | 7. **상태 영속화** — 세션이 끊겨도 `docs/`의 상태 파일로 정확히 재개 가능. | 사람 결정 — 사람 결정 2026-11-21 — 은퇴한 옛 하네스 설명 문서라 문서째 삭제(결정 10) |
 | docs/harness_analysis/README.md:52 | > ⚠️ 이 문서들은 **읽기 전용 정리본**입니다. 실제 동작 규칙의 원본은 | 사람 결정 — 사람 결정 2026-11-21 — 은퇴한 옛 하네스 설명 문서라 문서째 삭제(결정 10) |
 | docs/harness_analysis/README.md:53 | > `.claude/`, `CLAUDE.md`, `.codex/`, `codex.md`에 있으며 그 파일들은 수정하지 않습니다. | 사람 결정 — 사람 결정 2026-11-21 — 은퇴한 옛 하네스 설명 문서라 문서째 삭제(결정 10) |
+
+
+## 리뷰 뒤 고침 (2026-11-21, 합동 리뷰 막는 지적 9건)
+
+finish 뒤 합동 리뷰(코드, 명세 정합, QA)가 막는 지적 9건을 냈고, 같은 PR 에서 고쳤다(사람 결정 2026-11-21 «이 PR 에서 모두 고침»). 이 고침은 finish 뒤라 레포 밖 원장을 다시 쓰지 않았다. 그래서 원장 기준 check 는 이 절의 줄만큼 어긋난다.
+
+- 닿음: backend-api.md signal 에 Spring 빈 표지와 `@Autowired`·`!!`·`Double`·`Float` 추가(collector-api), quant.md·market-data.md 경로에 quant-worker 추가
+- 어긋남: trading.md·market-data.md 의 옛 PRD 디렉터리 그림 위와 tests.md 옮겨 온 줄 위에 어느 쪽이 이기는지 한 줄
+- 경로: ui-common.md·frontend/trading-web/README.md·docs/TODO.md·multi-broker 기능 문서의 옮긴 경로 고침
+- 입구: 하위 CLAUDE.md 가 `@AGENTS.md` 를 가져오고 본문은 AGENTS.md 하나에, 빈 제목 정리
+
+지운 줄 (20행):
+
+| 파일 | 지운 줄 | 근거 |
+|---|---|---|
+| rules/backend-api.md | - Constructor injection only. Field injection via `@Autowired` is forbidden. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/backend-api.md | - `trading-api` domain package must be pure Kotlin — no Spring, no JPA. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/backend-api.md | - Always use BigDecimal for monetary and quantity values (double/float is forbidden) | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/backend-api.md | - Constructor injection only. Field injection via `@Autowired` is forbidden. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/backend-api.md | - Constructor injection only — no `@Autowired` field injection | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/data-access.md | - Indexes: verify with query execution plan before adding. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/domains/quant.md | - **Look-ahead bias is strictly forbidden**: data at time T must use only information available before T. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/domains/quant.md | - **Always include transaction costs**: slippage + commission + tax. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/domains/quant.md | - Translate formulas to code (variable names must match formula notation; verify step-by-step). | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/domains/quant.md | - **Look-ahead bias is strictly forbidden**: data at time T must use only information available before T. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/domains/quant.md | - **Always include transaction costs**: slippage + commission + tax. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/security-privacy-config.md | - Never expose externally. Use separate authentication. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/security-privacy-config.md | - Never expose externally. Use separate authentication. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/tests.md | - Enforce test policy: service/application business logic must be verified by integration tests, not E2E additions. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/tests.md | - Enforce test policy: service/application business logic must be verified by integration tests, not E2E additions. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/tests.md | - Changing production code for test convenience = forbidden. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/tests.md | - Prefer an HTTP-level fake (e.g. WireMock) over an interface/trait mock for HTTP APIs. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/tests.md | - Use `@SpringBootTest` + Testcontainers PostgreSQL instead. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/tests.md | - 3. Never fix flakiness with `sleep()`, retry loops, or higher timeouts → fix the root cause. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
+| rules/tests.md | - New E2E test introduced for service verification that should be covered by integration tests. | 같은 파일에 한국어로 고쳐 쓴 판이나 같은 글자 사본이 남음 |
