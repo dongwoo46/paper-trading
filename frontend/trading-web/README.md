@@ -16,8 +16,6 @@ Node 20 이상(CI 는 20).
 
 ## 개발 서버 프록시
 
-브라우저는 백엔드를 직접 부르지 못하므로 개발 서버·`preview` 가 경로 접두사별로 나눠 보냅니다(`proxy.config.ts`). 백엔드에 컨트롤러 경로를 더하면 이 표도 함께 고칩니다 — `src/test/proxy-table.test.ts` 가 컨트롤러 소스를 읽어 빠진 접두사를 잡습니다.
-
 | 접두사 | 대상 | 환경 변수(기본값) |
 |---|---|---|
 | `/api/v1` · `/api/accounts` · `/api/kis/account` · `/api/positions` · `/api/trading-journals` · `/api/operations` · `/api/tax-summaries` | trading-api | `VITE_TRADING_API_TARGET` (`http://127.0.0.1:8080`) |
