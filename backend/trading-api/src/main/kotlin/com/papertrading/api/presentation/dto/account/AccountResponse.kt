@@ -15,7 +15,7 @@ data class AccountResponse(
     val accountName: String,
     val accountType: AccountType,
     val tradingMode: TradingMode,
-    val source: AccountSource = AccountSource.LOCAL,
+    val source: AccountSource,
     val deposit: BigDecimal,
     val availableDeposit: BigDecimal,
     val lockedDeposit: BigDecimal,
@@ -26,21 +26,24 @@ data class AccountResponse(
     val updatedAt: Instant?
 ) {
     companion object {
-        fun from(account: Account) = AccountResponse(
-            id = account.id!!,
-            accountName = account.accountName!!,
-            accountType = account.accountType!!,
-            tradingMode = account.tradingMode!!,
-            source = AccountSource.LOCAL,
-            deposit = account.deposit,
-            availableDeposit = account.availableDeposit,
-            lockedDeposit = account.lockedDeposit,
-            baseCurrency = account.baseCurrency,
-            externalAccountId = account.externalAccountId,
-            isActive = account.isActive,
-            createdAt = account.createdAt,
-            updatedAt = account.updatedAt
-        )
+        fun from(account: Account): AccountResponse {
+            val mode = account.tradingMode!!
+            return AccountResponse(
+                id = account.id!!,
+                accountName = account.accountName!!,
+                accountType = account.accountType!!,
+                tradingMode = mode,
+                source = AccountSource.fromTradingMode(mode),
+                deposit = account.deposit,
+                availableDeposit = account.availableDeposit,
+                lockedDeposit = account.lockedDeposit,
+                baseCurrency = account.baseCurrency,
+                externalAccountId = account.externalAccountId,
+                isActive = account.isActive,
+                createdAt = account.createdAt,
+                updatedAt = account.updatedAt
+            )
+        }
     }
 }
 

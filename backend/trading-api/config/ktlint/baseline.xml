@@ -731,12 +731,12 @@
     <file name="src/main/kotlin/com/papertrading/api/presentation/dto/account/AccountResponse.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="26" column="28" source="standard:trailing-comma-on-declaration-site" />
-        <error line="42" column="42" source="standard:trailing-comma-on-call-site" />
-        <error line="55" column="28" source="standard:trailing-comma-on-declaration-site" />
-        <error line="66" column="41" source="standard:trailing-comma-on-call-site" />
-        <error line="77" column="41" source="standard:trailing-comma-on-call-site" />
-        <error line="85" column="41" source="standard:trailing-comma-on-declaration-site" />
-        <error line="93" column="24" source="standard:trailing-comma-on-declaration-site" />
+        <error line="44" column="46" source="standard:trailing-comma-on-call-site" />
+        <error line="58" column="28" source="standard:trailing-comma-on-declaration-site" />
+        <error line="69" column="41" source="standard:trailing-comma-on-call-site" />
+        <error line="80" column="41" source="standard:trailing-comma-on-call-site" />
+        <error line="88" column="41" source="standard:trailing-comma-on-declaration-site" />
+        <error line="96" column="24" source="standard:trailing-comma-on-declaration-site" />
     </file>
     <file name="src/main/kotlin/com/papertrading/api/presentation/dto/account/RiskPolicyDto.kt">
         <error line="15" column="36" source="standard:trailing-comma-on-declaration-site" />
@@ -1013,14 +1013,14 @@
         <error line="219" column="35" source="standard:function-signature" />
     </file>
     <file name="src/test/kotlin/com/papertrading/api/presentation/controller/AccountControllerIntegrationTest.kt">
-        <error line="54" column="40" source="standard:trailing-comma-on-call-site" />
-        <error line="75" column="39" source="standard:trailing-comma-on-call-site" />
-        <error line="89" column="61" source="standard:trailing-comma-on-call-site" />
-        <error line="103" column="61" source="standard:trailing-comma-on-call-site" />
-        <error line="133" column="34" source="standard:trailing-comma-on-call-site" />
-        <error line="175" column="38" source="standard:trailing-comma-on-call-site" />
-        <error line="187" column="94" source="standard:trailing-comma-on-call-site" />
-        <error line="202" column="34" source="standard:trailing-comma-on-call-site" />
+        <error line="55" column="40" source="standard:trailing-comma-on-call-site" />
+        <error line="115" column="39" source="standard:trailing-comma-on-call-site" />
+        <error line="129" column="61" source="standard:trailing-comma-on-call-site" />
+        <error line="143" column="61" source="standard:trailing-comma-on-call-site" />
+        <error line="173" column="34" source="standard:trailing-comma-on-call-site" />
+        <error line="215" column="38" source="standard:trailing-comma-on-call-site" />
+        <error line="227" column="94" source="standard:trailing-comma-on-call-site" />
+        <error line="242" column="34" source="standard:trailing-comma-on-call-site" />
     </file>
     <file name="src/test/kotlin/com/papertrading/api/presentation/controller/KisAccountBalanceControllerIntegrationTest.kt">
         <error line="50" column="19" source="standard:annotation" />

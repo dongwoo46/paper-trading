@@ -35,8 +35,8 @@ class BrokerAccountQueryService(
         val account = accountQueryService.getAccount(accountId)
         val mode = account.tradingMode
         return when (routeOf(mode)) {
-            Route.TOSS -> fetch(accountId, mode, AccountSource.TOSS, linkedAccountSeq(account.externalAccountId))
-            Route.KIS -> fetch(accountId, mode, AccountSource.KIS, linkedKisAccountNumber(account.externalAccountId))
+            Route.TOSS -> fetch(accountId, mode, linkedAccountSeq(account.externalAccountId))
+            Route.KIS -> fetch(accountId, mode, linkedKisAccountNumber(account.externalAccountId))
             Route.NOT_SUPPORTED -> throw BrokerBalanceNotSupportedException(mode.name)
             Route.NOT_BROKER_ACCOUNT -> throw NotBrokerAccountException(mode.name)
         }
@@ -45,13 +45,12 @@ class BrokerAccountQueryService(
     private fun fetch(
         accountId: Long,
         mode: TradingMode,
-        source: AccountSource,
         externalAccountId: String,
     ): BrokerAccountBalanceResult {
         val snapshot = portTable.portFor(mode).fetchBalance(BrokerAccountRef(accountId, mode, externalAccountId))
         return BrokerAccountBalanceResult(
             accountId = accountId,
-            source = source,
+            source = AccountSource.fromTradingMode(mode),
             tradingMode = mode,
             asOf = snapshot.asOf,
             currencyBalances = snapshot.currencyBalances,

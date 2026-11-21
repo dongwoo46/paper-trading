@@ -46,7 +46,7 @@
 | 9 | KIS 에러 정렬 | done | steps/step-9.md | 잔고 경로만(주문 경로·KIS_ORDER_REJECTED 는 step 11). 전체 1095건 실패 0, 리뷰 막는 지적 0(`review/step9-code-review.md`, 후속 9건 원장) |
 | 10 | 브로커 선택과 KIS 잔고 이전 | done | steps/step-10.md | 전체 1116건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step10-code-review.md`, 메인 인라인 리뷰, 후속 3건 원장) |
 | 11 | 주문 공통 포트 | done | steps/step-11.md | 2단계 4번, D26·D28, S9-01·S9-02 함께. 전체 1176건 실패 0, 특성화 10건 무수정 통과, 리뷰 3회차 머지 가능(`review/step11-code-review.md`·`step11-rereview-1.md`·`step11-rereview-2.md`, 3회차 메인 인라인), 후속은 원장·TODO P1 |
-| 12 | 계좌 응답 출처와 ADR 갱신 | todo | - | 2단계 5번, D29 |
+| 12 | 계좌 응답 출처와 ADR 갱신 | done | steps/step-12.md | 2단계 5번, D29, ADR-005(D25·D26). 전체 1180건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step12-code-review.md`, 메인 인라인) |
 | 13 | 체결 입력 공통화 | todo | - | 2단계 6번, D27, PR #53 머지 뒤에만 |
 | 14 | 2단계 최종 확인 | todo | - | 2단계 7번 |
 
@@ -81,4 +81,5 @@
 
 | Issue | Step | Decision or person needed |
 |---|---|---|
+| 리뷰·QA 보류: step 11 변경분은 코드 리뷰 3회차(머지 가능)만 거침, 독립 QA 는 step 14 최종 확인에서 2단계 전체로 함 | 11 | 사용자 결정 2026-11-21 «지금은 안 함» |
 | 리뷰·QA 보류: 린트 정리 커밋 `a43538a`(서식·파일 이름만, 동작 변경 없음, 바뀐 시험 107건 통과)는 같은 파일을 고치는 step 3 합동 리뷰에 포함 | 3 | 사용자 결정 2026-11-15 |

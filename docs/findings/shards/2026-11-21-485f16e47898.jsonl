@@ -1,0 +1,1 @@
+{"id":"be147fd46c8e","uid":"01876c6f9a3b","ts":"2026-11-21T08:52:13.558Z","kitVersion":"1.2.0","source":"review-round","category":"other","severity":"low","confidence":"low","title":"리뷰 1회차 기록","file":"","context":"feature:multi-broker-kis-toss","detail":"step12-code-review.md · 1회차를 원장에 기록함 — 표식이 지워진 뒤 그 회차를 새로 계산하지 않게 알아보는 행(지적도 판정도 아님)"}
