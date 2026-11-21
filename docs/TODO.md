@@ -68,7 +68,6 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
     - 프론트엔드: `runChartAnalysis`, `fetchChartAnalysis`, `fetchAnalyzedSymbols` → `api-research`로 변경
 
 - [x] Python 서비스 DB 스키마 자동 생성 | project: quant-research | phase: service-role-refactor | priority: P0 | done: 2026-05-14
-  - Python 서비스가 사용하는 테이블은 Python 서비스가 직접 생성 (Kotlin Flyway 의존 금지)
   - quant-research / quant-ai lifespan 시작 시 `migrations/*.sql` 순서대로 자동 실행
   - `CREATE TABLE IF NOT EXISTS` 사용으로 멱등성 보장
   - 대상 테이블: `chart_analysis_result`, `analysis_request_queue`, `popular_symbols`

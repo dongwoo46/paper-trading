@@ -25,3 +25,7 @@ why: 퀀트 수식·백테스트·신호·금액 계산 Python 코드
 - **Always include transaction costs**: slippage + commission + tax.
 
 - Use `Decimal` for monetary calculations and verify quant math with targeted tests.
+
+## 옮겨 온 줄 — docs/TODO.md
+
+- Python 서비스가 사용하는 테이블은 Python 서비스가 직접 생성 (Kotlin Flyway 의존 금지)
