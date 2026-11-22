@@ -41,7 +41,7 @@
 | 4 | 토스 토큰 기반 | done | steps/step-4.md | 시험 71건 통과, CI 전체 success(`da617e5`, 실행 43688563304), 리뷰 막는 지적 0(후속 9건은 FLAG-15로 step 5 전 수정) |
 | 5 | 스키마 확정과 토스 전송 계층 | done | steps/step-5.md | 관련 시험 253건 통과, CI 전체 success(`908ac89`, 실행 43700036485), 리뷰 막는 지적 0(후속 C-01~C-05는 step 6 범위) |
 | 6 | 잔고 공통 포트와 토스 어댑터 | done | steps/step-6.md | 관련 시험 297건 통과, CI 전체 success(`2692c2d`, 실행 43723583394), 리뷰 막는 지적 0(후속 S6-01·02·04·05는 step 7 범위) |
-| 7 | 시세 REST와 최종 확인 | in progress | steps/step-7.md | 코드는 PR #55로 머지(`263f047`, 전체 1073건 실패 0). 남은 것은 §5 8번 수동 실호출 대조(사람 준비 뒤, 2단계와 병행) |
+| 7 | 시세 REST와 최종 확인 | in progress | steps/step-7.md | 코드는 PR #55로 머지(`263f047`, 전체 1073건 실패 0). 남은 것은 §5 8번 수동 실호출 대조(사람 준비 뒤, 2단계와 병행). 2026-11-23 실호출 대조 끝: accounts·broker-balance·prices 200, expires_in 86399초(step-7 §5·§6). 완료 표시는 사람 판단 |
 | 8 | 2단계 기준선과 특성화 시험 | done | steps/step-8.md | 기준선 1073건 실패 0, 특성화 10건 통과(`338a5ad`), 리뷰 2회차 막는 지적 0(`review/step8-rereview-1.md`) |
 | 9 | KIS 에러 정렬 | done | steps/step-9.md | 잔고 경로만(주문 경로·KIS_ORDER_REJECTED 는 step 11). 전체 1095건 실패 0, 리뷰 막는 지적 0(`review/step9-code-review.md`, 후속 9건 원장) |
 | 10 | 브로커 선택과 KIS 잔고 이전 | done | steps/step-10.md | 전체 1116건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step10-code-review.md`, 메인 인라인 리뷰, 후속 3건 원장) |
