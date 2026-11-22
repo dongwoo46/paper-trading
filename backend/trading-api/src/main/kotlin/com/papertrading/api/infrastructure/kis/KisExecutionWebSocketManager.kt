@@ -2,6 +2,7 @@ package com.papertrading.api.infrastructure.kis
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.papertrading.api.application.order.KisExecutionNoticeService
+import com.papertrading.api.common.maskKisAccountNumber
 import mu.KotlinLogging
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
@@ -11,8 +12,8 @@ import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.client.standard.StandardWebSocketClient
 import org.springframework.web.socket.handler.TextWebSocketHandler
-import java.util.concurrent.Executors
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 data class KisExecutionWebSocketConnectionRequest(
@@ -79,8 +80,8 @@ class SpringKisExecutionWebSocketTransport(
                         "input" to mapOf(
                             "tr_id" to request.channelId,
                             "tr_key" to request.appKey,
-                        )
-                    )
+                        ),
+                    ),
                 )
                 session.sendMessage(TextMessage(objectMapper.writeValueAsString(subscribe)))
             }
@@ -124,6 +125,8 @@ class SpringKisExecutionWebSocketTransport(
         }
     }.getOrNull()
 }
+
+private val CREDENTIAL_PAIR = Regex("(?i)(approval_key|access_token|appsecret|app_secret|secretkey|authorization)=\\S+")
 
 @Component
 class KisExecutionWebSocketManager(
@@ -171,11 +174,18 @@ class KisExecutionWebSocketManager(
     fun handleControlMessage(mode: String, message: KisWebSocketControlMessage) {
         when (message) {
             is KisWebSocketControlMessage.AuthError -> {
-                log.warn { "KIS WebSocket auth error: mode=$mode, code=${message.code}, message=${sanitizeControlMessage(message.message)}" }
+                log.warn {
+                    "KIS WebSocket auth error: mode=$mode, code=${message.code}, " +
+                        "message=${sanitizeControlMessage(message.message)}"
+                }
                 reconnect(mode)
             }
+
             is KisWebSocketControlMessage.Error -> {
-                log.warn { "KIS WebSocket error: mode=$mode, code=${message.code}, message=${sanitizeControlMessage(message.message)}" }
+                log.warn {
+                    "KIS WebSocket error: mode=$mode, code=${message.code}, " +
+                        "message=${sanitizeControlMessage(message.message)}"
+                }
                 reconnect(mode)
             }
         }
@@ -191,8 +201,7 @@ class KisExecutionWebSocketManager(
         reconnect(mode)
     }
 
-    fun status(mode: String): KisWebSocketConnectionStatus =
-        statuses[mode] ?: KisWebSocketConnectionStatus.DISCONNECTED
+    fun status(mode: String): KisWebSocketConnectionStatus = statuses[mode] ?: KisWebSocketConnectionStatus.DISCONNECTED
 
     private fun handleConnected(mode: String) {
         reconnectAttempts[mode] = 0
@@ -203,7 +212,10 @@ class KisExecutionWebSocketManager(
         val nextAttempt = (reconnectAttempts[mode] ?: 0) + 1
         if (nextAttempt > properties.wsReconnectMaxAttempts) {
             statuses[mode] = KisWebSocketConnectionStatus.DISCONNECTED
-            log.error { "KIS WebSocket reconnect attempts exhausted: mode=$mode, attempts=${properties.wsReconnectMaxAttempts}" }
+            log.error {
+                "KIS WebSocket reconnect attempts exhausted: mode=$mode, " +
+                    "attempts=${properties.wsReconnectMaxAttempts}"
+            }
             return
         }
 
@@ -226,9 +238,17 @@ class KisExecutionWebSocketManager(
 
     private fun handleRawMessage(mode: String, rawMessage: String) {
         val notice = parser.parse(rawMessage, mode) ?: return
-        noticeService.handle(notice)
+        // 트랜잭션이 끝난 바깥 경계에서 거부를 잡아 세션을 유지한다 — 그 통지는 롤백돼 처리되지 않음
+        try {
+            noticeService.handle(notice)
+        } catch (rejected: IllegalArgumentException) {
+            log.error {
+                "KIS execution notice rejected: mode=$mode, externalOrderId=${notice.externalOrderId}, " +
+                    "externalExecutionId=${maskKisAccountNumber(notice.externalExecutionId)}, " +
+                    "executedQty=${notice.executedQty}, reason=${rejected.message}"
+            }
+        }
     }
 
-    private fun sanitizeControlMessage(message: String): String =
-        message.replace(Regex("(?i)(approval_key|access_token|appsecret|app_secret|secretkey|authorization)=\\S+"), "$1=<redacted>")
+    private fun sanitizeControlMessage(message: String): String = message.replace(CREDENTIAL_PAIR, "$1=<redacted>")
 }

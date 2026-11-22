@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- devkit:html-kit v0.95.0 -->
+<style>
+:where(:root){
+  --bg:#ffffff; --fg:#1f2328; --muted:#59636e; --line:#d1d9e0; --card:#f6f8fa;
+  --accent:#0b5cad; --accent-bg:#eef5fd; --accent-line:#b6d3f2; --ok-bar:#2da44e;
+  --ok-bg:#e9f7ee; --ok-line:#7fc79a; --warn-bg:#fff6e5; --warn-line:#e2b25c;
+  --stop-bg:#fdecec; --stop-line:#e08a8a;
+  --pass-bg:#dcf3e3; --fail-bg:#fbe3e3; --ok-fg:#116329; --warn-fg:#7a4a00; --on-accent:#ffffff;
+  --hl-kw:#ff9492; --hl-str:#7ee787; --hl-num:#79c0ff; --hl-com:#a3adba;
+  --hl-fn:#d2a8ff; --hl-type:#ffb27a; --hl-attr:#79c0ff; --hl-meta:#a3adba;
+  --code-bar-bg:#2a2e35; --code-bar-fg:#c9d1d9; --pre-bg:#1c1f23; --pre-fg:#e6edf3;
+}
+@media (prefers-color-scheme: dark){:where(:root:not([data-theme="light"])){
+  --bg:#0d1117; --fg:#e6edf3; --muted:#9da7b3; --line:#30363d; --card:#161b22;
+  --accent:#6cb6ff; --accent-bg:#0f2236; --accent-line:#1f4a75;
+  --ok-bg:#0f2a1a; --ok-line:#2f7a48; --warn-bg:#2b2110; --warn-line:#8a6a26;
+  --stop-bg:#2d1415; --stop-line:#8a3a3a;
+  --pass-bg:#12301e; --fail-bg:#3a1719; --ok-fg:#7ee2a8; --warn-fg:#f2c46d; --on-accent:#0d1117;
+}}
+:where(:root[data-theme="dark"]){
+  --bg:#0d1117; --fg:#e6edf3; --muted:#9da7b3; --line:#30363d; --card:#161b22;
+  --accent:#6cb6ff; --accent-bg:#0f2236; --accent-line:#1f4a75;
+  --ok-bg:#0f2a1a; --ok-line:#2f7a48; --warn-bg:#2b2110; --warn-line:#8a6a26;
+  --stop-bg:#2d1415; --stop-line:#8a3a3a;
+  --pass-bg:#12301e; --fail-bg:#3a1719; --ok-fg:#7ee2a8; --warn-fg:#f2c46d; --on-accent:#0d1117;
+}
+:where(*,*::before,*::after){box-sizing:border-box}
+:where(body){margin:0;background:var(--bg);color:var(--fg);
+  font:15.5px/1.7 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif;
+  word-break:keep-all;overflow-wrap:break-word}
+:where(main,.wrap){width:min(960px,100%);margin:0 auto;padding:clamp(18px,4vw,40px) clamp(16px,4vw,28px) 60px}
+:where(h1){font-size:26px;line-height:1.3;margin:0 0 6px}
+:where(h2){font-size:20px;margin:38px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+:where(h3){font-size:16.5px;margin:22px 0 6px}
+:where(a){color:var(--accent)}
+:where(.sub){color:var(--muted);font-size:14px;margin:0 0 20px}
+:where(.cl){font-weight:700;color:var(--accent);font-size:13px}
+:where(.toc){background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:0 0 16px}
+:where(.tbl){overflow-x:auto;margin:10px 0}
+:where(table){border-collapse:collapse;width:100%;font-size:14px}
+:where(th,td){border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+:where(th){background:var(--card)}
+:where(pre){overflow-x:auto;background:var(--pre-bg);color:var(--pre-fg);padding:14px 16px;margin:0;border-radius:8px;
+  font:13.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;tab-size:4}
+:where(code){font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em}
+:where(:not(pre)>code){background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+:where(pre.mermaid){background:var(--card);color:var(--fg);border:1px solid var(--line);margin:12px 0}
+img{max-width:100%;height:auto}
+:where(figure){margin:16px 0}
+:where(figcaption){color:var(--muted);font-size:13px;margin-top:6px}
+:where(.box){background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0}
+:where(.box.note){background:var(--accent-bg);border-color:var(--accent-line)}
+:where(.box.ok){background:var(--ok-bg);border-color:var(--ok-line)}
+:where(.box.warn){background:var(--warn-bg);border-color:var(--warn-line)}
+:where(.box.stop){background:var(--stop-bg);border-color:var(--stop-line)}
+:where(.path){font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--card);
+  border:1px solid var(--line);border-radius:5px;padding:1px 6px;word-break:break-word}
+/* 따라 할 절차 — 화면 캡처·흐름도 바로 옆에 번호 단계(경로·누를 것·넣을 값). */
+:where(.figure-steps){display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start;margin:16px 0}
+:where(.figure-steps figure){margin:0}
+:where(.figure-steps img){border:1px solid var(--line);border-radius:6px;display:block}
+:where(.steps){margin:6px 0;padding-left:22px}
+:where(.steps li){margin:6px 0}
+@media (max-width:640px){:where(h1){font-size:22px} :where(.figure-steps){grid-template-columns:1fr}}
+@media print{:where(.box,figure){break-inside:avoid}}
+figure.code{margin:16px 0;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.code-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--code-bar-bg);color:var(--code-bar-fg);padding:6px 12px;font-size:12.5px}
+.code-lang{font-weight:600;letter-spacing:.02em}
+.code-copy{background:transparent;color:var(--code-bar-fg);border:1px solid #4b525c;border-radius:5px;
+  padding:2px 10px;font:inherit;font-size:12px;cursor:pointer}
+.code-copy:hover{background:#3a3f47}
+.code-copy[data-done]{border-color:var(--ok-bar);color:#7ee787}
+figure.code pre{margin:0;border-radius:0}
+.code-cap{color:var(--muted);font-size:13px;padding:8px 2px 0}
+/* 문법 색칠 — 스크립트가 막히면 색만 빠지고 원문은 그대로 읽힘(fail-visible). */
+.hljs-keyword,.hljs-selector-tag,.hljs-literal,.hljs-section{color:var(--hl-kw)}
+.hljs-string,.hljs-regexp,.hljs-addition{color:var(--hl-str)}
+.hljs-number,.hljs-symbol,.hljs-bullet{color:var(--hl-num)}
+.hljs-comment,.hljs-quote,.hljs-deletion{color:var(--hl-com)}
+.hljs-title,.hljs-title.function_,.hljs-name{color:var(--hl-fn)}
+.hljs-type,.hljs-built_in,.hljs-class .hljs-title{color:var(--hl-type)}
+.hljs-attr,.hljs-attribute,.hljs-variable,.hljs-template-variable,.hljs-property{color:var(--hl-attr)}
+.hljs-meta,.hljs-doctag{color:var(--hl-meta)}
+.hljs-emphasis{font-style:italic}
+.hljs-strong{font-weight:700}
+/* 한눈에 — 첫 화면에서 결론이 끝나게. */
+.brief{background:var(--accent-bg);border:1px solid var(--accent-line);border-radius:8px;
+  padding:16px 18px;margin:0 0 22px}
+.brief ul{margin:8px 0 0;padding-left:20px}
+.brief li{margin:5px 0}
+.cards{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0 0}
+.card{flex:1 1 150px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.card b{display:block;font-size:24px;line-height:1.2;color:var(--accent);font-variant-numeric:tabular-nums}
+.card span{display:block;font-size:13px;color:var(--fg);margin-top:3px}
+.card small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+@media (max-width:640px){.card{flex:1 1 100%}}
+:where(.timeline){list-style:none;display:flex;margin:18px 0;padding:14px 0 0;overflow-x:auto}
+:where(.timeline>li){flex:1 1 0;min-width:120px;position:relative;margin:0;padding:18px 12px 0 0;border-top:3px solid var(--accent-line)}
+:where(.timeline>li)::before{content:"";position:absolute;top:-9px;left:0;width:15px;height:15px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--bg)}
+:where(.timeline b){display:block;color:var(--accent);font-variant-numeric:tabular-nums}
+:where(.timeline span){display:block;color:var(--fg);font-size:14px}
+:where(.timeline small){display:block;color:var(--muted);font-size:12.5px}
+:where(.screen-frame){background:var(--bg);color:var(--fg);border:1px solid var(--line);overflow:hidden;margin:0 auto;font-size:14px}
+:where(.screen-frame.phone){max-width:300px;border:9px solid var(--muted);border-radius:30px}
+:where(.screen-frame.desktop){max-width:100%;border-radius:8px}
+:where(.screen-bar){display:flex;justify-content:space-between;gap:8px;background:var(--card);border-bottom:1px solid var(--line);padding:6px 14px;font-size:12px;color:var(--muted)}
+:where(.screen-body){padding:14px 16px}
+:where(.screen-body>:first-child){margin-top:0}
+:where(.screen-btn){display:block;text-align:center;background:var(--accent);color:var(--on-accent);border-radius:8px;padding:9px 12px;margin:12px 0 0;font-weight:600}
+:where(.screen-hl){outline:3px solid var(--warn-fg);outline-offset:2px;border-radius:4px}
+:where(td.pass){background:var(--pass-bg);color:var(--fg)}
+:where(td.fail){background:var(--fail-bg);color:var(--fg)}
+:where(.tag){display:inline-block;padding:0 8px;border:1px solid var(--line);border-radius:999px;font-size:12px;font-weight:600;line-height:1.6;white-space:nowrap;vertical-align:middle}
+:where(.tag.ok){background:var(--ok-bg);color:var(--ok-fg);border-color:var(--ok-line)}
+:where(.tag.unverified){background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-line)}
+:where(.check-card){background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:12px 16px;margin:12px 0}
+:where(.check-card>b){display:block;margin:0 0 4px}
+:where(.check-card ul){list-style:none;margin:0;padding:0}
+:where(.check-card li){position:relative;margin:6px 0;padding-left:28px}
+:where(.check-card li)::before{content:"";position:absolute;left:0;top:.3em;width:16px;height:16px;border:2px solid var(--accent);border-radius:4px;background:var(--bg)}
+:where(ol.steps){list-style:none;counter-reset:step;padding-left:0}
+:where(ol.steps>li){counter-increment:step;position:relative;min-height:26px;padding-left:36px}
+:where(ol.steps>li)::before{content:counter(step);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:700;line-height:26px;text-align:center}
+:where(.copy-block){background:var(--card);border:1px solid var(--line);border-radius:8px;margin:16px 0;overflow:hidden}
+:where(.copy-bar){display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 12px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
+:where(.copy-btn){background:var(--bg);color:var(--accent);border:1px solid var(--accent-line);border-radius:5px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer}
+:where(.copy-btn[data-done]){color:var(--ok-fg);border-color:var(--ok-line)}
+:where(pre.copy-text){background:transparent;color:var(--fg);margin:0;padding:12px 14px;border-radius:0;font-family:inherit;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+:where(fieldset.q){background:var(--card);border:1px solid var(--line);border-radius:8px;margin:16px 0;padding:12px 16px;min-width:0}
+:where(fieldset.q>legend){font-weight:700;padding:0 6px}
+:where(.q-intent){color:var(--muted);font-size:14px;margin:4px 0 8px}
+:where(.q-opt){border-top:1px solid var(--line);margin:0;padding:10px 0}
+:where(.q-opt>label){display:block;font-weight:600;cursor:pointer}
+:where(.q-rec){color:var(--accent);font-weight:700}
+:where(.q-sheet textarea){display:block;box-sizing:border-box;width:100%;min-height:3em;margin:6px 0 0;padding:6px 8px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:5px;font:inherit}
+:where(.doc-meta){display:flex;flex-wrap:wrap;gap:4px 16px;margin:0 0 16px;color:var(--muted);font-size:13px}
+:where(.ev){display:inline-block;padding:0 6px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-weight:700;line-height:1.6;white-space:nowrap;vertical-align:middle}
+:where(.ev.ext){background:var(--ok-bg);color:var(--ok-fg);border-color:var(--ok-line)}
+:where(.ev.int){background:var(--accent-bg);color:var(--accent);border-color:var(--accent-line)}
+:where(.ev.hyp){background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-line)}
+:where(.approve){background:var(--bg);border:3px solid var(--accent);border-radius:10px;padding:14px 18px;margin:14px 0}
+:where(.approve label){display:inline-block;margin:6px 18px 6px 0;font-weight:600}
+:where(.sign){display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:12px 0 0}
+:where(.sign>div){border-bottom:1px solid var(--fg);min-height:3em;padding:2px 4px}
+:where(.sign span){display:block;color:var(--muted);font-size:12px}
+:where(.cols){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+:where(.cols>.lose,.cols>.gain){border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+:where(.cols>.lose){background:var(--warn-bg);border-color:var(--warn-line)}
+:where(.cols>.gain){background:var(--ok-bg);border-color:var(--ok-line)}
+:where(.case-card){flex:1 1 220px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+:where(.case-card>b){display:block;font-size:24px;line-height:1.2;color:var(--accent)}
+:where(.case-card>h3){margin:6px 0 4px;font-size:15px}
+:where(.case-card>p){margin:4px 0;font-size:14px}
+:where(details.self-check){background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:22px 0 0}
+:where(details.self-check>summary){cursor:pointer;font-weight:700}
+@media (max-width:640px){:where(.cols){grid-template-columns:1fr}}
+@media (max-width:640px){:where(.timeline){flex-direction:column;padding:0 0 0 8px} :where(.timeline>li){flex:none;border-top:0;border-left:3px solid var(--accent-line);padding:0 0 16px 20px} :where(.timeline>li)::before{top:2px;left:-9px}}
+@media print{:where(.screen-frame,.check-card,.copy-block,fieldset.q,.approve,.case-card,.cols){break-inside:avoid}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js" defer></script>
+<script>window.addEventListener('load',function(){
+  if(window.hljs) hljs.highlightAll();
+});</script>
+<script>document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('.code-copy,.copy-btn'); if(!b) return;
+  var box=b.closest('figure.code,.copy-block'); var pre=box?box.querySelector('pre'):null;
+  var t=pre?pre.innerText:''; if(!pre) return;
+  var done=function(){b.textContent='복사됨';b.setAttribute('data-done','1');
+    setTimeout(function(){b.textContent='복사';b.removeAttribute('data-done')},1400)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,function(){})}
+  else{var s=window.getSelection(),r=document.createRange();r.selectNodeContents(pre);
+    s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');done()}catch(_){}}
+});
+function collectAnswers(sheet, now) {
+  var answers = {}, touched = false;
+  sheet.querySelectorAll("fieldset.q").forEach(function (q) {
+    var picked = q.querySelector("input[type=radio]:checked");
+    var other = q.querySelector(".q-other"), note = q.querySelector(".q-note");
+    var choice = picked ? picked.value : "";
+    var row = { choice: choice, other: choice === "other" && other ? other.value : "", note: note ? note.value : "" };
+    if (row.choice || row.note) touched = true;
+    answers[q.dataset.q] = row;
+  });
+  var box = sheet.querySelector(".q-comment"), comment = box ? box.value : "";
+  return { doc: sheet.dataset.doc, version: sheet.dataset.version, answered_at: touched || comment ? now : "", answers: answers, skipped: {}, comment: comment };
+}
+function qSheetSync(s){var p=s.querySelector('.q-answer pre');if(!p)return;
+  var now=new Date(Date.now()+324e5).toISOString().slice(0,19);
+  p.textContent=JSON.stringify(collectAnswers(s,now),null,2)}
+document.addEventListener('input',function(e){var t=e.target,s=t.closest&&t.closest('.q-sheet');if(!s)return;
+  if(t.matches('.q-other')&&t.value){var o=t.closest('fieldset.q').querySelector('input[value=other]');if(o)o.checked=true}
+  qSheetSync(s)});
+window.addEventListener('load',function(){document.querySelectorAll('.q-sheet').forEach(qSheetSync)});</script>
+<!-- 본문은 <body><main> … </main></body> 안에 — 폭·가운데 정렬·여백 규칙(main, .wrap)이 그 안에서만 켜짐 -->
+<title>trading-api 돈·상태 결함 바로잡기 (A 갈래)</title>
+<meta name="description" content="주문 체결·취소에서 돈이 틀리게 계산되는 결함을 PR 여섯 개(A1~A6)로 TDD 수정하는 계획과 진행 상황">
+</head><body><main>
+<h1>trading-api 돈·상태 결함 바로잡기 (A 갈래)</h1>
+<p class="doc-meta">devkit v0.95.0, 2026-11-15, 브랜치 <code>fix/trading-api-money-state</code>, 근거: <code>docs/features/running/trading-api-money-state/development-plan.md</code>(사람 승인 2026-11-15)</p>
+
+<section class="brief"><span class="cl">한눈에</span><ul>
+<li>주문이 나눠 체결되거나 취소될 때 <b>잠금 예수금과 주문 총액이 틀리게 계산되는 버그</b>를 고칩니다.</li>
+<li>버그 9건을 PR 여섯 개(A1~A6)로 나눴고, PR마다 <b>재현 시험 실패 → 수정 → 통과</b> 순서(TDD)로 갑니다.</li>
+<li>돈 계산 규칙은 서비스에서 도메인 모델 <code>Order</code> 한 곳으로 옮깁니다. 서비스는 계산하지 않고 주문에 시킵니다.</li>
+<li>A1은 수정과 전체 검증이 끝났고 합동 리뷰 중입니다. 머지를 막는 지적은 아직 0건입니다.</li>
+<li>이 갈래가 끝나면 B(트랜잭션 안 외부 호출), C(포트 도입), D(도메인·영속 분리) 순서로 이어집니다.</li>
+</ul><div class="cards">
+<div class="card"><b>646</b><span>감사로 찾은 문제</span><small>trading-api 전수 감사</small></div>
+<div class="card"><b>6</b><span>A 갈래 PR</span><small>A1~A6</small></div>
+<div class="card"><b>280,000원</b><span>A1이 막는 과다 해제</span><small>재현 시나리오 기준</small></div>
+</div></section>
+
+<nav class="toc"><ol>
+<li><a href="#problem">무엇이 문제인가</a></li>
+<li><a href="#decisions">설계 결정</a></li>
+<li><a href="#detail">PR 여섯 개 상세</a></li>
+<li><a href="#rounding">돈과 반올림</a></li>
+<li><a href="#risk">리스크와 대응</a></li>
+<li><a href="#next">진행 상황과 다음 단계</a></li>
+</ol></nav>
+
+<h2 id="problem">1. 무엇이 문제인가</h2>
+<p>trading-api 전체를 감사해 문제 646건을 찾았습니다(PR #52로 머지). 고치는 순서는 네 갈래로 정했고, 그중 A는 사용자 돈이 실제로 틀어지는 버그입니다.</p>
+<pre class="mermaid">
+flowchart LR
+  AUD["전수 감사 646건"] --> A["A 돈·상태 결함<br/>(지금)"]
+  A --> B["B 트랜잭션 안 외부 호출"]
+  B --> C["C 포트 도입"]
+  C --> D["D 도메인·영속 분리"]
+</pre>
+<p>A의 핵심 원인은 하나입니다. 체결 금액과 잠금 해제액을 서비스(<code>ExecutionProcessor</code>, <code>OrderCommandService</code>)가 제각각 계산하고 있었습니다. 그래서 같은 돈을 두 곳이 다른 식으로 계산했고, 부분 체결이 끼면 숫자가 어긋났습니다.</p>
+<div class="box warn">부분 체결은 KIS 모드에서만 생깁니다. LOCAL은 남은 수량을 한 번에 체결합니다. 그래서 A1과 A2의 버그는 주로 KIS 계좌에서 돈을 틀어지게 합니다.</div>
+
+<h2 id="decisions">2. 설계 결정</h2>
+<h3>1. 체결 금액은 주문이 스스로 계산한다</h3>
+<p>지금은 서비스가 평균 체결가를 계산해 주문에 넘기고, 주문은 총액을 평균가 × 수량으로 다시 만듭니다. 이 과정에서 총액이 틀어집니다.</p>
+<p><b>채택:</b> <code>Order.applyExecution(수량, 체결가, 수수료)</code>가 총액에 수량 × 체결가를 더하고 평균가도 직접 계산해서, 이번 체결 금액을 돌려줍니다. 서비스는 돌려받은 금액만 씁니다.</p>
+<p><b>기각:</b> 서비스가 체결가만 넘기게 이름을 바꾸는 안은 평균가 계산이 서비스에 남아 같은 버그가 반복됩니다. 체결 내역 합계를 매번 조회하는 안은 구조 변경이라 D 갈래로 미뤘습니다.</p>
+
+<h3>2. 잠금 해제액은 한 곳에서만 계산한다</h3>
+<p>최종 체결과 취소가 서로 다른 식으로 해제액을 계산했습니다.</p>
+<p><b>채택:</b> 둘 다 <code>Order.remainingLockedAmount()</code>(잠금액 − 누적 체결금액, 0 하한)만 씁니다. A1은 최종 체결 쪽, A2는 취소 쪽을 바꿉니다.</p>
+<p><b>기각:</b> 계좌가 주문을 읽어 해제하는 안은 애그리거트(한 묶음으로 일관성을 지키는 객체 단위) 경계를 넘습니다. 주문별 잠금을 따로 저장하는 안은 스키마 변경이라 범위 밖입니다.</p>
+
+<h3>3. 기계 검사를 늘리지도 숨기지도 않는다</h3>
+<p>ArchUnit 동결 저장소(이미 있는 위반 목록)와 린트 기준선은 새 위반이 생기면 빌드를 실패시킵니다.</p>
+<p><b>채택:</b> 새 메서드로 옮기거나 서명을 바꾸지 않고 기존 메서드 안에서 고칩니다. A1에서는 고쳐서 사라진 위반 1줄을 사람 승인을 받아 손으로 지웠습니다. 매수·매도 원장 저장은 한 곳으로 합쳐 저장 호출 수를 3개로 유지했습니다.</p>
+<p><b>기각:</b> 저장소 갱신 옵션으로 한꺼번에 다시 쓰는 안은 새 위반까지 함께 묻힐 수 있습니다.</p>
+
+<h3>4. 사람이 정한 정책</h3>
+<div class="tbl"><table><tr><th>결정</th><th>정한 내용</th><th>영향 PR</th></tr>
+<tr><td>수수료 원 미만</td><td>체결 건별 원 미만 절사(잠정). 증권사 규칙을 조사한 뒤 결정</td><td>A5</td></tr>
+<tr><td>같은 멱등 키에 다른 요청</td><td>409로 거절, 요청 본문 전부를 비교</td><td>A4</td></tr>
+<tr><td>KIS 주문을 트랜잭션 밖으로 빼는 일</td><td>B 갈래 첫 PR로 넘김</td><td>B</td></tr>
+<tr><td>KIS 접수 주문의 사용자 취소</td><td>B가 고치기 전까지 501로 거절</td><td>A3</td></tr>
+<tr><td>이미 저장된 틀린 총액</td><td>읽기 전용 점검 쿼리를 먼저 돌리고, 행이 있으면 보정</td><td>A6</td></tr>
+<tr><td>손댄 파일 린트</td><td>ktlint는 전부, detekt는 국소 항목만</td><td>전 PR</td></tr>
+</table></div>
+
+<h2 id="detail">3. PR 여섯 개 상세</h2>
+<div class="tbl"><table><tr><th>PR</th><th>고치는 버그</th><th>재현 시나리오</th><th>상태</th></tr>
+<tr><td>A1</td><td>나눠 체결된 주문의 총액과 최종 잠금 해제</td><td>4주를 69,000원, 6주를 70,000원에 체결하면 총액이 696,000원이어야 하는데 693,600원이 됨. 마지막 체결 때 280,000원을 과다 해제하려다 실패하거나, 다른 주문의 잠금을 풂</td><td><span class="tag ok">수정·검증 끝, 리뷰 중</span></td></tr>
+<tr><td>A2</td><td>부분 체결 뒤 취소할 때 잠금 해제</td><td>4주를 69,000원에 체결한 뒤 취소하면 4,000원이 영구히 잠김</td><td><span class="tag">대기</span></td></tr>
+<tr><td>A3</td><td>KIS 주문 취소가 KIS에 전달되지 않음</td><td>앱에서는 취소됐는데 KIS에서 체결될 수 있음. 임시로 사용자 취소를 501로 막음</td><td><span class="tag">대기</span></td></tr>
+<tr><td>A4</td><td>멱등 키 처리</td><td>같은 키로 수량이 다른 주문을 보내도 통과함. 같은 키로 동시에 보내면 하나가 DB 예외로 실패함</td><td><span class="tag">대기</span></td></tr>
+<tr><td>A5</td><td>수수료 규칙 두 벌</td><td>서비스 반올림과 도메인 올림이 달라 체결마다 수수료가 어긋남. 정책도 체결 시각이 아니라 처리 시각으로 조회함</td><td><span class="tag">대기</span></td></tr>
+<tr><td>A6</td><td>이미 저장된 틀린 총액 보정</td><td>점검 쿼리 결과가 1행 이상일 때만 진행</td><td><span class="tag">조건부</span></td></tr>
+</table></div>
+
+<h3>PR 하나 안의 순서</h3>
+<pre class="mermaid">
+flowchart LR
+  L["1. 손댈 파일 린트 정리<br/>(동작 불변)"] --> R["2. 재현 시험 작성<br/>실패 확인"]
+  R --> F["3. 도메인으로 규칙 이동<br/>시험 통과"]
+  F --> G["4. 기준선 재생성<br/>전체 검증"]
+  G --> V["5. 합동 리뷰·QA"]
+  V --> P["6. PR"]
+</pre>
+<p>린트 정리를 맨 앞에 떼어 두는 이유는 로직 diff를 읽기 쉽게 하기 위해서입니다. 실패하는 시험을 먼저 커밋하므로, 고치기 전에 버그가 정말 있었다는 증거가 이력에 남습니다.</p>
+
+<h3>A1에서 실제로 나온 증거</h3>
+<div class="tbl"><table><tr><th>시험</th><th>고치기 전</th><th>고친 뒤</th></tr>
+<tr><td>가격이 다른 두 체결 뒤 평균가</td><td class="fail">평균가가 마지막 체결가 70,000원으로 나옴</td><td class="pass">69,600원</td></tr>
+<tr><td>KIS_PAPER 매수, 가격이 다른 두 번 체결</td><td class="fail">"잠금 예수금이 부족합니다" 예외</td><td class="pass">잠금 0, 가용 304,000원, 해제 4,000원 1건</td></tr>
+<tr><td>KIS_PAPER 매수, 같은 가격 두 번 체결</td><td class="fail">같은 예외</td><td class="pass">예외 없음, 잠금 0</td></tr>
+<tr><td>단일 체결 가격 개선(회귀 확인)</td><td class="pass">해제 20,000원</td><td class="pass">해제 20,000원</td></tr>
+</table></div>
+<p>전체 게이트(<code>./gradlew test ktlintCheck detekt verifyLintBaselinesNotGrown</code>)는 시험 418개로 통과했습니다. 늘어난 린트 기준선 항목은 0건입니다.</p>
+
+<h2 id="rounding">4. 돈과 반올림</h2>
+<p>돈 흐름 중간에는 반올림을 넣지 않습니다. 누적 체결금액은 수량 × 체결가를 더하기만 하고, <code>BigDecimal</code> 곱셈과 덧셈은 정확합니다. 잠금 해제액도 뺄셈뿐입니다.</p>
+<p>반올림을 피할 수 없는 자리는 두 곳뿐이고, 둘 다 규칙을 한 곳에 명시합니다.</p>
+<div class="tbl"><table><tr><th>자리</th><th>왜 피할 수 없나</th><th>규칙</th></tr>
+<tr><td>수수료</td><td>70,001원 × 0.000015 = 1.050015원처럼 원 미만이 나오는데, 예수금은 원 단위임</td><td>체결 건별 원 미만 절사(<code>FeePolicy</code> 한 곳, 잠정)</td></tr>
+<tr><td>평균 체결가</td><td>100원 ÷ 3주처럼 끝없는 소수가 나와 자릿수를 정하지 않으면 나눗셈이 실패함</td><td>소수 4자리. 표시용이고 돈 계산에는 쓰지 않음</td></tr>
+</table></div>
+<div class="box note">원 미만 절사의 근거는 삼성증권 수수료 안내의 "원미만 절사"와 국고금 관리법 제47조 2항입니다. KIS의 규칙과 건별·일별 단위는 아직 확인하지 못해 "잠정"으로 둡니다.</div>
+
+<h2 id="risk">5. 리스크와 대응</h2>
+<div class="tbl"><table><tr><th>리스크</th><th>영향</th><th>대응</th></tr>
+<tr><td>옛 코드로 이미 어긋난 KIS 계좌의 잠금 예수금은 코드를 고쳐도 돌아오지 않음</td><td>높음</td><td>A6 점검 쿼리로 영향받은 계좌를 찾음. A1 배포 전에 돌리기를 권함</td></tr>
+<tr><td>A 기간 동안 KIS 이중 주문 위험이 남음</td><td>높음</td><td>B 갈래 첫 PR에서 KIS 호출을 트랜잭션 밖으로 빼고 불확정 상태를 도입</td></tr>
+<tr><td>시장가 매수가 잠금가보다 비싸게 체결되면 다른 주문의 잠금을 씀</td><td>중간</td><td>원장 밖 새 결함으로 등록하고 A 다음 묶음에서 다룸</td></tr>
+<tr><td>동결 저장소가 메서드별 호출 개수를 세서 고칠 자리를 제약함</td><td>중간</td><td>기존 메서드 안에서 고치고, 사라진 위반은 사람 승인 뒤 한 줄씩 지움</td></tr>
+<tr><td>동시성 통합 시험이 비결정적일 수 있음</td><td>중간</td><td>고정 sleep 없이 DB의 락 대기를 확인한 뒤 진행(A4)</td></tr>
+</table></div>
+
+<h2 id="next">6. 진행 상황과 다음 단계</h2>
+<div class="tbl"><table><tr><th>항목</th><th>상태</th></tr>
+<tr><td>전수 감사 결과 머지(PR #52)</td><td><span class="tag ok">끝</span></td></tr>
+<tr><td>A 갈래 계획 승인과 정책 결정</td><td><span class="tag ok">끝</span></td></tr>
+<tr><td>A1 수정 커밋 6개와 전체 검증</td><td><span class="tag ok">끝</span></td></tr>
+<tr><td>A1 합동 리뷰(코드·정합성·QA)</td><td>3개 중 2개 끝, 머지를 막는 지적 0건</td></tr>
+<tr><td>A1 리뷰 지적 수정 뒤 PR 올리기</td><td>리뷰가 끝나면 진행</td></tr>
+<tr><td>A2 취소 해제</td><td>A1 다음</td></tr>
+<tr><td>A3~A6</td><td>A2 다음, 차례로</td></tr>
+</table></div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'default'});</script>
+</main></body></html>

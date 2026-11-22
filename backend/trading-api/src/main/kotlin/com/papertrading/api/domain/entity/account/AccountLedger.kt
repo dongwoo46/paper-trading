@@ -47,11 +47,11 @@ class AccountLedger protected constructor() : BaseTimeEntity() {
     lateinit var transactionType: TransactionType
         private set
 
-    @Column(name = "amount", nullable = false, precision = 20, scale = 4)
+    @Column(name = "amount", nullable = false, precision = 28, scale = 12)
     lateinit var amount: BigDecimal
         private set
 
-    @Column(name = "balance_after", nullable = false, precision = 20, scale = 4)
+    @Column(name = "balance_after", nullable = false, precision = 28, scale = 12)
     lateinit var balanceAfter: BigDecimal
         private set
 
