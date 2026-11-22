@@ -14,7 +14,7 @@ why: 토스증권 등 외부 증권사 연동(토큰·호출 한도·웹소켓·
 - 웹소켓이 `auth-revoked` 로 끊기면(토큰 만료, 재발급, 허용 IP 이탈) 재연결 뒤 `GET /orders` 와 `GET /conditional-orders` 로 주문 상태를 다시 맞춘다.
   Why: 토스는 이 세 경우에 `auth-revoked` 를 보내고 연결을 끊어, 끊긴 동안의 주문 이벤트를 받지 못한다(토스증권 Open API 조사 2026-11-15 웹소켓 절, aa6097e). — enforce: review
 <!-- gt:PTK2 -->
-- 토스 API 호출 한도는 응답 `X-RateLimit-Limit` 헤더로 확인하고, 429 를 받으면 `Retry-After` 만큼 기다린다. 기다린 뒤 다시 부를지는 devkit LA12(재시도는 멱등 작업만, 시도 상한)가 정한다. 2026-11-15 공지 한도(초당): 시세 `MARKET_DATA` 15, 차트 `MARKET_DATA_CHART` 20, 종목 `STOCK` 5, 전체 종목 `STOCK_ALL` 1, 수급 `STOCK_TRADING_TREND` 10, 장 정보 `MARKET_INFO` 3, 랭킹 5, 시장 지표 5~10, 섹터 5, 계좌 `ACCOUNT` 1, 자산 5, 주문 `ORDER` 10, 주문 조회 5, 거래 가능 정보 6(09:00~09:10에는 3), 조건주문 5, 조건주문 조회 10, 토큰 5.
+- 토스 API 호출 한도는 응답 `X-RateLimit-Limit` 헤더로 확인하고, 429 를 받으면 `Retry-After` 만큼 기다린다. 기다린 뒤 다시 부를지는 devkit LA12 가 정한다. 2026-11-15 공지 한도(초당): 시세 `MARKET_DATA` 15, 차트 `MARKET_DATA_CHART` 20, 종목 `STOCK` 5, 전체 종목 `STOCK_ALL` 1, 수급 `STOCK_TRADING_TREND` 10, 장 정보 `MARKET_INFO` 3, 랭킹 5, 시장 지표 5~10, 섹터 5, 계좌 `ACCOUNT` 1, 자산 5, 주문 `ORDER` 10, 주문 조회 5, 거래 가능 정보 6(09:00~09:10에는 3), 조건주문 5, 조건주문 조회 10, 토큰 5.
   Why: 토스 한도는 클라이언트와 API 그룹 단위이고 사전 공지 없이 바뀔 수 있어, 박아 둔 숫자보다 헤더가 맞다(토스증권 Open API 조사 2026-11-15 호출 한도 절, aa6097e). — enforce: review
 <!-- gt:PTK3 -->
 - 토스 토큰 발급 지점은 `collector-api` 와 `trading-api` 중 한 곳으로 모으고, 같은 키로 두 프로세스가 따로 발급하지 않는다.
