@@ -101,3 +101,6 @@
 
 - 삭제: > 옛 PRD 시점의 그림이다. 실제 패키지 이름과 계층 자리(Redis 리스너·컨트롤러 같은 진입점은 presentation)는 `rules/backend-api.md` 의 «계층과 포트» 절이 이긴다.
   → 잔존: rules/domains/market-data.md:20 «옛 PRD 시점의 그림이다. 지금 collector-api 패키지는 … 컨트롤러는 `presentation/`, 스케줄러는 `application/*/runtime/` 에 있다. 새 코드는 그림이 아니라 이 자리를 따른다» (가리키던 절이 trading-api 전용이라 collector-api 실제 자리로 고쳐 씀, 재리뷰 P3)
+
+- 삭제: > 옛 PRD 시점의 그림이다. 지금 collector-api 패키지는 `com.papertrading.collector` 아래 `application`·`domain`·`infra`·`presentation` 이고, HTTP 컨트롤러는 `presentation/`, 스케줄러는 `application/*/runtime/` 에 있다(2026-11-22 코드 기준). 새 코드는 그림이 아니라 이 자리를 따른다.
+  → 잔존: rules/domains/market-data.md:20 같은 줄에서 진입점 자리를 `application/runtime/`·`application/<소스>/runtime/` 으로 넓혀 고쳐 씀(재리뷰 R3-1)

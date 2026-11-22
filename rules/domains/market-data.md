@@ -17,7 +17,7 @@ why: 시세·OHLCV·매크로 수집과 Redis 시세 발행 코드(collector-api
 ## 아키텍처
 
 ### 디렉토리 구조
-> 옛 PRD 시점의 그림이다. 지금 collector-api 패키지는 `com.papertrading.collector` 아래 `application`·`domain`·`infra`·`presentation` 이고, HTTP 컨트롤러는 `presentation/`, 스케줄러는 `application/*/runtime/` 에 있다(2026-11-22 코드 기준). 새 코드는 그림이 아니라 이 자리를 따른다.
+> 옛 PRD 시점의 그림이다. 지금 collector-api 패키지는 `com.papertrading.collector` 아래 `application`·`domain`·`infra`·`presentation` 이고, HTTP 컨트롤러는 `presentation/`, 스케줄러·기동 이벤트·웹소켓 런타임 같은 진입점은 `application/runtime/` 이나 `application/<소스>/runtime/` 에 있다(2026-11-22 코드 기준: `CatalogSyncRuntime`, `kis/runtime/CollectorRuntime`, `fred`·`kis` 스케줄러). 새 코드는 그림이 아니라 이 자리를 따른다.
 
 ```
 src/
