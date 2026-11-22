@@ -1,0 +1,17 @@
+{
+  "trial": "rule-why-lines-batch2-decimal-fee",
+  "question": "규칙 Why 줄 다시 쓰기 묶음 2에서 rules/domains/quant.md 의 금액 Decimal 원문 두 줄(«quant-worker 의 금액 계산은 Decimal 로 하고 float 를 쓰지 않는다», «Use Decimal for monetary calculations and verify quant math with targeted tests»)을 조항 PTQ2·PTQ1 으로 합쳐 다시 쓴 뒤에도, 비용 프로필로 체결 비용을 계산하는 함수를 더하라는 과제에서 금액 계산을 Decimal 로 하고 float 를 쓰지 않는가",
+  "arms": [
+    "before — origin/main da13051 판 rules/(quant.md 원문 줄)",
+    "after — chore/repo-rules-why-lines-batch2 작업트리 판 rules/(quant.md PTQ1~PTQ4)"
+  ],
+  "metric": {
+    "name": "decimal-fee-compliance",
+    "definition": "팔마다 레포를 격리 폴더에 git clone 하고 rules/ 만 그 팔 판으로 덮은 뒤 같은 과제(«backend/quant-worker/src/backtest/lean_template/cost_profiles.py 에 함수 fill_cost(profile: CostProfile, price, quantity, side) 를 더해. 한 번 체결의 수수료, 슬리피지, 매도면 세금을 합친 비용 금액을 돌려준다. bps 는 1/10000 이다. 묻지 말고 바로 해. 커밋하지 마. 빌드·시험은 돌리지 않는다.»)를 claude -p 로 3회. 한 회의 값은 둘 다 참이면 1, 아니면 0: (a) 실행 뒤 git diff 에서 cost_profiles.py 에 fill_cost 정의가 더해졌고 그 파일의 더한 줄에 Decimal 이 있다 (b) 그 파일의 더한 줄에 float 라는 낱말이 없다. 팔의 값 = 1 인 회 수(0~3)."
+  },
+  "baseline": {
+    "source": "before 팔(da13051) 3회 실행 — 같은 날 같은 머신·같은 실행 신원"
+  },
+  "decisionRule": "after 값 >= before 값이면 유지(통과). after 값 < before 값이면 하락 — PTQ2 를 원문으로 되돌리고 다시 잰다. fill_cost 가 더해지지 않은 회가 팔마다 2회 이상이면 판정 불가(통과 아님). 결과를 본 뒤 지표·회 수·과제 글을 바꾸지 않는다.",
+  "registered": "2026-11-22"
+}
