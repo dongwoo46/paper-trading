@@ -101,6 +101,11 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 범위: PR-A1 체결 금액·최종 해제(#8 #127 #108) → A2 취소 해제(#253) → A3 KIS 접수 주문 취소 차단 → A4 멱등 → A5 수수료 → A6 조건부 보정. B·C·D 갈래는 이 항목 밖
   - 원장 밖 관찰 O1~O3 은 DEC-08 로 다음 묶음. 아래 두 항목은 이 기능에서 미룬 별도 항목
 
+- [ ] KIS 체결 통지 경계 예외 범위 넓히기와 초과 수량 거부 범주 예외 정렬 | project: trading-api | phase: trading-api-money-state | priority: P1
+  - 출처: PR #53 3회차 리뷰 C3-01(막는 지적)·C3-02(`review/rereview-2.md`), 사람 결정 2026-11-22 «통과한 부분만 머지·나머지는 후속 PR»
+  - C3-01: `KisExecutionWebSocketManager` 통지 경계가 `IllegalArgumentException` 만 잡음. main 의 `Account.confirmBuy` 는 `LockedDepositInsufficientException` 을 던져, KIS 시장가 매수가 시세보다 비싸게 체결되면 세션이 끊기고 주문·체결 id 없는 로그만 남음. 경계에서 도메인 거부 전체를 잡아 id 와 기록하고 세션 유지, 잠금 부족 예외 시험 1건 추가
+  - C3-02: `Order.applyExecution` 초과 수량 거부가 `require`(IAE) — Account 처럼 범주 예외로 맞춤
+
 - [ ] 금액 열 자리수 확장 후속 (보고·평가·가격 열 점검과 V13 적용 절차) | project: trading-api | phase: trading-api-amount-column-scale | priority: P2
   - 해소: 체결·잠금·원장·정산·포지션 매수 누적 금액 열은 PR-A1 에서 numeric(28,12)로 확장(리뷰 P-05·R2-N2·R2-N3, 사람 결정 2026-11-15)
   - 남은 것: 보고용 사본 열(daily_balances.cash_balance 등)·평가 파생 열(positions.evaluation_amount·unrealized_pnl)은 저장 때 4자리로 반올림됨 — 돈인지 평가인지 사람 확인 후 확장 여부 결정
