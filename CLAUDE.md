@@ -11,89 +11,8 @@ Market data collection → strategy execution → order/execution/settlement →
 ## Frontend Design System
 
 - trading-web의 공식 디자인 시스템은 shadcn/ui Base Nova다.
-- 프론트엔드 작업은 `frontend/trading-web/CODEX.md`와 `frontend/trading-web/docs/UI_GUIDE.md`를 먼저 적용한다.
 
 Data flow: KIS WebSocket → collector-api → Redis Pub/Sub → trading-api (matching engine)
-
----
-
-## Session Boot Rules
-
-- Read `docs/state.md` first (determine active feature)
-- Read `docs/TODO.md` only if task selection or backlog prioritization is needed
-- Read `docs/phase/{project}/{feature}/index.json` only for the active feature
-- Do not re-read unchanged state files in the same session
-- Single source of truth for orchestrator state is `docs/` at repo root only
-- Never read/write orchestrator state under `.claude/**/docs` or `.codex/**/docs`
-- Create/remove git worktrees only under root `.worktrees/` (never under `.claude/worktrees` or `.codex/worktrees`)
-
----
-
-## CRITICAL — Absolute Rules (No Exceptions)
-
-**Security**
-
-- Never hardcode API keys, secrets, or credentials — use environment variables
-- Never log secrets in plaintext
-- Never store tokens in plaintext
-
-**Collaboration**
-
-- Critique before execution (risks, gaps, better alternatives)
-- Act as an active partner, not a passive executor. Follow the user if they insist.
-- Design/planning changes require user approval
-
-**Development Process**
-
-- CRITICAL: Write tests first for all business logic changes (TDD: Red → Green → Refactor)
-- CRITICAL: Infrastructure/configuration-only changes may skip test-first, but must include validation after implementation
-- CRITICAL: Work in small increments: implement → test → lint → commit
-- CRITICAL: Write all commit messages in Korean.
-- CRITICAL: Only read explicitly specified files. Expand only when necessary. No broad exploration
-- Only modify code relevant to the task. Do not touch unrelated files. If unavoidable, state the reason
-- Write the minimum code that solves the problem. Do not implement for imagined future requirements.
-- If refactoring, large-scale changes, or improvements beyond the task scope are needed, propose them to the user and wait for approval before proceeding.
-
-### Goal-Driven Execution
-
-Define success criteria first, then execute each step with an explicit verification check.
-- "Add validation" → write tests for invalid inputs, then make them pass.
-- "Fix bug X" → reproduce with a failing test, implement fix, verify test passes.
-- "Refactor X" → keep behavior stable and verify tests pass before/after.
-- For multi-step tasks, always write steps as `[Step] -> verify: [check]`.
-
-### Completion Criteria (Mandatory)
-
-A task is complete only if:
-
-- Build, tests, and lint/format all pass with no compile/import errors
-- No unresolved TODO/FIXME remains in modified files
-- Relevant documentation state is updated (`state.md`, `index.json`, `TODO.md` if needed)
-
----
-
-## CRITICAL — Financial Safety
-
-- Monetary calculations must never use floating-point types
-- Use `BigDecimal` for Kotlin/Java monetary calculations
-- Use `Decimal` for Python monetary calculations
-- All order execution flows must be idempotent
-- Order/Execution/Settlement state transitions must be explicit
-- Never mutate financial state implicitly
-- All financial state changes must be auditable and event-traceable
-
----
-
-## CRITICAL — Subagent Cost Control
-
-- Keep trivial work (small docs/read-only checks) in the main agent.
-- Delegate implementation, test execution, refactor, and multi-file changes to subagents.
-- Prefer one focused subagent per independent work item.
-- Parallelize only when write scopes do not overlap and tasks are truly independent.
-- Do not spawn extra planners/reviewers if plan/design has not changed.
-- Always summarize build/test outputs before handing control back.
-
----
 
 ## Build Verification Commands
 
@@ -104,15 +23,4 @@ quant-worker:     python -m py_compile {file}
 trading-web:      cd frontend/trading-web && npm run build
 ```
 
----
-
-## Docs Rules
-
-- In progress: update step status in `docs/phase/{project}/{feature}/index.json`
-- Done: write `docs/done/{project}/{feature}/{feature}-summary.md` → move phase folder → mark `[x]` in `docs/TODO.md`
-- Keep only root `docs/` state files up to date (`docs/state.md`, `docs/TODO.md`, `docs/phase/**`); ignore duplicate state files outside root `docs/`
-- When adding a new feature, add an entry to `docs/TODO.md` first
-- Never treat `.claude/**/docs` or `.codex/**/docs` as orchestration state.
-- If duplicate state files are found outside root `docs/`, leave them untouched.
-
-⚠️ If session context is overloaded, switch to a new session
+@AGENTS.md

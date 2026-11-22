@@ -1,0 +1,36 @@
+{
+  "id": "rule-migration-nested-entry-2026-11-21",
+  "status": "applied",
+  "proposedAt": "2026-11-21",
+  "decision": "사람 승인 2026-11-21 — 세션 팝업 «승인 — applied로», 규칙 이사 커밋에 함께 적용, 최종 승인은 PR 머지",
+  "kind": "harness-doc",
+  "destination": "consumer",
+  "consumerRecord": "docs/eval/rule-change/2026-11-21-repo-rules-devkit-migration.md",
+  "evidence": {
+    "findings": [
+      {
+        "title": "하위 폴더 입구 파일이 표준 이전 관례(CODEX.md, 옛 오케스트레이터 절차, compileJava)로 남음",
+        "recurrence": 1,
+        "distinctContexts": 1,
+        "contexts": [
+          "paper-trading 규칙 이사 2026-11-21 — 원장 2026-11-21-v3, 사람 결정 DECISIONS 5·8·16"
+        ]
+      }
+    ]
+  },
+  "affectedFiles": [
+    "backend/AGENTS.md",
+    "backend/CLAUDE.md",
+    "backend/collector-api/AGENTS.md",
+    "backend/quant-worker/AGENTS.md",
+    "backend/trading-api/AGENTS.md",
+    "backend/trading-api/CLAUDE.md",
+    "frontend/trading-web/AGENTS.md",
+    "frontend/trading-web/CLAUDE.md",
+    "backend/collector-api/CLAUDE.md",
+    "backend/quant-worker/CLAUDE.md"
+  ],
+  "filesToCreate": [],
+  "generality": "이 레포 입구 파일만의 정리라 devkit 일반 규칙이 아님 — 승인 흔적을 남기려는 레포 안 번들",
+  "followUp": "2026-11-21 합동 리뷰 막는 지적 P10·P11 고침 — 하위 CLAUDE.md 가 AGENTS.md 본문 복사 대신 @AGENTS.md 가져오기, 빈 제목 정리(사람 지시 «이 PR 에서 모두 고침»)"
+}

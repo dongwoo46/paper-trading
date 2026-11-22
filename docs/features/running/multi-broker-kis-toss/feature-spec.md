@@ -16,7 +16,7 @@
 | tier | 프로젝트 기본값. 3단계(실주문) 착수 전에 재판정 (FLAG-09) |
 | 산출 | 구현 |
 | 상태 | draft |
-| 관련 링크 | [open-questions](./open-questions.md) · [조사 문서](../../../research/2026-11-15-toss-open-api.md) |
+| 관련 링크 | [open-questions](./open-questions.md) · [조사 문서](../../../reference/2026-11-15-toss-open-api.md) |
 
 ---
 
@@ -38,7 +38,7 @@
 |---|---|---|---|
 | 기획문서 | 없음. 세션 내 사용자 결정 | 2026-11-15 | 계좌별 브로커 지정, 1단계 읽기 전용 먼저, KIS 전면 리팩터링은 그 뒤 |
 | 외부 API 문서 | [토스증권 Open API 개요](https://openapi.tossinvest.com/openapi-docs/overview.md) | 2026-11-15 수집 | 개별 API 스키마는 못 읽음 |
-| 조사 문서 | `docs/research/2026-11-15-toss-open-api.md` | PR #47 | 한도, 웹소켓, 에러 코드 |
+| 조사 문서 | `docs/reference/2026-11-15-toss-open-api.md` | PR #47 | 한도, 웹소켓, 에러 코드 |
 | 기존 API/도메인 | `TradingMode`, `AccountSource`, `Account.validateTradingMode`, `OrderCommandService.submitExternalOrderIfNeeded`, `KisAccountBalancePort`, `KisTokenManager`, `KisAccountBalanceController`(`/api/kis/account/balance`), `application.yaml`의 `kis.*` | `origin/main` 0f57687 기준 | |
 
 ---
