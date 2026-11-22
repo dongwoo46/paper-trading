@@ -21,7 +21,7 @@
 | Title | 2단계 최종 확인 |
 | Feature | multi-broker-kis-toss |
 | Based on | development-plan.md §5 2단계 7번(최종 확인), §10 RULE-10 판정(DEC-05 A), RISK-11(PR #53), step-8 §4(특성화 시험 무수정), state.md §3 2026-11-22 순서 변경(step 13 은 PR #53 머지 뒤 별도 PR) |
-| Status | in progress |
+| Status | done |
 | Owner |  |
 
 ---
@@ -64,7 +64,7 @@
 - [x] 전체 시험 새 실패 0(직전 1180건 기준)
 - [x] compileKotlin·compileTestKotlin·ktlintCheck·detekt·verifyLintBaselinesNotGrown exit 0
 - [x] 2단계 독립 QA 막는 지적 0
-- [ ] PR 생성, step 13 은 PR #53 머지 뒤 별도로 남김
+- [x] PR 생성(#57), step 13 은 PR #53 머지 뒤 별도로 남김
 
 ---
 
@@ -102,8 +102,8 @@
 
 ## 7. Result  (record)
 
-- Done:
-- Changed files / PR:
+- Done: 2단계 step 8~12 최종 확인 끝, 독립 QA 막는 지적 0, Q-01~03 고침(`a49e74a`)
+- Changed files / PR: PR #57(feature/multi-broker-kis-toss-phase2 → main)
 
 ---
 

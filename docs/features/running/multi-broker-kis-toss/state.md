@@ -48,7 +48,7 @@
 | 11 | 주문 공통 포트 | done | steps/step-11.md | 2단계 4번, D26·D28, S9-01·S9-02 함께. 전체 1176건 실패 0, 특성화 10건 무수정 통과, 리뷰 3회차 머지 가능(`review/step11-code-review.md`·`step11-rereview-1.md`·`step11-rereview-2.md`, 3회차 메인 인라인), 후속은 원장·TODO P1 |
 | 12 | 계좌 응답 출처와 ADR 갱신 | done | steps/step-12.md | 2단계 5번, D29, ADR-005(D25·D26). 전체 1180건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step12-code-review.md`, 메인 인라인) |
 | 13 | 체결 입력 공통화 | blocked | - | 2단계 6번, D27, PR #53 머지 뒤에만(2026-11-22 OPEN·충돌), 별도 PR |
-| 14 | 2단계 최종 확인 | in progress | steps/step-14.md | 2단계 7번, step 13 보다 먼저(§3 2026-11-22) |
+| 14 | 2단계 최종 확인 | done | steps/step-14.md | 2단계 7번, step 13 보다 먼저(§3 2026-11-22). 전체 1186건 실패 0, 독립 QA 막는 지적 0, Q-01~03 고침 `a49e74a`, PR #57 |
 
 - **Status:** todo / in progress / done / blocked — a cell is read by its leading word; anything else (`WIP`, `not done`) is treated as unknown, never as done.
 
