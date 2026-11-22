@@ -297,6 +297,28 @@ class KisAccountBalanceAdapterTest {
         assertThrows(KisUnavailableException::class.java) { adapter.fetchBalance(paperRef) }
     }
 
+    // step 14 QA Q-01 — 5xx 본문은 한도·인증만 확정, rt_cd 1 서버 에러를 인증 실패로 보지 않음
+    @Test
+    fun `HTTP 500 본문이 rt_cd 1 서버 에러면 인증이 아니라 KIS_UNAVAILABLE 이다`() {
+        stubTransportFailure(httpError(500, kisBody("1", "EGW00002", "서버 에러가 발생 했습니다.")))
+
+        assertThrows(KisUnavailableException::class.java) { adapter.fetchBalance(paperRef) }
+    }
+
+    @Test
+    fun `HTTP 500 본문이 권한 문구여도 KIS_UNAVAILABLE 이다`() {
+        stubTransportFailure(httpError(500, kisBody("7", "EGW00999", "권한이 없습니다.")))
+
+        assertThrows(KisUnavailableException::class.java) { adapter.fetchBalance(paperRef) }
+    }
+
+    @Test
+    fun `HTTP 4xx 본문 rt_cd 1 은 그대로 KIS_AUTH_FAILED 이다`() {
+        stubTransportFailure(httpError(403, kisBody("1", "EGW00002", "서버 에러가 발생 했습니다.")))
+
+        assertThrows(KisAuthFailedException::class.java) { adapter.fetchBalance(paperRef) }
+    }
+
     private fun stubTransportFailure(failure: RestClientException) {
         every { tokenManager.getToken("paper") } returns "paper-token"
         every { restTemplate.exchange(any<String>(), HttpMethod.GET, any(), Map::class.java) } throws failure

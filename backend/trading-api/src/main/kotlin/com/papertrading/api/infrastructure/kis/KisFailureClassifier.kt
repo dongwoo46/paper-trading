@@ -18,6 +18,8 @@ import java.net.ConnectException
 import java.net.UnknownHostException
 import java.net.http.HttpConnectTimeoutException
 
+private data class KisErrorBody(val rtCd: String, val msgCd: String?, val msg1: String)
+
 /**
  * KIS 실패 분류 (D28), 잔고·주문 어댑터 공용, KIS 원문은 cause 에만
  * 한도 판정은 msg_cd EGW00201 또는 «초당 거래건수» 문구만, rt_cd 1 판정보다 앞 (S9-02)
@@ -29,19 +31,23 @@ internal object KisFailureClassifier {
     private const val RATE_LIMIT_PHRASE = "초당 거래건수"
     private val objectMapper = ObjectMapper()
 
-    private data class KisErrorBody(val rtCd: String, val msgCd: String?, val msg1: String)
-
     fun isRateLimited(msgCd: String?, message: String?): Boolean {
         val byPhrase = message.orEmpty().contains(RATE_LIMIT_PHRASE)
         return msgCd == RATE_LIMIT_MSG_CD || byPhrase
     }
 
     // 잔고(읽기 전용) 전송 실패: KIS 본문 → 본문 분류, 원인 체인 타임아웃 → KIS_TIMEOUT, 나머지 KIS_UNAVAILABLE (S9-01)
+    // 5xx 본문은 한도·인증만 확정, rt_cd 1 서버 에러(EGW00002)가 인증 실패로 가던 오분류 방지 (step 14 QA Q-01)
     fun transportFailure(e: RestClientException): ServiceUnavailableException {
-        val body = (e as? HttpStatusCodeException)?.let(::kisErrorBody)
-        if (body != null) return balanceFailure(body.rtCd, body.msgCd, body.msg1)
+        val http = e as? HttpStatusCodeException
+        val body = http?.let(::kisErrorBody)
         val timedOut = e is ResourceAccessException && TransportTimeouts.hasTimeoutCause(e)
-        return if (timedOut) KisTimeoutException(e) else KisUnavailableException(e)
+        return when {
+            body != null && http?.statusCode?.is5xxServerError == true -> balanceServerErrorFailure(body)
+            body != null -> balanceFailure(body.rtCd, body.msgCd, body.msg1)
+            timedOut -> KisTimeoutException(e)
+            else -> KisUnavailableException(e)
+        }
     }
 
     // 잔고 응답 실패: 한도 → 인증 → 권한 → 그 밖 순서
@@ -131,6 +137,16 @@ internal object KisFailureClassifier {
 private fun isAuthMessage(message: String): Boolean {
     val byToken = message.contains("token", ignoreCase = true)
     return message.contains("인증") || byToken
+}
+
+// 잔고 5xx 본문 분류, 주문 경로 R1-02 와 같은 판정 (object 함수 수 한도로 파일 수준에 둠)
+private fun balanceServerErrorFailure(body: KisErrorBody): ServiceUnavailableException {
+    val cause = KisApiException(mapKisErrorCode(body.rtCd, body.msg1), body.rtCd, body.msg1)
+    return when {
+        KisFailureClassifier.isRateLimited(body.msgCd, body.msg1) -> KisRateLimitedException(cause)
+        isAuthMessage(body.msg1) -> KisAuthFailedException(cause)
+        else -> KisUnavailableException(cause)
+    }
 }
 
 // KisErrorCode 별 주문 실패 (object 함수 수 한도로 파일 수준에 둠)
