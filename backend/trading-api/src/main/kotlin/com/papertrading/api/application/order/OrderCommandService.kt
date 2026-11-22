@@ -13,13 +13,13 @@ import com.papertrading.api.common.exception.OrderNotFoundException
 import com.papertrading.api.common.exception.PositionNotFoundException
 import com.papertrading.api.common.exception.QuoteStaleException
 import com.papertrading.api.common.exception.QuoteUnavailableException
+import com.papertrading.api.domain.entity.order.Order
+import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.enums.OrderCondition
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.domain.entity.order.Order
-import com.papertrading.api.domain.entity.position.Position
 import com.papertrading.api.domain.enums.TriggerType
 import com.papertrading.api.domain.port.CollectorSubscriptionPort
 import com.papertrading.api.domain.port.MarketQuotePort
@@ -39,8 +39,11 @@ data class AutoExitTriggerAuditInput(
     val triggerVersion: Long,
 )
 
+// 생성자 LongParameterList 억제: 저장소 4개와 포트·엔진·접수기를 받는 유스케이스, 저장소 포트 이전 전까지 줄일 수 없음
 @Service
-class OrderCommandService(
+class OrderCommandService
+@Suppress("LongParameterList")
+constructor(
     private val accountRepository: AccountRepository,
     private val orderRepository: OrderRepository,
     private val positionRepository: PositionRepository,
@@ -48,8 +51,7 @@ class OrderCommandService(
     private val marketQuotePort: MarketQuotePort,
     private val collectorSubscriptionPort: CollectorSubscriptionPort,
     private val localMatchingEngine: LocalMatchingEngine,
-    private val kisPaperOrderExecutor: KisPaperOrderExecutor,
-    private val kisLiveOrderExecutor: KisLiveOrderExecutor,
+    private val brokerOrderSubmitter: BrokerOrderSubmitter,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -105,6 +107,7 @@ class OrderCommandService(
 
         val unitPrice = when (command.orderType) {
             OrderType.LIMIT -> requireNotNull(command.limitPrice) { "limitPrice is null" }
+
             OrderType.MARKET -> {
                 val quote = marketQuotePort.getQuote(tradingMode, command.ticker)
                     ?: throw QuoteUnavailableException(command.ticker)
@@ -137,7 +140,7 @@ class OrderCommandService(
             expireAt = command.expireAt,
             strategyId = command.strategyId,
             signalId = command.signalId,
-        )
+        ),
     )
 
     private fun recordBuyLockIfNeeded(
@@ -148,7 +151,7 @@ class OrderCommandService(
     ) {
         if (command.orderSide == OrderSide.BUY && lockedAmount > BigDecimal.ZERO) {
             accountLedgerRepository.save(
-                account.recordBuyLock(lockedAmount, orderId, "buy-lock-$orderId")
+                account.recordBuyLock(lockedAmount, orderId, "buy-lock-$orderId"),
             )
         }
     }
@@ -190,9 +193,8 @@ class OrderCommandService(
             // 내부 매칭 엔진 체결
             TradingMode.LOCAL -> Unit
 
-            TradingMode.KIS_PAPER -> kisPaperOrderExecutor.submit(order)
-
-            TradingMode.KIS_LIVE -> kisLiveOrderExecutor.submit(order)
+            // 브로커 접수 (D26), 실패 예외는 그대로 올라가 주문 트랜잭션 롤백
+            TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> brokerOrderSubmitter.submit(order)
 
             TradingMode.TOSS_LIVE, TradingMode.UPBIT_LIVE -> throw BrokerOrderNotSupportedException(tradingMode.name)
         }
@@ -253,7 +255,7 @@ class OrderCommandService(
                 expireAt = null,
                 idempotencyKey = key,
                 orderGroupId = orderGroupId,
-            )
+            ),
         )
     }
 
@@ -283,7 +285,7 @@ class OrderCommandService(
 
             if (releaseAmount > BigDecimal.ZERO) {
                 accountLedgerRepository.save(
-                    account.recordBuyUnlock(releaseAmount, orderId, "cancel-unlock-$orderId")
+                    account.recordBuyUnlock(releaseAmount, orderId, "cancel-unlock-$orderId"),
                 )
             }
         }

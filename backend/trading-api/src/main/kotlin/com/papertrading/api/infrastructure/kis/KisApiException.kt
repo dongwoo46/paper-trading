@@ -12,7 +12,7 @@ enum class KisErrorCode {
 class KisApiException(
     val code: KisErrorCode,
     val kisRtCode: String?,
-    kisMessage: String?,
+    val kisMessage: String?,
 ) : RuntimeException("KIS API error code=$code rtCd=$kisRtCode message=${kisMessage.orEmpty()}")
 
 fun mapKisErrorCode(rtCd: String?, message: String?): KisErrorCode {

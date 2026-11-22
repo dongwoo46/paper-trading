@@ -42,6 +42,10 @@ class TossFloatingPointScanTest {
             // step 7: 시세 응답 DTO 와 컨트롤러도 대상, 가격·수량은 BigDecimal 에서 JSON 문자열로만 나감
             walkKotlin(apiRoot.resolve("presentation/dto/toss")),
             tossControllerFiles(),
+            // 2단계 §10.6: 공통 주문 포트·접수기·KIS 주문 어댑터 (step 14 QA Q-03)
+            walkKotlin(apiRoot.resolve("application/order/port")),
+            listOf(apiRoot.resolve("application/order/BrokerOrderSubmitter.kt")),
+            listOf(apiRoot.resolve("infrastructure/kis/KisOrderAdapter.kt")),
         )
         groups.forEachIndexed { index, files -> assertTrue(files.isNotEmpty(), "검사 대상 묶음 $index 이 비어 있음") }
         return groups.flatten()
