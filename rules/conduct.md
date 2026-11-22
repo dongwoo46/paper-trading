@@ -3,23 +3,24 @@
 path: ^(backend|frontend|scripts|rules|docs)/
 why: 이 레포의 코드·규칙·문서를 고치는 작업의 범위와 서브에이전트 운용
 -->
+<!-- devkit:form v2 -->
 
-> 아래 줄은 옛 문서에서 원문 그대로 옮겼다(2026-11-21 규칙 이사). 절 제목이 출처다.
+이 파일은 이 레포에서 AI 가 읽고 고치는 범위와 서브에이전트를 띄우는 기준을 정한다. 범위 밖 변경과 쓸모없는 컨텍스트·사용량 소비를 막는다.
 
-## 옮겨 온 줄 — 루트 CLAUDE.md
+## 조항
 
-- CRITICAL: Only read explicitly specified files. Expand only when necessary. No broad exploration
-- Only modify code relevant to the task. Do not touch unrelated files. If unavoidable, state the reason
-- If refactoring, large-scale changes, or improvements beyond the task scope are needed, propose them to the user and wait for approval before proceeding.
-
-- Prefer one focused subagent per independent work item.
-- Parallelize only when write scopes do not overlap and tasks are truly independent.
-- Do not spawn extra planners/reviewers if plan/design has not changed.
-- Always summarize build/test outputs before handing control back.
-
-- ⚠️ If session context is overloaded, switch to a new session
-
-## 옮겨 온 줄 — 루트 CODEX.md
-
-- Read only explicitly specified files; expand only when necessary.
-- Modify only task-relevant files; do not implement beyond scope without approval.
+<!-- gt:PTC1 -->
+- 지시받은 파일만 읽고, 그것으로 답이 안 될 때만 읽는 범위를 넓힌다. 넓게 훑는 탐색은 하지 않는다.
+  Why: 넓게 읽으면 맥락이 차서 성능이 떨어지고 사용량이 늘어난다(사람 결정 2026-11-22). — enforce: review
+<!-- gt:PTC2 -->
+- 과제와 관계없는 코드는 고치지 않는다(관계없는 파일과, 고치는 파일 안의 관계없는 줄 모두). 어쩔 수 없이 고치면 이유를 밝히고, 과제 범위를 넘는 리팩터링·대규모 변경·개선은 먼저 제안해 사람 승인을 받은 뒤 한다.
+  Why: 범위 밖 변경은 작업 보고에 보이지 않고 diff 에만 드러나, 아무도 리뷰하지 않은 변경이 된다. devkit CL8·CL11 이 서브에이전트에 거는 이유를 메인 세션에도 건다. — enforce: review
+<!-- gt:PTC3 -->
+- 서브에이전트는 독립된 일 하나에 하나씩 띄우고, 쓰기 범위가 겹치지 않고 서로 독립일 때만 병렬로 돌리며, 계획·설계가 바뀌지 않았으면 기획자·리뷰어를 더 띄우지 않는다.
+  Why: 쓰기 범위가 겹치는 병렬 실행은 같은 파일을 서로 덮어쓰고, 바뀐 것 없는 재기획·재리뷰는 사용량만 쓴다(옛 CLAUDE.md «Subagent Cost Control»). — enforce: review
+<!-- gt:PTC4 -->
+- 서브에이전트는 빌드·시험 출력을 그대로 넘기지 않고 요약해서 부모 세션에 돌려준다.
+  Why: 원문 출력을 그대로 돌려주면 부모 세션의 맥락이 차고 사용량이 는다(옛 CLAUDE.md «Subagent Cost Control» 절의 줄). — enforce: review
+<!-- gt:PTC5 -->
+- 세션 컨텍스트가 차면 새 세션으로 옮긴다.
+  Why: 가득 찬 세션은 성능이 떨어지고 대화에만 있던 결정이 압축에서 사라진다(devkit session-handoff). — enforce: review
