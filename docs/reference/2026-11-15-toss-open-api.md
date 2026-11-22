@@ -8,7 +8,7 @@ KIS와 토스증권을 함께 쓰기 위해 토스증권 공식 문서로 가능
 - 읽은 문서: [공식 개요 문서](https://openapi.tossinvest.com/openapi-docs/overview.md) 전문(엔드포인트 목록, 시작하기, 호출 한도, 에러 코드, 웹소켓 연동)
 - 개별 API 스키마: 2026-11-15 추가 확인. 공식 명세 `https://openapi.tossinvest.com/openapi-docs/latest/openapi.json`(OpenAPI, 버전 1.2.28)에 있다. 처음 조사 때는 다른 경로를 시도해 403·404였다. 요약은 아래 «개별 API 스키마(step 5~7 범위)» 절.
 - 읽지 못한 문서: 소개 페이지, 이용약관, FAQ, 보도자료. 본문을 자바스크립트로 그려서 서버에서 받으면 제목만 온다.
-- 공식 MCP: 개요 문서와 소개 페이지에 언급이 없다. 커뮤니티 서버만 있다(tossinvest-mcp, JeongSeongMok/tossinvest-openapi-mcp, scjang01/tossinvest-mcp, kcw2034/toss-invest-mcp).
+- 공식 MCP: 개요 문서와 소개 페이지에 언급이 없다(2026-11-23 개요 문서 재확인, 여전히 없음). 커뮤니티 서버만 있다(tossinvest-mcp, JeongSeongMok/tossinvest-openapi-mcp, scjang01/tossinvest-mcp, kcw2034/toss-invest-mcp).
 - 아래 표는 개요 문서를 옮긴 것이고, 필드 스펙은 2026-11-15 openapi.json 으로 확인했다.
 
 ## 인증과 접속 조건
