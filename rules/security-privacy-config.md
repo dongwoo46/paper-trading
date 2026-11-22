@@ -14,7 +14,7 @@ why: 토큰·비밀값 저장과 서비스 간 내부 API 를 다루는 코드
 - `/api/internal/**` 서비스 간 API 는 외부에 노출하지 않고, 외부 API 와 다른 인증을 건다.
   Why: 서비스 간 호출은 호출자를 믿고 사용자 인증을 건너뛰므로, 밖에 노출되면 외부인이 그 우회로를 쓴다(사람 결정 2026-11-22). — enforce: review
 <!-- gt:PTS2 -->
-- 증권사(KIS·토스) 토큰과 그 밖의 인증 토큰은 어디에도 평문으로 저장하지 않는다(서버의 DB·Redis·파일, 브라우저의 `localStorage`·`sessionStorage` 모두). 클라이언트에 두는 토큰의 자리는 devkit SC21 도 함께 따른다.
+- 증권사(KIS·토스) 토큰과 그 밖의 인증 토큰은 어디에도 평문으로 저장하지 않는다(서버의 DB·Redis·파일, 브라우저의 `localStorage`·`sessionStorage` 모두). 클라이언트에 두는 토큰의 자리는 devkit SC21 도 함께 따르고, SC21 이 정한 `HttpOnly`·`Secure`·`SameSite` 쿠키 자리는 그대로 쓴다.
   Why: 토큰이 평문이면 DB·Redis 덤프나 로그 하나로 계좌 주문 권한이 넘어간다(사람 결정 2026-11-22). SC21 은 모바일 토큰과 웹 refresh 토큰의 자리만 정해, 서버 저장과 그 밖의 브라우저 토큰을 여기서 더한다. — enforce: review
 <!-- gt:PTS3 -->
 - 비밀값(KIS·토스 앱 키와 시크릿, DB 비밀번호 등)은 Kotlin 코드와 커밋하는 설정(`application.yaml` 포함)에 쓰지 않고 환경 변수로만 받는다.
