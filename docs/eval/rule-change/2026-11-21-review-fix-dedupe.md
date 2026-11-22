@@ -97,3 +97,7 @@
 - 삭제: - `CLAUDE.md` 와 같은 규칙입니다. 먼저 `CLAUDE.md` 를 읽고, UI 작업은 `docs/UI_GUIDE.md` 를 적용합니다.
   → 잔존: rules/ui-common.md:28 «UI 작업은 `rules/design-system.md` 를 적용한다» (지운 docs/UI_GUIDE.md 를 새 자리로 고쳐 씀, «CLAUDE.md 와 같은 규칙» 은 지운 CODEX.md 의 자기 설명이라 대상이 없음)
 
+## 재리뷰 뒤 고침 (2026-11-22)
+
+- 삭제: > 옛 PRD 시점의 그림이다. 실제 패키지 이름과 계층 자리(Redis 리스너·컨트롤러 같은 진입점은 presentation)는 `rules/backend-api.md` 의 «계층과 포트» 절이 이긴다.
+  → 잔존: rules/domains/market-data.md:20 «옛 PRD 시점의 그림이다. 지금 collector-api 패키지는 … 컨트롤러는 `presentation/`, 스케줄러는 `application/*/runtime/` 에 있다. 새 코드는 그림이 아니라 이 자리를 따른다» (가리키던 절이 trading-api 전용이라 collector-api 실제 자리로 고쳐 씀, 재리뷰 P3)

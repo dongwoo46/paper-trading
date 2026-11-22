@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-규칙 이사 커밋이 하위 폴더 입구 파일 8개(`backend/AGENTS.md`, `backend/CLAUDE.md`, `backend/collector-api/AGENTS.md`, `backend/quant-worker/AGENTS.md`, `backend/trading-api/AGENTS.md`, `backend/trading-api/CLAUDE.md`, `frontend/trading-web/AGENTS.md`, `frontend/trading-web/CLAUDE.md`)를 바꾼다. 커밋 게이트(dirty-harness)는 하위 폴더 입구를 하네스로 보고 이 번들을 요구한다. 승인은 이 번들을 담은 PR 의 사람 머지다.
+규칙 이사 커밋이 하위 폴더 입구 파일 8개(리뷰 뒤 고침에서 2개 더해 10개, 아래 절)(`backend/AGENTS.md`, `backend/CLAUDE.md`, `backend/collector-api/AGENTS.md`, `backend/quant-worker/AGENTS.md`, `backend/trading-api/AGENTS.md`, `backend/trading-api/CLAUDE.md`, `frontend/trading-web/AGENTS.md`, `frontend/trading-web/CLAUDE.md`)를 바꾼다. 커밋 게이트(dirty-harness)는 하위 폴더 입구를 하네스로 보고 이 번들을 요구한다. 승인은 이 번들을 담은 PR 의 사람 머지다.
 
 ## 문제
 
