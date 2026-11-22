@@ -4,7 +4,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
 
 형식: `- [ ] 설명 | project: {프로젝트} | phase: {phase명} | priority: P{n}`
-완료 시: `- [x]` 로 변경 + `| done: YYYY-MM-DD | pr: #{n}` → TODO-DONE.md로 이동
+완료 시: `- [x]` 로 변경 + `| done: YYYY-MM-DD | pr: #{n}` — 완료 항목은 이 파일에 둔다(옛 TODO-DONE.md 는 docs/archive/ 로 동결)
 
 ---
 
@@ -68,7 +68,6 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
     - 프론트엔드: `runChartAnalysis`, `fetchChartAnalysis`, `fetchAnalyzedSymbols` → `api-research`로 변경
 
 - [x] Python 서비스 DB 스키마 자동 생성 | project: quant-research | phase: service-role-refactor | priority: P0 | done: 2026-05-14
-  - Python 서비스가 사용하는 테이블은 Python 서비스가 직접 생성 (Kotlin Flyway 의존 금지)
   - quant-research / quant-ai lifespan 시작 시 `migrations/*.sql` 순서대로 자동 실행
   - `CREATE TABLE IF NOT EXISTS` 사용으로 멱등성 보장
   - 대상 테이블: `chart_analysis_result`, `analysis_request_queue`, `popular_symbols`
@@ -116,7 +115,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 - [ ] KIS·토스증권 다중 브로커 연동 | project: trading-api, collector-api | phase: multi-broker-kis-toss | priority: P1
   - ✅ 계좌별 브로커 지정(계좌 하나 = 브로커 하나), 토스는 `TOSS_LIVE` 실계좌 모드
   - ✅ 순서: 1) 토스 읽기 전용(시세·잔고·보유 REST) 2) 공통 브로커 계층으로 KIS 전면 리팩터링 3) 토스 시세 웹소켓·실주문
-  - 조사 문서: `docs/research/2026-11-15-toss-open-api.md` · 기획: `docs/features/running/multi-broker-kis-toss/`
+  - 조사 문서: `docs/reference/2026-11-15-toss-open-api.md` · 기획: `docs/features/running/multi-broker-kis-toss/`
 
 - [ ] KIS 주문 취소·접수 타임아웃 결함 수정 | project: trading-api | phase: kis-order-cancel-timeout | priority: P1
   - 우리 주문 취소가 KIS 취소를 부르지 않아 KIS에 살아 있는 주문의 잠금이 풀리고, 뒤 체결 통지가 버려짐(`OrderCommandService.kt:260-303`, `ExecutionProcessor.kt:100`)

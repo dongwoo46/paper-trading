@@ -8,9 +8,9 @@ include:
   - frontend/**
 
   # architecture / planning docs
-  - docs/ADR.md
-  - docs/PRD.md
-  - docs/state.md
+  - docs/adr/architecture.md
+  - rules/domains/trading.md
+  - docs/archive/state.md
   - docs/TODO.md
   - docs/phase/**/*.md
   - docs/**/*.md
