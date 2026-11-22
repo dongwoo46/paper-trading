@@ -32,9 +32,12 @@
   - step 10 브로커 선택과 KIS 잔고 이전: `f9c8589`, 전체 1116건 실패 0, 메인 재실행 144건 실패 0, 리뷰 막는 지적 0(`review/step10-code-review.md`, 메인 인라인 리뷰, 후속 S10-01~03 원장)
   - step 11 주문 공통 포트(2026-11-21): `c1153de`. S9-01·S9-02 함께 고침, 리뷰 C-01(결과 미확인 재시도 안내)·C-02(HTTP 오류 본문)·R1-02(5xx 본문 확정 범위) 고침, 503 `KIS_ORDER_RESULT_UNKNOWN` 신설. 전체 1176건 실패 0, 리뷰 3회차 머지 가능(`review/step11-*.md`, 3회차 메인 인라인). 설계 재승인 2회 기록(승인 코드 EQPG·TZR2)
   - step 12 계좌 응답 출처와 ADR-005(2026-11-21): `d78dc5f`. 전체 1180건 실패 0, 리뷰 막는 지적 0(`review/step12-code-review.md`, 메인 인라인)
-- **진행 중:** 없음
+  - step 14 2단계 최종 확인(2026-11-22): step 13 보다 먼저 함(사람 결정, PR #53 OPEN·충돌). 고치기 전 전체 1180건 실패 0, 독립 QA 막는 지적 0, 사람 결정으로 Q-01(잔고 5xx EGW00002 가 KIS_AUTH_FAILED 로 가던 오분류)·Q-02(AE20 목록 보충)·Q-03(부동소수점 스캔 확대, KIS 주문 로그 누출 시험) 고침 `a49e74a`, 메인 인라인 리뷰 발견 0, 고친 뒤 전체 90 xml 1186건 실패 0. Q-04~06 은 findings 원장. 설계 재승인(코드 REKP) `4a80596`
+  - PR #57 생성(feature/multi-broker-kis-toss-phase2 → main). main 의 규칙 이사 PR #56 과 충돌(docs/ADR.md 삭제)해 합치기 `1c35226`(ADR-005 를 docs/adr/architecture.md 로 이식). 합치기 커밋은 test-gate 오판(옛 .codex/skills/test/SKILL.md 를 시험으로 봄)으로 사람이 --no-verify 로 커밋, 원장 기록
+- **진행 중:** PR #57 CI(head `4a80596`), 머지는 사람 지시 대기
 - **남음:**
-  - step 13(PR #53 머지 뒤에만, 2026-11-21 기준 PR #53 OPEN), step 14 최종 확인(2단계 전체 독립 QA 포함, 사람 결정 2026-11-21)
+  - PR #57 CI 확인과 머지(사람 지시)
+  - step 13(PR #53 머지 뒤에만, 별도 PR)
   - 1단계 수동 실호출 대조(사람이 토스 키·허용 IP 준비 뒤 broker-balance 1회, prices 1회)
   - 옛 worktree 정리: `.worktrees/multi-broker-kis-toss`(다른 세션 미커밋 2건 있음, 건드리지 말 것), `.worktrees/multi-broker-kis-toss-phase1`(옛 인계문서 정리 뒤)
   - 2단계 끝나면 PR(`feature/multi-broker-kis-toss-phase2` → main)
@@ -50,9 +53,8 @@
 - 리뷰 후속 후보는 원장으로만 넘기고 고침 라운드에 넣지 않음
 
 ## 4. 다음 첫 행동
-이어받기 한 줄: PR #53 확인 → step 13 또는 step 14
-- 다음 첫 행동: phase2 worktree(`feature/multi-broker-kis-toss-phase2`, HEAD `d78dc5f`)에서 `gh api repos/dongwoo46/paper-trading/pulls/53` 로 PR #53 상태 확인. 머지됐으면 main 을 합치고 기준선 재기록(계획서 RISK-11) 뒤 step 13(D27) 을 step-scaffold `--step 13` 으로 만들어 구현, 열려 있으면 사람에게 «step 14 먼저 / 대기» 를 물음(D27 은 열려 있으면 멈추고 ASK). 구현은 범용 에이전트(devkit:maker 없음), 리뷰 상한 초과라 리뷰 방식은 팝업으로 · 섬김: GL2
-- step 14 최종 확인은 2단계 전체 독립 QA 포함 뒤 PR(`feature/multi-broker-kis-toss-phase2` → main) · 섬김: GL2
+이어받기 한 줄: PR #57 CI·머지 확인 → step 13
+- 다음 첫 행동: phase2 worktree(`feature/multi-broker-kis-toss-phase2`, HEAD `4a80596`)에서 `node <devkit>/tools/ci-wait.js <head sha> --repo dongwoo46/paper-trading` 로 PR #57 CI 확인. 빨강이면 원인 진단(git-conventions), 초록이면 사람에게 머지 지시를 물음(머지는 사람 지시만, pr-head-sync 먼저). 그다음 PR #53 상태 확인 — 머지됐으면 새 브랜치에서 main 합치고 기준선 재기록(RISK-11) 뒤 step 13(D27)을 step-scaffold `--step 13` 으로, 열려 있으면 대기 · 섬김: GL2
 - 실호출 대조는 사람이 준비됐다고 할 때 · 섬김: GL1
 
 ## 5. 주의·함정
@@ -74,7 +76,7 @@
 - 추적 안 된 `backend/trading-api/src/main/kotlin/com/papertrading/api/docs/`·`docs/features/running/multi-broker-kis-toss/docs/`(devkit 훅 산출물로 보임)는 커밋에서 뺌
 
 ## 6. 관련 파일·경로
-- 작업 worktree: `/Users/dongwoo/Desktop/paper-trading/.worktrees/multi-broker-kis-toss-phase2` (브랜치 `feature/multi-broker-kis-toss-phase2`, HEAD `d78dc5f`, 푸시 안 함)
+- 작업 worktree: `/Users/dongwoo/Desktop/paper-trading/.worktrees/multi-broker-kis-toss-phase2` (브랜치 `feature/multi-broker-kis-toss-phase2`, HEAD `4a80596`, 푸시함, PR #57)
 - 특성화 시험: `backend/trading-api/src/test/kotlin/com/papertrading/api/characterization/kis/`(잔고 3, 주문 접수 4, 체결 통지 3, 대역 전송기, 이벤트 수집)
 - step-scaffold spec 예시(이 세션 scratch, 다음 세션엔 없을 수 있음): `{"based_on":"development-plan.md","steps":[{"title":"기준선 기록"},…14개 제목(state 로드맵 그대로)…]}`에서 해당 step에만 basis·goal·scope·approach·deps·done을 채움
 - 설계 승인: AI 가 `feature-approval.js set multi-broker-kis-toss tech-plan --by dongwoo406 --note "<근거>"` 를 실행하면 가드가 승인 코드를 냄 → 사람이 다음 메시지 첫 줄에 «승인 <코드>» → 같은 명령 그대로 재실행. 사람에게 별도 터미널 명령을 주지 않음(사람 지적 2026-11-21)
@@ -88,4 +90,5 @@
 - step 10: 메인 집중 재실행 11 xml 144건 실패 0, maker 전체 85 xml 1116건 실패 0, 린트 exit 0, `review-verdict step10-code-review.md` «가능 — 막는 지적 0건 · 후속 후보 3건»
 - step 11: 메인 집중 재실행 27 xml 665건 실패 0(1차), 구현자 최종 전체 87 xml 1176건 실패 0, 린트 exit 0, `review-verdict step11-rereview-2.md --previous step11-code-review.md --previous step11-rereview-1.md` «가능 — 막는 지적 0건 · 지난 지적 미해결 0건»
 - step 12: 구현자 전체 89 xml 1180건 실패 0, 린트 exit 0, `review-verdict step12-code-review.md` «가능 — 막는 지적 0건»
+- step 14(2026-11-22): 고친 뒤 메인 전체 `./gradlew test --rerun --offline` 90 xml 1186건 실패 0·건너뜀 0, 린트 exit 0(합치기 뒤 재확인 exit 0), 특성화 diff 0. 합치기는 백엔드 소스 변경 0(문서 4개)이라 전체 시험 재실행 안 함
 - 주의: `SnapshotJobServiceAtomicRollbackIntegrationTest` 가 컨테이너 연결 실패(Postgres·Redis)로 두 번 단발 실패, 전체 재실행에서 통과
