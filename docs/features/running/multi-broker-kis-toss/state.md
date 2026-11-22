@@ -47,7 +47,7 @@
 | 10 | 브로커 선택과 KIS 잔고 이전 | done | steps/step-10.md | 전체 1116건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step10-code-review.md`, 메인 인라인 리뷰, 후속 3건 원장) |
 | 11 | 주문 공통 포트 | done | steps/step-11.md | 2단계 4번, D26·D28, S9-01·S9-02 함께. 전체 1176건 실패 0, 특성화 10건 무수정 통과, 리뷰 3회차 머지 가능(`review/step11-code-review.md`·`step11-rereview-1.md`·`step11-rereview-2.md`, 3회차 메인 인라인), 후속은 원장·TODO P1 |
 | 12 | 계좌 응답 출처와 ADR 갱신 | done | steps/step-12.md | 2단계 5번, D29, ADR-005(D25·D26). 전체 1180건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step12-code-review.md`, 메인 인라인) |
-| 13 | 체결 입력 공통화 | blocked | - | 2단계 6번, D27, PR #53 머지 뒤에만(2026-11-22 OPEN·충돌), 별도 PR |
+| 13 | 체결 입력 공통화 | in progress | steps/step-13.md | 2단계 6번, D27. PR #53 머지(486116c, 2026-11-22) 뒤 착수, 브랜치 feature/multi-broker-kis-toss-step13, PR #61. 전체 1218건 실패 0, 특성화 10건 무수정 통과, 리뷰 막는 지적 0(`review/step13-code-review.md`, 메인 인라인) |
 | 14 | 2단계 최종 확인 | done | steps/step-14.md | 2단계 7번, step 13 보다 먼저(§3 2026-11-22). 전체 1186건 실패 0, 독립 QA 막는 지적 0, Q-01~03 고침 `a49e74a`, PR #57 |
 
 - **Status:** todo / in progress / done / blocked — a cell is read by its leading word; anything else (`WIP`, `not done`) is treated as unknown, never as done.
@@ -61,6 +61,7 @@
 | Date | Change | Reason |
 |---|---|---|
 | (example) 6/7 | step-2.5 added | step-2 found a missing field in the API response |
+| 2026-11-22 | step 13 의 BrokerExecutionNotice 자리를 application/order/command → application/order/port 로, archunit_store 는 해결된 30줄 제거·이름만 바뀐 9줄 새 이름으로 재동결 | command 에 두면 KisExecutionNotice(infrastructure)가 application 을 port 밖으로 써 새 동결 위반 2줄. 사람 결정 «타입을 port 패키지로, 재동결». 전체 재동결(refreeze)은 무관한 줄 번호까지 바꿔 쓰지 않음 |
 | 2026-11-22 | step 14(2단계 최종 확인)를 step 13 보다 먼저 함. 2단계 PR 은 step 8~12 만 싣고, step 13(D27)은 PR #53 머지 뒤 별도 PR | PR #53 이 OPEN·main 과 충돌(2026-11-22 확인), D27 은 열려 있으면 착수 금지. 사용자 결정 «step 14 먼저» |
 | 2026-11-21 | step 11 범위에 step 9 리뷰 후속 S9-01(연결 거부가 KIS_TIMEOUT)·S9-02(rt_cd 1 한도가 인증으로 가려짐) 추가, KIS 실패 분류를 잔고·주문 어댑터 공용으로. 한도 판정은 msg_cd EGW00201 또는 «초당 거래건수» 문구(«초과» 단독 금지), ORNO 없는 성공 응답은 KIS_UNAVAILABLE(가정) | 주문 어댑터가 같은 분류를 써 따로 고치면 판정이 갈라짐. 사용자 결정 «함께 고침». 계획서 문구 변경 없음 |
 | 2026-11-21 | 주문 경로: mapKisErrorCode 가 «초과»·rate·limit 문구로 붙인 RATE_LIMITED 는 «초당 거래건수» 문구가 없으면 400 KIS_ORDER_REJECTED. step 11 이 KisPaperPollingScheduler 도 삭제(계획서 §10.3 삭제 행, 실행기 삭제로 컴파일 불가) | 고치지 않기로 한 mapKisErrorCode 와 «초과 단독 한도 금지»가 부딪힘. 사용자 결정 «그대로 둠» |

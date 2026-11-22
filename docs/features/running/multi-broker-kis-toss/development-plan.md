@@ -375,7 +375,7 @@
 | main/presentation/exception/GlobalExceptionHandler.kt | 수정 | KIS code 고정 문구(D28) | 중간 |
 | main/domain/enums/AccountSource.kt | 수정 | UPBIT, 모드 → 출처 함수(D29) | 낮음 |
 | main/presentation/dto/account/AccountResponse.kt | 수정 | D29 | 낮음 |
-| main/application/order/KisExecutionNoticeService.kt → BrokerExecutionNoticeService.kt, main/application/order/command/BrokerExecutionNotice.kt | 이름 바꿈, 신설 | D27(PR #53 뒤) | 중간 (체결 경로) |
+| main/application/order/KisExecutionNoticeService.kt → BrokerExecutionNoticeService.kt, main/application/order/port/BrokerExecutionNotice.kt(2026-11-22 command → port, 사람 결정: infrastructure 는 application 을 port 로만 씀) | 이름 바꿈, 신설 | D27(PR #53 뒤) | 중간 (체결 경로) |
 | main/infrastructure/kis/KisExecutionNotice.kt, KisExecutionNoticeParser.kt, KisExecutionWebSocketManager.kt | 수정 | D27 입력 타입 교체 | 중간 |
 | src/test/resources/archunit_store/* | 수정 | 해결된 동결 위반 줄 제거(실행기 2파일, 체결 서비스) | 낮음 (PR #53과 같은 파일, RISK-11) |
 | docs/adr/architecture.md(옛 docs/ADR.md, 2026-11-21 규칙 이사로 옮김) | 수정 | ADR-005 갱신(D25, D26) | 낮음 |

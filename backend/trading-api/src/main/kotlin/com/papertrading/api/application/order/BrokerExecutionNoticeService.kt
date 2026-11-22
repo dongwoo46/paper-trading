@@ -1,7 +1,7 @@
 package com.papertrading.api.application.order
 
+import com.papertrading.api.application.order.port.BrokerExecutionNotice
 import com.papertrading.api.common.maskKisAccountNumber
-import com.papertrading.api.infrastructure.kis.KisExecutionNotice
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
 import mu.KotlinLogging
@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 
 // 외부 증권사에서 체결 이벤트가 들어왔을 때, 내부 주문 상태와 체결 내역을 업데이트한다
 @Service
-class KisExecutionNoticeService(
+class BrokerExecutionNoticeService(
     private val orderRepository: OrderRepository,
     private val executionRepository: ExecutionRepository,
     private val executionProcessor: ExecutionProcessor,
@@ -18,7 +18,7 @@ class KisExecutionNoticeService(
     private val log = KotlinLogging.logger {}
 
     @Transactional
-    fun handle(notice: KisExecutionNotice) {
+    fun handle(notice: BrokerExecutionNotice) {
         // 이미 체결 통지 처리한 문제인지 확인
         if (executionRepository.findByExternalExecutionId(notice.externalExecutionId).isPresent) {
             log.info {

@@ -3,6 +3,7 @@ package com.papertrading.api.application.order
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import com.papertrading.api.application.order.port.BrokerExecutionNotice
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.order.Execution
 import com.papertrading.api.domain.entity.order.Order
@@ -13,7 +14,6 @@ import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.OrderStatus
 import com.papertrading.api.domain.enums.OrderType
 import com.papertrading.api.domain.enums.TradingMode
-import com.papertrading.api.infrastructure.kis.KisExecutionNotice
 import com.papertrading.api.infrastructure.persistence.ExecutionRepository
 import com.papertrading.api.infrastructure.persistence.OrderRepository
 import com.papertrading.api.support.withId
@@ -29,17 +29,17 @@ import java.math.BigDecimal
 import java.time.Instant
 import java.util.Optional
 
-class KisExecutionNoticeServiceTest {
+class BrokerExecutionNoticeServiceTest {
 
     private val orderRepository = mockk<OrderRepository>()
     private val executionRepository = mockk<ExecutionRepository>()
     private val executionProcessor = mockk<ExecutionProcessor>()
-    private val service = KisExecutionNoticeService(orderRepository, executionRepository, executionProcessor)
+    private val service = BrokerExecutionNoticeService(orderRepository, executionRepository, executionProcessor)
 
     @Test
     fun `duplicate notice does not mutate financial state again`() {
         val notice = sampleNotice()
-        every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns Optional.of(mockk<Execution>(relaxed = true))
+        every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns savedExecution()
 
         service.handle(notice)
 
@@ -48,7 +48,7 @@ class KisExecutionNoticeServiceTest {
     }
 
     @Test
-    fun `new notice resolves by external order id mode and account scope then fills with scoped KIS external execution id`() {
+    fun `new notice resolves order by external id, mode and account scope then fills with scoped execution id`() {
         val notice = sampleNotice()
         val order = sampleOrder()
         every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns Optional.empty()
@@ -56,7 +56,7 @@ class KisExecutionNoticeServiceTest {
             orderRepository.findActiveKisOrderByExternalOrderId("10000001", TradingMode.KIS_PAPER, "12345678-01")
         } returns Optional.of(order)
         every {
-            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), EXECUTION_ID, notice.executedAt)
         } just runs
 
         service.handle(notice)
@@ -65,7 +65,7 @@ class KisExecutionNoticeServiceTest {
             orderRepository.findActiveKisOrderByExternalOrderId("10000001", TradingMode.KIS_PAPER, "12345678-01")
         }
         verify(exactly = 1) {
-            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), EXECUTION_ID, notice.executedAt)
         }
     }
 
@@ -73,26 +73,28 @@ class KisExecutionNoticeServiceTest {
     fun `duplicate detection is scoped by external execution id account scope`() {
         val notice = sampleNotice()
         val order = sampleOrder()
-        every { executionRepository.findByExternalExecutionId("KIS_PAPER:12345678-01:10000001:00003") } returns Optional.empty()
+        every { executionRepository.findByExternalExecutionId(EXECUTION_ID) } returns Optional.empty()
         every {
             orderRepository.findActiveKisOrderByExternalOrderId("10000001", TradingMode.KIS_PAPER, "12345678-01")
         } returns Optional.of(order)
         every {
-            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), EXECUTION_ID, notice.executedAt)
         } just runs
 
         service.handle(notice)
 
         verify(exactly = 1) {
-            executionRepository.findByExternalExecutionId("KIS_PAPER:12345678-01:10000001:00003")
+            executionRepository.findByExternalExecutionId(EXECUTION_ID)
         }
         verify(exactly = 1) {
-            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), "KIS_PAPER:12345678-01:10000001:00003", notice.executedAt)
+            executionProcessor.fillExternal(10L, BigDecimal("70000"), BigDecimal("3"), EXECUTION_ID, notice.executedAt)
         }
     }
 
+    private fun savedExecution() = Optional.of(mockk<Execution>(relaxed = true))
+
     private fun logsOf(block: () -> Unit): List<String> {
-        val logger = LoggerFactory.getLogger(KisExecutionNoticeService::class.java) as Logger
+        val logger = LoggerFactory.getLogger(BrokerExecutionNoticeService::class.java) as Logger
         val appender = ListAppender<ILoggingEvent>().also { it.start() }
         logger.addAppender(appender)
         try {
@@ -106,7 +108,7 @@ class KisExecutionNoticeServiceTest {
     @Test
     fun `duplicate notice log masks the account number of the KIS execution id`() {
         val notice = sampleNotice()
-        every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns Optional.of(mockk<Execution>(relaxed = true))
+        every { executionRepository.findByExternalExecutionId(notice.externalExecutionId) } returns savedExecution()
 
         val logs = logsOf { service.handle(notice) }
 
@@ -128,18 +130,14 @@ class KisExecutionNoticeServiceTest {
         assertTrue(logs.any { "10000001" in it }, "external order id stays: $logs")
     }
 
-    private fun sampleNotice() = KisExecutionNotice(
+    private fun sampleNotice() = BrokerExecutionNotice(
         mode = TradingMode.KIS_PAPER,
-        channelId = "H0STCNI9",
         externalOrderId = "10000001",
-        externalExecutionId = "KIS_PAPER:12345678-01:10000001:00003",
-        ticker = "005930",
-        side = OrderSide.BUY,
+        externalExecutionId = EXECUTION_ID,
         executedQty = BigDecimal("3"),
         executedPrice = BigDecimal("70000"),
         executedAt = Instant.parse("2026-05-01T00:30:15Z"),
-        accountNumber = "12345678",
-        accountProductCode = "01",
+        accountScope = "12345678-01",
     )
 
     private fun sampleOrder(): Order {
@@ -162,5 +160,9 @@ class KisExecutionNoticeServiceTest {
             lockedAmount = BigDecimal("210000"),
             idempotencyKey = "key",
         ).withId(10L).also { it.assignExternalOrderId("10000001") }
+    }
+
+    private companion object {
+        const val EXECUTION_ID = "KIS_PAPER:12345678-01:10000001:00003"
     }
 }
