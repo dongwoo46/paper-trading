@@ -5,7 +5,7 @@ Metric: stage-by-file-compliance
 
 ## 무엇이 바뀌었나
 
-2026-11-21 규칙 이사에서 원문 그대로 옮긴 6개 파일(`rules/architecture.md`·`conduct.md`·`docs-ops.md`·`security-privacy-config.md`·`time.md`·`workflow.md`)을 form v2 조항 꼴(앵커 · 명령형 한 줄 · `Why:` · enforce)로 다시 썼다(조항 14개). 영어 CLAUDE.md 줄과 CODEX.md 사본처럼 같은 뜻의 줄은 한 조항으로 합쳤고, 강조 4곳(`CRITICAL` 2곳, 굵게 1곳, `⚠️` 1곳)을 뺐다. 지운 지시는 없다: README 에서 옮긴 «비밀값은 환경 변수로만»은 처음엔 devkit SC1 중복으로 지웠으나, 합동 리뷰(2026-11-22)가 SC1 이 `.kt`·`.yml` 에 지목되지 않음을 찾아 PTS3 으로 되살렸다(사람 결정 2026-11-22). 뜻이 달라진 조항은 둘이고 모두 원문보다 넓다: PTS2 는 «토큰 평문 저장 금지»를 서버 저장소로 밝히고 클라이언트 자리는 SC21 에 맡겼고, PTS3 은 원문에 없던 `application.yml` 등 대상을 이름 댔다. 원문에 이유가 없던 줄의 Why 는 사람이 골랐다(2026-11-22 팝업: 읽기 범위 PTC1, TODO 등록 PTO1, 내부 API PTS1, 토큰 PTS2).
+2026-11-21 규칙 이사에서 원문 그대로 옮긴 6개 파일(`rules/architecture.md`·`conduct.md`·`docs-ops.md`·`security-privacy-config.md`·`time.md`·`workflow.md`)을 form v2 조항 꼴(앵커 · 명령형 한 줄 · `Why:` · enforce)로 다시 썼다(조항 14개). 영어 CLAUDE.md 줄과 CODEX.md 사본처럼 같은 뜻의 줄은 한 조항으로 합쳤고, 강조 4곳(`CRITICAL` 2곳, 굵게 1곳, `⚠️` 1곳)을 뺐다. 지운 지시는 없다: README 에서 옮긴 «비밀값은 환경 변수로만»은 처음엔 devkit SC1 중복으로 지웠으나, 합동 리뷰(2026-11-22)가 SC1 이 `.kt`·`.yml` 에 지목되지 않음을 찾아 PTS3 으로 되살렸다(사람 결정 2026-11-22). 뜻이 달라진 조항은 둘이고 모두 원문보다 넓거나 같다: PTS2 는 «토큰 평문 저장 금지»의 범위(어디에도)를 그대로 두고 서버·브라우저 저장소를 이름 댔으며(재리뷰 N1 뒤 사람 결정 2026-11-22 «원문 범위 되살림»), PTS3 은 원문에 없던 `application.yaml` 등 대상을 이름 댔다. 원문에 이유가 없던 줄의 Why 는 사람이 골랐다(2026-11-22 팝업: 읽기 범위 PTC1, TODO 등록 PTO1, 내부 API PTS1, 토큰 PTS2).
 
 ## 실행 비교
 
@@ -107,8 +107,8 @@ Metric: stage-by-file-compliance
 
 - 이유(rationale) 보존: 새 조항 14개 모두 `Why:` 줄을 갖는다. 출처는 devkit 조항(AR2·CL8·CL11·WF1·CS15·SC1·SC21·git-conventions·session-handoff), 옛 문서(CLAUDE.md «Subagent Cost Control» 절, collector-worker 재발 방지 규칙 2), 사람 결정 2026-11-22(PTC1·PTO1·PTS1·PTS2)이다. 출처 없는 추정 이유는 넣지 않았다.
 - 강조 서식: 이 6개 파일의 `CRITICAL` 2곳, 굵게 1곳, `⚠️` 1곳을 뺐고 새로 더하지 않았다. 다른 파일의 강조 4곳(`data-access.md`·`design-system.md`·`tests.md` 등)은 다음 묶음 몫이다.
-- 골격: 파일마다 pointer 머리말 · scope 줄(있던 것 유지) · `<!-- devkit:form v2 -->` · 목적 문단 · `## 조항` · 조항.
-- 분량: 6개 파일 합계 변경 전 79줄 → 변경 뒤 비슷한 수준(`git diff --stat` 57+ / 59-).
+- 골격: 파일마다 pointer 머리말 · scope 줄(있던 것 유지, security-privacy-config 만 리뷰 뒤 SC1 을 더함) · `<!-- devkit:form v2 -->` · 목적 문단 · `## 조항` · 조항.
+- 분량: 6개 파일 합계 줄 수는 변경 전과 비슷하다(최종 수치는 PR diff 기준).
 - 꼴 검사: `doc-form-check.js` 로 6개 파일 위반 0, 레포 `rules/` 전체 267 → 243.
 
 ## 출처 안내 줄 대조(파일마다)
