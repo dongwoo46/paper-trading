@@ -24,7 +24,6 @@
     <ID>LongParameterList:OrderAmendment.kt$OrderAmendment.Companion$( order: Order, amendmentType: String, beforeQuantity: BigDecimal? = null, afterQuantity: BigDecimal? = null, beforeLimitPrice: BigDecimal? = null, afterLimitPrice: BigDecimal? = null, reason: String? = null )</ID>
     <ID>LongParameterList:OrderAmendment.kt$OrderAmendment.Companion$( order: Order, beforeQuantity: BigDecimal? = null, afterQuantity: BigDecimal? = null, beforeLimitPrice: BigDecimal? = null, afterLimitPrice: BigDecimal? = null, reason: String? = null )</ID>
     <ID>LongParameterList:OrderCommandService.kt$OrderCommandService$( accountId: Long, ticker: String, marketType: com.papertrading.api.domain.enums.MarketType, quantity: BigDecimal, orderGroupId: String, triggerAuditInputs: List&lt;AutoExitTriggerAuditInput&gt;, )</ID>
-    <ID>LongParameterList:OrderCommandService.kt$OrderCommandService$( private val accountRepository: AccountRepository, private val orderRepository: OrderRepository, private val positionRepository: PositionRepository, private val accountLedgerRepository: AccountLedgerRepository, private val marketQuotePort: MarketQuotePort, private val collectorSubscriptionPort: CollectorSubscriptionPort, private val localMatchingEngine: LocalMatchingEngine, private val kisPaperOrderExecutor: KisPaperOrderExecutor, private val kisLiveOrderExecutor: KisLiveOrderExecutor, )</ID>
     <ID>LongParameterList:OrderSignal.kt$OrderSignal.Companion$( account: Account, ticker: String, signalSide: OrderSide, quantity: BigDecimal, idempotencyKey: String, strategyId: Long? = null, signalCategory: SignalCategory? = null, signalIndicator: SignalIndicator? = null, signalThreshold: BigDecimal? = null, signalActualValue: BigDecimal? = null, conditionSnapshot: String? = null, limitPrice: BigDecimal? = null )</ID>
     <ID>LongParameterList:PortfolioSnapshot.kt$PortfolioSnapshot$( quantity: BigDecimal, avgBuyPrice: BigDecimal, closePrice: BigDecimal, marketValue: BigDecimal, weight: BigDecimal, unrealizedPnl: BigDecimal )</ID>
     <ID>LongParameterList:PortfolioSnapshot.kt$PortfolioSnapshot.Companion$( account: Account, businessDate: LocalDate, ticker: String, quantity: BigDecimal, avgBuyPrice: BigDecimal, closePrice: BigDecimal, marketValue: BigDecimal, weight: BigDecimal, unrealizedPnl: BigDecimal )</ID>
@@ -74,8 +73,6 @@
     <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$16</ID>
     <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$3</ID>
     <ID>MagicNumber:PositionExitTriggerOrchestrator.kt$PositionExitTriggerOrchestrator$8</ID>
-    <ID>MagicNumber:RestTemplateConfig.kt$RestTemplateConfig$10</ID>
-    <ID>MagicNumber:RestTemplateConfig.kt$RestTemplateConfig$5</ID>
     <ID>MagicNumber:Settlement.kt$Settlement.Companion$4</ID>
     <ID>MagicNumber:SnapshotJobRun.kt$SnapshotJobRun$500</ID>
     <ID>MagicNumber:Strategy.kt$Strategy$200</ID>
@@ -97,10 +94,7 @@
     <ID>MaxLineLength:DailyBalanceCommandServiceTest.kt$DailyBalanceCommandServiceTest$every { dailyBalanceRepository.findByAccountIdAndBusinessDate(1L, LocalDate.of(2026, 5, 6)) } returns Optional.empty()</ID>
     <ID>MaxLineLength:ExecutionSseEventTest.kt$ExecutionSseEventTest$/** Spec: from_BigDecimal_fields_are_plain_strings — quantity "10.00" must serialize as "10.00", no scientific notation */</ID>
     <ID>MaxLineLength:GlobalExceptionHandler.kt$GlobalExceptionHandler$(ex.message ?: "").contains("포지션") || (ex.message ?: "").contains("position") -&gt; "POSITION_NOT_FOUND"</ID>
-    <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$KisAuthorizationException("KIS authorization failed", KisApiException(KisErrorCode.KIS_AUTH_FAILED, rtCd, message))</ID>
-    <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$KisRemoteCallException("KIS remote call failed", KisApiException(mapKisErrorCode(rtCd, message), rtCd, message))</ID>
     <ID>MaxLineLength:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$private</ID>
-    <ID>MaxLineLength:KisAccountBalanceControllerIntegrationTest.kt$KisAccountBalanceControllerIntegrationTest$given(kisAccountQueryService.getBalance(1L, KisAccountMode.PAPER)).willThrow(KisAuthorizationException("unauthorized"))</ID>
     <ID>MaxLineLength:KisApiException.kt$normalized.contains("auth") || normalized.contains("token") || normalized.contains("인증") -&gt; KisErrorCode.KIS_AUTH_FAILED</ID>
     <ID>MaxLineLength:KisApiException.kt$normalized.contains("duplicate") || normalized.contains("already") || normalized.contains("중복") -&gt; KisErrorCode.KIS_DUPLICATE_OR_ALREADY_PROCESSED</ID>
     <ID>MaxLineLength:KisApiException.kt$normalized.contains("rate") || normalized.contains("limit") || normalized.contains("초과") -&gt; KisErrorCode.KIS_RATE_LIMITED</ID>
@@ -166,10 +160,8 @@
     <ID>NewLineAtEndOfFile:OrderSignal.kt$com.papertrading.api.domain.entity.order.OrderSignal.kt</ID>
     <ID>NewLineAtEndOfFile:PortfolioSnapshotDto.kt$com.papertrading.api.presentation.dto.portfolio.PortfolioSnapshotDto.kt</ID>
     <ID>NewLineAtEndOfFile:QueryDslConfig.kt$com.papertrading.api.infrastructure.config.QueryDslConfig.kt</ID>
-    <ID>NewLineAtEndOfFile:RestTemplateConfig.kt$com.papertrading.api.infrastructure.config.RestTemplateConfig.kt</ID>
     <ID>NewLineAtEndOfFile:SlackNotificationRequestedEvent.kt$com.papertrading.api.application.notification.SlackNotificationRequestedEvent.kt</ID>
     <ID>NewLineAtEndOfFile:TestEntityUtils.kt$com.papertrading.api.support.TestEntityUtils.kt</ID>
-    <ID>NewLineAtEndOfFile:TradingApiApplicationTests.kt$com.papertrading.api.TradingApiApplicationTests.kt</ID>
     <ID>NewLineAtEndOfFile:TradingJournalTest.kt$com.papertrading.api.domain.entity.portfolio.TradingJournalTest.kt</ID>
     <ID>ProtectedMemberInFinalClass:Account.kt$Account$protected constructor()</ID>
     <ID>ProtectedMemberInFinalClass:AccountExitTriggerDefault.kt$AccountExitTriggerDefault$protected constructor()</ID>
@@ -231,7 +223,6 @@
     <ID>UnusedParameter:GlobalExceptionHandler.kt$GlobalExceptionHandler$ex: MethodArgumentNotValidException</ID>
     <ID>UnusedParameter:KisAccountBalanceAdapter.kt$KisAccountBalanceAdapter$marketValue: BigDecimal</ID>
     <ID>UnusedPrivateMember:PositionControllerIntegrationTest.kt$PositionControllerIntegrationTest$private fun createAccountViaApi(): Long</ID>
-    <ID>UnusedPrivateProperty:KisLiveOrderExecutor.kt$KisLiveOrderExecutor$private val orderRepository: OrderRepository</ID>
     <ID>UnusedPrivateProperty:KisOrderRestClient.kt$KisOrderRestClient$private val log = KotlinLogging.logger {}</ID>
     <ID>UnusedPrivateProperty:OrderControllerIntegrationTest.kt$OrderControllerIntegrationTest$val beforeAvailable = objectMapper.readTree(beforeCancel.response.contentAsString)["availableDeposit"].asLong()</ID>
   </CurrentIssues>

@@ -2,7 +2,9 @@ package com.papertrading.api.application.order
 
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
 import com.papertrading.api.common.exception.AccountNotFoundException
+import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
 import com.papertrading.api.common.exception.PositionNotFoundException
+import com.papertrading.api.common.exception.SellExecutionApplyFailedException
 import com.papertrading.api.common.maskKisAccountNumber
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.order.Execution
@@ -111,6 +113,7 @@ class ExecutionProcessor(
             .orElseThrow { AccountNotFoundException(accountId) }
 
         val tradingMode = requireNotNull(account.tradingMode) { "account.tradingMode is null: accountId=$accountId" }
+        rejectIfBrokerFillNotSupported(tradingMode)
         val marketType = requireNotNull(order.marketType) { "order.marketType is null: orderId=$orderId" }
         val ticker = requireNotNull(order.ticker) { "order.ticker is null: orderId=$orderId" }
 
@@ -153,9 +156,7 @@ class ExecutionProcessor(
                 .orElseThrow { PositionNotFoundException(ticker = ticker) }
             val positionId = requireNotNull(position.id) { "position.id is null: accountId=$accountId, ticker=$ticker" }
             val updatedRows = positionRepository.applySellExecutionAtomically(positionId, fillQty)
-            check(updatedRows == 1) {
-                "원자적 매도 반영 실패: positionId=$positionId, qty=$fillQty"
-            }
+            ensureSellApplied(updatedRows, positionId, fillQty)
 
             val grossProceeds = executedAmount
             val netProceeds = grossProceeds.subtract(fee)
@@ -170,9 +171,9 @@ class ExecutionProcessor(
                     // KIS 모드: 체결 상태 동기화만 수행한다.
                 }
 
-                else -> {
-                    account.receiveSellProceeds(netProceeds)
-                }
+                // 진입부 거부 모드 (else 없는 전수 when 용 방어 분기)
+                TradingMode.TOSS_LIVE, TradingMode.UPBIT_LIVE ->
+                    throw BrokerOrderNotSupportedException(tradingMode.name)
             }
 
             executionLedger = account.recordSellExecution(netProceeds, orderId, executionId, "sell-exec-$executionId")
@@ -244,6 +245,19 @@ class ExecutionProcessor(
             message = "Execution filled: ticker=$ticker, side=$side, qty=$fillQty, price=$fillPrice",
             occurredAt = executedAt,
         )
+    }
+
+    // 조건부 UPDATE 가 정확히 1행을 못 바꾸면 잠금 수량 장부 어긋남 (체결 저장 뒤 검사, 트랜잭션 롤백 의존)
+    private fun ensureSellApplied(updatedRows: Int, positionId: Long, fillQty: BigDecimal) {
+        if (updatedRows != 1) throw SellExecutionApplyFailedException(positionId, fillQty)
+    }
+
+    // 체결 저장·포지션·원장 변경 이전 진입부 거부 (롤백 비의존)
+    private fun rejectIfBrokerFillNotSupported(tradingMode: TradingMode) {
+        when (tradingMode) {
+            TradingMode.LOCAL, TradingMode.KIS_PAPER, TradingMode.KIS_LIVE -> Unit
+            TradingMode.TOSS_LIVE, TradingMode.UPBIT_LIVE -> throw BrokerOrderNotSupportedException(tradingMode.name)
+        }
     }
 
     /** 해당 ticker의 활성 주문이 없으면 collector-api 구독 해제 */

@@ -5,6 +5,8 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import com.papertrading.api.application.notification.SlackNotificationEventPublisher
+import com.papertrading.api.common.exception.BrokerOrderNotSupportedException
+import com.papertrading.api.common.exception.SellExecutionApplyFailedException
 import com.papertrading.api.domain.entity.account.Account
 import com.papertrading.api.domain.entity.account.AccountLedger
 import com.papertrading.api.domain.entity.feepolicy.FeePolicy
@@ -43,6 +45,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.MethodSource
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import java.math.BigDecimal
@@ -86,7 +92,7 @@ class ExecutionProcessorTest {
         deposit: BigDecimal = BigDecimal("1000000"),
     ): Account = Account.create(
         accountName = "test",
-        accountType = AccountType.STOCK,
+        accountType = if (tradingMode == TradingMode.UPBIT_LIVE) AccountType.CRYPTO else AccountType.STOCK,
         tradingMode = tradingMode,
         initialDeposit = deposit,
     ).withId(1L)
@@ -420,6 +426,140 @@ class ExecutionProcessorTest {
         val warns = warnLogsOf { fillBuy("70000", "10", "ext-1") }
 
         assertEquals(emptyList<String>(), warns)
+    }
+
+    @Test
+    fun `SELL 포지션 원자 반영이 조건을 못 맞추면 K 범주 SELL_EXECUTION_APPLY_FAILED, 입금과 정산 없음`() {
+        val account = account(TradingMode.LOCAL)
+        val order = sellOrder(account, qty = BigDecimal("5"))
+        setupCommonMocks(account, order)
+        every { executionRepository.save(any()) } answers { firstArg<Execution>().withId(300L) }
+        every { positionRepository.applySellExecutionAtomically(any(), any()) } returns 0
+        val initialDeposit = account.availableDeposit
+
+        val ex = assertThrows<SellExecutionApplyFailedException> {
+            processor.fillLocal(10L, BigDecimal("70000"), BigDecimal("5"))
+        }
+
+        assertEquals("SELL_EXECUTION_APPLY_FAILED", ex.errorCode)
+        assertEquals(initialDeposit, account.availableDeposit)
+        verify(exactly = 0) { settlementRepository.save(any()) }
+    }
+
+    private fun buyOrder(account: Account, qty: BigDecimal = BigDecimal("5")): Order = Order.create(
+        account = account,
+        ticker = "005930",
+        marketType = MarketType.KOSPI,
+        orderType = OrderType.LIMIT,
+        orderSide = OrderSide.BUY,
+        orderCondition = OrderCondition.DAY,
+        quantity = qty,
+        limitPrice = BigDecimal("70000"),
+        lockedAmount = BigDecimal.ZERO,
+        idempotencyKey = "buy-key-1",
+    ).withId(10L)
+
+    // 체결 저장·포지션·원장·정산 어디에도 닿기 전에 거부 (롤백에 기대지 않음)
+    private fun verifyNoFillSideEffects() {
+        verify(exactly = 0) { executionRepository.save(any()) }
+        verify(exactly = 0) { positionRepository.findByAccountIdAndTickerWithLock(any(), any()) }
+        verify(exactly = 0) { positionRepository.save(any()) }
+        verify(exactly = 0) { positionRepository.applySellExecutionAtomically(any(), any()) }
+        verify(exactly = 0) { accountLedgerRepository.save(any()) }
+        verify(exactly = 0) { settlementRepository.save(any()) }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("brokerOrderUnsupportedModes")
+    fun `미지원 모드 SELL 체결 — 예외, 저장·포지션·원장·입금 호출 없음`(mode: TradingMode) {
+        val account = account(mode)
+        val order = sellOrder(account, qty = BigDecimal("5"))
+        setupCommonMocks(account, order)
+        val initialDeposit = account.availableDeposit
+
+        val ex = assertThrows<BrokerOrderNotSupportedException>("$mode") {
+            processor.fillExternal(10L, BigDecimal("70000"), BigDecimal("5"), "ext-sell-$mode", Instant.now())
+        }
+
+        assertEquals("BROKER_ORDER_NOT_SUPPORTED", ex.errorCode, "$mode")
+        assertEquals(initialDeposit, account.availableDeposit, "$mode")
+        assertEquals(0, BigDecimal.ZERO.compareTo(order.filledQuantity), "$mode")
+        verifyNoFillSideEffects()
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("brokerOrderUnsupportedModes")
+    fun `미지원 모드 BUY 체결 — 예외, 저장·포지션 생성·원장 호출 없음`(mode: TradingMode) {
+        val account = account(mode)
+        val order = buyOrder(account, qty = BigDecimal("5"))
+        setupCommonMocks(account, order)
+        val initialDeposit = account.availableDeposit
+
+        assertThrows<BrokerOrderNotSupportedException>("$mode") {
+            processor.fillExternal(10L, BigDecimal("70000"), BigDecimal("5"), "ext-buy-$mode", Instant.now())
+        }
+
+        assertEquals(initialDeposit, account.availableDeposit, "$mode")
+        assertEquals(0, BigDecimal.ZERO.compareTo(order.filledQuantity), "$mode")
+        verifyNoFillSideEffects()
+    }
+
+    // ---- 모드 누락 표: 새 TradingMode 를 추가하면 이 표에 매도 체결 동작을 적어야 통과한다 ----
+
+    private enum class SellFillOutcome { DEPOSIT_RECEIVED, SYNC_ONLY, REJECTED }
+
+    @Test
+    fun `모드 누락 표 — 키 집합이 TradingMode entries 와 같다`() {
+        assertEquals(TradingMode.entries.toSet(), EXPECTED_SELL_FILL_OUTCOME.keys)
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(TradingMode::class)
+    fun `모드 누락 표 — 모드별 매도 체결 동작`(mode: TradingMode) {
+        val outcome = EXPECTED_SELL_FILL_OUTCOME.getValue(mode)
+        val account = account(mode)
+        val order = sellOrder(account, qty = BigDecimal("5"))
+        setupCommonMocks(account, order)
+        every { executionRepository.save(any()) } answers { firstArg<Execution>().withId(500L) }
+        val initialDeposit = account.availableDeposit
+        val fill = {
+            processor.fillExternal(10L, BigDecimal("70000"), BigDecimal("5"), "table-$mode", Instant.now())
+        }
+
+        when (outcome) {
+            SellFillOutcome.DEPOSIT_RECEIVED -> {
+                fill()
+                assertEquals(0, initialDeposit.add(BigDecimal("350000")).compareTo(account.availableDeposit), "$mode")
+            }
+
+            SellFillOutcome.SYNC_ONLY -> {
+                fill()
+                assertEquals(initialDeposit, account.availableDeposit, "$mode")
+            }
+
+            SellFillOutcome.REJECTED -> {
+                assertThrows<BrokerOrderNotSupportedException>("$mode") { fill() }
+                assertEquals(initialDeposit, account.availableDeposit, "$mode")
+                verifyNoFillSideEffects()
+            }
+        }
+    }
+
+    companion object {
+        private val EXPECTED_SELL_FILL_OUTCOME: Map<TradingMode, SellFillOutcome> = mapOf(
+            TradingMode.LOCAL to SellFillOutcome.DEPOSIT_RECEIVED,
+            TradingMode.KIS_PAPER to SellFillOutcome.SYNC_ONLY,
+            TradingMode.KIS_LIVE to SellFillOutcome.SYNC_ONLY,
+            TradingMode.TOSS_LIVE to SellFillOutcome.REJECTED,
+            TradingMode.UPBIT_LIVE to SellFillOutcome.REJECTED,
+        )
+
+        // 거부 모드는 표에서 파생해 한 곳에서만 관리
+        @JvmStatic
+        fun brokerOrderUnsupportedModes(): List<TradingMode> {
+            val rejected = EXPECTED_SELL_FILL_OUTCOME.filterValues { it == SellFillOutcome.REJECTED }
+            return rejected.keys.toList()
+        }
     }
 
     /** Spec Test 1C: fill() 뒤 ExecutionFilledEvent 발행(ticker, side, executionId 일치) */

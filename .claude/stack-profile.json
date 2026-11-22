@@ -89,5 +89,6 @@
       "command": "docker compose up -d --wait"
     }
   },
-  "profileContract": 1
+  "profileContract": 1,
+  "qaNumber": "off"
 }

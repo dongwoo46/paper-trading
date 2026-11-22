@@ -1,6 +1,7 @@
 package com.papertrading.api.common.exception
 
 import org.springframework.http.HttpStatus
+import java.math.BigDecimal
 
 open class BadRequestException(
     errorCode: String,
@@ -66,42 +67,6 @@ class InvalidPaginationException(message: String) :
 class KisResponseParseException(message: String) :
     BadRequestException("KIS_RESPONSE_PARSE_ERROR", message)
 
-open class UnauthorizedException(
-    errorCode: String,
-    message: String,
-    cause: Throwable? = null,
-) : ApiDomainException(errorCode, HttpStatus.UNAUTHORIZED, message, cause)
-
-open class ForbiddenException(
-    errorCode: String,
-    message: String,
-    cause: Throwable? = null,
-) : ApiDomainException(errorCode, HttpStatus.FORBIDDEN, message, cause)
-
-open class BadGatewayException(
-    errorCode: String,
-    message: String,
-    cause: Throwable? = null,
-) : ApiDomainException(errorCode, HttpStatus.BAD_GATEWAY, message, cause)
-
-open class GatewayTimeoutException(
-    errorCode: String,
-    message: String,
-    cause: Throwable? = null,
-) : ApiDomainException(errorCode, HttpStatus.GATEWAY_TIMEOUT, message, cause)
-
-class KisAuthorizationException(message: String, cause: Throwable? = null) :
-    UnauthorizedException("KIS_UNAUTHORIZED", message, cause)
-
-class KisForbiddenException(message: String, cause: Throwable? = null) :
-    ForbiddenException("KIS_FORBIDDEN", message, cause)
-
-class KisRemoteCallException(message: String, cause: Throwable? = null) :
-    BadGatewayException("KIS_BAD_GATEWAY", message, cause)
-
-class KisTimeoutException(message: String, cause: Throwable? = null) :
-    GatewayTimeoutException("KIS_GATEWAY_TIMEOUT", message, cause)
-
 class ExternalServiceResponseException(message: String) :
     ConflictException("EXTERNAL_SERVICE_RESPONSE_ERROR", message)
 
@@ -158,3 +123,70 @@ class TaxSummaryComputeFailedException(message: String, cause: Throwable? = null
 
 class InvalidAccountModeForTaxSummaryException(message: String) :
     BadRequestException("INVALID_ACCOUNT_MODE_FOR_TAX_SUMMARY", message)
+
+// ---- 계좌·주문 에러 정렬(DEC-02): 기존 require/check 의 400 뭉침을 상황별 범주와 code 로 분리 ----
+
+/** A-1 — 금액이 0 이하 (입금, 출금) */
+class InvalidAmountException(message: String) : BadRequestException("INVALID_AMOUNT", message)
+
+/** A-2 — 계좌명이 비어 있음 */
+class InvalidAccountNameException : BadRequestException("INVALID_ACCOUNT_NAME", "계좌명은 비어 있을 수 없습니다.")
+
+/** A-1 — 초기 예수금이 음수 */
+class InvalidInitialDepositException : BadRequestException("INVALID_INITIAL_DEPOSIT", "초기 예수금은 0 이상이어야 합니다.")
+
+/** A-1 — 기준 통화 코드가 3자리가 아님 */
+class InvalidBaseCurrencyException : BadRequestException("INVALID_BASE_CURRENCY", "기준 통화는 3자리 코드여야 합니다.")
+
+/** A-1 — 계좌 타입과 거래 모드의 잘못된 조합 */
+class InvalidAccountModeCombinationException(
+    accountType: String,
+    tradingMode: String,
+) : BadRequestException("INVALID_ACCOUNT_TYPE_TRADING_MODE", "계좌 타입과 거래 모드 조합이 올바르지 않습니다. $accountType, $tradingMode")
+
+/** A-1 — 리스크 정책 값이 범위 밖 */
+class InvalidRiskPolicyException(message: String) : BadRequestException("INVALID_RISK_POLICY", message)
+
+/** A-2 — 지정가 주문에 가격이 없음 */
+class LimitPriceRequiredException : BadRequestException("LIMIT_PRICE_REQUIRED", "지정가 주문은 limitPrice가 필요합니다.")
+
+/** A-2 — GTD 주문에 만료 시각이 없음 */
+class ExpireAtRequiredException : BadRequestException("EXPIRE_AT_REQUIRED", "GTD 주문은 expireAt이 필요합니다.")
+
+/** F-5 — 가용 예수금 부족 (출금, 매수 주문 잠금) */
+class InsufficientAvailableDepositException : ConflictException("INSUFFICIENT_AVAILABLE_DEPOSIT", "가용 예수금이 부족합니다.")
+
+/** F-5 — 주문 가능 수량 부족 (매도 주문) */
+class InsufficientOrderableQuantityException(
+    available: BigDecimal,
+    requested: BigDecimal,
+) : ConflictException("INSUFFICIENT_ORDERABLE_QUANTITY", "주문 가능 수량 부족. available=$available, requested=$requested")
+
+/** F-2 — 비활성화된 계좌로 주문 */
+class AccountInactiveException : ConflictException("ACCOUNT_INACTIVE", "비활성화된 계좌입니다.")
+
+/** F-2 — 이미 비활성화된 계좌를 다시 비활성화 */
+class AccountAlreadyInactiveException : ConflictException("ACCOUNT_ALREADY_INACTIVE", "이미 비활성화된 계좌입니다.")
+
+/** F-1 — 이미 활성화된 계좌를 다시 활성화 */
+class AccountAlreadyActiveException : ConflictException("ACCOUNT_ALREADY_ACTIVE", "이미 활성화된 계좌입니다.")
+
+/** F-2 — 취소할 수 없는 상태의 주문 (체결 완료, 취소 완료 등) */
+class OrderNotCancelableException(
+    status: String,
+) : ConflictException("ORDER_NOT_CANCELABLE", "취소 불가 상태입니다. status=$status")
+
+/** F-4 — 시세가 오래되어 아직 쓸 수 없음 */
+class QuoteStaleException(ticker: String) : ConflictException("QUOTE_STALE", "시세가 오래되었습니다. (stale) ticker=$ticker")
+
+/** K-2 — 잠금 예수금 장부가 어긋나 해제, 확정할 수 없음 */
+class LockedDepositInsufficientException : InternalErrorException("LOCKED_DEPOSIT_INSUFFICIENT", "잠금 예수금이 부족합니다.")
+
+/** K-3 — 내부에서 계산한 원장 금액이 0 이하 (잠금, 해제, 확정, 매도 대금) */
+class LedgerAmountInvalidException(message: String) : InternalErrorException("LEDGER_AMOUNT_INVALID", message)
+
+/** K-3 — 매도 체결의 포지션 원자 반영이 조건을 맞추지 못함 */
+class SellExecutionApplyFailedException(
+    positionId: Long,
+    quantity: BigDecimal,
+) : InternalErrorException("SELL_EXECUTION_APPLY_FAILED", "원자적 매도 반영 실패: positionId=$positionId, qty=$quantity")

@@ -1,14 +1,15 @@
 # Backend API — Kotlin·Spring 도메인 모델과 금액 (paper-trading)
 <!-- devkit:pointer
 path: ^backend/(trading-api|collector-api)/src/main/.+\.kt$
-signal: @Entity|BigDecimal|class \w+\s*(protected )?constructor|private set|@ManyToOne|@OneToMany|@OneToOne|^import com\.papertrading\.api\.(application|infrastructure|presentation)\.|@Service|@Transactional|interface \w+Port\b
-why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트를 다루는 Kotlin 코드
+signal: @Entity|BigDecimal|class \w+\s*(protected )?constructor|private set|@ManyToOne|@OneToMany|@OneToOne|^import com\.papertrading\.api\.(application|infrastructure|presentation)\.|@Service|@Transactional|interface \w+Port\b|@Component|@Controller|@RestController|@Configuration|@Repository|@Autowired|!!|\bDouble\b|\bFloat\b
+why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트·Spring 빈 주입·null 단언을 다루는 Kotlin 코드
 -->
+<!-- devkit:scope narrows DD9, DD10, DD11, DD12, DD13, DD14, AR3 -->
 <!-- devkit:form v2 -->
 
 > 이 레포 전용 규칙 — devkit 팀 규칙 `backend-api.md`(DD4~DD14)를 이 레포의 Kotlin·Spring·JPA 에서 지키는 방법만 적는다. 원칙 자체는 팀 규칙이 SSoT 이고 여기서 다시 쓰지 않는다.
-> devkit 은 이 레포의 Kotlin 파일에 팀 규칙을 자동으로 전달하지 않는다(rule-pointer 실측 2026-11-15: `always:dev-team` 만 나온다). 그래서 이 레포 Kotlin 작업·리뷰는 팀 `backend-api.md` 의 DD9~DD14(PTB1·PTB2·PTB3·PTB5·PTB7~PTB9 가 이 레포 형태로 적음)와, 이 문서가 다시 쓰지 않는 DD7(컨텍스트 사이는 명시 계약으로만)·AE5·AE8(예외→HTTP 응답은 전역 핸들러 한 곳, 예외 원문을 응답에 싣지 않음)을 직접 열어 따른다. devkit 쪽 Kotlin 신호 추가는 devkit 에 제안으로 올린다.
-> 금액 규칙의 상위 원칙은 루트 `CLAUDE.md` «Financial Safety»(금액에 부동소수점 금지, Kotlin 은 BigDecimal).
+> devkit 은 이 레포의 Kotlin 파일에 팀 규칙을 자동으로 전달하지 않는다(rule-pointer 실측 2026-11-21, devkit 1.2.0: `always:dev-team`·`architecture.md` 와 레포 규칙만 나온다). 그래서 이 레포 Kotlin 작업·리뷰는 팀 `backend-api.md` 의 DD9~DD14(PTB1·PTB2·PTB5·PTB7~PTB9 가 이 레포 형태로 적음)와, 이 문서가 다시 쓰지 않는 DD7(컨텍스트 사이는 명시 계약으로만)·DD13(금액을 float 로 두지 않음)·DD15(다른 애그리거트는 id 로만 참조, JPA 연관관계는 같은 애그리거트 자식에만)·AE5·AE8(예외→HTTP 응답은 전역 핸들러 한 곳, 예외 원문을 응답에 싣지 않음)을 직접 열어 따른다. devkit 쪽 Kotlin 신호 추가는 devkit 에 제안으로 올린다.
+> 금액 규칙의 상위 원칙은 `rules/domains/trading.md` «금융 안전»(Kotlin 은 BigDecimal)과 devkit DD13(금액에 부동소수점 금지).
 
 ## 도메인 모델과 영속 모델
 
@@ -18,10 +19,7 @@ why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트를
   Exception: 금액도 전이 규칙도 없는 단순 CRUD·설정 성격 컨텍스트는 불변식·전이 메서드가 없는 얇은 도메인 모델(필드만 가진 클래스)을 허용한다 — 팀 규칙 backend-api «No over-engineering»(단순 CRUD 에 규칙 많은 도메인 모델을 강요하지 않음)의 적용이다. JPA 엔티티를 infrastructure 밖에 두는 예외는 없고, 얇은 모델도 PTB1 의 import 금지와 포트·어댑터 분리는 그대로 따른다.
 <!-- gt:PTB2 -->
 - 도메인 모델의 상태 필드는 `private set` 이고, 상태 변경은 허용된 이전 상태를 검사하는 이름 붙은 메서드로만 한다.
-  Why: 팀 규칙 DD10(빈약한 모델 금지)·DD11(도메인 로직 누수 금지)의 Kotlin 형태. Kotlin `var` 는 기본이 public setter 라 서비스가 전이 검사를 건너뛰고 상태를 바꿀 수 있고, 루트 `CLAUDE.md` 의 «상태 전이는 명시적»이 깨진다. — enforce: review
-<!-- gt:PTB3 -->
-- 다른 애그리거트는 id 로만 참조한다. JPA 연관관계(`@ManyToOne`·`@OneToMany`·`@OneToOne`)는 같은 애그리거트 안의 자식에만 쓴다.
-  Why: 팀 규칙 DD12(한 트랜잭션은 한 애그리거트)를 지키는 구조. 애그리거트를 객체로 이으면 한 트랜잭션이 여러 애그리거트를 읽고 잠근다(devkit 제안 BiocomKR/devkit#2471 의 DD15 와 같은 내용 — 그 제안이 머지되면 이 조항은 지운다). — enforce: review
+  Why: 팀 규칙 DD10(빈약한 모델 금지)·DD11(도메인 로직 누수 금지)의 Kotlin 형태. Kotlin `var` 는 기본이 public setter 라 서비스가 전이 검사를 건너뛰고 상태를 바꿀 수 있고, `rules/domains/trading.md` 의 «상태 전이는 명시적»이 깨진다. — enforce: review
 <!-- gt:PTB5 -->
 - 도메인 모델은 private 생성자와 팩토리, 또는 `init { require(...) }` 로 생성 시점에 불변식을 검증해 잘못된 인스턴스가 존재할 수 없게 한다.
   Why: 검증을 서비스에 두면 그 서비스를 거치지 않는 호출자(다른 유스케이스, 어댑터의 변환, 테스트 픽스처)가 건너뛴다. 팀 규칙 DD13(원시 타입 집착 금지)의 값 객체도 이 방식으로 만든다. — enforce: review
@@ -56,3 +54,15 @@ why: JPA 엔티티(애그리거트)·금액 계산·계층 간 import·포트를
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r6.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r7.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r8.md -->
+
+## 옮겨 온 줄 — 옛 하네스(.claude/_disabled·.codex)
+
+- trading-api·collector-api 에서 금액과 수량은 `BigDecimal` 로 다루고 `Double`·`Float` 을 쓰지 않는다.
+
+- Spring 빈은 생성자로 주입하고 `@Autowired` 필드 주입을 쓰지 않는다.
+
+- `trading-api` domain package must be pure Kotlin — no Spring, no JPA.
+
+## 옮겨 온 줄 — backend/CLAUDE.md
+
+- Prefer `val` over `var` — never use `!!`

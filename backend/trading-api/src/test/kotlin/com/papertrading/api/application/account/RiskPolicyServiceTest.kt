@@ -1,6 +1,7 @@
 package com.papertrading.api.application.account
 
 import com.papertrading.api.application.account.command.UpsertRiskPolicyCommand
+import com.papertrading.api.common.exception.InvalidRiskPolicyException
 import com.papertrading.api.common.exception.NotFoundException
 import com.papertrading.api.domain.enums.AccountType
 import com.papertrading.api.domain.enums.TradingMode
@@ -97,6 +98,7 @@ class RiskPolicyServiceTest {
         every { riskPolicyRepository.findByAccountIdAndIsActiveTrue(1L) } returns Optional.empty()
 
         assertThatThrownBy { service.replaceRiskPolicy(1L, command) }
-            .isInstanceOf(IllegalArgumentException::class.java)
+            .isInstanceOf(InvalidRiskPolicyException::class.java)
+            .hasFieldOrPropertyWithValue("errorCode", "INVALID_RISK_POLICY")
     }
 }

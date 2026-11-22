@@ -1,2 +1,4 @@
 [*.{kt,kts}]
 ktlint_code_style = intellij_idea
+# 시험 함수는 한글 이름이 레포 관례 — 사람 결정 2026-11-15
+ktlint_function_naming_ignore_when_annotated_with = Test, ParameterizedTest

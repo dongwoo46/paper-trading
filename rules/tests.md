@@ -4,6 +4,7 @@ path: ^backend/(trading-api|collector-api)/src/test/.+\.kt$
 signal: @DataJpaTest|@SpringBootTest|Repository|Redis|H2|h2|Testcontainers|@Container|mockk<.*(Repository|Redis)
 why: PostgreSQL·Redis 를 쓰는 코드를 시험하는 Kotlin 테스트
 -->
+<!-- devkit:scope narrows TT7 -->
 <!-- devkit:form v2 -->
 
 > 이 레포 전용 규칙. 시험 원칙(시험 먼저, 무엇을 가짜로 둘지)은 devkit 팀 규칙 `tests.md` 가 SSoT 이고, 여기서는 영속·캐시 어댑터의 시험 엔진만 정한다.
@@ -17,3 +18,29 @@ why: PostgreSQL·Redis 를 쓰는 코드를 시험하는 Kotlin 테스트
 
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r5.md -->
+
+## 옮겨 온 줄 — 옛 하네스(.claude/_disabled·.codex)
+
+> 아래 줄이 위 «실제 엔진» 조항과 어긋나면 위 조항과 그 Exception 이 이긴다. 실제 DB·Redis 요구와 «Mocked DB or Redis → Must fix» 는 영속·캐시 어댑터와 그것을 거치는 통합 시험에 한하고, 도메인 모델과 유스케이스의 단위 시험은 포트를 가짜로 둔다.
+
+- 서비스·애플리케이션 비즈니스 로직은 통합 시험으로 검증하고, 그 검증을 위해 E2E 시험을 새로 더하지 않는다.
+
+- **Mocked DB or Redis → 🔴 Must fix.** Testcontainers only.
+
+- Changing production code for test convenience = forbidden.
+
+- Prefer an HTTP-level fake (e.g. WireMock) over an interface/trait mock for HTTP APIs.
+
+- Use `@SpringBootTest` + Testcontainers PostgreSQL instead.
+
+- 3. Never fix flakiness with `sleep()`, retry loops, or higher timeouts → fix the root cause.
+
+- New E2E test introduced for service verification that should be covered by integration tests.
+
+- Do not introduce or expand E2E tests for service/business-logic validation.
+
+- Verify Acceptance Criteria using targeted integration tests (service/application business logic 중심).
+
+- Do not add E2E tests for this verification scope. Replace existing E2E-oriented checks with integration tests where needed.
+
+- Integration tests are the default high-value tests and must verify service/application business logic with real managed dependencies (DB/Redis via Testcontainers).

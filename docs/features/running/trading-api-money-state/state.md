@@ -58,6 +58,7 @@ step-1 in progress: PR-A1 implemented and committed; joint review round 1 and re
 | 2026-11-15 | step-1 completion criteria deviate: baseline ref e510634 instead of main, archunit_store 1 line deleted, ledger save merged | local main is stale and has no baseline files; the frozen store cannot shrink without the human-approved deletion (plan §8-1) |
 | 2026-11-15 | step-1 scope grew: in-memory rounding removed, overfill rejected, two warn logs | joint review blockers P-01~P-03 and human decision on rounding (plan §8-1) |
 | 2026-11-15 | step-1 scope grew again: money columns widened to numeric(28,12) with V13, settlement rounding removed, notice rejection handled at the socket boundary, KIS execution id masked | re-review round 2 (R2-N1~R2-N4) and the human decision "금액 열 확장" (plan section 8-1) |
+| 2026-11-22 | origin/main merged into the PR branch; the 2026-11-15 "wait until the rules are wired" hold is replaced: conflict resolution, QA round 3 and merge go ahead now | human decision 2026-11-22 «해소부터 머지까지» (multi-broker step 13 is blocked on this PR). Resolution keeps main's exhaustive `when` with entry rejection for TOSS_LIVE·UPBIT_LIVE (no `else` deposit) and this PR's `Order.applyExecution`/`remainingLockedAmount`; full test 92 xml 1216 tests 0 failures, lint baselines grew 0 vs origin/main |
 
 ---
 

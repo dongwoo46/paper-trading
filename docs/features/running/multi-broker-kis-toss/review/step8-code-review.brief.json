@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "review": "docs/features/running/multi-broker-kis-toss/review/step8-code-review.md",
+  "base": "origin/main",
+  "head": "91f03b1d03491a54c2580c89ca9dc4d46b2af929",
+  "changedFiles": 8,
+  "rows": [
+    {
+      "id": "C-01",
+      "bucket": "blocking",
+      "grade": "blocker",
+      "origin": "change",
+      "loc": "backend/trading-api/src/test/kotlin/com/papertrading/api/characterization/kis/KisExecutionNoticeBoundaryCharacterizationTest.kt:3",
+      "what": "(c) 시험이 입구를 `KisExecutionNoticeService`(L3·L62·L110·L177·L218)와 `KisExecutionNotice` 반환 타입(L19·L342)으로 직접 잡음. 계획서 §10.3(development-plan.md:378-379)과 D27 이 step 13 에서 이 서비스를 `BrokerExecutionNoticeService` 로 이름을 바꾸고 `KisExecutionNotice` 를 `BrokerExecutionNotice` 로 바꾸므로, step 13 에서 이 파일을 고치지 않으면 컴파일이 안 됨 → D21·step-8 §4(L66) «step 9~14 에서 고치지 않는다»가 구조상 지켜질 수 없음. 또 실제 배선(`KisExecutionWebSocketManager.handleRawMessage` 의 파싱→처리, D27 이 바꾸는 곳)을 건너뛰어, step 13 에서 그 배선의 변환이 틀려도 이 시험은 못 잡음",
+      "targets": [],
+      "sites": [],
+      "notes": [
+        "file:line 칸 «backend/trading-api/src/test/kotlin/com/papertrading/api/characterization/kis/KisExecutionNoticeBoundaryCharacterizationTest.kt:3» 에서 파일을 못 읽었습니다 — 이 행은 목록이 비었습니다(빈 목록 ≠ 주변 자리 없음)"
+      ]
+    }
+  ],
+  "notes": [
+    "크기 600000바이트 초과 7개·읽기 실패 0개 파일은 검색에서 빠졌습니다"
+  ]
+}

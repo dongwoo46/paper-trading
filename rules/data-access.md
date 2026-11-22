@@ -3,7 +3,9 @@
 path: ^backend/(trading-api|collector-api)/src/main/.+\.kt$
 signal: @Transactional|@TransactionalEventListener|JpaRepository|@Query|@Modifying|@Lock|@Version|EntityManager|fetch join|@EntityGraph|\.save\(|\.saveAll\(|JPAQueryFactory|import com\.papertrading\.api\.domain\.entity\.\w+\.Q[A-Z]\w+|\.fetchJoin\(\)|\.offset\(
 why: Spring 트랜잭션·JPA·Querydsl 조회와 쓰기를 다루는 Kotlin 코드
+adr: ../docs/adr/data-access.md
 -->
+<!-- devkit:scope narrows DA1, DA6, DA7, DA9, DA10 -->
 <!-- devkit:form v2 -->
 
 > 이 레포 전용 규칙 — devkit 팀 규칙 `data-access.md`(DA1~)를 Spring·JPA 에서 지키는 방법만 적는다. 원칙은 팀 규칙이 SSoT.
@@ -42,3 +44,11 @@ why: Spring 트랜잭션·JPA·Querydsl 조회와 쓰기를 다루는 Kotlin 코
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r7.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r8.md -->
 <!-- devkit:rule-verified docs/eval/rule-change/2026-11-15-repo-rules-spring-ddd-r9.md -->
+
+## 옮겨 온 줄 — 옛 하네스(.claude/_disabled·.codex)
+
+- Indexes: verify with query execution plan before adding.
+
+## 옮겨 온 줄 — backend/trading-api/docs/ADR.md
+
+- **트레이드오프**: 비관적 락은 데드락 위험. Account 락 먼저 → Position 락 나중 순서를 코드 레벨에서 강제해야 함.

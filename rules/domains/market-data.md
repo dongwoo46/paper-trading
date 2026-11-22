@@ -1,0 +1,125 @@
+# Market data 도메인 — 시세·일봉·매크로 수집 (paper-trading)
+<!-- devkit:pointer
+path: ^backend/(collector-api/src/main/.+\.kt|quant-(collector|worker)/.+\.py)$
+adr: ../../docs/adr/market-data-collector-worker-incidents.md
+why: 시세·OHLCV·매크로 수집과 Redis 시세 발행 코드(collector-api, quant-collector, quant-worker)
+-->
+
+> 아래 줄은 옛 문서에서 원문 그대로 옮겼다(2026-11-21 규칙 이사). 절 제목이 출처다.
+
+## 옛 `backend/collector-api/docs/PRD.md`
+
+# PRD — collector-api
+
+## 역할
+외부 시장 데이터 수집 + Redis 시세 발행 + PostgreSQL 히스토리 적재 + 구독 관리 API 제공.
+
+## 아키텍처
+
+### 디렉토리 구조
+> 옛 PRD 시점의 그림이다. 지금 collector-api 패키지는 `com.papertrading.collector` 아래 `application`·`domain`·`infra`·`presentation` 이고, HTTP 컨트롤러는 `presentation/`, 스케줄러·기동 이벤트·웹소켓 런타임 같은 진입점은 `application/runtime/` 이나 `application/<소스>/runtime/` 에 있다(2026-11-22 코드 기준: `CatalogSyncRuntime`, `kis/runtime/CollectorRuntime`, `fred`·`kis` 스케줄러). 새 코드는 그림이 아니라 이 자리를 따른다.
+
+```
+src/
+└── main/kotlin/com/papertrading/collector/
+    ├── domain/
+    ├── application/
+    │   ├── fred/           FredObservationIngestionService, FredObservationScheduler
+    │   ├── kis/
+    │   │   └── pipeline/   RawEventPipeline, KisRawEventParser
+    │   ├── market/         MarketDailyOhlcvQueryService
+    │   └── upbit/
+    ├── infrastructure/
+    │   ├── redis/          QuoteRedisPublisher
+    │   └── external/       KisWebSocketCollector, FredClient
+    └── interfaces/
+        ├── http/           각 소스별 Controller
+        └── internal/       InternalSubscriptionController
+```
+
+### 패턴
+- Clean Architecture: presentation → application → domain ← infrastructure
+- Pipeline Pattern: KIS WebSocket 원시 메시지 → Parser → Redis Publisher
+- Scheduler Pattern: FRED 관측값 주기 수집 (AtomicBoolean 중복 실행 방지)
+
+### 데이터 흐름
+```
+KIS WebSocket 메시지
+  → RawEventPipeline.publish()
+  → KisRawEventParser (H0STCNT0 파싱 → KisQuoteEvent)
+  → QuoteRedisPublisher
+      ├── Redis Hash quote:{ticker} 저장 (TTL 300s)
+      └── Redis Pub/Sub quote:{ticker} 발행
+
+trading-api → POST /api/internal/subscriptions/{ticker}
+  → KisWebSocketCollector.emit() (동적 구독/해제)
+
+collector-api → POST /collect/daily (quant-worker HTTP)
+  → quant-worker가 pykrx/yfinance 수집 후 PostgreSQL 적재
+```
+
+## 핵심 기능 (MVP)
+- KIS WebSocket 실시간 시세 수신 + Redis 발행
+- KIS/Upbit/pykrx/yfinance/FRED 구독 관리 API
+- FRED 관측값 주기 수집 (1시간 간격, 증분)
+- 일봉 OHLCV 조회 API (pykrx, yfinance)
+- 내부 구독 API (trading-api 연동용)
+
+## 미구현 (제외)
+- WebSocket 재연결 안정성 강화
+- ECOS / IMF / Binance 수집
+- DART / EDGAR 공시 수집
+- 분봉 수집 파이프라인
+- 수집 실패 모니터링 대시보드
+
+## 옛 `backend/quant-worker/docs/PRD.md`
+
+# PRD — quant-worker
+
+## 역할
+일봉 OHLCV 배치 수집 워커. collector-api HTTP 요청으로 트리거, pykrx/yfinance로 수집 후 PostgreSQL 적재.
+
+## 아키텍처
+
+### 디렉토리 구조
+```
+quant-worker/
+├── src/
+│   ├── fetch/          pykrx_fetcher.py, yfinance_fetcher.py
+│   └── db/             upsert.py (ON CONFLICT DO UPDATE)
+├── scripts/            수동 실행 스크립트
+├── main.py             CLI 실행 진입점
+└── api_main.py         FastAPI 서버 진입점
+```
+
+### 패턴
+- 함수형 스타일: 클래스보다 함수 단위 구성
+- Upsert Pattern: 중복 적재 방지 (ON CONFLICT DO UPDATE)
+- Incremental Fetch: catalog watermark 기준 증분 수집
+
+### 데이터 흐름
+```
+collector-api POST /collect/daily
+  → api_main.py (FastAPI)
+  → fetch/pykrx_fetcher or yfinance_fetcher (provider 분기)
+  → 종목별 일봉 OHLCV 수집 (watermark 이후 날짜만)
+  → db/upsert.py → PostgreSQL market_daily_ohlcv
+```
+
+## 핵심 기능 (MVP)
+- pykrx 일봉 OHLCV 수집 (2010~현재, 국내 주식)
+- yfinance 일봉 OHLCV 수집 (2010~현재, 해외 주식)
+- catalog watermark 기반 증분 수집
+- DB upsert (중복 방지)
+- POST /collect/daily API
+
+## 미구현 (제외)
+- 수집 실패 종목 재시도 로직
+- 수집 이력 로그 DB 적재
+- 분봉 수집
+- Binance/DART 등 추가 소스
+- 스케줄러 자체 내장 (현재는 외부 트리거 방식)
+
+## 옮겨 온 줄 — docs/before/collector-worker/rules/incident-prevention-rules.md
+
+- 다중 종목 조회 시 MultiIndex 컬럼 반환 가능. 응답 정규화 시 flatten 먼저 처리

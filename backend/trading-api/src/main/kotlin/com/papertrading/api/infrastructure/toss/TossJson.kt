@@ -1,0 +1,102 @@
+package com.papertrading.api.infrastructure.toss
+
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.core.JsonToken
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JavaType
+import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.cfg.CoercionAction
+import com.fasterxml.jackson.databind.cfg.CoercionInputShape
+import com.fasterxml.jackson.databind.cfg.MutableCoercionConfig
+import com.fasterxml.jackson.databind.deser.std.NumberDeserializers
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
+import com.fasterxml.jackson.module.kotlin.kotlinModule
+import com.papertrading.api.infrastructure.toss.dto.TossErrorDetail
+import com.papertrading.api.infrastructure.toss.dto.TossErrorEnvelope
+import com.papertrading.api.infrastructure.toss.dto.TossOAuth2Error
+import com.papertrading.api.infrastructure.toss.dto.TossSuccessEnvelope
+import java.math.BigDecimal
+
+/**
+ * 토스 본문 역직렬화, 문자열 본문을 data class 로 직접 읽음 (D13)
+ * Map·JsonNode 로 읽지 않으므로 JSON 소수가 Double 을 거치지 않고, BigDecimal 필드는 문자열 숫자도 정확히 받음
+ * 모르는 필드는 무시(명세가 값 확장을 허용), 필수 필드(null 불가 필드) 누락은 JsonMappingException
+ */
+// 문자열 토큰 null 글자는 실패, 나머지(숫자·숫자 문자열·빈 문자열 강제 변환 설정)는 Jackson 기본 BigDecimal 읽기에 위임, JSON null 은 여기까지 오지 않음
+private class NullTokenRejectingBigDecimalDeserializer : StdDeserializer<BigDecimal>(BigDecimal::class.java) {
+    override fun deserialize(parser: JsonParser, context: DeserializationContext): BigDecimal? {
+        if (parser.hasToken(JsonToken.VALUE_STRING) && parser.text.trim() == NULL_TOKEN) {
+            val failed = context.handleWeirdStringValue(BigDecimal::class.java, parser.text, "문자열 null 은 값이 아님")
+            return failed as BigDecimal?
+        }
+        return NumberDeserializers.BigDecimalDeserializer.instance.deserialize(parser, context)
+    }
+
+    private companion object {
+        const val NULL_TOKEN = "null"
+    }
+}
+
+internal object TossJson {
+    private val mapper: JsonMapper = JsonMapper.builder()
+        // 목록·맵 원소 null 이 null 불가 원소 타입에 조용히 들어가지 않게 실패시킴 (D14, C-03)
+        .addModule(kotlinModule { enable(KotlinFeature.NewStrictNullChecks) })
+        // 봉투 result 처럼 제네릭 타입이 지워진 목록은 코틀린 검사가 못 보므로 원소 null 을 매퍼 전체에서 막음, 명세 배열에는 null 원소가 없음
+        .defaultSetterInfo(JsonSetter.Value.forContentNulls(Nulls.FAIL))
+        // 문자열 토큰 "null"(앞뒤 공백 포함)이 금액 칸에서 조용히 null 이 되지 않게 함, 강제 변환 설정과 별개 경로라 따로 막음 (D14, S7-02)
+        .addModule(SimpleModule().addDeserializer(BigDecimal::class.java, NullTokenRejectingBigDecimalDeserializer()))
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+        // null·빈 값이 원시형(Long·Int) 필드에서 조용히 0 이 되지 않게 실패시킴 (D14)
+        .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+        // 3600.9 가 3600 으로 절삭되어 정수 필드(Long·Int)에 들어가지 않게 실패시킴 (D14, C-03)
+        .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
+        // 빈·공백 문자열이 숫자·불린·객체·목록 칸에서 조용히 null·0·빈 값이 되지 않게 실패시킴, 칸이 비었다는 뜻은 명시적 JSON null 만 (D14, S6-01)
+        // 문자열 칸은 이 검사를 거치지 않아 빈 문자열을 그대로 읽음(오류 본문의 빈 message 등)
+        .withCoercionConfigDefaults(::failOnEmptyOrBlankString)
+        .build()
+
+    private fun failOnEmptyOrBlankString(config: MutableCoercionConfig) {
+        config.setCoercion(CoercionInputShape.EmptyString, CoercionAction.Fail).setAcceptBlankAsEmpty(true)
+    }
+
+    fun javaType(type: Class<*>): JavaType = mapper.constructType(type)
+
+    fun javaType(type: TypeReference<*>): JavaType = mapper.constructType(type.type)
+
+    // 본문이 JSON null 이면 null, 호출 쪽이 응답 불일치로 처리
+    fun <T : Any> readValue(body: String, type: Class<T>): T? = mapper.readValue(body, type)
+
+    fun <T> readSuccess(body: String, resultType: JavaType): TossSuccessEnvelope<T>? {
+        val envelopeType = mapper.typeFactory.constructParametricType(TossSuccessEnvelope::class.java, resultType)
+        return mapper.readValue(body, envelopeType)
+    }
+
+    // 오류 본문은 분류를 돕는 용도라 읽지 못하면 null, 실패를 새로 만들지 않음
+    fun readErrorDetail(body: String?): TossErrorDetail? = readOrNull(body, TossErrorEnvelope::class.java)?.error
+
+    fun readOAuth2Error(body: String?): TossOAuth2Error? = readOrNull(body, TossOAuth2Error::class.java)
+
+    private fun <T> readOrNull(body: String?, type: Class<T>): T? {
+        if (body.isNullOrBlank()) return null
+        return try {
+            mapper.readValue(body, type)
+        } catch (_: JsonProcessingException) {
+            null
+        }
+    }
+
+    // 응답 값이 든 Jackson 메시지 대신 필드 경로(이름만)로 사유를 만듦
+    fun reasonOf(e: JsonProcessingException): String = when (e) {
+        is JsonMappingException -> "필드 경로=${e.path.joinToString(".") { it.fieldName ?: "[${it.index}]" }}"
+        else -> "JSON 구문 오류"
+    }
+}

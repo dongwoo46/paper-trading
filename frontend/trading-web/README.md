@@ -1,6 +1,6 @@
 # trading-web
 
-모의투자·알고리즘 트레이딩 운영 대시보드(React · TypeScript · Vite · shadcn/ui Base Nova). 지침은 `CLAUDE.md`, UI 규칙은 `docs/UI_GUIDE.md` 입니다.
+모의투자·알고리즘 트레이딩 운영 대시보드(React · TypeScript · Vite · shadcn/ui Base Nova). 지침은 `AGENTS.md`(Claude 는 `CLAUDE.md`), UI 규칙은 레포 루트 `rules/design-system.md` 입니다.
 
 ## 실행
 
@@ -15,8 +15,6 @@ npm test -- --run
 Node 20 이상(CI 는 20).
 
 ## 개발 서버 프록시
-
-브라우저는 백엔드를 직접 부르지 못하므로 개발 서버·`preview` 가 경로 접두사별로 나눠 보냅니다(`proxy.config.ts`). 백엔드에 컨트롤러 경로를 더하면 이 표도 함께 고칩니다 — `src/test/proxy-table.test.ts` 가 컨트롤러 소스를 읽어 빠진 접두사를 잡습니다.
 
 | 접두사 | 대상 | 환경 변수(기본값) |
 |---|---|---|

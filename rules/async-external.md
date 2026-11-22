@@ -3,7 +3,9 @@
 path: ^backend/(trading-api|collector-api)/src/main/.+\.kt$
 signal: suspend fun|runBlocking|Dispatchers|\.block\(|WebClient|MessageListener|RedisMessageListenerContainer|convertAndSend|\.publish\(|onMessage\(
 why: 코루틴·블로킹 호출이나 Redis Pub/Sub 발행·구독을 다루는 Kotlin 코드
+adr: ../docs/adr/async-external.md
 -->
+<!-- devkit:scope narrows LA1, LA21, EV2, EV4 -->
 <!-- devkit:form v2 -->
 
 > 이 레포 전용 규칙 — devkit 팀 규칙 `async-external.md`(LA1~)를 Kotlin·Spring 에서 지키는 방법만 적는다. 원칙은 팀 규칙이 SSoT.

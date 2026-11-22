@@ -4,7 +4,7 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
 `$orchestrate` 실행 시 idle 상태면 이 파일의 미완료 항목을 제안한다.
 
 형식: `- [ ] 설명 | project: {프로젝트} | phase: {phase명} | priority: P{n}`
-완료 시: `- [x]` 로 변경 + `| done: YYYY-MM-DD | pr: #{n}` → TODO-DONE.md로 이동
+완료 시: `- [x]` 로 변경 + `| done: YYYY-MM-DD | pr: #{n}` — 완료 항목은 이 파일에 둔다(옛 TODO-DONE.md 는 docs/archive/ 로 동결)
 
 ---
 
@@ -68,7 +68,6 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
     - 프론트엔드: `runChartAnalysis`, `fetchChartAnalysis`, `fetchAnalyzedSymbols` → `api-research`로 변경
 
 - [x] Python 서비스 DB 스키마 자동 생성 | project: quant-research | phase: service-role-refactor | priority: P0 | done: 2026-05-14
-  - Python 서비스가 사용하는 테이블은 Python 서비스가 직접 생성 (Kotlin Flyway 의존 금지)
   - quant-research / quant-ai lifespan 시작 시 `migrations/*.sql` 순서대로 자동 실행
   - `CREATE TABLE IF NOT EXISTS` 사용으로 멱등성 보장
   - 대상 테이블: `chart_analysis_result`, `analysis_request_queue`, `popular_symbols`
@@ -142,6 +141,27 @@ Orchestrator가 읽어 다음 개발 대상을 선택하는 작업 목록.
   - 변경 범위: entity/migration/repository/querydsl/command/query/orchestrator/evaluator/order DTO/API/tests 전체 갱신
 
 ### P1
+
+- [ ] KIS·토스증권 다중 브로커 연동 | project: trading-api, collector-api | phase: multi-broker-kis-toss | priority: P1
+  - ✅ 계좌별 브로커 지정(계좌 하나 = 브로커 하나), 토스는 `TOSS_LIVE` 실계좌 모드
+  - ✅ 순서: 1) 토스 읽기 전용(시세·잔고·보유 REST) 2) 공통 브로커 계층으로 KIS 전면 리팩터링 3) 토스 시세 웹소켓·실주문
+  - 조사 문서: `docs/reference/2026-11-15-toss-open-api.md` · 기획: `docs/features/running/multi-broker-kis-toss/`
+
+- [ ] KIS 주문 취소·접수 타임아웃 결함 수정 | project: trading-api | phase: kis-order-cancel-timeout | priority: P1
+  - 우리 주문 취소가 KIS 취소를 부르지 않아 KIS에 살아 있는 주문의 잠금이 풀리고, 뒤 체결 통지가 버려짐(`OrderCommandService.kt:260-303`, `ExecutionProcessor.kt:100`)
+  - KIS 접수 타임아웃 뒤 우리 주문만 롤백되는데 KIS에는 접수됐을 수 있음(`BrokerOrderSubmitter.kt:54-66`·`KisOrderAdapter.kt:24-25`, 옛 `KisLiveOrderExecutor.kt:30-42` 는 step 11 에서 삭제)
+  - 자동 청산 재시도(`PositionExitTriggerOrchestrator.kt:170` `catch (Exception)`)가 `KIS_ORDER_RESULT_UNKNOWN` 도 같은 orderGroupId 로 최대 3회 재접수 → 실매도 중복 위험(step 11 재리뷰 R1-03, 코드는 안 고침)
+  - 출처: multi-broker-kis-toss 계획서 RISK-15, DEC-08 A(사용자 2026-11-16, 2단계는 동작 불변이라 따로 등록)
+
+- [ ] KIS 주문 응답·취소 요청 필드명 대조와 수정 | project: trading-api | phase: kis-order-field-names | priority: P1
+  - 주문 접수는 `output.ORNO`를 읽고 없으면 예외(`KisOrderRestClient.kt:64` `requireNotNull`), 취소 요청은 `ORGN_ORNO`(L76). 주문 조회(L112, L130)와 체결 통지 파서(`KisExecutionNoticeParser.kt:25`)는 `ODNO`
+  - 2차 자료(wikidocs, algolab 등)는 주문 응답 `ODNO`, 취소 요청 `ORGN_ODNO`. 맞다면 KIS 실주문 접수가 매번 예외로 롤백됨. 공식 저장소(koreainvestment/open-trading-api)와 실호출로 확인 필요(미확인)
+  - 같은 자료에 매수 tr_id가 `TTTC0012U`로 바뀌었다는 내용도 있어 tr_id도 함께 대조
+  - 출처: multi-broker-kis-toss step 8 특성화 시험 작성 중 발견(fixture는 지금 코드 동작대로 `ORNO`로 고정), 사용자 결정 2026-11-16 «공식 문서 대조 후 TODO 등록». 2단계는 동작 불변이라 고치지 않음
+
+- [ ] KIS 토큰 평문 저장 해소 | project: trading-api, collector-api | phase: kis-token-encryption | priority: P1
+  - `kis:token:{mode}`를 두 서비스가 평문으로 공유(`KisTokenManager.kt:85`, collector `KisTokenRedisStore.kt:12-21`). 토스 토큰 암호기(`AesGcmTokenCipher`)와 같은 형식으로 두 서비스를 함께 이전
+  - 출처: multi-broker-kis-toss 계획서 RISK-13, DEC-07 A(사용자 2026-11-16, 3단계 collector 토큰 공유 작업과 함께 검토)
 
 - [ ] 전략 실행 모드 설계 결정 | project: trading-api | phase: strategy-execution-mode-design | priority: P1
   - ✅ 실행 모드 3개 지원 결정: `KIS_LIVE` / `KIS_PAPER` / `LOCAL`
