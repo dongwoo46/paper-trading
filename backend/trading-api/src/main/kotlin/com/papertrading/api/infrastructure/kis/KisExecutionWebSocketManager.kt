@@ -1,7 +1,7 @@
 package com.papertrading.api.infrastructure.kis
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.papertrading.api.application.order.KisExecutionNoticeService
+import com.papertrading.api.application.order.BrokerExecutionNoticeService
 import com.papertrading.api.common.maskKisAccountNumber
 import mu.KotlinLogging
 import org.springframework.boot.context.event.ApplicationReadyEvent
@@ -134,7 +134,7 @@ class KisExecutionWebSocketManager(
     private val tokenManager: KisTokenManager,
     private val transport: KisExecutionWebSocketTransport,
     private val parser: KisExecutionNoticeParser,
-    private val noticeService: KisExecutionNoticeService,
+    private val noticeService: BrokerExecutionNoticeService,
     private val reconnectScheduler: KisExecutionWebSocketReconnectScheduler,
 ) {
     private val log = KotlinLogging.logger {}
@@ -240,7 +240,7 @@ class KisExecutionWebSocketManager(
         val notice = parser.parse(rawMessage, mode) ?: return
         // 트랜잭션이 끝난 바깥 경계에서 거부를 잡아 세션을 유지한다 — 그 통지는 롤백돼 처리되지 않음
         try {
-            noticeService.handle(notice)
+            noticeService.handle(notice.toBrokerExecutionNotice())
         } catch (rejected: IllegalArgumentException) {
             log.error {
                 "KIS execution notice rejected: mode=$mode, externalOrderId=${notice.externalOrderId}, " +

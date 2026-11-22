@@ -1,6 +1,6 @@
 package com.papertrading.api.infrastructure.kis
 
-import com.papertrading.api.application.order.KisExecutionNoticeService
+import com.papertrading.api.application.order.BrokerExecutionNoticeService
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.TradingMode
 import io.mockk.every
@@ -40,7 +40,7 @@ class KisExecutionWebSocketManagerTest {
     private val tokenManager = mockk<KisTokenManager>()
     private val transport = mockk<KisExecutionWebSocketTransport>()
     private val parser = mockk<KisExecutionNoticeParser>(relaxed = true)
-    private val service = mockk<KisExecutionNoticeService>(relaxed = true)
+    private val service = mockk<BrokerExecutionNoticeService>(relaxed = true)
 
     private val reconnectScheduler = RecordingReconnectScheduler()
 
@@ -178,7 +178,7 @@ class KisExecutionWebSocketManagerTest {
         val request = slot<KisExecutionWebSocketConnectionRequest>()
         every { transport.connect(capture(request)) } just runs
         every { parser.parse("raw-notice", "paper") } returns notice
-        every { service.handle(notice) } throws IllegalArgumentException(
+        every { service.handle(notice.toBrokerExecutionNotice()) } throws IllegalArgumentException(
             "체결 수량이 주문 잔여 수량을 넘습니다: orderId=10, executedQty=7, remainingQty=6",
         )
         manager.connectMode("paper")

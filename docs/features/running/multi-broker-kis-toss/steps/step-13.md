@@ -33,7 +33,7 @@
 > What this step (phase) **builds (what)** + **how far it goes (this step's boundary — name what is handed to the next step)**.
 
 - Builds: application 이 infrastructure 타입 KisExecutionNotice 를 import 하지 않도록, 체결 통지 입력을 application 명령 BrokerExecutionNotice(모드 포함)로 바꾸고 KisExecutionNoticeService 를 BrokerExecutionNoticeService 로 이름을 바꾼다
-- Scope (where this step stops): main: application/order/command/BrokerExecutionNotice.kt 신설, application/order/KisExecutionNoticeService.kt → BrokerExecutionNoticeService.kt, infrastructure/kis/KisExecutionNotice.kt(BrokerExecutionNotice 로 바꾸는 함수), KisExecutionWebSocketManager.kt(서비스 이름·입력 교체). test: KisExecutionNoticeServiceTest → BrokerExecutionNoticeServiceTest, KisExecutionWebSocketManagerTest 의 서비스 mock. archunit_store 해결된 동결 줄 제거(사람 승인 뒤). 범위 밖: ExecutionProcessor, KIS 주문 찾기 쿼리, 파서 동작, characterization/kis 시험, 통지 경계 예외 범위(TODO C3-01), 토스 체결(3단계)
+- Scope (where this step stops): main: application/order/port/BrokerExecutionNotice.kt 신설(처음 계획 command, ArchUnit 포트 경유 규칙으로 port, 사람 결정 2026-11-22), application/order/KisExecutionNoticeService.kt → BrokerExecutionNoticeService.kt, infrastructure/kis/KisExecutionNotice.kt(BrokerExecutionNotice 로 바꾸는 함수), KisExecutionWebSocketManager.kt(서비스 이름·입력 교체). test: KisExecutionNoticeServiceTest → BrokerExecutionNoticeServiceTest, KisExecutionWebSocketManagerTest 의 서비스 mock. archunit_store 해결된 동결 줄 30 제거, 이름만 바뀐 9줄 새 이름으로 재동결(사람 결정 2026-11-22). 범위 밖: ExecutionProcessor, KIS 주문 찾기 쿼리, 파서 동작, characterization/kis 시험, 통지 경계 예외 범위(TODO C3-01), 토스 체결(3단계)
 
 ---
 
@@ -58,11 +58,11 @@
 
 ## 4. Completion criteria  (plan)
 
-- [ ] characterization/kis 10건 고치지 않고 통과(--rerun, 실행 뒤 생긴 xml)
-- [ ] application 패키지에서 infrastructure.kis.KisExecutionNotice import 0
-- [ ] BrokerExecutionNoticeServiceTest·변환 시험 통과
-- [ ] 전체 시험 새 실패 0(기준선 재기록 값 기준)
-- [ ] compileKotlin·compileTestKotlin·ktlintCheck·detekt·verifyLintBaselinesNotGrown exit 0
+- [x] characterization/kis 10건 고치지 않고 통과(--rerun, 실행 뒤 생긴 xml)
+- [x] application 패키지에서 infrastructure.kis.KisExecutionNotice import 0
+- [x] BrokerExecutionNoticeServiceTest·변환 시험 통과
+- [x] 전체 시험 새 실패 0(기준선 재기록 값 기준)
+- [x] compileKotlin·compileTestKotlin·ktlintCheck·detekt·verifyLintBaselinesNotGrown exit 0
 
 ---
 
@@ -80,14 +80,17 @@
 
 | What | How it was checked | Result |
 |---|---|---|
-|  | test / screenshot / API contract / manual |  |
+| 집중 시험 | --rerun, 실행 뒤 생긴 xml | BrokerExecutionNoticeServiceTest 5·KisExecutionNoticeTest 2·KisExecutionWebSocketManagerTest 7·ArchitectureRulesTest 15·characterization/kis 10, 실패 0 |
+| 전체 시험 | ./gradlew test --rerun --offline --continue | 93 xml 1218건 실패 0·오류 0·건너뜀 0(기준선 1216 + 새 2) |
+| 린트 | compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main | exit 0, 기준선 증가 0 |
+| import | git grep infrastructure.kis.KisExecutionNotice -- application | 0건 |
 
 ---
 
 ## 7. Result  (record)
 
-- Done:
-- Changed files / PR:
+- Done: 완료 기준 5개 충족(완료 표시는 사람 몫)
+- Changed files / PR: feature/multi-broker-kis-toss-step13 PR
 
 ---
 
@@ -97,4 +100,4 @@
 
 | Problem | How it was handled |
 |---|---|
-|  | new step / change an existing step / open-questions flag / ignore |
+| BrokerExecutionNotice 를 command 에 두면 ArchUnit 포트 경유 규칙 위반 | 기존 step 변경: port 로(사람 결정, 계획 §10.3·state §3 기록, 설계 재승인) |

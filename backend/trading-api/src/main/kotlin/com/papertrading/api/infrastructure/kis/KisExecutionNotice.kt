@@ -1,5 +1,6 @@
 package com.papertrading.api.infrastructure.kis
 
+import com.papertrading.api.application.order.port.BrokerExecutionNotice
 import com.papertrading.api.domain.enums.OrderSide
 import com.papertrading.api.domain.enums.TradingMode
 import java.math.BigDecimal
@@ -24,4 +25,14 @@ data class KisExecutionNotice(
         } else {
             null
         }
+
+    fun toBrokerExecutionNotice(): BrokerExecutionNotice = BrokerExecutionNotice(
+        mode = mode,
+        externalOrderId = externalOrderId,
+        externalExecutionId = externalExecutionId,
+        executedQty = executedQty,
+        executedPrice = executedPrice,
+        executedAt = executedAt,
+        accountScope = accountScope,
+    )
 }
