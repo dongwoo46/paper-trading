@@ -12,7 +12,8 @@
 - docs/features/running/multi-broker-kis-toss/review/step8-rereview-1.md — 구속: 후속 R2-01·R2-02는 findings 원장 — 처분: 미룸(1단계·2단계 끝 정리 때)
 - docs/features/running/multi-broker-kis-toss/review/step8-code-review.md — 구속: 후속 C-02~C-10은 findings 원장(C-03 ORNO fixture 는 TODO 결함 수정 때 함께) — 처분: 미룸(TODO kis-order-field-names 착수 때)
 - docs/features/running/multi-broker-kis-toss/open-questions.md — 구속: FLAG-10·11·18, FLAG-04·05·07·08·09 가정 유지 — 처분: 넘김(§2 남음)
-- docs/research/2026-11-15-toss-open-api.md — 구속: expires_in 크기 미확인(실호출 대조 몫) — 처분: 넘김(§2 남음)
+- docs/reference/2026-11-15-toss-open-api.md — 구속: expires_in 크기 미확인(실호출 대조 몫) — 처분: 넘김(§2 남음)
+- docs/adr/architecture.md — 구속: 없음 — 처분: 구속 없음(ADR-005 는 PR #57 로 갱신을 마친 결정 기록, 남은 조건 없음)
 - docs/features/running/multi-broker-kis-toss/steps/step-7.md — 구속: §5 8번 수동 실호출 대조 미완 — 처분: 넘김(§2 남음)
 
 ## 1. 목표 (무엇을 만들고 있었나)
@@ -34,9 +35,9 @@
   - step 12 계좌 응답 출처와 ADR-005(2026-11-21): `d78dc5f`. 전체 1180건 실패 0, 리뷰 막는 지적 0(`review/step12-code-review.md`, 메인 인라인)
   - step 14 2단계 최종 확인(2026-11-22): step 13 보다 먼저 함(사람 결정, PR #53 OPEN·충돌). 고치기 전 전체 1180건 실패 0, 독립 QA 막는 지적 0, 사람 결정으로 Q-01(잔고 5xx EGW00002 가 KIS_AUTH_FAILED 로 가던 오분류)·Q-02(AE20 목록 보충)·Q-03(부동소수점 스캔 확대, KIS 주문 로그 누출 시험) 고침 `a49e74a`, 메인 인라인 리뷰 발견 0, 고친 뒤 전체 90 xml 1186건 실패 0. Q-04~06 은 findings 원장. 설계 재승인(코드 REKP) `4a80596`
   - PR #57 생성(feature/multi-broker-kis-toss-phase2 → main). main 의 규칙 이사 PR #56 과 충돌(docs/ADR.md 삭제)해 합치기 `1c35226`(ADR-005 를 docs/adr/architecture.md 로 이식). 합치기 커밋은 test-gate 오판(옛 .codex/skills/test/SKILL.md 를 시험으로 봄)으로 사람이 --no-verify 로 커밋, 원장 기록
-- **진행 중:** PR #57 CI(head `4a80596`), 머지는 사람 지시 대기
+- **완료(2026-11-22):** PR #57 CI 6개 초록, 사람 지시 «CI 끝나면 머지» 로 머지 `52af70f`(head 워크트리의 devkit 기계 로컬 원장 2건 decided.json 은 남긴 채 1회 허용)
+- **진행 중:** 없음
 - **남음:**
-  - PR #57 CI 확인과 머지(사람 지시)
   - step 13(PR #53 머지 뒤에만, 별도 PR)
   - 1단계 수동 실호출 대조(사람이 토스 키·허용 IP 준비 뒤 broker-balance 1회, prices 1회)
   - 옛 worktree 정리: `.worktrees/multi-broker-kis-toss`(다른 세션 미커밋 2건 있음, 건드리지 말 것), `.worktrees/multi-broker-kis-toss-phase1`(옛 인계문서 정리 뒤)
@@ -53,8 +54,8 @@
 - 리뷰 후속 후보는 원장으로만 넘기고 고침 라운드에 넣지 않음
 
 ## 4. 다음 첫 행동
-이어받기 한 줄: PR #57 CI·머지 확인 → step 13
-- 다음 첫 행동: phase2 worktree(`feature/multi-broker-kis-toss-phase2`, HEAD `4a80596`)에서 `node <devkit>/tools/ci-wait.js <head sha> --repo dongwoo46/paper-trading` 로 PR #57 CI 확인. 빨강이면 원인 진단(git-conventions), 초록이면 사람에게 머지 지시를 물음(머지는 사람 지시만, pr-head-sync 먼저). 그다음 PR #53 상태 확인 — 머지됐으면 새 브랜치에서 main 합치고 기준선 재기록(RISK-11) 뒤 step 13(D27)을 step-scaffold `--step 13` 으로, 열려 있으면 대기 · 섬김: GL2
+이어받기 한 줄: PR #53 확인 → step 13
+- 다음 첫 행동: PR #57 은 머지됨(`52af70f`). `gh api repos/dongwoo46/paper-trading/pulls/53` 로 PR #53 상태 확인 — 머지됐으면 새 브랜치에서 main 합치고 기준선 재기록(RISK-11) 뒤 step 13(D27)을 step-scaffold `--step 13` 으로, 열려 있으면 대기 · 섬김: GL2
 - 실호출 대조는 사람이 준비됐다고 할 때 · 섬김: GL1
 
 ## 5. 주의·함정
