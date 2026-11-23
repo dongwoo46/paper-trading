@@ -1,12 +1,12 @@
 # Broker 도메인 — 토스증권 연동 (paper-trading)
 <!-- devkit:pointer
-path: ^backend/(trading-api|collector-api)/src/main/.+(Toss|Broker)\w*\.kt$
-why: 토스증권 등 외부 증권사 연동(토큰·호출 한도·웹소켓·주문 채널) Kotlin 코드
+path: ^backend/(trading-api|collector-api)/src/main/.+(Toss|Broker|Kis)\w*\.kt$
+why: 토스증권·KIS 등 외부 증권사 연동(토큰·호출 한도·웹소켓·주문 채널) Kotlin 코드
 -->
 <!-- devkit:scope repo-only -->
 <!-- devkit:form v2 -->
 
-이 파일은 토스증권 Open API 를 붙이는 Kotlin 코드의 토큰, 호출 한도, 웹소켓 재연결, 주문 채널, 응답 enum 기준을 정한다. 토스 명세가 정한 제약을 어겨 연결이 끊기거나 실거래 주문이 모의 체결과 섞이는 것을 막는다. 근거 자료는 [토스증권 Open API 조사](../../docs/reference/2026-11-15-toss-open-api.md)다.
+이 파일은 증권사 Open API 를 붙이는 Kotlin 코드의 토큰, 호출 한도, 웹소켓 재연결, 주문 채널, 응답 enum 기준을 정한다. 증권사 명세가 정한 제약을 어겨 연결이 끊기거나 실거래 주문이 모의 체결과 섞이는 것을 막는다. PTK1·PTK2·PTK3·PTK5 는 토스 명세에서 온 조항이라 토스 코드에만 해당하고, PTK4 는 모든 증권사에 해당한다. 근거 자료는 [토스증권 Open API 조사](../../docs/reference/2026-11-15-toss-open-api.md)다.
 
 ## 조항
 
