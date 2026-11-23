@@ -10,7 +10,7 @@ Metric: ui-money-string-compliance
 - 지운 지시: ui-common 의 메타 줄 둘(«프론트엔드 작업은 design-system.md 와 이 파일을 먼저 적용한다», «UI 작업은 design-system.md 를 적용한다»). 두 파일 pointer 가 trading-web `src` 의 ts·tsx 를 모두 지목해 편집 훅이 두 파일을 함께 부르므로 같은 일을 하는 줄이다(사람 결정 2026-11-23).
 - 합친 줄: 금액 네 줄(ui-common «포맷 단일화, 임의 반올림/절삭 금지», «핵심 비즈니스 계산 UI 재구현 금지, 서버 값 우선», «parseFloat·parseInt·Number(·Math. 를 쓰지 않음», design-system «문자열 그대로 받아 표시용 유틸로만, 반올림·합산·비율 계산을 화면에서 하지 않음»)은 ui-common PTU5 로, API 일원화와 계약 우회 금지는 PTU1 로, CODEX.md 와 UI_GUIDE.md 에 겹쳐 있던 shadcn 조립·추가·토큰 줄은 PTV1·PTV2·PTV4·PTV5 로 합쳤다.
 - 더한 예외: PTU5 Exception(자산 추이 그래프 좌표만 숫자 변환, `chart-coordinate.ts` 한 곳). 사람 결정 FLAG-17(2026-11-15)과 소스 검사 시험 허용 목록에 이미 있던 예외를 규칙 글에 맞췄다(사람 결정 2026-11-23).
-- devkit 중복 판정: PTV1 은 devkit FE1·FE24(기존 컴포넌트 먼저, variant 로 넓힘)를 shadcn 으로, PTV4 는 FE9(토큰만)를 `index.css` 로, PTV13 은 EC1(화면 6상태)을 화면 안 데이터 영역 4상태로, PTU1 은 FE34(타입 클라이언트 하나)를 `src/shared/api` 로 좁힌다(`devkit:scope narrows FE1, FE9, FE24, EC1` · `narrows FE7, FE34`). devkit ui-common pointer(`\.(tsx|jsx)$` 등)가 trading-web tsx 에 닿는다. EC1 은 «다른 문서는 목록을 다시 적지 말라» 하지만 PTV13 의 4상태는 화면 6상태와 다른 영역 단위 목록이라 원문대로 두었다(사람 결정 2026-11-23).
+- devkit 중복 판정: PTV1·PTV2 는 devkit FE1·FE24 를 shadcn 프리미티브와 생성물에 맞추고(생성물은 FE24 와 부딪히면 PTV2 가 이김), PTV4 는 FE9 의 토큰 자리를 `index.css` 로 정하고, PTV13 은 EC1 화면 상태 위에 화면 안 데이터 영역 4상태를 더하고, PTU1 은 FE34(타입 클라이언트 하나)를 `src/shared/api` 로 좁힌다(`devkit:scope narrows FE1, FE9, FE24, EC1` · `narrows FE7, FE34`). devkit ui-common pointer(`\.(tsx|jsx)$` 등)가 trading-web tsx 에 닿는다. EC1 은 «다른 문서는 목록을 다시 적지 말라» 하지만 PTV13 의 4상태는 화면 6상태와 다른 영역 단위 목록이라 원문대로 두었다(사람 결정 2026-11-23).
 - 이유가 없던 줄의 Why: 사람이 고른 안(2026-11-23 팝업 둘 — 표시 4줄 PTV9~PTV12, 화면·코드 6줄 PTV2·PTV5·PTV14·PTV15·PTU3). 나머지 Why 는 출처 문서에 있던 사실이다(CLAUDE.md, trading-web-shadcn-rebuild feature-spec·development-plan·screen-spec v2·v3, `components.json`, `.github/workflows/full-test.yml`, 이사 기록).
 - 줄별 출처 커밋(`git log -S`): TDS 줄 bf6f2c8, CODEX.md·UI_GUIDE.md 줄 8e5bd7c(4상태 줄만 d41db8a), CLAUDE.md 줄 06f39ad·366640a·a1f9169·c044f83, README 프록시 줄 e8bacfe, useEffect 줄은 2026-11-21 이사에서 사람 결정으로 고쳐 쓴 줄.
 
@@ -162,3 +162,15 @@ Metric: ui-money-string-compliance
 - 골격: 파일마다 pointer 머리말(그대로) · scope 줄 · `<!-- devkit:form v2 -->` · 목적 문단 · `## 조항` · 조항.
 - 분량: 두 파일 합계 75줄 → 92줄(조항마다 앵커와 Why 줄이 붙음).
 - 꼴 검사: `doc-form-check.js --root . --list` 에서 네 파일 위반 0, 레포 `rules/` 위반 합계 232 → 203. `rule-form-check.js --root .` exit 0 이지만 이 도구는 `rules/` 하위 폴더만 훑어 최상위 design-system·ui-common 은 재지 않는다(확인 못 함 — domains 의 quant·broker 는 잼).
+
+## 리뷰 뒤 고침(2026-11-23 합동 리뷰 1회차)
+
+합동 리뷰(코드·정합성) 막는 지적 0, 고칠 것 4건과 사소한 것 1건을 같은 PR 에서 고쳤다. 모두 원문 뜻이나 사람 결정으로 되돌리는 고침이다. 실행 비교의 after 팔은 고치기 전 판인데, 과제가 닿는 PTU5 는 고친 뒤 금지가 원문만큼 넓어졌을 뿐 좁아지지 않아 결과를 다시 재지 않았다.
+
+- PTU5(정합성 S1): «반올림·절삭·합산·비율 계산 같은 핵심 비즈니스 계산은 화면에서 다시 하지 않고»가 한정어 둘(«핵심 비즈니스», «다시»)로 원문 design-system «반올림·합산·비율 계산을 화면에서 하지 않습니다»의 조건 없는 금지를 좁혔다. «화면에서 반올림·절삭·합산·비율 계산을 하지 않고, 핵심 비즈니스 계산은 화면에서 다시 하지 않고 서버 값을 쓴다»로 두 원문을 모두 살렸다.
+- PTK1(정합성 S2): 토스 전용 표시가 배달되지 않는 목적 문단에만 있어, 지시 줄을 «토스 웹소켓이 …»로 고쳤다(PTK2·PTK3·PTK5 는 지시 줄에 이미 «토스»가 있음).
+- PTV13(코드 R1): EC1 괄호 요약 «(화면 상태)»가 6상태를 빠뜨려 영역 4상태가 EC1 을 대신한다고 읽혔다. 요약을 빼고 «화면 단위 상태는 devkit EC1 이 그대로 정하고, 이 조항은 화면 안 영역마다 더한다»로 적었다.
+- PTV1·PTV2(코드 R2): PTV1 의 «FE1·FE24 를 shadcn 으로 좁힌다»가 FE24(variant 로 넓힘)와 PTV2(생성물 그대로)를 부딪히게 했다. PTV1 에서 그 문장을 빼고 PTV2 에 «생성물에 대해서는 devkit FE24 와 부딪히면 이 조항이 이긴다»를 적었다(원문 «필요한 변경은 호출하는 쪽에서»가 이미 정한 쪽).
+- PTV4(코드 R3): «FE9 를 이 토큰 파일로 좁힌다»를 «FE9 의 토큰 자리를 이 파일로 정한다»로 고쳐, FE9 의 타이포·그림자·z-index·매직 px 금지가 빠진 것으로 읽히지 않게 했다.
+- broker 제목(코드 S2): «토스증권 연동»을 «증권사 연동»으로(pointer 를 넓힌 것과 맞춤).
+- findings 로 넘긴 후속: scope 의 FE7 을 짚는 조항 없음(R4), PTU5 Exception 과 시험 허용 목록의 safe-integer.ts(S1, id 변환이라 금액 예외 아님), PTU7 이 백엔드 작성자에게 배달 안 됨(B1, base 부터), 차트 지표 화면 계산 허용과 PTU5(N1, 사람 결정 필요), PTV9 에 매수/매도 텍스트 병기 빠짐(N2, base 부터).
