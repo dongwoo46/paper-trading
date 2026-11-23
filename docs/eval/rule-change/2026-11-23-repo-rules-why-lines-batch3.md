@@ -20,8 +20,8 @@ Metric: ui-money-string-compliance
 
 | 등록 | before | after | 판정 |
 |---|---|---|---|
-| `docs/eval/trials/rule-why-lines-batch3-ui-money-string.prereg.json`(8cfa263) | 0/3 | 0/3 | 판정 불가: 6회 모두 파일이 생기지 않음 |
-| `docs/eval/trials/rule-why-lines-batch3-ui-money-string-r2.prereg.json`(06650b5) | 3/3 | 3/3 | 유지(통과): after ≥ before |
+| `docs/eval/trials/rule-why-lines-batch3-ui-money-string.prereg.json`(652f0c4, rebase 전 8cfa263) | 0/3 | 0/3 | 판정 불가: 6회 모두 파일이 생기지 않음 |
+| `docs/eval/trials/rule-why-lines-batch3-ui-money-string-r2.prereg.json`(38a7d45, rebase 전 06650b5) | 3/3 | 3/3 | 유지(통과): after ≥ before |
 
 - 1차: 6회 모두 exit 0 이지만 clone 안 세션의 devkit worktree 게이트가 첫 편집을 막아, 실행 세션이 worktree 를 만들지 묻고 멈췄다. 규칙이 아니라 실행 환경 문제라 과제·지표·판정 규칙은 그대로 두고 두 팔 모두 `DEVKIT_WORKTREE_EXEMPT=1` 로 2차 등록했다(사람 승인 2026-11-23).
 - 2차 회별: 6회 모두 `PositionPnlTable` 을 만들었고, 더한 줄에 `parseFloat`·`parseInt`·`Number(`·`Math.` 가 없다. 6회 모두 exit 0.
