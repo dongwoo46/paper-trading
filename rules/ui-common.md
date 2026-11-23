@@ -23,7 +23,7 @@ why: trading-web 의 React·TypeScript 코드, API 호출, 금액 표시, 프록
 - 사용자 행동이 일으킨 효과는 이벤트 핸들러에 두고, `useEffect` 는 외부 시스템과 동기화할 때만 쓴다.
   Why: 옛 줄 «사이드이펙트는 useEffect 내부에서만»이 React 공식 문서(You Might Not Need an Effect)와 어긋나 사람 결정으로 고쳐 쓴 조항이다(사람 결정 2026-11-21, docs/adr/rule-migration-2026-11-21.md). — enforce: review
 <!-- gt:PTU5 -->
-- 금액·수량·가격은 서버가 준 문자열 그대로 받아 표시용 유틸(`src/shared/lib`) 하나로만 포맷하고 `parseFloat`·`parseInt`·`Number(`·`Math.` 를 쓰지 않는다. 화면에서 반올림·절삭·합산·비율 계산을 하지 않고, 핵심 비즈니스 계산은 화면에서 다시 하지 않고 서버 값을 쓴다.
+- 금액·수량·가격은 서버가 준 문자열 그대로 받아 표시용 유틸(`src/shared/lib`) 하나로만 포맷하고 `parseFloat`·`parseInt`·`Number(`·`Math.` 를 쓰지 않는다. 화면에서 반올림·합산·비율 계산과 임의 절삭을 하지 않고, 핵심 비즈니스 계산은 화면에서 다시 하지 않고 서버 값을 쓴다.
   Why: 부동소수점 변환은 금액을 조용히 틀리게 해 화면 계산을 막고 서버 값만 쓰기로 했다(CLAUDE.md 금융 안전, feature-spec RULE-03, a1f9169·c044f83·8e5bd7c). — enforce: test:frontend/trading-web/src/test/guards/source-guards.test.ts · review
   Exception: 자산 추이 그래프의 좌표 계산만 숫자 변환을 쓴다. 변환 함수는 `src/shared/lib/chart-coordinate.ts` 한 곳이고, 라벨·툴팁·축 문구는 서버 원문 문자열이다(사람 결정 FLAG-17 2026-11-15, 2026-11-23).
 <!-- gt:PTU6 -->

@@ -15,8 +15,8 @@ why: trading-web 화면 조립·토큰·금융 값 표시·표와 영역 상태
 - 화면은 `src/shared/ui` 의 shadcn/ui Base Nova 프리미티브로 조립하고 있는 것을 다시 만들지 않는다. 직접 만들 컴포넌트는 먼저 shadcn 프리미티브로 되는지 본다.
   Why: trading-web 의 공식 디자인 시스템은 shadcn/ui Base Nova 하나다(CLAUDE.md, trading-web-shadcn-rebuild development-plan D1, 8e5bd7c). — enforce: review
 <!-- gt:PTV2 -->
-- 새 shadcn 컴포넌트는 `npx shadcn@4.23.0 add <이름>` 으로 `src/shared/ui` 에 더한다. 생성물은 사람이 고치기 전에는 그대로 두고, 필요한 변경은 호출하는 쪽에서 한다. 생성물에 대해서는 devkit FE24 와 부딪히면 이 조항이 이긴다.
-  Why: CLI 판이 바뀌면 생성 코드 모양이 달라져 한 앱에 두 판의 컴포넌트가 섞이고, `add` 를 다시 돌리면 생성 파일이 덮여 고친 것이 사라진다. 생성물은 옛 앱 검사(development-plan D15)의 예외로 따로 관리한다(사람 결정 2026-11-23, 8e5bd7c). — enforce: review
+- 새 shadcn 컴포넌트는 `npx shadcn@4.23.0 add <이름>` 으로 `src/shared/ui` 에 더한다. 생성물은 사람이 고치기 전에는 그대로 두고, 필요한 변경은 호출하는 쪽에서 한다. 생성물에 variant 가 더 필요하면(devkit FE24) 생성 파일이 아니라 그것을 감싼 컴포넌트에서 넓히고 복사하지 않는다.
+  Why: CLI 판이 바뀌면 생성 코드 모양이 달라져 한 앱에 두 판의 컴포넌트가 섞이고, `add` 를 다시 돌리면 생성 파일이 덮여 고친 것이 사라진다. 생성물은 옛 앱 검사(development-plan D15)의 예외로 따로 관리한다(사람 결정 2026-11-23 두 건 — Why 문구, 감싼 컴포넌트에서 넓히는 꼴, 8e5bd7c). — enforce: review
 <!-- gt:PTV3 -->
 - 아이콘은 `lucide-react` 를 쓴다.
   Why: `components.json` 의 `iconLibrary` 가 `lucide` 라 shadcn 생성물이 lucide 아이콘을 쓴다(8e5bd7c). — enforce: review
