@@ -16,6 +16,7 @@ why: 퀀트 수식·백테스트·신호·금액 계산 Python 코드
 <!-- gt:PTQ2 -->
 - quant 서비스의 금액 계산(수수료, 세금, 잔고 포함)은 `Decimal` 로 하고 `float` 를 쓰지 않는다. devkit DD13 의 «Money 를 float 로 두지 않음»을 계산까지 좁힌다.
   Why: float 이진 오차가 수수료·잔고 누적과 비교에서 틀린 금액을 내고, 백테스트 spec(`docs/done/quant-worker/backtest-engine/spec.md`)도 금액·지표의 float 저장을 막는다(사람 결정 2026-11-22). — enforce: review
+  Exception: LEAN 입출력 경계의 수치 변환은 허용하고 시험으로 덮는다. 금액은 경계 안쪽에서 `Decimal` 이다(`docs/done/quant-worker/backtest-engine/spec.md`, 사람 결정 2026-11-23).
 <!-- gt:PTQ3 -->
 - 백테스트와 신호 계산은 시점 T 에 T 이전에 알 수 있던 데이터만 쓰고(룩어헤드 금지), 성과에는 슬리피지, 수수료, 세금을 늘 반영하며, 결측값, 상장폐지 종목, 서킷브레이커(거래 정지) 구간을 명시적으로 처리한다.
   Why: 미래 데이터, 비용 누락, 생존 편향은 과거 성과를 부풀려 실거래에서 못 내는 전략을 통과시킨다(사람 결정 2026-11-22, 옛 퀀트 스킬 «상장 종목만 쓰면 과거 성과가 부풀려짐»). — enforce: review
