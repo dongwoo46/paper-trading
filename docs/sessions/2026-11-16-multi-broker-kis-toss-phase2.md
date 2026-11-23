@@ -6,7 +6,7 @@
 > 📌 **상태는 3단계** — `open`(대기: 아무도 안 집음) → `in-use(시각 · 세션id)`(어느 세션이 이어받아 진행 중 — 다른 세션은 이 문서를 집지 않는다) → `done(날짜)`(남은 일 전부 끝 → `docs/archive/sessions/` 로 이관). 표시는 손으로 고치지 말고 `session-handoff.js` 의 `take`·`release`·`done` 으로 바꾼다(마커 문법이 곧 잠금이다).
 
 ## 0. 근거 문서
-- docs/features/running/multi-broker-kis-toss/development-plan.md — 구속: §5 2단계 2~7번(step 9~14), §10 D20~D29, DEC-05~08 모두 A, §9 경계·멈춤 조건(6번은 PR #53 머지 뒤만) — 처분: 넘김(§4)
+- docs/features/running/multi-broker-kis-toss/development-plan.md — 구속: §5 2단계 2~7번(step 9~14), §10 D20~D29, DEC-05~08 모두 A, §9 경계·멈춤 조건 — 처분: 끝(PR #57 52af70f, PR #61 9080505)
 - docs/features/running/multi-broker-kis-toss/feature-spec.md — 구속: §10 완료 기준 7행 대기(실호출 행 포함), RULE-03·RULE-10 — 처분: 넘김(§2 남음)
 - docs/features/running/multi-broker-kis-toss/steps/step-8.md — 구속: §4 «특성화 시험 characterization/kis 는 step 9~14에서 고치지 않음», §5 main 타입 운명 대조표 — 처분: 넘김(§4)
 - docs/features/running/multi-broker-kis-toss/review/step8-rereview-1.md — 구속: 후속 R2-01·R2-02는 findings 원장 — 처분: 미룸(1단계·2단계 끝 정리 때)
@@ -36,12 +36,18 @@
   - step 14 2단계 최종 확인(2026-11-22): step 13 보다 먼저 함(사람 결정, PR #53 OPEN·충돌). 고치기 전 전체 1180건 실패 0, 독립 QA 막는 지적 0, 사람 결정으로 Q-01(잔고 5xx EGW00002 가 KIS_AUTH_FAILED 로 가던 오분류)·Q-02(AE20 목록 보충)·Q-03(부동소수점 스캔 확대, KIS 주문 로그 누출 시험) 고침 `a49e74a`, 메인 인라인 리뷰 발견 0, 고친 뒤 전체 90 xml 1186건 실패 0. Q-04~06 은 findings 원장. 설계 재승인(코드 REKP) `4a80596`
   - PR #57 생성(feature/multi-broker-kis-toss-phase2 → main). main 의 규칙 이사 PR #56 과 충돌(docs/ADR.md 삭제)해 합치기 `1c35226`(ADR-005 를 docs/adr/architecture.md 로 이식). 합치기 커밋은 test-gate 오판(옛 .codex/skills/test/SKILL.md 를 시험으로 봄)으로 사람이 --no-verify 로 커밋, 원장 기록
 - **완료(2026-11-22):** PR #57 CI 6개 초록, 사람 지시 «CI 끝나면 머지» 로 머지 `52af70f`(head 워크트리의 devkit 기계 로컬 원장 2건 decided.json 은 남긴 채 1회 허용)
+- **완료(2026-11-22 저녁):**
+  - PR #53(자금 상태 A1) 충돌 해소·머지 `486116c`: 사람 결정 «해소부터 머지까지»(11-15 «규칙 배선 뒤» 대기 결정 대체, money-state state.md §3 기록). 해소 `9fdbd37`(main 전수 when·진입부 거부 유지, PR 금액 계산 유지), 전체 92 xml 1216건 실패 0. 3회차 리뷰 막는 지적 C3-01(통지 경계가 IAE 만 잡음)은 사람 결정 «통과한 부분만 머지·나머지 후속 PR» → TODO P1 등록 `4539c89`
+  - step 13 체결 입력 공통화: PR #61 머지 `9080505`. BrokerExecutionNotice 를 command 대신 port 패키지에(사람 결정, 설계 재승인 VDNG), ArchUnit 해결 30줄 제거·이름만 바뀐 9줄 재동결. 전체 93 xml 1218건 실패 0, 특성화 10건 무수정, 메인 인라인 리뷰 발견 0(사람 결정 «메인이 직접»)
+  - 2단계(step 8~14) 코드 전부 main 에 들어감. 기능 완료 여부는 사람이 «아직 진행 중»으로 답함(done-ask 기록)
+- **완료(2026-11-23):** 1단계 수동 실호출 대조. accounts·broker-balance·prices 200, expires_in 86399초, 틀린 accountSeq 는 400 `TOSS_REQUEST_REJECTED`(S6-03 의 403 오안내 아님, 해지 계좌는 미확인). 기록은 step-7 §5·§6, state step 7 줄, feature-spec §10 실호출 행, reference 문서(미커밋)
 - **진행 중:** 없음
 - **남음:**
-  - step 13(PR #53 머지 뒤에만, 별도 PR)
-  - 1단계 수동 실호출 대조(사람이 토스 키·허용 IP 준비 뒤 broker-balance 1회, prices 1회)
-  - 옛 worktree 정리: `.worktrees/multi-broker-kis-toss`(다른 세션 미커밋 2건 있음, 건드리지 말 것), `.worktrees/multi-broker-kis-toss-phase1`(옛 인계문서 정리 뒤)
-  - 2단계 끝나면 PR(`feature/multi-broker-kis-toss-phase2` → main)
+  - 실호출 대조 기록 문서 4개 커밋·PR(이 worktree 미커밋)
+  - step 7 완료 표시는 사람 판단
+  - TODO P1: KIS 체결 통지 경계 예외 범위(C3-01)·초과 수량 거부 범주 예외(C3-02) — trading-api-money-state 기능 몫
+  - 옛 worktree 정리: `.worktrees/multi-broker-kis-toss`(다른 세션 미커밋 2건 있음, 건드리지 말 것), `.worktrees/multi-broker-kis-toss-phase1`(옛 인계문서 정리 뒤). 이 worktree(phase2)는 지금 브랜치 feature/multi-broker-kis-toss-step13(= main), 미추적 훅 산출물 3건만 남음
+  - step 13 완료 표시·2단계 끝 정리(R2-01·R2-02 원장)는 사람 판단
 
 ## 3. 핵심 결정과 이유
 - 2단계 범위(사람 2026-11-16): trading-api만. trading-web 화면 제외(다른 세션이 shadcn 재제작 중), 토스 실주문 제외(GL4), 실호출 대조는 선행 조건에서 뺌
@@ -54,9 +60,9 @@
 - 리뷰 후속 후보는 원장으로만 넘기고 고침 라운드에 넣지 않음
 
 ## 4. 다음 첫 행동
-이어받기 한 줄: PR #53 확인 → step 13
-- 다음 첫 행동: PR #57 은 머지됨(`52af70f`). `gh api repos/dongwoo46/paper-trading/pulls/53` 로 PR #53 상태 확인 — 머지됐으면 새 브랜치에서 main 합치고 기준선 재기록(RISK-11) 뒤 step 13(D27)을 step-scaffold `--step 13` 으로, 열려 있으면 대기 · 섬김: GL2
-- 실호출 대조는 사람이 준비됐다고 할 때 · 섬김: GL1
+이어받기 한 줄: 실호출 기록 커밋·PR
+- 다음 첫 행동: 실호출 대조는 2026-11-23 끝남. 이 worktree 미커밋 문서 4개(step-7·state·feature-spec·reference)를 main 기준 새 브랜치로 커밋·PR(git-conventions) · 섬김: GL1
+- C3-01·C3-02 후속 PR 은 trading-api-money-state 기능에서(TODO P1) · 섬김: GL2
 
 ## 5. 주의·함정
 - 맥 부하가 자주 기준(36)을 넘어 에이전트 착수가 막힘. `concurrency-budget.js wait --weight 1 --reserve`를 백그라운드로 걸고 알림 뒤 다시 띄움. 사람은 «계속 기다림»을 고름
@@ -92,4 +98,6 @@
 - step 11: 메인 집중 재실행 27 xml 665건 실패 0(1차), 구현자 최종 전체 87 xml 1176건 실패 0, 린트 exit 0, `review-verdict step11-rereview-2.md --previous step11-code-review.md --previous step11-rereview-1.md` «가능 — 막는 지적 0건 · 지난 지적 미해결 0건»
 - step 12: 구현자 전체 89 xml 1180건 실패 0, 린트 exit 0, `review-verdict step12-code-review.md` «가능 — 막는 지적 0건»
 - step 14(2026-11-22): 고친 뒤 메인 전체 `./gradlew test --rerun --offline` 90 xml 1186건 실패 0·건너뜀 0, 린트 exit 0(합치기 뒤 재확인 exit 0), 특성화 diff 0. 합치기는 백엔드 소스 변경 0(문서 4개)이라 전체 시험 재실행 안 함
+- PR #53 합치기(2026-11-22): 전체 92 xml 1216건 실패 0, 린트·기준선 증가 0, CI 6개 초록
+- step 13(2026-11-22): 전체 `./gradlew test --rerun --offline --continue` 93 xml 1218건 실패 0, 특성화 10건 무수정, 린트 exit 0, PR #61 CI 초록
 - 주의: `SnapshotJobServiceAtomicRollbackIntegrationTest` 가 컨테이너 연결 실패(Postgres·Redis)로 두 번 단발 실패, 전체 재실행에서 통과

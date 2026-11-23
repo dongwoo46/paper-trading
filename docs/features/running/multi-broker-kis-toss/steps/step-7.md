@@ -91,6 +91,15 @@
   - S7-02 `TossJson`: 문자열 토큰 `null`(앞뒤 공백 포함)을 실패로 돌리는 BigDecimal 역직렬화기, 나머지는 기본 역직렬화기에 위임
   - S7-03 `TossProperties`: 줄 대기 상한이 설정된 그룹 간격 최댓값보다 작으면 범위 오류로 비활성(계획서 D16·§4), 간격 식은 `TossRateLimiter.intervalMillisOf` 한 곳, 키 주석·`application.yaml` 주석 갱신
   - S7-04 시험: 컨트롤러 시험은 실제 `TossMarketQueryService` + 가짜 `TossMarketDataPort`, `TossMarketDataClientTest`는 실제 `TossRateLimiter` + 주입 시계
+- 수동 실호출 대조(2026-11-23, main `9080505` 와 같은 코드, 사람 키·허용 IP, 로컬 compose postgres·redis + `bootRun`):
+  - 기동 로그 `토스 연동 활성`. 첫 기동은 `TOSS_BASE_URL`·`TOSS_TOKEN_ENCRYPTION_KEY` 누락으로 `토스 연동 비활성`(값 없이 이름만 로그), 사람이 두 줄 추가 뒤 통과
+  - `GET /api/toss/accounts` 200(0.98초, 토큰 발급 포함), 계좌 1개, accountNo 는 끝 4자리만
+  - 토큰 `expires_in` = 86399초(약 24시간): 로그 `ttl=86339s` 와 식 `max(수명-60, 수명/2, 1)` 역산, Redis `toss:token` TTL 일치. 갱신 여유 60초 쪽 가지를 탐(절반 가지 경고 없음)
+  - `GET /api/v1/accounts/{id}/broker-balance`(TOSS_LIVE, externalAccountId=accountSeq) 200(0.59초): KRW·USD 2행, 종목 3개(USD), 금액 전부 JSON 문자열, `cashBalance` null(DEC-04), KRW 원금 0이라 KRW `returnRate` null(부록 A 규칙대로), `asOf` 는 오프셋 없는 KST
+  - `GET /api/toss/market/prices?symbols=005930,NVDA` 200(0.13초): 시각은 토스 오프셋 `+09:00` 원문, 가격 문자열
+  - `GET /api/toss/market/orderbook?symbol=005930` 200(0.54초): asks·bids 각 10단계, 가격·수량 문자열
+  - `GET /api/toss/market/candles` 200: 005930 `1d` count=3(0.11초), NVDA `1m` count=2(0.09초), 시각은 토스 오프셋 원문. `before=<nextBefore>`(`+` 를 `%2B`)로 다음 페이지를 불러 겹침·빠짐 없이 이어짐 확인
+  - S6-03 대조: 없는 accountSeq(`999`)로 잔고 조회 → 토스 400, 우리 400 `TOSS_REQUEST_REJECTED`(403 `TOSS_AUTH_FAILED` 오안내 아님). 해지 계좌는 미확인이라 원장 항목은 그대로 둠
 
 ---
 
@@ -112,6 +121,7 @@
 | 후속 린트 | `./gradlew compileKotlin compileTestKotlin ktlintCheck detekt verifyLintBaselinesNotGrown -PlintBaselineRef=origin/main --offline` 메인 재실행 | exit 0 |
 | 후속 범위·부동소수점 | `git diff --name-only origin/main` 의 `infrastructure/kis`·collector-api·frontend, toss 코드 grep | 변경 0, 부동소수점 0건(기존 주석 1줄 제외) |
 | 후속 CI | 후속 커밋 푸시 뒤 PR CI | 대기 |
+| 실호출 대조(§5 8번, 2026-11-23) | 실제 토스 키로 accounts·broker-balance·prices·orderbook·candles 1회씩(candles 는 1d·1m·다음 페이지), 틀린 accountSeq 1회 | 5경로 200, `expires_in` 86399초, 캔들 페이지 연속, 틀린 accountSeq 400 `TOSS_REQUEST_REJECTED` |
 
 ---
 
